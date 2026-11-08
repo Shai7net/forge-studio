@@ -1,0 +1,57 @@
+[
+ {
+  "i": 0,
+  "en": "🗺️ Map Key",
+  "ctx": "[t] Deforum Keyframes sub-tab (ui_elements.py)"
+ },
+ {
+  "i": 1,
+  "en": "📥 Load from Deforum",
+  "ctx": "[t] Deforum Map Key (map_key_ui.py)"
+ },
+ {
+  "i": 2,
+  "en": "✅ Apply to Deforum",
+  "ctx": "[t] Deforum Map Key (map_key_ui.py)"
+ },
+ {
+  "i": 3,
+  "en": "↩ Open the last Apply",
+  "ctx": "[t] Deforum Map Key (map_key_ui.py)"
+ },
+ {
+  "i": 4,
+  "en": "💾 Map Key projects",
+  "ctx": "[t] Deforum Map Key (map_key_ui.py)"
+ },
+ {
+  "i": 5,
+  "en": "Project name",
+  "ctx": "[t] Deforum Map Key (map_key_ui.py)"
+ },
+ {
+  "i": 6,
+  "en": "e.g. Seinfeld flight",
+  "ctx": "[p] Deforum Map Key projects"
+ },
+ {
+  "i": 7,
+  "en": "💾 Save project",
+  "ctx": "[t] Deforum Map Key (map_key_ui.py)"
+ },
+ {
+  "i": 8,
+  "en": "Saved projects",
+  "ctx": "[t] Deforum Map Key (map_key_ui.py)"
+ },
+ {
+  "i": 9,
+  "en": "📂 Open project",
+  "ctx": "[t] Deforum Map Key (map_key_ui.py)"
+ },
+ {
+  "i": 10,
+  "en": "Refresh the list of projects",
+  "ctx": "[title] Deforum Map Key projects"
+ }
+]

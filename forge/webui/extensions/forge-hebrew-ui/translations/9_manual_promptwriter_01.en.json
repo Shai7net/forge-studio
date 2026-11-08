@@ -1,0 +1,47 @@
+[
+ {
+  "i": 0,
+  "en": "Prompt writer (🌐 Hebrew to English)",
+  "ctx": "[t] Settings section (hebrew-translator, scripts/translator.py)"
+ },
+ {
+  "i": 1,
+  "en": "How much the writer adds to your idea",
+  "ctx": "[t] Settings, prompt writer"
+ },
+ {
+  "i": 2,
+  "en": "Faithful: only what you wrote. Rich: concrete looks, place, light and framing. Creative: a striking picture of your idea",
+  "ctx": "[t] Settings, prompt writer, info"
+ },
+ {
+  "i": 3,
+  "en": "Keep Qwen in memory after a prompt (minutes)",
+  "ctx": "[t] Settings, prompt writer"
+ },
+ {
+  "i": 4,
+  "en": "4.9 GB of system memory while kept; loading it again takes a few seconds",
+  "ctx": "[t] Settings, prompt writer, info"
+ },
+ {
+  "i": 5,
+  "en": "Writer model",
+  "ctx": "[t] Settings, prompt writer"
+ },
+ {
+  "i": 6,
+  "en": "Gemma reads Hebrew far better; Qwen needs no extra program",
+  "ctx": "[t] Settings, prompt writer, info"
+ },
+ {
+  "i": 7,
+  "en": "Keep Gemma on the card after a prompt (seconds)",
+  "ctx": "[t] Settings, prompt writer"
+ },
+ {
+  "i": 8,
+  "en": "2.9 GB of the card while kept; it leaves at once when Forge starts drawing",
+  "ctx": "[t] Settings, prompt writer, info"
+ }
+]

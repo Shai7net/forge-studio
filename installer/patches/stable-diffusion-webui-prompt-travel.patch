@@ -1,0 +1,9 @@
+diff --git a/scripts/controlnet_travel.py b/scripts/controlnet_travel.py
+index d83db6f..c97e37f 100644
+--- a/scripts/controlnet_travel.py
++++ b/scripts/controlnet_travel.py
+@@ -1,3 +1,4 @@
++from __future__ import annotations  # Forge Studio: the hints below name ControlNet classes that may be absent
+ # This extension works with [Mikubill/sd-webui-controlnet](https://github.com/Mikubill/sd-webui-controlnet)
+ # version: v1.1.424
+ 

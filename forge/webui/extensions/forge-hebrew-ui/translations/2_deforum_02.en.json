@@ -1,0 +1,1172 @@
+[
+ {
+  "i": 0,
+  "en": "for backward compatibility. Uses the formula: `width/height`",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 1,
+  "en": "Use old aspect ratio formula",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 2,
+  "en": "Aspect Ratio schedule",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 3,
+  "en": "adjusts the aspect ratio for the depth calculations",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 4,
+  "en": "FOV schedule",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 5,
+  "en": "adjusts the scale at which the canvas is moved in 3D by the translation_z value. [Range -180 to +180, with 0 being undefined. Values closer to 180 will make the image have less depth, while values closer to 0 will allow more depth]",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 6,
+  "en": "Near schedule",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 7,
+  "en": "Far schedule",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 8,
+  "en": "*Important* notes on Prompts",
+  "ctx": "*Important* notes on Prompts"
+ },
+ {
+  "i": 9,
+  "en": "full prompts list in a JSON format.  value on left side is the frame number",
+  "ctx": "component-6445"
+ },
+ {
+  "i": 10,
+  "en": "Prompts positive",
+  "ctx": "component-6445"
+ },
+ {
+  "i": 11,
+  "en": "Prompts negative",
+  "ctx": "component-6445"
+ },
+ {
+  "i": 12,
+  "en": "Composable Mask scheduling",
+  "ctx": "Composable Mask scheduling"
+ },
+ {
+  "i": 13,
+  "en": "Mask schedule",
+  "ctx": "Composable Mask scheduling"
+ },
+ {
+  "i": 14,
+  "en": "Use noise mask",
+  "ctx": "Composable Mask scheduling"
+ },
+ {
+  "i": 15,
+  "en": "Noise mask schedule",
+  "ctx": "Composable Mask scheduling"
+ },
+ {
+  "i": 16,
+  "en": "Image Init",
+  "ctx": "component-6470"
+ },
+ {
+  "i": 17,
+  "en": "Video Init",
+  "ctx": "component-6470"
+ },
+ {
+  "i": 18,
+  "en": "Mask Init",
+  "ctx": "component-6470"
+ },
+ {
+  "i": 19,
+  "en": "Parseq",
+  "ctx": "component-6470"
+ },
+ {
+  "i": 20,
+  "en": "Use init",
+  "ctx": "component-6471"
+ },
+ {
+  "i": 21,
+  "en": "Strength 0 no init",
+  "ctx": "component-6471"
+ },
+ {
+  "i": 22,
+  "en": "the inverse of denoise; lower values alter the init image more (high denoise); higher values alter it less (low denoise)",
+  "ctx": "component-6471"
+ },
+ {
+  "i": 23,
+  "en": "Init image URL",
+  "ctx": "component-6471"
+ },
+ {
+  "i": 24,
+  "en": "Use web address or local path. Note: if the image box below is used then this field is ignored.",
+  "ctx": "component-6471"
+ },
+ {
+  "i": 25,
+  "en": "Init image box",
+  "ctx": "component-6471"
+ },
+ {
+  "i": 26,
+  "en": "Video init path/ URL",
+  "ctx": "component-6488"
+ },
+ {
+  "i": 27,
+  "en": "Extract from frame",
+  "ctx": "component-6488"
+ },
+ {
+  "i": 28,
+  "en": "Extract to frame",
+  "ctx": "component-6488"
+ },
+ {
+  "i": 29,
+  "en": "Extract nth frame",
+  "ctx": "component-6488"
+ },
+ {
+  "i": 30,
+  "en": "Overwrite extracted frames",
+  "ctx": "component-6488"
+ },
+ {
+  "i": 31,
+  "en": "Use mask video",
+  "ctx": "component-6488"
+ },
+ {
+  "i": 32,
+  "en": "Video mask path",
+  "ctx": "component-6488"
+ },
+ {
+  "i": 33,
+  "en": "Use mask",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 34,
+  "en": "Use alpha as mask",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 35,
+  "en": "Invert mask",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 36,
+  "en": "Overlay mask",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 37,
+  "en": "Mask file",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 38,
+  "en": "Mask overlay blur",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 39,
+  "en": "Mask fill",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 40,
+  "en": "Full res mask",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 41,
+  "en": "Full res mask padding",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 42,
+  "en": "Mask contrast adjust",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 43,
+  "en": "Mask brightness adjust",
+  "ctx": "component-6503"
+ },
+ {
+  "i": 44,
+  "en": "Parseq manifest (JSON or URL)",
+  "ctx": "component-6532"
+ },
+ {
+  "i": 45,
+  "en": "Recommended. If you uncheck this, the FPS, max_frames and cadence in the Parseq doc are ignored, and the values in the A1111 UI are used instead.",
+  "ctx": "component-6532"
+ },
+ {
+  "i": 46,
+  "en": "Use FPS, max_frames and cadence from the Parseq manifest, if present (recommended)",
+  "ctx": "component-6532"
+ },
+ {
+  "i": 47,
+  "en": "Recommended. If you uncheck this, Parseq keyframe values as are treated as relative movement values instead of absolute.",
+  "ctx": "component-6532"
+ },
+ {
+  "i": 48,
+  "en": "Use delta values for movement parameters (recommended)",
+  "ctx": "component-6532"
+ },
+ {
+  "i": 49,
+  "en": "CN Model 1",
+  "ctx": "component-6545"
+ },
+ {
+  "i": 50,
+  "en": "CN Model 2",
+  "ctx": "component-6545"
+ },
+ {
+  "i": 51,
+  "en": "CN Model 3",
+  "ctx": "component-6545"
+ },
+ {
+  "i": 52,
+  "en": "CN Model 4",
+  "ctx": "component-6545"
+ },
+ {
+  "i": 53,
+  "en": "CN Model 5",
+  "ctx": "component-6545"
+ },
+ {
+  "i": 54,
+  "en": "Low VRAM",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 55,
+  "en": "Overwrite input frames",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 56,
+  "en": "Weight schedule",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 57,
+  "en": "Starting Control Step schedule",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 58,
+  "en": "Ending Control Step schedule",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 59,
+  "en": "Annotator resolution",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 60,
+  "en": "Parameter 1",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 61,
+  "en": "Parameter 2",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 62,
+  "en": "ControlNet Input Video/ Image Path",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 63,
+  "en": "ControlNet Mask Video/ Image Path (*NOT WORKING, kept in UI for CN's devs testing!*)",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 64,
+  "en": "Outer Fit (Shrink to Fit)",
+  "ctx": "[c] component-6548"
+ },
+ {
+  "i": 65,
+  "en": "Inner Fit (Scale to Fit)",
+  "ctx": "[c] component-6548"
+ },
+ {
+  "i": 66,
+  "en": "LoopBack mode",
+  "ctx": "component-6548"
+ },
+ {
+  "i": 67,
+  "en": "Enable FreeU",
+  "ctx": "component-6753"
+ },
+ {
+  "i": 68,
+  "en": "Backbone stage 1",
+  "ctx": "component-6753"
+ },
+ {
+  "i": 69,
+  "en": "backbone factor of the first stage block of decoder",
+  "ctx": "component-6753"
+ },
+ {
+  "i": 70,
+  "en": "Backbone stage 2",
+  "ctx": "component-6753"
+ },
+ {
+  "i": 71,
+  "en": "backbone factor of the second stage block of decoder",
+  "ctx": "component-6753"
+ },
+ {
+  "i": 72,
+  "en": "Skip stage 1",
+  "ctx": "component-6753"
+ },
+ {
+  "i": 73,
+  "en": "skip factor of the first stage block of decoder",
+  "ctx": "component-6753"
+ },
+ {
+  "i": 74,
+  "en": "Skip stage 2",
+  "ctx": "component-6753"
+ },
+ {
+  "i": 75,
+  "en": "skip factor of the second stage block of decoder",
+  "ctx": "component-6753"
+ },
+ {
+  "i": 76,
+  "en": "Enable Kohya HRFix",
+  "ctx": "component-6770"
+ },
+ {
+  "i": 77,
+  "en": "Block Number (1-32)",
+  "ctx": "component-6770"
+ },
+ {
+  "i": 78,
+  "en": "Downscale Factor (0.1-9.0)",
+  "ctx": "component-6770"
+ },
+ {
+  "i": 79,
+  "en": "Start Percent (0.0-1.0)",
+  "ctx": "component-6770"
+ },
+ {
+  "i": 80,
+  "en": "End Percent (0.0-1.0)",
+  "ctx": "component-6770"
+ },
+ {
+  "i": 81,
+  "en": "Change animation mode to 2D or 3D to enable Hybrid Mode",
+  "ctx": "component-6796"
+ },
+ {
+  "i": 82,
+  "en": "Info & Help",
+  "ctx": "Info & Help"
+ },
+ {
+  "i": 83,
+  "en": "Hybrid Settings",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 84,
+  "en": "Hybrid composite",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 85,
+  "en": "Normal",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 86,
+  "en": "Before Motion",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 87,
+  "en": "After Generation",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 88,
+  "en": "Generate inputframes",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 89,
+  "en": "First frame as init image",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 90,
+  "en": "Use init image as video",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 91,
+  "en": "Hybrid motion",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 92,
+  "en": "Optical Flow",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 93,
+  "en": "Perspective",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 94,
+  "en": "Affine",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 95,
+  "en": "Flow method",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 96,
+  "en": "RAFT",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 97,
+  "en": "DIS Medium",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 98,
+  "en": "DIS Fine",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 99,
+  "en": "Farneback",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 100,
+  "en": "Flow consistency mask",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 101,
+  "en": "Consistency mask blur",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 102,
+  "en": "Motion use prev img",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 103,
+  "en": "Comp mask type",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 104,
+  "en": "Video Depth",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 105,
+  "en": "Difference",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 106,
+  "en": "Comp mask equalize",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 107,
+  "en": "Before",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 108,
+  "en": "After",
+  "ctx": "[c] Hybrid Settings"
+ },
+ {
+  "i": 109,
+  "en": "Comp mask auto contrast",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 110,
+  "en": "Comp mask inverse",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 111,
+  "en": "Comp save extra frames",
+  "ctx": "Hybrid Settings"
+ },
+ {
+  "i": 112,
+  "en": "Hybrid Schedules",
+  "ctx": "Hybrid Schedules"
+ },
+ {
+  "i": 113,
+  "en": "Comp alpha schedule",
+  "ctx": "Hybrid Schedules"
+ },
+ {
+  "i": 114,
+  "en": "Flow factor schedule",
+  "ctx": "Hybrid Schedules"
+ },
+ {
+  "i": 115,
+  "en": "Comp mask blend alpha schedule",
+  "ctx": "Hybrid Schedules"
+ },
+ {
+  "i": 116,
+  "en": "Comp mask contrast schedule",
+  "ctx": "Hybrid Schedules"
+ },
+ {
+  "i": 117,
+  "en": "Comp mask auto contrast cutoff high schedule",
+  "ctx": "Hybrid Schedules"
+ },
+ {
+  "i": 118,
+  "en": "Comp mask auto contrast cutoff low schedule",
+  "ctx": "Hybrid Schedules"
+ },
+ {
+  "i": 119,
+  "en": "Humans Masking",
+  "ctx": "Humans Masking"
+ },
+ {
+  "i": 120,
+  "en": "Generate human masks",
+  "ctx": "Humans Masking"
+ },
+ {
+  "i": 121,
+  "en": "PNGs",
+  "ctx": "[c] Humans Masking"
+ },
+ {
+  "i": 122,
+  "en": "Video Output Settings",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 123,
+  "en": "Add soundtrack",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 124,
+  "en": "add audio to video from file/url or init video",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 125,
+  "en": "Init Video",
+  "ctx": "[c] Video Output Settings"
+ },
+ {
+  "i": 126,
+  "en": "Soundtrack path",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 127,
+  "en": "abs. path or url to audio file",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 128,
+  "en": "If enabled, only images will be saved",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 129,
+  "en": "Skip video creation",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 130,
+  "en": "auto-delete imgs when video is ready. Will break Resume from timestring!",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 131,
+  "en": "Delete Imgs",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 132,
+  "en": "auto-delete inputframes (incl CN ones) when video is ready",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 133,
+  "en": "Delete All Inputframes",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 134,
+  "en": "auto-delete imgs when video is ready",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 135,
+  "en": "Store frames in ram",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 136,
+  "en": "save animation's depth maps as extra files",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 137,
+  "en": "Save 3D depth maps",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 138,
+  "en": "make GIF in addition to the video/s",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 139,
+  "en": "Make GIF",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 140,
+  "en": "upscale output imgs when run is finished",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 141,
+  "en": "Upscale model",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 142,
+  "en": "Upscale factor",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 143,
+  "en": "don't delete upscaled imgs",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 144,
+  "en": "Keep Imgs",
+  "ctx": "Video Output Settings"
+ },
+ {
+  "i": 145,
+  "en": "Video Upscaling",
+  "ctx": "output_tab"
+ },
+ {
+  "i": 146,
+  "en": "Vid2depth",
+  "ctx": "output_tab"
+ },
+ {
+  "i": 147,
+  "en": "Frames to Video",
+  "ctx": "output_tab"
+ },
+ {
+  "i": 148,
+  "en": "Important notes and Help",
+  "ctx": "Important notes and Help"
+ },
+ {
+  "i": 149,
+  "en": "Engine",
+  "ctx": "component-6901"
+ },
+ {
+  "i": 150,
+  "en": "select the frame interpolation engine. hover on the options for more info",
+  "ctx": "component-6901"
+ },
+ {
+  "i": 151,
+  "en": "RIFE v4.6",
+  "ctx": "[c] component-6901"
+ },
+ {
+  "i": 152,
+  "en": "Slow-Mo the interpolated video, audio will not be used if enabled",
+  "ctx": "component-6901"
+ },
+ {
+  "i": 153,
+  "en": "Slow-Mo",
+  "ctx": "component-6901"
+ },
+ {
+  "i": 154,
+  "en": "Keep interpolated images on disk",
+  "ctx": "component-6901"
+ },
+ {
+  "i": 155,
+  "en": "Interpolate upscaled images, if available",
+  "ctx": "component-6901"
+ },
+ {
+  "i": 156,
+  "en": "Use Upscaled",
+  "ctx": "component-6901"
+ },
+ {
+  "i": 157,
+  "en": "Slow-Mo X",
+  "ctx": "component-6901"
+ },
+ {
+  "i": 158,
+  "en": "Interpolate existing Video/ Images",
+  "ctx": "Interpolate existing Video/ Images"
+ },
+ {
+  "i": 159,
+  "en": "Video to Interpolate",
+  "ctx": "Interpolate existing Video/ Images"
+ },
+ {
+  "i": 160,
+  "en": "Pics to Interpolate",
+  "ctx": "Interpolate existing Video/ Images"
+ },
+ {
+  "i": 161,
+  "en": "In Frame Count",
+  "ctx": "Interpolate existing Video/ Images"
+ },
+ {
+  "i": 162,
+  "en": "In FPS",
+  "ctx": "Interpolate existing Video/ Images"
+ },
+ {
+  "i": 163,
+  "en": "Interpolated Vid FPS",
+  "ctx": "Interpolate existing Video/ Images"
+ },
+ {
+  "i": 164,
+  "en": "*Interpolate Video*",
+  "ctx": "Interpolate existing Video/ Images"
+ },
+ {
+  "i": 165,
+  "en": "*Interpolate Pics*",
+  "ctx": "Interpolate existing Video/ Images"
+ },
+ {
+  "i": 166,
+  "en": "* check your CLI for outputs *",
+  "ctx": "Interpolate existing Video/ Images"
+ },
+ {
+  "i": 167,
+  "en": "Video to Upscale",
+  "ctx": "component-6941"
+ },
+ {
+  "i": 168,
+  "en": "In Res",
+  "ctx": "component-6941"
+ },
+ {
+  "i": 169,
+  "en": "Out Res",
+  "ctx": "component-6941"
+ },
+ {
+  "i": 170,
+  "en": "*Upscale uploaded video*",
+  "ctx": "component-6941"
+ },
+ {
+  "i": 171,
+  "en": "Video to get Depth from",
+  "ctx": "component-6959"
+ },
+ {
+  "i": 172,
+  "en": "Threshold Value Lower",
+  "ctx": "component-6959"
+ },
+ {
+  "i": 173,
+  "en": "Threshold Value Upper",
+  "ctx": "component-6959"
+ },
+ {
+  "i": 174,
+  "en": "Thresholding Mode",
+  "ctx": "component-6959"
+ },
+ {
+  "i": 175,
+  "en": "Simple",
+  "ctx": "[c] component-6959"
+ },
+ {
+  "i": 176,
+  "en": "Simple (Auto-value)",
+  "ctx": "[c] component-6959"
+ },
+ {
+  "i": 177,
+  "en": "Adaptive (Mean)",
+  "ctx": "[c] component-6959"
+ },
+ {
+  "i": 178,
+  "en": "Adaptive (Gaussian)",
+  "ctx": "[c] component-6959"
+ },
+ {
+  "i": 179,
+  "en": "Block size",
+  "ctx": "component-6959"
+ },
+ {
+  "i": 180,
+  "en": "Closer is brighter",
+  "ctx": "component-6959"
+ },
+ {
+  "i": 181,
+  "en": "End blur width",
+  "ctx": "component-6959"
+ },
+ {
+  "i": 182,
+  "en": "MiDaS weight (vid2depth)",
+  "ctx": "component-6959"
+ },
+ {
+  "i": 183,
+  "en": "*Get depth from uploaded video*",
+  "ctx": "component-6959"
+ },
+ {
+  "i": 184,
+  "en": "* check your CLI for outputs",
+  "ctx": "component-6959"
+ },
+ {
+  "i": 185,
+  "en": "Image path",
+  "ctx": "component-6984"
+ },
+ {
+  "i": 186,
+  "en": "*Stitch frames to video*",
+  "ctx": "component-6984"
+ },
+ {
+  "i": 187,
+  "en": "Click here after the generation to show the video",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 188,
+  "en": "Close the video",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 189,
+  "en": "Deforum extension for auto1111 — version 3.0 | Git commit: Unknown",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 190,
+  "en": "Pause/Resume",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 191,
+  "en": "Settings File",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 192,
+  "en": "settings file path can be relative to webui folder OR full - absolute",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 193,
+  "en": "Save Settings",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 194,
+  "en": "Load All Settings",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 195,
+  "en": "Load Video Settings",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 196,
+  "en": "Full",
+  "ctx": "[c] settings_vae"
+ },
+ {
+  "i": 197,
+  "en": "Formula for each frame: x = loudness 0..1, y = frame number",
+  "ctx": "[t] Generate keyframes from the soundtrack"
+ },
+ {
+  "i": 198,
+  "en": "Euler Ancestral - very creative, each can get a completely different picture depending on step count, setting steps higher than 30-40 does not help",
+  "ctx": "[ht] component-5871"
+ },
+ {
+  "i": 199,
+  "en": "output images will be placed in a folder with this name ({timestring} token will be replaced) inside the img2img output folder. Supports placeholders like {seed}, {w}, {h}, {prompts} and more",
+  "ctx": "[ht] component-5871"
+ },
+ {
+  "i": 200,
+  "en": "Produce an image that can be tiled.",
+  "ctx": "[ht] component-5871"
+ },
+ {
+  "i": 201,
+  "en": "instructs the run to start from a specified point",
+  "ctx": "[ht] component-5902"
+ },
+ {
+  "i": 202,
+  "en": "*Only in use with pix2pix checkpoints!*",
+  "ctx": "[ht] Batch Mode, Resume and more"
+ },
+ {
+  "i": 203,
+  "en": "selects the type of animation",
+  "ctx": "[ht] component-5912"
+ },
+ {
+  "i": 204,
+  "en": "only 2D motion parameters will be used, but this mode uses the least amount of VRAM. You can optionally enable flip_2d_perspective to enable some psuedo-3d animation parameters while in 2D mode.",
+  "ctx": "[ht] component-5912"
+ },
+ {
+  "i": 205,
+  "en": "enables all 3D motion parameters.",
+  "ctx": "[ht] component-5912"
+ },
+ {
+  "i": 206,
+  "en": "will ignore all motion parameters and attempt to reference a video loaded into the runtime, specified by the video_init_path. Max_frames is ignored during video_input mode, and instead, follows the number of frames pulled from the video’s length. Resume_from_timestring is NOT available with Video_Input mode.",
+  "ctx": "[ht] component-5912"
+ },
+ {
+  "i": 207,
+  "en": "repeats the edge of the pixels, and extends them. Animations with quick motion may yield lines where this border function was attempting to populate pixels into the empty space created.",
+  "ctx": "[ht] component-5912"
+ },
+ {
+  "i": 208,
+  "en": "pulls pixels from the opposite edge of the image",
+  "ctx": "[ht] component-5912"
+ },
+ {
+  "i": 209,
+  "en": "A setting of 1 will cause every frame to receive diffusion in the sequence of image outputs. A setting of 2 will only diffuse on every other frame, yet motion will still be in effect. The output of images during the cadence sequence will be automatically blended, additively and saved to the specified drive. This may improve the illusion of coherence in some workflows as the content and context of an image will not change or diffuse during frames that were skipped. Higher values of 4-8 cadence will skip over a larger amount of frames and only diffuse the “Nth” frame as set by the diffusion_cadence value. This may produce more continuity in an animation, at the cost of little opportunity to add more diffused content. In extreme examples, motion within a frame will fail to produce diverse prompt context, and the space will be filled with lines or approximations of content - resulting in unexpected animation patterns and artifacts. Video Input & Interpolation modes are not affected by diffusion_cadence.",
+  "ctx": "[ht] component-5912"
+ },
+ {
+  "i": 210,
+  "en": "the maximum number of output images to be created",
+  "ctx": "[ht] component-5912"
+ },
+ {
+  "i": 211,
+  "en": "check this box to enable guided images mode",
+  "ctx": "[ht] Guided Images"
+ },
+ {
+  "i": 212,
+  "en": "images you iterate over, you can do local or web paths (no single backslashes!)",
+  "ctx": "[ht] Guided Images"
+ },
+ {
+  "i": 213,
+  "en": "how much the image should look like the previou one and new image frame init. strength schedule might be better if this is higher, around .75 during the keyfames you want to switch on",
+  "ctx": "[ht] Guided images schedules"
+ },
+ {
+  "i": 214,
+  "en": "blendFactor = blendFactorMax - blendFactorSlope * cos((frame % tweening_frames_schedule) / (tweening_frames_schedule / 2))",
+  "ctx": "[ht] Guided images schedules"
+ },
+ {
+  "i": 215,
+  "en": "number of the frames that we will blend between current imagined image and input frame image",
+  "ctx": "[ht] Guided images schedules"
+ },
+ {
+  "i": 216,
+  "en": "how close to get to the colors of the input frame image/ the amount each frame during a tweening step to use the new images colors",
+  "ctx": "[ht] Guided images schedules"
+ },
+ {
+  "i": 217,
+  "en": "how closely the image should conform to the prompt. Lower values produce more creative results. (recommended range 5-15)",
+  "ctx": "[ht] component-5958"
+ },
+ {
+  "i": 218,
+  "en": "defines the seed behavior that is used for animations",
+  "ctx": "[ht] component-5969"
+ },
+ {
+  "i": 219,
+  "en": "the seed value will increment by 1 for each subsequent frame of the animation",
+  "ctx": "[ht] component-5969"
+ },
+ {
+  "i": 220,
+  "en": "the seed will remain fixed across all frames of animation. **NOT RECOMMENDED.** Unless you know what you are doing, it will *deep fry* the pictures over time",
+  "ctx": "[ht] component-5969"
+ },
+ {
+  "i": 221,
+  "en": "specify your own seed schedule",
+  "ctx": "[ht] component-5969"
+ },
+ {
+  "i": 222,
+  "en": "controls for how many frames the same seed should stick before iterating to the next one",
+  "ctx": "[ht] component-5969"
+ },
+ {
+  "i": 223,
+  "en": "allows you to specify seeds at a specific schedule, if seed_behavior is set to schedule.",
+  "ctx": "[ht] component-5969"
+ },
+ {
+  "i": 224,
+  "en": "controls which sampler to use at a specific scheduled frame",
+  "ctx": "[ht] component-5999"
+ },
+ {
+  "i": 225,
+  "en": "Use the FPS from the Output tab",
+  "ctx": "[t] 1 · Music"
+ },
+ {
+  "i": 226,
+  "en": "2D operator that scales the canvas size, multiplicatively. [static = 1.0]",
+  "ctx": "[ht] 2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 227,
+  "en": "2D operator to rotate canvas clockwise/anticlockwise in degrees per frame",
+  "ctx": "[ht] 2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 228,
+  "en": "amount of graininess to add per frame for diffusion diversity",
+  "ctx": "[ht] Image change"
+ },
+ {
+  "i": 229,
+  "en": "Reset zoom to static.",
+  "ctx": "[t] component-6282"
+ },
+ {
+  "i": 230,
+  "en": "x center axis for 2D angle/zoom *only*",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 231,
+  "en": "y center axis for 2D angle/zoom *only*",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 232,
+  "en": "2D & 3D operator to move canvas left/right in pixels per frame",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 233,
+  "en": "2D & 3D operator to move canvas up/down in pixels per frame",
+  "ctx": "[ht] component-6282"
+ }
+]

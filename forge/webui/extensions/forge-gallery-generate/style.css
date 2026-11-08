@@ -1,0 +1,37 @@
+/* Only the two new gallery shortcuts are styled. */
+:is(#image_buttons_txt2img, #image_buttons_img2img) .fgg-button {
+    order: -1;
+    flex: 0 0 46px;
+    width: 46px;
+    min-width: 46px !important; /* Override Forge's .tool minimum based on font size. */
+    max-width: 46px;
+    height: 46px;
+    min-height: 46px;
+    align-self: center;
+    padding: 0;
+    background: #F46913;
+    color: #fff;
+    border: 1px solid #F46913;
+    border-radius: var(--button-small-radius, 8px);
+    font-family: inherit;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+:is(#image_buttons_txt2img, #image_buttons_img2img) .fgg-button:hover:not(:disabled) {
+    background: #F46913;
+    filter: brightness(1.08);
+}
+:is(#image_buttons_txt2img, #image_buttons_img2img) .fgg-button:focus-visible {
+    outline: 2px solid var(--body-text-color, currentColor);
+    outline-offset: 3px;
+}
+:is(#image_buttons_txt2img, #image_buttons_img2img) .fgg-button:disabled {
+    background: #6b7280;
+    border-color: #6b7280;
+    color: #fff;
+    opacity: 1;
+    cursor: default;
+    filter: none;
+}

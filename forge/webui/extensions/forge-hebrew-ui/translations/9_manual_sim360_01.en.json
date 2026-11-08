@@ -1,0 +1,27 @@
+[
+ {
+  "i": 0,
+  "en": "Simulation 360",
+  "ctx": "[t] The tab and the Settings section of the sd-forge-simulation-360 extension (sim360_script.py); the tab's own content draws both languages itself"
+ },
+ {
+  "i": 1,
+  "en": "Folder for projects (empty: simulation-360 inside the webui folder)",
+  "ctx": "Settings > Simulation 360 (sim360_script.py)"
+ },
+ {
+  "i": 2,
+  "en": "Folder for recorded videos and packed projects (empty: output\\simulation inside the webui folder)",
+  "ctx": "Settings > Simulation 360 (sim360_script.py)"
+ },
+ {
+  "i": 3,
+  "en": "Kokoro's folder, for its voices (empty: models\\sim360-kokoro)",
+  "ctx": "Settings > Simulation 360 (sim360_script.py)"
+ },
+ {
+  "i": 4,
+  "en": "FaceFusion's folder, for talking characters (empty: found by itself beside the Forge folder)",
+  "ctx": "Settings > Simulation 360 (sim360_script.py)"
+ }
+]

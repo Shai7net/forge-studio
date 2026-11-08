@@ -1,0 +1,2977 @@
+diff --git a/README.md b/README.md
+index 4342d60..c275590 100644
+--- a/README.md
++++ b/README.md
+@@ -42,6 +42,34 @@ This is an extension for the AUTOMATIC1111's (and Vladmandic´s) webui that allo
+  </details>
+  
+ **To learn more about the parameters, please refer to our [WIKI](https://github.com/v8hid/infinite-zoom-automatic1111-webui/wiki).**
++
++## Music, keyframes and image zooms
++
++<details>
++  <summary> Click to expand </summary>
++
++### Music & Keyframes tab
++* **Soundtrack**: upload any audio file ffmpeg can read (mp3, wav, flac, ogg, opus, m4a/aac, alac, wma, aiff, ac3, mka, ...) or a video with sound. The finished video contains the soundtrack as AAC. Longer music is cut at the end of the video with a fade-out, shorter music is padded with silence. The file is checked before rendering starts; if adding the sound ever fails, the silent video is still saved.
++* **Keyframes**: paste or upload keyframes from the [audio keyframe generator](https://www.chigozie.co.uk/audio-keyframe-generator/) (Disco, PyTTI or CSV output) or Deforum strings such as `0: (1.00), 12: (1.40)`. Sparse keys are interpolated. Only numbers are read; formulas inside keyframes are never executed.
++  * *Speed multiplier* (default): `1` zooms at the Zoom Speed, `2` twice as fast, `0` pauses.
++  * *Deforum zoom*: `1.00` stands still, `1.02` zooms 2% per frame.
++  * *Keyframes FPS* `0` detects the rate from PyTTI text or from the soundtrack length (the website default is 12); otherwise the video FPS is assumed.
++  * With keyframes the video lasts as long as the keyframes, the number of outpaint steps is calculated automatically ("Total video length" is ignored), frame dupes are not used, and prompt keys still count outpaint steps.
++  * **Analyze keyframes** shows the length, FPS and the zoom steps needed.
++  * **Generate keyframes from the soundtrack** computes the same keyframes as the website (loudness per frame, function `1 + x^4` by default) without leaving the webui.
++
++### IMG tab
++Zoom through your own images instead of prompts. Image 1 is the center of the zoom and the last image the outermost frame (sorted by file name, or reversed). Every image gets the previous frame shrunk into its center by the *zoom factor between images* (2 matches Midjourney Zoom Out 2x, 1.33 its 1.5x button).
++* *AI blend strength* `0`: no AI at all, for ready-made nested sequences.
++* Above `0`: Stable Diffusion repaints a ring across the edge of the pasted center (img2img with the Blend prompt; *Seam width* sets how far it reaches into the next image), bridging the previous image into the next one so unrelated images flow into each other. The previous image's own pixels are then restored with a feathered edge, so it stays sharp.
++
++The IMG zoom uses the Render settings of the Main tab, the Video tab, Music & Keyframes, Mask Blur and Post process. Click **Generate video from images** in the IMG tab. With keyframes, the zoom through the images always fills the whole video: the pace is scaled to the number of images, and the keyframes still decide where it speeds up or slows down. With the LCM sampler, add your LCM LoRA to the Blend prompt too (for example `<lora:LCM_SDXL15:1>`); without it the seams come out gray and smeared. The log panel warns when a render uses the LCM sampler without any LoRA tag.
++
++### Tests
++`tests/` contains unit tests for the keyframe, audio, frame and image helpers:
++`python -m unittest discover -s tests` (from the extension folder, with the webui's Python).
++
++</details>
+  ## Effective Friendly Tips for Optimal Outcomes
+  
+ <details>
+diff --git a/iz_helpers/audio.py b/iz_helpers/audio.py
+new file mode 100644
+index 0000000..2fb0c35
+--- /dev/null
++++ b/iz_helpers/audio.py
+@@ -0,0 +1,171 @@
++"""Soundtrack support: find ffmpeg, inspect and decode audio, mux the soundtrack into a video.
++
++No webui imports. ffmpeg decodes practically every audio format (and the audio track of
++video files), so the extension accepts anything ffmpeg can read and validates it by probing.
++"""
++import os
++import re
++import shutil
++import subprocess
++
++import numpy as np
++
++from .keyframes import GENERATOR_DEFAULT_FUNCTION, generate_keyframes
++
++SOUNDTRACK_FILE_TYPES = [
++    "audio", "video",
++    ".mp3", ".wav", ".flac", ".ogg", ".oga", ".opus", ".m4a", ".aac", ".wma", ".aiff", ".aif",
++    ".alac", ".ape", ".wv", ".ac3", ".amr", ".mka", ".webm", ".mp4", ".mov", ".mkv",
++]
++DECODE_SAMPLE_RATE = 48000
++AAC_BITRATE = "192k"
++
++_DURATION = re.compile(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)")
++_TIME = re.compile(r"time=\s*(\d+):(\d+):(\d+(?:\.\d+)?)")
++_AUDIO_STREAM = re.compile(
++    r"Stream #\d+:\d+(?:\[[^\]]*\])?(?:\([^)]*\))?: Audio: ([^,\n]+)(?:,\s*(\d+) Hz)?(?:,\s*([^,\n]+))?"
++)
++
++
++class AudioError(RuntimeError):
++    pass
++
++
++def ffmpeg_exe():
++    try:
++        import imageio_ffmpeg
++
++        return imageio_ffmpeg.get_ffmpeg_exe()
++    except Exception:
++        path = shutil.which("ffmpeg")
++        if path:
++            return path
++    raise AudioError("ffmpeg was not found. Install imageio-ffmpeg or put ffmpeg on PATH.")
++
++
++def _run(args, timeout=None):
++    kwargs = {"creationflags": 0x08000000} if os.name == "nt" else {}  # CREATE_NO_WINDOW
++    return subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout, **kwargs)
++
++
++def _seconds(match):
++    hours, minutes, seconds = match.groups()
++    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
++
++
++def clock(seconds):
++    minutes, rest = divmod(max(float(seconds), 0.0), 60)
++    return f"{int(minutes)}:{rest:04.1f}"
++
++
++class AudioInfo:
++    def __init__(self, path, duration, codec, sample_rate, layout):
++        self.path = path
++        self.duration = duration
++        self.codec = codec
++        self.sample_rate = sample_rate
++        self.layout = layout
++
++    def describe(self):
++        details = [self.codec]
++        if self.sample_rate:
++            details.append(f"{self.sample_rate / 1000:g} kHz")
++        if self.layout:
++            details.append(self.layout)
++        return f"{os.path.basename(self.path)}: {clock(self.duration)} ({', '.join(details)})"
++
++
++def probe_audio(path):
++    if not path or not os.path.isfile(path):
++        raise AudioError("The soundtrack file is missing.")
++    name = os.path.basename(path)
++    exe = ffmpeg_exe()
++    text = _run([exe, "-hide_banner", "-i", path], timeout=120).stderr.decode("utf-8", errors="replace")
++    stream = _AUDIO_STREAM.search(text)
++    if not stream:
++        raise AudioError(f"{name} has no audio track that ffmpeg can read.")
++
++    duration_match = _DURATION.search(text)
++    duration = _seconds(duration_match) if duration_match else 0.0
++    if duration <= 0:
++        # no usable header duration (raw streams): decode once and read the final timestamp
++        log = _run([exe, "-hide_banner", "-i", path, "-map", "0:a:0", "-f", "null", "-"])
++        times = _TIME.findall(log.stderr.decode("utf-8", errors="replace"))
++        if times:
++            hours, minutes, seconds = times[-1]
++            duration = int(hours) * 3600 + int(minutes) * 60 + float(seconds)
++    if duration <= 0:
++        raise AudioError(f"Could not determine how long {name} is.")
++
++    codec = stream.group(1).split()[0]
++    sample_rate = int(stream.group(2)) if stream.group(2) else None
++    layout = stream.group(3).strip() if stream.group(3) else None
++    return AudioInfo(path, duration, codec, sample_rate, layout)
++
++
++def decode_audio(path, sample_rate=DECODE_SAMPLE_RATE):
++    """First audio track as (samples, 2) float32. Mono is duplicated, surround is down-mixed."""
++    probe_audio(path)
++    result = _run([
++        ffmpeg_exe(), "-hide_banner", "-v", "error", "-i", path,
++        "-map", "0:a:0", "-vn", "-ac", "2", "-ar", str(sample_rate),
++        "-f", "f32le", "-acodec", "pcm_f32le", "-",
++    ])
++    if result.returncode != 0:
++        raise AudioError(f"ffmpeg could not decode {os.path.basename(path)}: {_tail(result.stderr)}")
++    usable = len(result.stdout) // 8 * 8
++    pcm = np.frombuffer(result.stdout[:usable], dtype=np.float32).reshape(-1, 2)
++    if pcm.shape[0] == 0:
++        raise AudioError(f"{os.path.basename(path)} decoded to no samples.")
++    return pcm
++
++
++def keyframes_from_audio(path, fps, expression=GENERATOR_DEFAULT_FUNCTION):
++    """Disco keyframes from a soundtrack, computed like the web generator. Returns (text, values, seconds)."""
++    pcm = decode_audio(path)
++    text, values = generate_keyframes(pcm, DECODE_SAMPLE_RATE, fps, expression)
++    return text, values, pcm.shape[0] / DECODE_SAMPLE_RATE
++
++
++def _tail(stderr, lines=6):
++    text = stderr.decode("utf-8", errors="replace").strip().splitlines()
++    return " | ".join(text[-lines:]) if text else "no details"
++
++
++def mux_soundtrack(video_path, audio_path, output_path, video_duration, fade_out=1.0, audio_duration=None):
++    """Writes video_path's video with the soundtrack cut (with fade-out) or padded to video_duration."""
++    if audio_duration is None:
++        audio_duration = probe_audio(audio_path).duration
++    filters = ["apad"]
++    if fade_out and fade_out > 0 and audio_duration > video_duration + 0.05:
++        fade = min(float(fade_out), video_duration)
++        filters.append(f"afade=t=out:st={max(video_duration - fade, 0.0):.3f}:d={fade:.3f}")
++    result = _run([
++        ffmpeg_exe(), "-hide_banner", "-v", "error", "-y",
++        "-i", video_path, "-i", audio_path,
++        "-map", "0:v:0", "-map", "1:a:0",
++        "-c:v", "copy",
++        "-af", ",".join(filters),
++        "-c:a", "aac", "-b:a", AAC_BITRATE, "-ar", "48000", "-ac", "2",
++        "-t", f"{video_duration:.6f}",
++        "-movflags", "+faststart",
++        output_path,
++    ])
++    if result.returncode != 0 or not os.path.isfile(output_path) or os.path.getsize(output_path) == 0:
++        raise AudioError(f"ffmpeg could not add the soundtrack: {_tail(result.stderr)}")
++
++
++def attach_soundtrack(silent_path, final_path, audio_path, video_duration, fade_out, audio_duration=None):
++    """Muxes the soundtrack into final_path. On failure the silent render is kept as final_path.
++
++    Returns (added, message).
++    """
++    try:
++        mux_soundtrack(silent_path, audio_path, final_path, video_duration, fade_out, audio_duration)
++    except Exception as err:
++        if os.path.exists(final_path):
++            os.remove(final_path)
++        os.replace(silent_path, final_path)
++        return False, f"The video was saved without sound: {err}"
++    os.remove(silent_path)
++    return True, f"Soundtrack added ({os.path.basename(audio_path)})."
+diff --git a/iz_helpers/image_sequence.py b/iz_helpers/image_sequence.py
+new file mode 100644
+index 0000000..9229a12
+--- /dev/null
++++ b/iz_helpers/image_sequence.py
+@@ -0,0 +1,123 @@
++"""Uploaded images as the layers of a zoom. Pure (PIL only).
++
++Image 1 is the innermost layer (the start of a zoom-out), the last image the outermost.
++Each layer is the next image with the previous layer shrunk into its center, so a ready-made
++nested sequence (Midjourney Zoom Out, ZoomVideoComposer) zooms without any AI, and unrelated
++images can have the seam around the pasted center repainted.
++"""
++import math
++import os
++import re
++
++import numpy as np
++from PIL import Image, ImageDraw, ImageOps
++
++IMAGE_FILE_TYPES = ["image", ".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"]
++SIZE_STEP = 16
++MAX_SIZE = 2048
++
++
++def natural_sort_key(path):
++    name = os.path.basename(path).lower()
++    return [int(part) if part.isdigit() else part for part in re.split(r"(\d+)", name)]
++
++
++def order_images(paths, sort_by_name=True, reverse=False):
++    paths = list(paths)
++    if sort_by_name:
++        paths.sort(key=natural_sort_key)
++    if reverse:
++        paths.reverse()
++    return paths
++
++
++def load_image(path):
++    with Image.open(path) as image:
++        image.load()
++        image = ImageOps.exif_transpose(image)
++        if image.mode in ("RGBA", "LA", "P"):
++            image = image.convert("RGBA")
++            background = Image.new("RGBA", image.size, (0, 0, 0, 255))
++            background.alpha_composite(image)
++            image = background
++        return image.convert("RGB")
++
++
++def fit_image(image, width, height):
++    """Center-crop to the output aspect ratio, then resize."""
++    return ImageOps.fit(image, (width, height), method=Image.LANCZOS, centering=(0.5, 0.5))
++
++
++def output_size_for(image_size):
++    """Output Width/Height slider values closest to an image size."""
++    return tuple(min(MAX_SIZE, max(SIZE_STEP, int(round(v / SIZE_STEP)) * SIZE_STEP)) for v in image_size)
++
++
++def zoom_mask_size(width, height, zoom_factor):
++    """Border sizes that make the inner layer 1/zoom_factor of the frame (2.0 gives the classic width/4)."""
++    return math.trunc(width * (1 - 1 / zoom_factor) / 2), math.trunc(height * (1 - 1 / zoom_factor) / 2)
++
++
++def compose_layer(outer_image, inner_frame, mask_width, mask_height):
++    width, height = outer_image.size
++    composed = outer_image.copy()
++    inner = inner_frame.resize((width - 2 * mask_width, height - 2 * mask_height), resample=Image.LANCZOS)
++    composed.paste(inner, (mask_width, mask_height))
++    return composed
++
++
++def seam_band_size(mask_width, mask_height, seam_fraction):
++    """Width in pixels of the band repainted outside the pasted center."""
++    return max(2, int(round(min(mask_width, mask_height) * seam_fraction)))
++
++
++def seam_mask(width, height, mask_width, mask_height, band, overlap):
++    """White ring from `band` px outside the edge of the pasted center to `overlap` px inside it."""
++    mask = Image.new("L", (width, height), 0)
++    draw = ImageDraw.Draw(mask)
++    draw.rectangle(
++        (
++            max(mask_width - band, 0),
++            max(mask_height - band, 0),
++            min(width - mask_width + band, width) - 1,
++            min(height - mask_height + band, height) - 1,
++        ),
++        fill=255,
++    )
++    inner = (
++        mask_width + overlap,
++        mask_height + overlap,
++        width - mask_width - overlap - 1,
++        height - mask_height - overlap - 1,
++    )
++    if inner[2] > inner[0] and inner[3] > inner[1]:
++        draw.rectangle(inner, fill=0)
++    return mask.convert("RGB")
++
++
++def feathered_paste(base, inner_frame, mask_width, mask_height, feather):
++    """inner_frame shrunk into the center of base, fading in over `feather` px from its edge.
++
++    After img2img this gives the previous frame its sharp pixels back while its edge keeps
++    the repainted continuation, so the seam stays smooth.
++    """
++    width, height = base.size
++    inner_width, inner_height = width - 2 * mask_width, height - 2 * mask_height
++    inner = inner_frame.resize((inner_width, inner_height), resample=Image.LANCZOS)
++    alpha = None
++    if feather > 0:
++        x = np.minimum(np.arange(inner_width), np.arange(inner_width)[::-1])
++        y = np.minimum(np.arange(inner_height), np.arange(inner_height)[::-1])
++        distance = np.minimum.outer(y, x).astype(np.float32)
++        alpha = Image.fromarray((np.clip(distance / feather, 0, 1) * 255).astype(np.uint8), "L")
++    result = base.copy()
++    result.paste(inner, (mask_width, mask_height), alpha)
++    return result
++
++
++def gallery_items(paths):
++    items = []
++    for index, path in enumerate(paths, start=1):
++        role = " (center)" if index == 1 else " (outermost)" if index == len(paths) else ""
++        items.append((path, f"{index}{role}: {os.path.basename(path)}"))
++    return items
+diff --git a/iz_helpers/keyframes.py b/iz_helpers/keyframes.py
+new file mode 100644
+index 0000000..756ad5c
+--- /dev/null
++++ b/iz_helpers/keyframes.py
+@@ -0,0 +1,455 @@
++"""Keyframe schedules that set the pace of the zoom.
++
++Pure module (numpy + stdlib only), so it can be tested without the webui.
++
++Accepted keyframe text, as produced by the audio keyframe generator
++(https://www.chigozie.co.uk/audio-keyframe-generator/) and by Deforum:
++  * Disco / Deforum: "0: (1.00), 1: (1.53), 12: (1.20)" - sparse keys are interpolated
++  * PyTTI: the generator's lambda string - only its fps and dictionary are read, it is never executed
++  * CSV: one value per line, or "frame,value" rows with an optional header
++  * JSON: [1.0, 1.2, ...], [[0, 1.0], ...] or {"0": 1.0, ...}
++Values must be plain numbers: formulas inside keyframes are rejected, never evaluated.
++"""
++import ast
++import json
++import math
++import re
++from decimal import Decimal, ROUND_HALF_UP
++
++import numpy as np
++
++MODE_SPEED = "Speed multiplier"
++MODE_DEFORUM = "Deforum zoom"
++KEYFRAME_MODES = [MODE_SPEED, MODE_DEFORUM]
++
++MAX_KEYFRAMES = 250_000
++COMMON_FPS = (8, 10, 12, 15, 24, 25, 30, 48, 50, 60)
++GENERATOR_DEFAULT_FUNCTION = "1 + x^4"
++
++_NUMBER = r"[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?"
++_NUMBER_ONLY = re.compile(r"^" + _NUMBER + r"$")
++_DISCO_PAIR = re.compile(
++    r"[\"']?(\d+)[\"']?\s*:\s*(?:\(\s*(" + _NUMBER + r")\s*\)|(" + _NUMBER + r"))"
++)
++# the generator's PyTTI output ends with: ..., <fps>, {0: (1.00), 1: (1.53)})
++_PYTTI_TAIL = re.compile(r",\s*(" + _NUMBER + r")\s*,\s*\{([^{}]*)\}\s*\)\s*$", re.S)
++
++
++class KeyframeError(ValueError):
++    pass
++
++
++class Keyframes:
++    """Sorted (frame, value) keyframes and the format they were read from."""
++
++    def __init__(self, points, fmt, fps=None):
++        self.points = points
++        self.format = fmt
++        self.fps = fps
++
++    @property
++    def frame_count(self):
++        return self.points[-1][0] + 1
++
++    def dense(self):
++        """One value per keyframe frame. Values between keys are linear, the first value holds before it."""
++        frames = np.array([p[0] for p in self.points], dtype=np.float64)
++        values = np.array([p[1] for p in self.points], dtype=np.float64)
++        return np.interp(np.arange(self.frame_count, dtype=np.float64), frames, values)
++
++
++def parse_keyframes(text):
++    if text is None or not str(text).strip():
++        raise KeyframeError("The keyframes are empty.")
++    text = str(text).lstrip("﻿").strip()
++
++    if "lambda" in text:
++        tail = _PYTTI_TAIL.search(text)
++        if tail:
++            return _finish(_disco_points(tail.group(2)), "PyTTI", fps=float(tail.group(1)))
++
++    if text[0] in "[{":
++        try:
++            data = json.loads(text)
++        except ValueError:
++            data = None
++        if data is not None:
++            return _finish(_json_points(data), "JSON")
++
++    if ":" in text:
++        return _finish(_disco_points(text), "Disco/Deforum")
++    return _finish(_csv_points(text), "CSV")
++
++
++def _disco_points(text):
++    points = []
++    for match in _DISCO_PAIR.finditer(text):
++        value = match.group(2) if match.group(2) is not None else match.group(3)
++        points.append((int(match.group(1)), float(value)))
++    leftover = re.sub(r"[\s,;{}]", "", _DISCO_PAIR.sub("", text))
++    if leftover:
++        raise KeyframeError(
++            "Keyframes must be plain numbers such as '0: (1.00), 1: (1.25)'. "
++            f"Could not read: {leftover[:40]!r} (formulas are not evaluated)."
++        )
++    return points
++
++
++def _frame_number(value):
++    number = float(value)
++    if not number.is_integer():
++        raise KeyframeError(f"Frame numbers must be whole numbers, got {value!r}.")
++    return int(number)
++
++
++def _csv_points(text):
++    rows = []
++    for line in text.splitlines():
++        fields = [f.strip() for f in re.split(r"[,;\t]", line) if f.strip()]
++        if fields:
++            rows.append(fields)
++    if rows and not all(_NUMBER_ONLY.match(f) for f in rows[0]):
++        rows = rows[1:]  # header row, e.g. "frame,value"
++
++    points = []
++    for index, fields in enumerate(rows):
++        if not all(_NUMBER_ONLY.match(f) for f in fields):
++            raise KeyframeError(f"CSV row {index + 1} is not numeric: {', '.join(fields)[:40]!r}.")
++        if len(fields) == 1:
++            points.append((index, float(fields[0])))
++        elif len(fields) == 2:
++            points.append((_frame_number(fields[0]), float(fields[1])))
++        else:
++            raise KeyframeError("CSV keyframes need one column (value) or two columns (frame,value).")
++    return points
++
++
++def _json_points(data):
++    try:
++        if isinstance(data, dict):
++            return [(_frame_number(k), float(v)) for k, v in data.items()]
++        if isinstance(data, list):
++            points = []
++            for index, item in enumerate(data):
++                if isinstance(item, (int, float)) and not isinstance(item, bool):
++                    points.append((index, float(item)))
++                elif isinstance(item, (list, tuple)) and len(item) == 2:
++                    points.append((_frame_number(item[0]), float(item[1])))
++                elif isinstance(item, dict) and "frame" in item and "value" in item:
++                    points.append((_frame_number(item["frame"]), float(item["value"])))
++                else:
++                    raise KeyframeError(f"JSON keyframe {index} is not a number or a [frame, value] pair.")
++            return points
++    except (TypeError, ValueError) as err:
++        if isinstance(err, KeyframeError):
++            raise
++        raise KeyframeError("JSON keyframes must contain numbers only.") from None
++    raise KeyframeError("JSON keyframes must be a list or an object.")
++
++
++def _finish(points, fmt, fps=None):
++    if not points:
++        raise KeyframeError("No keyframes found. Paste the text from the keyframe generator (Disco, PyTTI or CSV).")
++    if len(points) > MAX_KEYFRAMES:
++        raise KeyframeError(f"Too many keyframes ({len(points):,}); the limit is {MAX_KEYFRAMES:,}.")
++    seen = set()
++    for frame, value in points:
++        if frame < 0:
++            raise KeyframeError(f"Keyframe {frame}: frame numbers cannot be negative.")
++        if not math.isfinite(value):
++            raise KeyframeError(f"Keyframe {frame}: the value is not a finite number.")
++        if frame in seen:
++            raise KeyframeError(f"Keyframe {frame} appears twice.")
++        seen.add(frame)
++    points.sort()
++    if points[-1][0] >= MAX_KEYFRAMES:
++        raise KeyframeError(f"Keyframes go past frame {MAX_KEYFRAMES:,}.")
++    if fps is not None and not 0 < fps <= 1000:
++        raise KeyframeError(f"Invalid fps {fps} inside the PyTTI keyframes.")
++    return Keyframes(points, fmt, fps)
++
++
++def resolve_fps(keyframes, requested_fps, video_fps, audio_duration=None):
++    """Returns (fps, how it was chosen, warning or None)."""
++    if requested_fps and requested_fps > 0:
++        return float(requested_fps), "set manually", None
++    if keyframes.fps:
++        return float(keyframes.fps), "read from the PyTTI keyframes", None
++    if audio_duration and audio_duration > 0:
++        measured = keyframes.frame_count / audio_duration
++        nearest = min(COMMON_FPS, key=lambda f: abs(f - measured))
++        if abs(nearest - measured) <= 0.02 * nearest:
++            return float(nearest), f"detected from the soundtrack length ({measured:.2f} fps)", None
++        return measured, "measured from the soundtrack length", (
++            f"{keyframes.frame_count:,} keyframes over {audio_duration:.1f}s of music is {measured:.2f} fps, "
++            "not a standard rate. Check the soundtrack is the one the keyframes were made from."
++        )
++    return float(video_fps), "assumed equal to the video FPS", (
++        "Keyframes FPS could not be detected, so the video FPS is assumed. If the keyframes were generated "
++        "at another rate (the website default is 12), set Keyframes FPS."
++    )
++
++
++def zoom_positions(values, keyframe_fps, video_fps, zoom_speed, mode=MODE_SPEED, zoom_factor=2.0, frame_count=None):
++    """Zoom position for every output frame of a zoom-out, in outpaint steps (0 = innermost image).
++
++    Each keyframe holds a constant zoom rate for 1/keyframe_fps seconds; positions are the exact
++    integral of that rate at each video frame, so the pace is independent of the two frame rates.
++    """
++    values = np.asarray(values, dtype=np.float64)
++    if values.size == 0:
++        raise KeyframeError("There are no keyframe values.")
++    if keyframe_fps <= 0 or video_fps <= 0:
++        raise KeyframeError("FPS must be positive.")
++    if mode == MODE_DEFORUM:
++        if zoom_factor <= 1:
++            raise KeyframeError("The zoom factor must be above 1.")
++        rates = np.log(np.clip(values, 1e-3, None)) / math.log(zoom_factor)
++    else:
++        if zoom_speed <= 0:
++            raise KeyframeError("Zoom Speed must be positive.")
++        rates = np.clip(values, 0.0, None) / (keyframe_fps * zoom_speed)
++
++    starts = np.concatenate(([0.0], np.cumsum(rates)[:-1]))
++    if frame_count is None:
++        frame_count = max(1, int(round(values.size / keyframe_fps * video_fps)))
++    u = np.arange(frame_count, dtype=np.float64) * (keyframe_fps / video_fps)
++    k = np.minimum(np.floor(u).astype(np.int64), values.size - 1)
++    return starts[k] + (u - k) * rates[k]
++
++
++def playback_positions(forward_positions, zoom_in, max_steps=None):
++    """Positions in playback order and the number of outpaint steps they need."""
++    positions = np.maximum(np.asarray(forward_positions, dtype=np.float64), 0.0)
++    if zoom_in:
++        positions = np.maximum(positions[-1] - positions, 0.0)
++    needed = max(1, int(math.ceil(float(positions.max()) - 1e-6)))
++    if max_steps is not None:
++        positions = np.minimum(positions, float(max_steps))
++    return positions, needed
++
++
++class KeyframePlan:
++    def __init__(self, keyframes, fps, fps_note, warnings, values, positions, steps_needed, video_fps, mode,
++                 scale=1.0, notes=None):
++        self.keyframes = keyframes
++        self.fps = fps
++        self.fps_note = fps_note
++        self.warnings = warnings
++        self.values = values
++        self.positions = positions
++        self.steps_needed = steps_needed
++        self.video_fps = video_fps
++        self.mode = mode
++        self.scale = scale
++        self.notes = notes or []
++
++    @property
++    def frame_count(self):
++        return len(self.positions)
++
++    @property
++    def duration(self):
++        return self.frame_count / self.video_fps
++
++
++def build_plan(text, requested_fps, mode, video_fps, zoom_speed, zoom_in,
++               zoom_factor=2.0, audio_duration=None, max_steps=None):
++    """Zoom positions for every frame. With max_steps (a fixed number of images) the keyframe pace is
++    scaled so the zoom uses exactly those steps over the whole video; the keyframes still decide where
++    it speeds up and slows down, instead of the zoom running out early and holding on one image."""
++    keyframes = parse_keyframes(text)
++    fps, fps_note, warning = resolve_fps(keyframes, requested_fps, video_fps, audio_duration)
++    warnings = [warning] if warning else []
++    notes = []
++    values = keyframes.dense()
++    forward = zoom_positions(values, fps, video_fps, zoom_speed, mode, zoom_factor)
++    reach = float(np.max(forward))
++    scale = 1.0
++    if reach < 1e-6:
++        warnings.append("These keyframes never move the zoom (all speeds are 0 or below).")
++    elif max_steps is not None:
++        scale = max_steps / reach
++        forward = forward * scale
++        notes.append(
++            f"Keyframe pace scaled x{scale:.2f} so the zoom through {max_steps + 1} images fills the whole video."
++        )
++    positions, needed = playback_positions(forward, zoom_in, max_steps)
++    return KeyframePlan(keyframes, fps, fps_note, warnings, values, positions, needed, video_fps, mode,
++                        scale, notes)
++
++
++def _clock(seconds):
++    minutes, rest = divmod(seconds, 60)
++    return f"{int(minutes)}:{rest:04.1f}"
++
++
++def describe_plan(plan, available_steps=None):
++    lines = [
++        f"**Format:** {plan.keyframes.format}, {plan.keyframes.frame_count:,} keyframe frames "
++        f"({len(plan.keyframes.points):,} given)",
++        f"**Keyframes FPS:** {plan.fps:g} ({plan.fps_note})",
++        f"**Length:** {_clock(plan.duration)} = {plan.frame_count:,} video frames at {plan.video_fps:g} fps",
++        f"**Values:** min {plan.values.min():.2f}, mean {plan.values.mean():.2f}, max {plan.values.max():.2f} "
++        f"({plan.mode})",
++    ]
++    if available_steps is None:
++        lines.append(f"**Outpaint steps needed:** {plan.steps_needed}")
++    else:
++        lines.append(
++            f"**Zoom:** through {available_steps + 1} images over the whole video "
++            f"(keyframe pace scaled x{plan.scale:.2f})"
++        )
++    for warning in plan.warnings:
++        lines.append(f"**Warning:** {warning}")
++    return "\n\n".join(lines)
++
++
++# --- keyframe generator (port of the website's filterData) -------------------------------------
++
++_FUNCTIONS = {
++    "sin": (np.sin, 1), "cos": (np.cos, 1), "tan": (np.tan, 1),
++    "asin": (np.arcsin, 1), "acos": (np.arccos, 1), "atan": (np.arctan, 1),
++    "sqrt": (np.sqrt, 1), "abs": (np.abs, 1), "exp": (np.exp, 1),
++    "log10": (np.log10, 1), "log2": (np.log2, 1),
++    "floor": (np.floor, 1), "ceil": (np.ceil, 1), "round": (np.round, 1),
++    "min": (np.minimum, 2), "max": (np.maximum, 2), "pow": (np.power, 2),
++}
++_CONSTANTS = {"pi": math.pi, "e": math.e}
++_VARIABLES = ("x", "y", "t")
++_BINARY = {ast.Add: np.add, ast.Sub: np.subtract, ast.Mult: np.multiply,
++           ast.Div: np.divide, ast.Mod: np.mod, ast.Pow: np.power}
++
++
++def _log(value, base=None):
++    return np.log(value) if base is None else np.log(value) / np.log(base)
++
++
++def _check_node(node):
++    if isinstance(node, ast.Constant):
++        if isinstance(node.value, bool) or not isinstance(node.value, (int, float)):
++            raise KeyframeError(f"Only numbers are allowed, not {node.value!r}.")
++    elif isinstance(node, ast.Name):
++        if node.id not in _VARIABLES and node.id not in _CONSTANTS:
++            raise KeyframeError(f"Unknown name {node.id!r}. Use x (loudness 0..1), y (frame), pi or e.")
++    elif isinstance(node, ast.UnaryOp):
++        if not isinstance(node.op, (ast.UAdd, ast.USub)):
++            raise KeyframeError("Only + and - are allowed before a value.")
++        _check_node(node.operand)
++    elif isinstance(node, ast.BinOp):
++        if type(node.op) not in _BINARY:
++            raise KeyframeError("Allowed operators: + - * / % ^")
++        _check_node(node.left)
++        _check_node(node.right)
++    elif isinstance(node, ast.Call):
++        name = node.func.id if isinstance(node.func, ast.Name) else None
++        if node.keywords or name is None or (name not in _FUNCTIONS and name != "log"):
++            raise KeyframeError(f"Function not allowed. Available: {', '.join(sorted(list(_FUNCTIONS) + ['log']))}.")
++        arity = (1, 2) if name == "log" else (_FUNCTIONS[name][1],)
++        if len(node.args) not in arity:
++            raise KeyframeError(f"{name}() takes {' or '.join(map(str, arity))} argument(s).")
++        for arg in node.args:
++            _check_node(arg)
++    else:
++        raise KeyframeError(f"{type(node).__name__} is not allowed in the function.")
++
++
++def _evaluate_node(node, env):
++    if isinstance(node, ast.Constant):
++        return float(node.value)
++    if isinstance(node, ast.Name):
++        return env[node.id] if node.id in env else _CONSTANTS[node.id]
++    if isinstance(node, ast.UnaryOp):
++        value = _evaluate_node(node.operand, env)
++        return -value if isinstance(node.op, ast.USub) else value
++    if isinstance(node, ast.BinOp):
++        return _BINARY[type(node.op)](_evaluate_node(node.left, env), _evaluate_node(node.right, env))
++    args = [_evaluate_node(arg, env) for arg in node.args]
++    if node.func.id == "log":
++        return _log(*args)
++    return _FUNCTIONS[node.func.id][0](*args)
++
++
++def compile_function(expression):
++    """Compiles a generator function such as '1 + x^4' into f(x, y) over numpy arrays.
++
++    '^' is a power, as on the website. Nothing is passed to eval(): the expression is
++    parsed and every node is checked against a small whitelist.
++    """
++    source = (expression or "").strip()
++    if not source:
++        raise KeyframeError("The function is empty.")
++    if len(source) > 500:
++        raise KeyframeError("The function is too long.")
++    try:
++        tree = ast.parse(source.replace("^", "**"), mode="eval")
++    except SyntaxError as err:
++        raise KeyframeError(f"Invalid function {source!r}: {err.msg}.") from None
++    _check_node(tree.body)
++
++    def evaluate(x, y):
++        x = np.asarray(x, dtype=np.float64)
++        y = np.asarray(y, dtype=np.float64)
++        with np.errstate(all="ignore"):
++            result = _evaluate_node(tree.body, {"x": x, "y": y, "t": y})
++        return np.broadcast_to(np.asarray(result, dtype=np.float64), x.shape).copy()
++
++    return evaluate
++
++
++def generator_loudness(pcm, sample_rate, fps):
++    """Per-frame loudness computed exactly like the website's filterData (before normalising).
++
++    pcm is (samples, channels) float32. Channels are |L| + |R| ... divided by the channel count in
++    float32, frames are blocks of floor(len / (duration * fps)) samples whose last sample is skipped,
++    and each frame is the mean of its block. Mono files use the absolute value (the website forgets it).
++    """
++    pcm = np.asarray(pcm, dtype=np.float32)
++    if pcm.ndim == 1:
++        pcm = pcm[:, None]
++    length, channels = pcm.shape
++    if length == 0:
++        raise KeyframeError("The soundtrack contains no audio samples.")
++    if fps <= 0:
++        raise KeyframeError("FPS must be positive.")
++
++    raw = np.abs(pcm[:, 0])
++    for channel in range(1, channels):
++        raw = np.abs(raw) + np.abs(pcm[:, channel])
++    if channels > 1:
++        raw = raw / np.float32(channels)
++
++    samples = (length / sample_rate) * fps
++    count = int(math.ceil(samples))
++    block = int(math.floor(length / samples))
++    loudness = np.empty(count, dtype=np.float64)
++    for i in range(count):
++        start = i * block
++        end = min((i + 1) * block - 1, length)
++        if end <= start:
++            loudness[i] = math.nan
++        else:
++            loudness[i] = np.cumsum(raw[start:end], dtype=np.float64)[-1] / (end - start)
++    return loudness
++
++
++def format_value(value):
++    """JavaScript toFixed(2): ties round away from zero on the exact binary value."""
++    return str(Decimal(float(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
++
++
++def format_disco(values):
++    return ", ".join(f"{i}: ({format_value(v)})" for i, v in enumerate(values))
++
++
++def generate_keyframes(pcm, sample_rate, fps, expression=GENERATOR_DEFAULT_FUNCTION):
++    """Returns (Disco keyframe text, values) for decoded audio, like the website does."""
++    function = compile_function(expression)
++    loudness = np.nan_to_num(generator_loudness(pcm, sample_rate, fps), nan=0.0)
++    peak = float(loudness.max()) if loudness.size else 0.0
++    x = loudness / peak if peak > 0 else np.zeros_like(loudness)
++    values = function(x, np.arange(x.size, dtype=np.float64))
++    finite = np.isfinite(values)
++    if not finite.all():
++        raise KeyframeError(f"The function gives an invalid number at frame {int(np.argmin(finite))}.")
++    return format_disco(values), values
+diff --git a/iz_helpers/render_checks.py b/iz_helpers/render_checks.py
+new file mode 100644
+index 0000000..c907ea3
+--- /dev/null
++++ b/iz_helpers/render_checks.py
+@@ -0,0 +1,23 @@
++"""Settings that do not fail but give poor results. No webui imports."""
++import re
++
++_LORA_TAG = re.compile(r"<lora:[^>]+>", re.IGNORECASE)
++
++
++def lcm_without_lora(sampler, *prompts):
++    """True when an LCM sampler is selected and none of the prompts loads any LoRA.
++
++    LCM sampling needs an LCM checkpoint or LoRA; without one, the output turns gray and
++    smeared. Any LoRA tag counts, so distilled LoRAs with other names do not trigger it.
++    """
++    if not sampler or "lcm" not in str(sampler).lower():
++        return False
++    return not any(_LORA_TAG.search(prompt or "") for prompt in prompts)
++
++
++def lcm_warning(where):
++    return (
++        f"Warning: the LCM sampler is selected but the {where} has no <lora:...> tag. Unless the "
++        "checkpoint is an LCM model, the result comes out gray and smeared; add your LCM LoRA there, "
++        "e.g. <lora:LCM_SDXL15:1>."
++    )
+diff --git a/iz_helpers/run.py b/iz_helpers/run.py
+index d224af5..e395dbd 100644
+--- a/iz_helpers/run.py
++++ b/iz_helpers/run.py
+@@ -12,7 +12,22 @@ from .helpers import (
+ )
+ from .sd_helpers import renderImg2Img, renderTxt2Img
+ from .image import shrink_and_paste_on_blank
+-from .video import write_video
++from .video import ZoomVideoWriter, unique_video_path
++from .zoom_frames import classic_requests, requests_from_positions, render_request
++from .keyframes import MODE_SPEED, build_plan
++from .audio import attach_soundtrack, clock, probe_audio
++from .image_sequence import (
++    compose_layer,
++    feathered_paste,
++    fit_image,
++    load_image,
++    order_images,
++    seam_band_size,
++    seam_mask,
++    zoom_mask_size,
++)
++from .uploads import upload_path, upload_paths
++from .render_checks import lcm_warning, lcm_without_lora
+ 
+ 
+ def crop_fethear_ellipse(image, feather_margin=30, width_offset=0, height_offset=0):
+@@ -67,6 +82,25 @@ def crop_fethear_ellipse(image, feather_margin=30, width_offset=0, height_offset
+     return res
+ 
+ 
++def correct_frame(main_frames, i, inner_width_offset, inner_height_offset, inpainting_mask_blur, out_config):
++    """Replaces main frame i by the inner area of frame i + 1 with frame i feathered on top,
++    so consecutive main frames agree where they overlap."""
++    corrected_frame = crop_inner_image(
++        main_frames[i + 1], inner_width_offset, inner_height_offset
++    )
++
++    enhanced_img = crop_fethear_ellipse(
++        main_frames[i],
++        30,
++        inpainting_mask_blur / 3 // 2,
++        inpainting_mask_blur / 3 // 2,
++    )
++    save2Collect(main_frames[i], out_config, f"main_frame_{i}")
++    save2Collect(enhanced_img, out_config, f"main_frame_enhanced_{i}")
++    corrected_frame.paste(enhanced_img, mask=enhanced_img)
++    main_frames[i] = corrected_frame
++
++
+ def outpaint_steps(
+     width,
+     height,
+@@ -146,25 +180,87 @@ def outpaint_steps(
+             # TODO: seed behavior
+ 
+         if frame_correction and inpainting_mask_blur > 0:
+-            corrected_frame = crop_inner_image(
+-                main_frames[i + 1], mask_width, mask_height
+-            )
+-
+-            enhanced_img = crop_fethear_ellipse(
+-                main_frames[i],
+-                30,
+-                inpainting_mask_blur / 3 // 2,
+-                inpainting_mask_blur / 3 // 2,
+-            )
+-            save2Collect(main_frames[i], out_config, f"main_frame_{i}")
+-            save2Collect(enhanced_img, out_config, f"main_frame_enhanced_{i}")
+-            corrected_frame.paste(enhanced_img, mask=enhanced_img)
+-            main_frames[i] = corrected_frame
++            correct_frame(main_frames, i, mask_width, mask_height, inpainting_mask_blur, out_config)
+         # else :TEST
+         # current_image.paste(prev_image, mask=prev_image)
+     return main_frames, processed
+ 
+ 
++def image_steps(
++    images,
++    width,
++    height,
++    mask_width,
++    mask_height,
++    blend_strength,
++    seam_fraction,
++    prompt,
++    negative_prompt,
++    seed,
++    sampler,
++    num_inference_steps,
++    guidance_scale,
++    inpainting_mask_blur,
++    out_config,
++):
++    """Main frames from uploaded images: every image with the previous frame shrunk into its center.
++
++    With a blend strength above 0, img2img repaints a ring across the edge of that center, bridging
++    the previous frame into the next image; the previous frame's pixels are then pasted back with a
++    feathered edge, so it stays sharp and matches the frame pasted during the zoom."""
++    main_frames = [images[0]]
++    save2Collect(images[0], out_config, "image_layer_0")
++    processed = None
++    overlap = 0
++    use_ai = blend_strength > 0
++    if use_ai:
++        load_model_from_setting(
++            "infzoom_inpainting_model", None, "Loading Model for inpainting/img2img: "
++        )
++        band = seam_band_size(mask_width, mask_height, seam_fraction)
++        # a blur wider than the band would reach deep into both images
++        seam_blur = min(int(inpainting_mask_blur), band)
++        inner_limit = min(width - 2 * mask_width, height - 2 * mask_height) // 4
++        overlap = min(max(seam_blur, band // 4), inner_limit)
++        mask_image = seam_mask(width, height, mask_width, mask_height, band, overlap)
++
++    for k in range(1, len(images)):
++        print(f"Image zoom layer {k + 1} / {len(images)}" + (f" Seed: {seed}" if use_ai else ""))
++        composed = compose_layer(images[k], main_frames[k - 1], mask_width, mask_height)
++        if not use_ai:
++            main_frames.append(composed)
++            save2Collect(composed, out_config, f"image_layer_{k}")
++            continue
++
++        if shared.state.interrupted:
++            raise RuntimeError("Interrupted.")
++        processed, seed = renderImg2Img(
++            prompt,
++            negative_prompt,
++            sampler,
++            num_inference_steps,
++            guidance_scale,
++            seed,
++            width,
++            height,
++            composed,
++            mask_image,
++            blend_strength,
++            seam_blur,
++            1,  # masked content "original": keep the uploaded image, repaint the seam
++            0,
++            0,
++        )
++        if len(processed.images) == 0:
++            raise RuntimeError("Interrupted.")
++        layer = feathered_paste(
++            processed.images[0].convert("RGB"), main_frames[k - 1], mask_width, mask_height, overlap
++        )
++        main_frames.append(layer)
++        save2Collect(layer, out_config, f"image_layer_{k}")
++    return main_frames, processed, overlap
++
++
+ def create_zoom(
+     common_prompt_pre,
+     prompts_array,
+@@ -190,6 +286,11 @@ def create_zoom(
+     upscale_do,
+     upscaler_name,
+     upscale_by,
++    keyframes_text="",
++    keyframes_fps=0,
++    keyframes_mode=MODE_SPEED,
++    soundtrack=None,
++    audio_fade_out=1.0,
+     inpainting_denoising_strength=1,
+     inpainting_full_res=0,
+     inpainting_padding=0,
+@@ -221,6 +322,11 @@ def create_zoom(
+             upscale_do,
+             upscaler_name,
+             upscale_by,
++            keyframes_text,
++            keyframes_fps,
++            keyframes_mode,
++            soundtrack,
++            audio_fade_out,
+             inpainting_denoising_strength,
+             inpainting_full_res,
+             inpainting_padding,
+@@ -243,9 +349,7 @@ def prepare_output_path():
+     if not os.path.exists(save_path):
+         os.makedirs(save_path)
+ 
+-    video_filename = os.path.join(
+-        save_path, "infinite_zoom_" + str(int(time.time())) + ".mp4"
+-    )
++    video_filename = unique_video_path(save_path, str(int(time.time())))
+ 
+     return {
+         "isCollect": isCollect,
+@@ -288,6 +392,119 @@ def crop_inner_image(outpainted_img, width_offset, height_offset):
+     return prev_step_img
+ 
+ 
++def prepare_sync(
++    keyframes_text,
++    keyframes_fps,
++    keyframes_mode,
++    soundtrack,
++    video_frame_rate,
++    zoom_speed,
++    video_zoom_mode,
++    zoom_factor=2.0,
++    max_steps=None,
++):
++    """Checks the soundtrack and keyframes before anything is rendered."""
++    audio_path = upload_path(soundtrack)
++    audio_info = probe_audio(audio_path) if audio_path else None
++    plan = None
++    if keyframes_text and keyframes_text.strip():
++        plan = build_plan(
++            keyframes_text,
++            keyframes_fps,
++            keyframes_mode or MODE_SPEED,
++            video_frame_rate,
++            zoom_speed,
++            zoom_in=video_zoom_mode == 1,
++            zoom_factor=zoom_factor,
++            audio_duration=audio_info.duration if audio_info else None,
++            max_steps=max_steps,
++        )
++    return audio_info, plan
++
++
++def sync_notes(plan, start_dupes, last_dupes):
++    if not plan:
++        return []
++    notes = [
++        f"Keyframes: {plan.keyframes.frame_count:,} frames at {plan.fps:g} fps ({plan.fps_note}), "
++        f"{plan.steps_needed} zoom steps, video length {clock(plan.duration)}."
++    ]
++    notes.extend(plan.notes)
++    notes.extend(f"Warning: {warning}" for warning in plan.warnings)
++    if start_dupes or last_dupes:
++        notes.append("Start/last frame dupes are not used when keyframes set the pace.")
++    return notes
++
++
++def render_video(
++    main_frames,
++    requests,
++    width,
++    height,
++    mask_width,
++    mask_height,
++    out_config,
++    video_frame_rate,
++    reverse,
++    start_dupes,
++    last_dupes,
++    upscale_do,
++    upscaler_name,
++    upscale_by,
++    audio_info=None,
++    audio_fade_out=1.0,
++    feather=0,
++):
++    """Renders the requested frames one at a time into the video, then adds the soundtrack.
++
++    Returns notes for the log panel.
++    """
++    final_path = out_config["video_filename"]
++    target_path = final_path[: -len(".mp4")] + "_silent.mp4" if audio_info else final_path
++    ordered = list(enumerate(requests))
++    if reverse:
++        ordered.reverse()
++
++    def collect(image, name):
++        save2Collect(image, out_config, name)
++
++    writer = ZoomVideoWriter(target_path, video_frame_rate, start_dupes, last_dupes)
++    previous_request, previous_frame = None, None
++    report_every = max(1, len(ordered) // 10)
++    try:
++        for count, (index, request) in enumerate(ordered, start=1):
++            if request == previous_request:
++                frame = previous_frame
++            else:
++                frame = render_request(
++                    main_frames, request, width, height, mask_width, mask_height, collect, feather
++                )
++                if upscale_do:
++                    frame = do_upscaleImg(frame, upscale_do, upscaler_name, upscale_by)
++                previous_request, previous_frame = request, frame
++            save2Collect(frame, out_config, f"frame_{index}")
++            writer.append(frame)
++            if count % report_every == 0 or count == len(ordered):
++                print(f"Infinite Zoom: frame {count} / {len(ordered)}")
++    finally:
++        writer.close()
++
++    notes = []
++    if writer.frames_dropped:
++        notes.append(f"{writer.frames_dropped} frame(s) with a different size were skipped.")
++    if audio_info:
++        added, message = attach_soundtrack(
++            target_path,
++            final_path,
++            audio_info.path,
++            writer.duration,
++            audio_fade_out,
++            audio_info.duration,
++        )
++        notes.append(message)
++    return notes
++
++
+ def create_zoom_single(
+     common_prompt_pre,
+     prompts_array,
+@@ -312,6 +529,11 @@ def create_zoom_single(
+     upscale_do,
+     upscaler_name,
+     upscale_by,
++    keyframes_text,
++    keyframes_fps,
++    keyframes_mode,
++    soundtrack,
++    audio_fade_out,
+     inpainting_denoising_strength,
+     inpainting_full_res,
+     inpainting_padding,
+@@ -324,6 +546,15 @@ def create_zoom_single(
+     # except Exception:
+     #     pass
+     fix_env_Path_ffprobe()
++    audio_info, plan = prepare_sync(
++        keyframes_text,
++        keyframes_fps,
++        keyframes_mode,
++        soundtrack,
++        video_frame_rate,
++        zoom_speed,
++        video_zoom_mode,
++    )
+     out_config = prepare_output_path()
+ 
+     prompts = {}
+@@ -338,6 +569,12 @@ def create_zoom_single(
+ 
+     assert len(prompts_array) > 0, "prompts is empty"
+ 
++    lcm_note = None
++    table_prompts = [str(row[1]) for row in prompts_array if len(row) > 1]
++    if lcm_without_lora(sampler, common_prompt_pre, common_prompt_suf, *table_prompts):
++        lcm_note = lcm_warning("prompts (prefix, table and suffix)")
++        print(lcm_note)
++
+     width = closest_upper_divisible_by_eight(outputsizeW)
+     height = closest_upper_divisible_by_eight(outputsizeH)
+ 
+@@ -378,8 +615,8 @@ def create_zoom_single(
+     mask_height = math.trunc(height / 4)  # was initially 512px => 128px
+ 
+     num_interpol_frames = round(video_frame_rate * zoom_speed)
+-
+-    all_frames = []
++    if plan:
++        num_outpainting_steps = plan.steps_needed
+ 
+     if upscale_do and progress:
+         progress(0, desc="upscaling inital image")
+@@ -410,103 +647,164 @@ def create_zoom_single(
+         mask_height,
+         custom_exit_image,
+     )
+-    all_frames.append(
+-        do_upscaleImg(main_frames[0], upscale_do, upscaler_name, upscale_by)
+-        if upscale_do
+-        else main_frames[0]
+-    )
+-    for i in range(len(main_frames) - 1):
+-        # interpolation steps between 2 inpainted images (=sequential zoom and crop)
+-        for j in range(num_interpol_frames - 1):
+-            current_image = main_frames[i + 1]
+-            interpol_image = current_image
+-            save2Collect(interpol_image, out_config, f"interpol_img_{i}_{j}].png")
+-
+-            interpol_width = math.ceil(
+-                (
+-                    1
+-                    - (1 - 2 * mask_width / width)
+-                    ** (1 - (j + 1) / num_interpol_frames)
+-                )
+-                * width
+-                / 2
+-            )
+-
+-            interpol_height = math.ceil(
+-                (
+-                    1
+-                    - (1 - 2 * mask_height / height)
+-                    ** (1 - (j + 1) / num_interpol_frames)
+-                )
+-                * height
+-                / 2
+-            )
+-
+-            interpol_image = interpol_image.crop(
+-                (
+-                    interpol_width,
+-                    interpol_height,
+-                    width - interpol_width,
+-                    height - interpol_height,
+-                )
+-            )
+ 
+-            interpol_image = interpol_image.resize((width, height))
+-            save2Collect(interpol_image, out_config, f"interpol_resize_{i}_{j}.png")
+-
+-            # paste the higher resolution previous image in the middle to avoid drop in quality caused by zooming
+-            interpol_width2 = math.ceil(
+-                (1 - (width - 2 * mask_width) / (width - 2 * interpol_width))
+-                / 2
+-                * width
+-            )
+-
+-            interpol_height2 = math.ceil(
+-                (1 - (height - 2 * mask_height) / (height - 2 * interpol_height))
+-                / 2
+-                * height
+-            )
+-
+-            prev_image_fix_crop = shrink_and_paste_on_blank(
+-                main_frames[i], interpol_width2, interpol_height2
+-            )
++    start_dupes = int(video_start_frame_dupe_amount)
++    last_dupes = int(video_last_frame_dupe_amount)
++    notes = sync_notes(plan, start_dupes, last_dupes)
++    if lcm_note:
++        notes.insert(0, lcm_note)
++    if plan:
++        requests = requests_from_positions(plan.positions, len(main_frames))
++        reverse, start_dupes, last_dupes = False, 0, 0
++    else:
++        requests = classic_requests(len(main_frames), num_interpol_frames)
++        reverse = video_zoom_mode == True
+ 
+-            interpol_image.paste(prev_image_fix_crop, mask=prev_image_fix_crop)
+-            save2Collect(interpol_image, out_config, f"interpol_prevcrop_{i}_{j}.png")
++    notes += render_video(
++        main_frames,
++        requests,
++        width,
++        height,
++        mask_width,
++        mask_height,
++        out_config,
++        video_frame_rate,
++        reverse,
++        start_dupes,
++        last_dupes,
++        upscale_do,
++        upscaler_name,
++        upscale_by,
++        audio_info,
++        audio_fade_out,
++    )
++    print("Video saved in: " + os.path.join(script_path, out_config["video_filename"]))
++    return (
++        out_config["video_filename"],
++        main_frames,
++        processed.js(),
++        plaintext_to_html(processed.info),
++        plaintext_to_html("\n".join(notes)),
++    )
+ 
+-            if upscale_do and progress:
+-                progress(((i + 1) / num_outpainting_steps), desc="upscaling interpol")
+ 
+-            all_frames.append(
+-                do_upscaleImg(interpol_image, upscale_do, upscaler_name, upscale_by)
+-                if upscale_do
+-                else interpol_image
+-            )
++def create_zoom_images(
++    image_files,
++    sort_by_name,
++    reverse_order,
++    zoom_factor,
++    blend_strength,
++    seam_width,
++    blend_prompt,
++    blend_negative_prompt,
++    guidance_scale,
++    num_inference_steps,
++    video_frame_rate,
++    video_zoom_mode,
++    video_start_frame_dupe_amount,
++    video_last_frame_dupe_amount,
++    inpainting_mask_blur,
++    zoom_speed,
++    seed,
++    outputsizeW,
++    outputsizeH,
++    sampler,
++    upscale_do,
++    upscaler_name,
++    upscale_by,
++    keyframes_text="",
++    keyframes_fps=0,
++    keyframes_mode=MODE_SPEED,
++    soundtrack=None,
++    audio_fade_out=1.0,
++):
++    fix_env_Path_ffprobe()
++    paths = order_images(upload_paths(image_files), sort_by_name, reverse_order)
++    if len(paths) < 2:
++        raise ValueError("Upload at least two images to zoom through.")
++    lcm_note = None
++    if blend_strength > 0 and lcm_without_lora(sampler, blend_prompt):
++        lcm_note = lcm_warning("Blend prompt")
++        print(lcm_note)
+ 
+-        if upscale_do and progress:
+-            progress(((i + 1) / num_outpainting_steps), desc="upscaling current")
++    width = closest_upper_divisible_by_eight(outputsizeW)
++    height = closest_upper_divisible_by_eight(outputsizeH)
++    mask_width, mask_height = zoom_mask_size(width, height, zoom_factor)
++    if mask_width < 1 or mask_height < 1:
++        raise ValueError("The zoom factor between images is too small for this output size.")
++
++    audio_info, plan = prepare_sync(
++        keyframes_text,
++        keyframes_fps,
++        keyframes_mode,
++        soundtrack,
++        video_frame_rate,
++        zoom_speed,
++        video_zoom_mode,
++        zoom_factor=zoom_factor,
++        max_steps=len(paths) - 1,
++    )
++    images = [fit_image(load_image(path), width, height) for path in paths]
++    out_config = prepare_output_path()
+ 
+-        all_frames.append(
+-            do_upscaleImg(current_image, upscale_do, upscaler_name, upscale_by)
+-            if upscale_do
+-            else current_image
+-        )
++    main_frames, processed, feather = image_steps(
++        images,
++        width,
++        height,
++        mask_width,
++        mask_height,
++        blend_strength,
++        seam_width / 100,
++        blend_prompt,
++        blend_negative_prompt,
++        seed,
++        sampler,
++        num_inference_steps,
++        guidance_scale,
++        inpainting_mask_blur,
++        out_config,
++    )
+ 
+-    frames2Collect(all_frames, out_config)
++    start_dupes = int(video_start_frame_dupe_amount)
++    last_dupes = int(video_last_frame_dupe_amount)
++    notes = [
++        f"Zoomed through {len(images)} images "
++        + (f"with AI blend strength {blend_strength:.2f}." if blend_strength > 0 else "without AI.")
++    ]
++    if lcm_note:
++        notes.append(lcm_note)
++    notes += sync_notes(plan, start_dupes, last_dupes)
++    if plan:
++        requests = requests_from_positions(plan.positions, len(main_frames))
++        reverse, start_dupes, last_dupes = False, 0, 0
++    else:
++        requests = classic_requests(len(main_frames), round(video_frame_rate * zoom_speed))
++        reverse = video_zoom_mode == True
+ 
+-    write_video(
+-        out_config["video_filename"],
+-        all_frames,
++    notes += render_video(
++        main_frames,
++        requests,
++        width,
++        height,
++        mask_width,
++        mask_height,
++        out_config,
+         video_frame_rate,
+-        video_zoom_mode,
+-        int(video_start_frame_dupe_amount),
+-        int(video_last_frame_dupe_amount),
++        reverse,
++        start_dupes,
++        last_dupes,
++        upscale_do,
++        upscaler_name,
++        upscale_by,
++        audio_info,
++        audio_fade_out,
++        feather=feather,
+     )
+     print("Video saved in: " + os.path.join(script_path, out_config["video_filename"]))
+     return (
+         out_config["video_filename"],
+         main_frames,
+-        processed.js(),
+-        plaintext_to_html(processed.info),
+-        plaintext_to_html(""),
++        processed.js() if processed else "",
++        plaintext_to_html(processed.info) if processed else "",
++        plaintext_to_html("\n".join(notes)),
+     )
+diff --git a/iz_helpers/ui.py b/iz_helpers/ui.py
+index ae19f41..2f2578d 100644
+--- a/iz_helpers/ui.py
++++ b/iz_helpers/ui.py
+@@ -1,5 +1,5 @@
+ import gradio as gr
+-from .run import create_zoom
++from .run import create_zoom, create_zoom_images
+ import modules.shared as shared
+ from modules.call_queue import wrap_gradio_gpu_call
+ from modules.ui import create_output_panel
+@@ -16,6 +16,19 @@ from .static_variables import (
+ from .helpers import putPrompts, clearPrompts
+ from .prompt_util import readJsonPrompt
+ from .static_variables import promptTableHeaders
++from .keyframes import (
++    GENERATOR_DEFAULT_FUNCTION,
++    KEYFRAME_MODES,
++    MODE_SPEED,
++    KeyframeError,
++    build_plan,
++    describe_plan,
++)
++from .audio import SOUNDTRACK_FILE_TYPES, AudioError, clock, keyframes_from_audio, probe_audio
++from .image_sequence import IMAGE_FILE_TYPES, gallery_items, load_image, order_images, output_size_for
++from .uploads import read_text_upload, upload_path, upload_paths
++
++KEYFRAME_GENERATOR_URL = "https://www.chigozie.co.uk/audio-keyframe-generator/"
+ 
+ 
+ def on_ui_tabs():
+@@ -176,6 +189,68 @@ def on_ui_tabs():
+                             exit_image = gr.Image(
+                                 type="pil", label="Custom exit image", visible=False
+                             )
++                with gr.Tab("IMG"):
++                    gr.Markdown(
++                        "Zoom through your own images instead of prompts. Image 1 is the center of the "
++                        "zoom and the last image is the outermost frame. Render settings (Main tab), "
++                        "Video, Music & Keyframes, Mask Blur (Outpaint tab) and Post process apply here too."
++                    )
++                    img_files = gr.File(
++                        label="Zoom images",
++                        file_count="multiple",
++                        file_types=IMAGE_FILE_TYPES,
++                        elem_id="infzoom_img_files",
++                    )
++                    img_gallery = gr.Gallery(
++                        label="Zoom order",
++                        columns=6,
++                        height=240,
++                        object_fit="contain",
++                        elem_id="infzoom_img_gallery",
++                    )
++                    with gr.Row():
++                        img_sort_by_name = gr.Checkbox(True, label="Sort by file name")
++                        img_reverse = gr.Checkbox(False, label="Reverse order")
++                        img_match_size = gr.Button(
++                            value="Match output size to first image", variant="secondary"
++                        )
++                    with gr.Row():
++                        img_zoom_factor = gr.Slider(
++                            label="Zoom factor between images",
++                            minimum=1.25,
++                            maximum=4.0,
++                            step=0.01,
++                            value=2.0,
++                            info="2 for Midjourney Zoom Out 2x; 1.33 for its Zoom Out 1.5x button",
++                        )
++                        img_blend_strength = gr.Slider(
++                            label="AI blend strength",
++                            minimum=0.0,
++                            maximum=1.0,
++                            step=0.05,
++                            value=0.5,
++                            info="0 = no AI, for ready-made nested images. Higher = Stable Diffusion repaints the seam between unrelated images",
++                        )
++                    img_seam_width = gr.Slider(
++                        label="Seam width (% of zoom border)",
++                        minimum=10,
++                        maximum=100,
++                        step=5,
++                        value=25,
++                        info="How far the repainted ring reaches into the next image; Mask Blur is limited to this width",
++                    )
++                    img_prompt = gr.Textbox(
++                        label="Blend prompt",
++                        placeholder="Optional: style or content of your images. With the LCM sampler add your LCM LoRA, e.g. <lora:LCM_SDXL15:1>",
++                        lines=2,
++                    )
++                    img_negative_prompt = gr.Textbox(
++                        label="Blend negative prompt",
++                        value="frames, border, edges, seams, text, watermark, low quality, blurry",
++                    )
++                    img_generate_btn = gr.Button(
++                        value="Generate video from images", variant="primary"
++                    )
+                 with gr.Tab("Video"):
+                     video_frame_rate = gr.Slider(
+                         label="Frames per second",
+@@ -212,6 +287,67 @@ def on_ui_tabs():
+                         info="Zoom speed in seconds (higher values create slower zoom)",
+                     )
+ 
++                with gr.Tab("Music & Keyframes"):
++                    with gr.Accordion("Soundtrack", open=True):
++                        soundtrack = gr.File(
++                            label="Soundtrack (any audio file, or a video with sound)",
++                            file_types=SOUNDTRACK_FILE_TYPES,
++                            elem_id="infzoom_soundtrack",
++                        )
++                        soundtrack_info = gr.Markdown("")
++                        audio_fade_out = gr.Slider(
++                            label="Fade-out when music is cut (s)",
++                            minimum=0,
++                            maximum=10,
++                            step=0.5,
++                            value=1.0,
++                        )
++                    with gr.Accordion("Keyframes (zoom pace)", open=True):
++                        gr.HTML(
++                            "<p>Paste or upload keyframes from the "
++                            f'<a href="{KEYFRAME_GENERATOR_URL}" target="_blank" rel="noopener noreferrer">'
++                            "audio keyframe generator</a> (Disco, PyTTI or CSV) or from Deforum. With "
++                            "keyframes the zoom follows their pace and the video lasts as long as the "
++                            "keyframes; leave empty for the classic steady zoom.</p>"
++                        )
++                        keyframes_file = gr.File(
++                            label="Keyframes file",
++                            file_types=[".txt", ".csv", ".json"],
++                        )
++                        keyframes_text = gr.Textbox(
++                            label="Keyframes",
++                            lines=4,
++                            max_lines=12,
++                            placeholder="0: (1.00), 1: (1.53), 2: (1.20), ...",
++                        )
++                        with gr.Row():
++                            keyframes_mode = gr.Radio(
++                                label="Keyframe values mean",
++                                choices=KEYFRAME_MODES,
++                                value=MODE_SPEED,
++                                info="Speed multiplier: 1 = Zoom Speed, 2 = twice as fast, 0 = pause. Deforum zoom: 1.00 = still, 1.02 = 2% zoom per frame",
++                            )
++                            keyframes_fps = gr.Number(
++                                label="Keyframes FPS (0 = auto)", value=0, precision=2
++                            )
++                        keyframes_analyze = gr.Button(
++                            value="Analyze keyframes", variant="secondary"
++                        )
++                        keyframes_report = gr.Markdown("")
++                        with gr.Accordion("Generate keyframes from the soundtrack", open=False):
++                            with gr.Row():
++                                generator_function = gr.Textbox(
++                                    label="Function",
++                                    value=GENERATOR_DEFAULT_FUNCTION,
++                                    info="x = loudness 0..1, y = frame number, ^ = power (as on the website)",
++                                )
++                                generator_fps = gr.Number(
++                                    label="Generator FPS (0 = video FPS)", value=0, precision=2
++                                )
++                            generator_btn = gr.Button(
++                                value="Generate keyframes", variant="secondary"
++                            )
++
+                 with gr.Tab("Outpaint"):
+                     inpainting_mask_blur = gr.Slider(
+                         label="Mask Blur",
+@@ -244,7 +380,7 @@ def on_ui_tabs():
+                     with gr.Accordion("Help", open=False):
+                         gr.Markdown(
+                             """# Performance critical
+-Depending on amount of frames and which upscaler you choose it might took a long time to render.  
++Depending on amount of frames and which upscaler you choose it might took a long time to render.
+ Our best experience and trade-off is the R-ERSGAn4x upscaler.
+ """
+                         )
+@@ -268,8 +404,18 @@ Our best experience and trade-off is the R-ERSGAn4x upscaler.
+                 html_info = output_panel.infotext
+                 html_log = output_panel.html_log
+ 
++        sync_inputs = [
++            keyframes_text,
++            keyframes_fps,
++            keyframes_mode,
++            soundtrack,
++            audio_fade_out,
++        ]
++        zoom_outputs = [output_video, out_image, generation_info, html_info, html_log]
++
++        # on errors the wrapper returns these placeholders plus the error html (one value per output)
+         generate_btn.click(
+-            fn=wrap_gradio_gpu_call(create_zoom, extra_outputs=[None, "", ""]),
++            fn=wrap_gradio_gpu_call(create_zoom, extra_outputs=[None, None, "", ""]),
+             inputs=[
+                 main_common_prompt_pre,
+                 main_prompts,
+@@ -295,8 +441,80 @@ Our best experience and trade-off is the R-ERSGAn4x upscaler.
+                 upscale_do,
+                 upscaler_name,
+                 upscale_by,
++            ]
++            + sync_inputs,
++            outputs=zoom_outputs,
++        )
++
++        img_generate_btn.click(
++            fn=wrap_gradio_gpu_call(create_zoom_images, extra_outputs=[None, None, "", ""]),
++            inputs=[
++                img_files,
++                img_sort_by_name,
++                img_reverse,
++                img_zoom_factor,
++                img_blend_strength,
++                img_seam_width,
++                img_prompt,
++                img_negative_prompt,
++                main_guidance_scale,
++                sampling_step,
++                video_frame_rate,
++                video_zoom_mode,
++                video_start_frame_dupe_amount,
++                video_last_frame_dupe_amount,
++                inpainting_mask_blur,
++                video_zoom_speed,
++                seed,
++                main_width,
++                main_height,
++                main_sampler,
++                upscale_do,
++                upscaler_name,
++                upscale_by,
++            ]
++            + sync_inputs,
++            outputs=zoom_outputs,
++        )
++
++        image_order_inputs = [img_files, img_sort_by_name, img_reverse]
++        for component in image_order_inputs:
++            component.change(
++                fn=preview_images, inputs=image_order_inputs, outputs=[img_gallery]
++            )
++        img_match_size.click(
++            fn=match_output_size,
++            inputs=image_order_inputs,
++            outputs=[main_width, main_height],
++        )
++
++        soundtrack.change(
++            fn=describe_soundtrack, inputs=[soundtrack], outputs=[soundtrack_info]
++        )
++        keyframes_file.change(
++            fn=load_keyframes_file,
++            inputs=[keyframes_file],
++            outputs=[keyframes_text, keyframes_report],
++        )
++        keyframes_analyze.click(
++            fn=analyze_keyframes,
++            inputs=[
++                keyframes_text,
++                keyframes_fps,
++                keyframes_mode,
++                video_frame_rate,
++                video_zoom_speed,
++                video_zoom_mode,
++                soundtrack,
++                img_files,
++                img_zoom_factor,
+             ],
+-            outputs=[output_video, out_image, generation_info, html_info, html_log],
++            outputs=[keyframes_report],
++        )
++        generator_btn.click(
++            fn=generate_keyframes_from_soundtrack,
++            inputs=[soundtrack, generator_function, generator_fps, video_frame_rate],
++            outputs=[keyframes_text, keyframes_fps, keyframes_report],
+         )
+ 
+         main_prompts.change(
+@@ -313,3 +531,82 @@ def checkPrompts(p):
+         interactive=any(0 in sublist for sublist in p)
+         or any("0" in sublist for sublist in p)
+     )
++
++
++def preview_images(files, sort_by_name, reverse):
++    paths = order_images(upload_paths(files), sort_by_name, reverse)
++    return gr.update(value=gallery_items(paths))
++
++
++def match_output_size(files, sort_by_name, reverse):
++    paths = order_images(upload_paths(files), sort_by_name, reverse)
++    if not paths:
++        return gr.update(), gr.update()
++    width, height = output_size_for(load_image(paths[0]).size)
++    return gr.update(value=width), gr.update(value=height)
++
++
++def describe_soundtrack(file):
++    path = upload_path(file)
++    if not path:
++        return ""
++    try:
++        return f"**Soundtrack:** {probe_audio(path).describe()}"
++    except AudioError as err:
++        return f"**This file cannot be used:** {err}"
++
++
++def load_keyframes_file(file):
++    if not upload_path(file):
++        return gr.update(), gr.update()
++    try:
++        text = read_text_upload(file)
++    except (OSError, ValueError) as err:
++        return gr.update(), f"**Could not read the keyframes file:** {err}"
++    return text, "Keyframes loaded. Press **Analyze keyframes** to check them."
++
++
++def analyze_keyframes(text, keyframes_fps, keyframes_mode, video_fps, zoom_speed, zoom_mode,
++                      soundtrack, image_files, image_zoom_factor):
++    try:
++        path = upload_path(soundtrack)
++        audio_duration = probe_audio(path).duration if path else None
++        plan = build_plan(
++            text, keyframes_fps, keyframes_mode, video_fps, zoom_speed,
++            zoom_in=zoom_mode == 1, audio_duration=audio_duration,
++        )
++        sections = [describe_plan(plan)]
++
++        available = len(upload_paths(image_files)) - 1
++        if available >= 1:
++            image_plan = build_plan(
++                text, keyframes_fps, keyframes_mode, video_fps, zoom_speed,
++                zoom_in=zoom_mode == 1, zoom_factor=image_zoom_factor,
++                audio_duration=audio_duration, max_steps=available,
++            )
++            lines = [
++                line
++                for line in describe_plan(image_plan, available_steps=available).split("\n\n")
++                if line.startswith("**Zoom:**")
++            ]
++            sections.append(f"**IMG tab ({available + 1} images):**\n\n" + "\n\n".join(lines))
++        return "\n\n---\n\n".join(sections)
++    except (KeyframeError, AudioError) as err:
++        return f"**Cannot use these keyframes:** {err}"
++
++
++def generate_keyframes_from_soundtrack(soundtrack, function, generator_fps, video_fps):
++    path = upload_path(soundtrack)
++    if not path:
++        return gr.update(), gr.update(), "**Upload a soundtrack first** (Soundtrack section above)."
++    fps = float(generator_fps) if generator_fps and generator_fps > 0 else float(video_fps)
++    try:
++        text, values, seconds = keyframes_from_audio(path, fps, function)
++    except (KeyframeError, AudioError) as err:
++        return gr.update(), gr.update(), f"**Could not generate keyframes:** {err}"
++    return (
++        text,
++        fps,
++        f"Generated {len(values):,} keyframes at {fps:g} fps from {clock(seconds)} of audio "
++        f"(values {values.min():.2f} to {values.max():.2f}).",
++    )
+diff --git a/iz_helpers/uploads.py b/iz_helpers/uploads.py
+new file mode 100644
+index 0000000..10e0dc8
+--- /dev/null
++++ b/iz_helpers/uploads.py
+@@ -0,0 +1,35 @@
++"""Paths of files uploaded through Gradio components. No webui imports."""
++
++
++def upload_path(value):
++    """Local path of one upload.
++
++    Gradio 3 passes a tempfile wrapper (path in .name), Gradio 4 a plain string and API
++    clients sometimes a dict with "path" or "name".
++    """
++    if value is None:
++        return None
++    if isinstance(value, str):
++        return value or None
++    if isinstance(value, dict):
++        return value.get("path") or value.get("name") or None
++    return getattr(value, "name", None) or None
++
++
++def upload_paths(values):
++    if not values:
++        return []
++    if not isinstance(values, (list, tuple)):
++        values = [values]
++    return [path for path in (upload_path(v) for v in values) if path]
++
++
++def read_text_upload(value, limit=16 * 1024 * 1024):
++    path = upload_path(value)
++    if not path:
++        return None
++    with open(path, "rb") as f:
++        data = f.read(limit + 1)
++    if len(data) > limit:
++        raise ValueError("The keyframe file is too large.")
++    return data.decode("utf-8-sig", errors="replace")
+diff --git a/iz_helpers/video.py b/iz_helpers/video.py
+index cb1c5d9..a35ddca 100644
+--- a/iz_helpers/video.py
++++ b/iz_helpers/video.py
+@@ -1,7 +1,68 @@
++import os
++
+ import numpy as np
+ import imageio
+ from PIL import Image
+ 
++
++def unique_video_path(folder, stamp):
++    """infinite_zoom_<stamp>.mp4, with _1, _2 ... added when a render in the same second already
++    used the name, so a fast render never overwrites the previous video."""
++    path = os.path.join(folder, f"infinite_zoom_{stamp}.mp4")
++    counter = 1
++    while os.path.exists(path) or os.path.exists(path[: -len(".mp4")] + "_silent.mp4"):
++        path = os.path.join(folder, f"infinite_zoom_{stamp}_{counter}.mp4")
++        counter += 1
++    return path
++
++
++class ZoomVideoWriter:
++    """Streams frames into an mp4 so long videos never have to fit in memory.
++
++    Same rules as write_video: frames whose size differs from the first frame are dropped,
++    and the first and last kept frames can be repeated.
++    """
++
++    def __init__(self, file_path, fps, start_frame_dupe_amount=0, last_frame_dupe_amount=0):
++        # Create an imageio video writer, avoid block size of 512.
++        self.writer = imageio.get_writer(file_path, fps=fps, macro_block_size=None)
++        self.fps = fps
++        self.start_frame_dupe_amount = start_frame_dupe_amount
++        self.last_frame_dupe_amount = last_frame_dupe_amount
++        self.size = None
++        self.last_frame = None
++        self.frames_written = 0
++        self.frames_dropped = 0
++
++    def _write(self, np_frame):
++        self.writer.append_data(np_frame)
++        self.frames_written += 1
++
++    def append(self, frame):
++        if self.size is None:
++            self.size = frame.size
++            np_frame = np.array(frame)
++            for _ in range(self.start_frame_dupe_amount):
++                self._write(np_frame)
++        elif frame.size != self.size:
++            # Drop missformed frames
++            self.frames_dropped += 1
++            return
++        np_frame = np.array(frame)
++        self._write(np_frame)
++        self.last_frame = np_frame
++
++    def close(self):
++        if self.last_frame is not None:
++            for _ in range(self.last_frame_dupe_amount):
++                self._write(self.last_frame)
++        self.writer.close()
++
++    @property
++    def duration(self):
++        return self.frames_written / self.fps
++
++
+ def write_video(file_path, frames, fps, reversed=True, start_frame_dupe_amount=15, last_frame_dupe_amount=30):
+     """
+     Writes frames to an mp4 video file
+@@ -13,31 +74,9 @@ def write_video(file_path, frames, fps, reversed=True, start_frame_dupe_amount=1
+     if reversed == True:
+         frames = frames[::-1]
+ 
+-    # Drop missformed frames
+-    frames = [frame for frame in frames if frame.size == frames[0].size]
+-
+-    # Create an imageio video writer, avoid block size of 512.
+-    writer = imageio.get_writer(file_path, fps=fps, macro_block_size=None)
+-
+-    # Duplicate the start and end frames
+-    start_frames = [frames[0]] * start_frame_dupe_amount
+-    end_frames = [frames[-1]] * last_frame_dupe_amount
+-
+-    # Write the duplicated frames to the video writer
+-    for frame in start_frames:
+-        # Convert PIL image to numpy array
+-        np_frame = np.array(frame)
+-        writer.append_data(np_frame)
+-
+-    # Write the frames to the video writer
+-    for frame in frames:
+-        np_frame = np.array(frame)
+-        writer.append_data(np_frame)
+-
+-    # Write the duplicated frames to the video writer
+-    for frame in  end_frames:
+-        np_frame = np.array(frame)
+-        writer.append_data(np_frame)
+-
+-    # Close the video writer
+-    writer.close()
+\ No newline at end of file
++    writer = ZoomVideoWriter(file_path, fps, start_frame_dupe_amount, last_frame_dupe_amount)
++    try:
++        for frame in frames:
++            writer.append(frame)
++    finally:
++        writer.close()
+diff --git a/iz_helpers/zoom_frames.py b/iz_helpers/zoom_frames.py
+new file mode 100644
+index 0000000..7c53335
+--- /dev/null
++++ b/iz_helpers/zoom_frames.py
+@@ -0,0 +1,116 @@
++"""Frames of the zoom between consecutive main frames. Pure (PIL only).
++
++A frame is requested as (step, fraction): fraction 0 is main frame `step` itself, a fraction in
++(0, 1) zooms out from main frame `step` toward main frame `step + 1`. The classic request list
++reproduces the extension's original interpolation loop exactly; keyframe-driven renders request
++arbitrary positions.
++"""
++import math
++from typing import NamedTuple
++
++import numpy as np
++from PIL import Image
++
++from .image import shrink_and_paste_on_blank
++
++EDGE_EPSILON = 1e-6
++
++
++class FrameRequest(NamedTuple):
++    step: int
++    fraction: float
++    label: tuple = None  # (i, j) of the classic loop, used for "collect" file names
++
++
++def classic_requests(main_frame_count, num_interpol_frames):
++    """The frame order of the original loop: main frame 0, then for every step its
++    interpolation frames j/n (j = 1..n-1) followed by the next main frame."""
++    requests = [FrameRequest(0, 0.0)]
++    for i in range(main_frame_count - 1):
++        for j in range(num_interpol_frames - 1):
++            requests.append(FrameRequest(i, (j + 1) / num_interpol_frames, (i, j)))
++        requests.append(FrameRequest(i + 1, 0.0))
++    return requests
++
++
++def requests_from_positions(positions, main_frame_count):
++    """Requests for zoom positions measured in steps (0 = first main frame)."""
++    last = main_frame_count - 1
++    requests = []
++    for position in positions:
++        position = min(max(float(position), 0.0), float(last))
++        step = min(int(math.floor(position)), last)
++        fraction = position - step
++        if fraction < EDGE_EPSILON:
++            requests.append(FrameRequest(step, 0.0))
++        elif fraction > 1 - EDGE_EPSILON:
++            requests.append(FrameRequest(step + 1, 0.0))
++        else:
++            requests.append(FrameRequest(step, fraction))
++    return requests
++
++
++def _feather_alpha(pasted, left, top, feather):
++    """Fades the opaque center of a shrink_and_paste_on_blank image in over `feather` pixels."""
++    width, height = pasted.size
++    inner_width, inner_height = width - 2 * left, height - 2 * top
++    if inner_width <= 0 or inner_height <= 0 or feather <= 0:
++        return pasted
++    x = np.minimum(np.arange(inner_width), np.arange(inner_width)[::-1])
++    y = np.minimum(np.arange(inner_height), np.arange(inner_height)[::-1])
++    ramp = np.clip(np.minimum.outer(y, x) / feather, 0, 1)
++    alpha = np.array(pasted.getchannel("A"), dtype=np.float32)
++    alpha[top:top + inner_height, left:left + inner_width] *= ramp
++    result = pasted.copy()
++    result.putalpha(Image.fromarray(alpha.astype(np.uint8), "L"))
++    return result
++
++
++def interpolated_frame(inner, outer, fraction, width, height, mask_width, mask_height,
++                       collect=None, label=None, feather=0):
++    """`outer` zoomed in so that `inner` (pasted at full quality) grows toward the full frame.
++
++    Same arithmetic and PIL calls as the original loop, with exponent 1 - fraction. With
++    feather > 0 (pixels of `outer` that fade from `inner` into it), the pasted edge follows that
++    fade instead of being hard; the classic zoom uses 0.
++    """
++    if collect and label:
++        collect(outer, f"interpol_img_{label[0]}_{label[1]}].png")
++
++    interpol_width = math.ceil(
++        (1 - (1 - 2 * mask_width / width) ** (1 - fraction)) * width / 2
++    )
++    interpol_height = math.ceil(
++        (1 - (1 - 2 * mask_height / height) ** (1 - fraction)) * height / 2
++    )
++    image = outer.crop(
++        (interpol_width, interpol_height, width - interpol_width, height - interpol_height)
++    )
++    image = image.resize((width, height))
++    if collect and label:
++        collect(image, f"interpol_resize_{label[0]}_{label[1]}.png")
++
++    # paste the higher resolution previous image in the middle to avoid drop in quality caused by zooming
++    interpol_width2 = math.ceil(
++        (1 - (width - 2 * mask_width) / (width - 2 * interpol_width)) / 2 * width
++    )
++    interpol_height2 = math.ceil(
++        (1 - (height - 2 * mask_height) / (height - 2 * interpol_height)) / 2 * height
++    )
++    prev_image_fix_crop = shrink_and_paste_on_blank(inner, interpol_width2, interpol_height2)
++    if feather > 0:
++        zoom = width / (width - 2 * interpol_width)
++        prev_image_fix_crop = _feather_alpha(prev_image_fix_crop, interpol_width2, interpol_height2, feather * zoom)
++    image.paste(prev_image_fix_crop, mask=prev_image_fix_crop)
++    if collect and label:
++        collect(image, f"interpol_prevcrop_{label[0]}_{label[1]}.png")
++    return image
++
++
++def render_request(main_frames, request, width, height, mask_width, mask_height, collect=None, feather=0):
++    if request.fraction == 0:
++        return main_frames[request.step]
++    return interpolated_frame(
++        main_frames[request.step], main_frames[request.step + 1], request.fraction,
++        width, height, mask_width, mask_height, collect, request.label, feather,
++    )
+diff --git a/javascript/infinite-zoom-hints.js b/javascript/infinite-zoom-hints.js
+index e046f65..fc45967 100644
+--- a/javascript/infinite-zoom-hints.js
++++ b/javascript/infinite-zoom-hints.js
+@@ -13,7 +13,30 @@ infzoom_titles = {
+     "Custom exit image":"An image at the end resp. begin of your movie, depending or ZoomIn or Out",
+     "Zoom Speed":"Varies additional frames per second",
+     "Start at second [0,1,...]": "At which time the prompt has to be occure. We need at least one prompt starting at time 0",
+-	"Generate video": "Start rendering. If it´s disabled the prompt table is invalid, check we have a start prompt at time 0"
++	"Generate video": "Start rendering. If it´s disabled the prompt table is invalid, check we have a start prompt at time 0",
++    "IMG": "Zoom through your own images instead of prompts",
++    "Zoom images": "The images to zoom through. Image 1 is the center of the zoom, the last image the outermost frame",
++    "Zoom order": "The order the images are used in, from the center outward",
++    "Sort by file name": "Order by file name (1, 2, 10) instead of upload order",
++    "Reverse order": "Use this when the first file is the outermost image",
++    "Match output size to first image": "Sets Output Width and Height (Main tab, Render settings) to the size of image 1",
++    "Zoom factor between images": "How much larger each image is than the image inside it",
++    "AI blend strength": "0 keeps your images untouched. Higher values let Stable Diffusion repaint the seam around the pasted center",
++    "Seam width (% of zoom border)": "Width of the band around the seam that gets repainted",
++    "Blend prompt": "Prompt used only to repaint the seams. With the LCM sampler, put your LCM LoRA here too",
++    "Blend negative prompt": "Negative prompt used only to repaint the seams",
++    "Generate video from images": "Render the zoom from the uploaded images",
++    "Music & Keyframes": "Add a soundtrack and let keyframes set the pace of the zoom",
++    "Soundtrack (any audio file, or a video with sound)": "The finished video gets this soundtrack, cut to the video length or padded with silence",
++    "Fade-out when music is cut (s)": "Fade applied at the end when the music is longer than the video",
++    "Keyframes file": "A .txt, .csv or .json file with keyframes",
++    "Keyframes": "Keyframe values such as 0: (1.00), 1: (1.53). Leave empty for the classic steady zoom",
++    "Keyframe values mean": "How keyframe values control the zoom",
++    "Keyframes FPS (0 = auto)": "Frame rate the keyframes were made for (the website default is 12). 0 reads it from PyTTI text or the soundtrack length",
++    "Analyze keyframes": "Shows the keyframe length, detected FPS and how many zoom steps they need",
++    "Function": "Formula for each frame: x = loudness 0..1, y = frame number",
++    "Generator FPS (0 = video FPS)": "Frame rate of the generated keyframes",
++    "Generate keyframes": "Creates keyframes from the soundtrack, like the website does"
+ }
+ 
+ 
+diff --git a/tests/test_audio.py b/tests/test_audio.py
+new file mode 100644
+index 0000000..2d238f4
+--- /dev/null
++++ b/tests/test_audio.py
+@@ -0,0 +1,173 @@
++import math
++import os
++import re
++import shutil
++import subprocess
++import sys
++import tempfile
++import unittest
++
++import numpy as np
++
++sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++
++from iz_helpers import audio  # noqa: E402
++
++DURATION = 3.2
++FORMATS = [  # file name, encoder
++    ("tone.wav", "pcm_s16le"),
++    ("tone.mp3", "libmp3lame"),
++    ("tone.flac", "flac"),
++    ("tone.ogg", "libvorbis"),
++    ("tone.opus", "libopus"),
++    ("tone.m4a", "aac"),
++    ("tone_alac.m4a", "alac"),
++    ("tone.wma", "wmav2"),
++    ("tone.aiff", "pcm_s16be"),
++    ("tone.ac3", "ac3"),
++    ("tone.mka", "flac"),
++    ("tone.webm", "libopus"),
++]
++TONE = ["-f", "lavfi", "-i", f"sine=frequency=440:duration={DURATION}:sample_rate=44100"]
++
++
++class AudioTest(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.ffmpeg = audio.ffmpeg_exe()
++        cls.tmp = tempfile.mkdtemp(prefix="iz_audio_test_")
++        encoders = subprocess.run([cls.ffmpeg, "-hide_banner", "-encoders"],
++                                  capture_output=True, text=True, errors="replace").stdout
++        cls.formats = {}
++        for name, encoder in FORMATS:
++            if re.search(rf"\s{re.escape(encoder)}\s", encoders):
++                cls.formats[name] = cls._make(name, TONE + ["-ac", "2", "-c:a", encoder])
++        cls.mono = cls._make("mono.wav", TONE + ["-ac", "1", "-c:a", "pcm_s16le"])
++        cls.surround = cls._make("surround.flac", TONE + ["-ac", "6", "-c:a", "flac"])
++        cls.hires = cls._make("hires.flac", ["-f", "lavfi", "-i",
++                                             f"sine=frequency=440:duration={DURATION}:sample_rate=96000",
++                                             "-c:a", "flac"])
++        cls.video_with_audio = cls._make("clip.mp4", ["-f", "lavfi", "-i", f"color=c=blue:s=64x64:d={DURATION}",
++                                                      *TONE, "-c:v", "libx264", "-pix_fmt", "yuv420p",
++                                                      "-c:a", "aac", "-shortest"])
++        cls.not_audio = os.path.join(cls.tmp, "notes.txt")
++        with open(cls.not_audio, "w") as f:
++            f.write("not a sound")
++        cls.silent_2s = cls._silent_video("silent2.mp4", 2.0)
++        cls.silent_5s = cls._silent_video("silent5.mp4", 5.0)
++
++    @classmethod
++    def tearDownClass(cls):
++        shutil.rmtree(cls.tmp, ignore_errors=True)
++
++    @classmethod
++    def _make(cls, name, args):
++        path = os.path.join(cls.tmp, name)
++        subprocess.run([cls.ffmpeg, "-hide_banner", "-v", "error", "-y", *args, path], check=True)
++        return path
++
++    @classmethod
++    def _silent_video(cls, name, seconds, fps=24):
++        import imageio
++
++        path = os.path.join(cls.tmp, name)
++        writer = imageio.get_writer(path, fps=fps, macro_block_size=None)
++        frame = np.zeros((64, 64, 3), dtype=np.uint8)
++        for _ in range(int(round(seconds * fps))):
++            writer.append_data(frame)
++        writer.close()
++        return path
++
++    def streams(self, path):
++        text = subprocess.run([self.ffmpeg, "-hide_banner", "-i", path],
++                              capture_output=True, text=True, errors="replace").stderr
++        video = re.findall(r"Stream #\S+: Video: (\w+)", text)
++        sound = re.findall(r"Stream #\S+: Audio: (\w+)", text)
++        h, m, s = re.search(r"Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)", text).groups()
++        return video, sound, int(h) * 3600 + int(m) * 60 + float(s)
++
++    def all_sources(self):
++        return list(self.formats.items()) + [
++            ("mono.wav", self.mono), ("surround.flac", self.surround),
++            ("hires.flac", self.hires), ("clip.mp4", self.video_with_audio),
++        ]
++
++    def test_fixtures_cover_the_common_formats(self):
++        self.assertGreaterEqual(len(self.formats), 10, sorted(self.formats))
++
++    def test_probe_every_format(self):
++        for name, path in self.all_sources():
++            with self.subTest(name=name):
++                info = audio.probe_audio(path)
++                self.assertAlmostEqual(info.duration, DURATION, delta=0.15)
++                self.assertTrue(info.codec)
++                self.assertIn(name, info.describe())
++
++    def test_probe_rejects_files_without_sound(self):
++        for path in (self.not_audio, self.silent_2s, os.path.join(self.tmp, "missing.mp3")):
++            with self.subTest(path=path):
++                with self.assertRaises(audio.AudioError):
++                    audio.probe_audio(path)
++
++    def test_decode_is_stereo_48k(self):
++        for path in (self.formats["tone.mp3"], self.mono, self.surround, self.hires):
++            with self.subTest(path=os.path.basename(path)):
++                pcm = audio.decode_audio(path)
++                self.assertEqual(pcm.shape[1], 2)
++                self.assertAlmostEqual(pcm.shape[0] / audio.DECODE_SAMPLE_RATE, DURATION, delta=0.1)
++                # lavfi sine peaks at 1/8 and the mono -> stereo up-mix is -3 dB, so ~0.088
++                self.assertGreater(float(np.abs(pcm).max()), 0.05)
++
++    def test_keyframes_from_audio(self):
++        text, values, seconds = audio.keyframes_from_audio(self.formats["tone.wav"], 12)
++        self.assertEqual(len(values), math.ceil(seconds * 12))
++        self.assertEqual(text.count(": ("), len(values))
++        self.assertGreaterEqual(values.min(), 1.0)
++        self.assertAlmostEqual(values.max(), 2.0)
++
++    def test_mux_cuts_long_audio(self):
++        out = os.path.join(self.tmp, "cut.mp4")
++        audio.mux_soundtrack(self.silent_2s, self.formats["tone.mp3"], out, 2.0, fade_out=1.0)
++        video, sound, duration = self.streams(out)
++        self.assertEqual((video, sound), (["h264"], ["aac"]))
++        self.assertAlmostEqual(duration, 2.0, delta=0.1)
++
++    def test_mux_pads_short_audio(self):
++        out = os.path.join(self.tmp, "padded.mp4")
++        audio.mux_soundtrack(self.silent_5s, self.formats["tone.mp3"], out, 5.0, fade_out=1.0)
++        video, sound, duration = self.streams(out)
++        self.assertEqual((video, sound), (["h264"], ["aac"]))
++        self.assertAlmostEqual(duration, 5.0, delta=0.1)
++
++    def test_mux_every_format(self):
++        for name, path in self.all_sources():
++            with self.subTest(name=name):
++                out = os.path.join(self.tmp, f"muxed_{name}.mp4")
++                audio.mux_soundtrack(self.silent_2s, path, out, 2.0, fade_out=0.5)
++                video, sound, duration = self.streams(out)
++                self.assertEqual((video, sound), (["h264"], ["aac"]))
++                self.assertAlmostEqual(duration, 2.0, delta=0.1)
++
++    def test_attach_success_replaces_silent_render(self):
++        silent = os.path.join(self.tmp, "render_ok_silent.mp4")
++        final = os.path.join(self.tmp, "render_ok.mp4")
++        shutil.copy(self.silent_2s, silent)
++        added, message = audio.attach_soundtrack(silent, final, self.formats["tone.flac"], 2.0, 1.0)
++        self.assertTrue(added, message)
++        self.assertTrue(os.path.isfile(final))
++        self.assertFalse(os.path.exists(silent))
++
++    def test_attach_failure_keeps_the_render(self):
++        silent = os.path.join(self.tmp, "render_bad_silent.mp4")
++        final = os.path.join(self.tmp, "render_bad.mp4")
++        shutil.copy(self.silent_2s, silent)
++        added, message = audio.attach_soundtrack(silent, final, self.not_audio, 2.0, 1.0)
++        self.assertFalse(added)
++        self.assertIn("without sound", message)
++        self.assertTrue(os.path.isfile(final))
++        self.assertFalse(os.path.exists(silent))
++        self.assertEqual(self.streams(final)[1], [])
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/test_image_sequence.py b/tests/test_image_sequence.py
+new file mode 100644
+index 0000000..7b1b31b
+--- /dev/null
++++ b/tests/test_image_sequence.py
+@@ -0,0 +1,99 @@
++import math
++import os
++import sys
++import tempfile
++import unittest
++
++import numpy as np
++from PIL import Image
++
++sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++
++from iz_helpers import image_sequence as seq  # noqa: E402
++
++
++class OrderTest(unittest.TestCase):
++    def test_natural_order_and_reverse(self):
++        paths = ["x/img10.png", "x/img2.png", "x/IMG1.png"]
++        self.assertEqual(seq.order_images(paths), ["x/IMG1.png", "x/img2.png", "x/img10.png"])
++        self.assertEqual(seq.order_images(paths, reverse=True), ["x/img10.png", "x/img2.png", "x/IMG1.png"])
++        self.assertEqual(seq.order_images(paths, sort_by_name=False), paths)
++
++    def test_gallery_captions(self):
++        items = seq.gallery_items(["a/01.webp", "a/02.webp", "a/03.webp"])
++        self.assertEqual([caption for _, caption in items],
++                         ["1 (center): 01.webp", "2: 02.webp", "3 (outermost): 03.webp"])
++
++
++class GeometryTest(unittest.TestCase):
++    def test_zoom_factor_two_matches_classic_mask(self):
++        for width, height in [(512, 512), (1024, 576), (576, 1024), (1000, 600)]:
++            with self.subTest(size=(width, height)):
++                self.assertEqual(seq.zoom_mask_size(width, height, 2.0),
++                                 (math.trunc(width / 4), math.trunc(height / 4)))
++        self.assertEqual(seq.zoom_mask_size(1024, 1024, 1.3333), (127, 127))
++
++    def test_output_size_for(self):
++        self.assertEqual(seq.output_size_for((1456, 816)), (1456, 816))
++        self.assertEqual(seq.output_size_for((1010, 700)), (1008, 704))
++        self.assertEqual(seq.output_size_for((4000, 100)), (2048, 96))
++
++    def test_fit_image_center_crops(self):
++        image = Image.new("RGB", (800, 400), "red")
++        image.paste(Image.new("RGB", (400, 400), "blue"), (200, 0))
++        fitted = seq.fit_image(image, 256, 256)
++        self.assertEqual(fitted.size, (256, 256))
++        self.assertEqual(fitted.getpixel((128, 128)), (0, 0, 255))
++
++    def test_compose_layer_puts_previous_frame_in_center(self):
++        outer = Image.new("RGB", (512, 512), (255, 0, 0))
++        inner = Image.new("RGB", (512, 512), (0, 0, 255))
++        composed = seq.compose_layer(outer, inner, 128, 128)
++        self.assertEqual(composed.getpixel((128, 128)), (0, 0, 255))
++        self.assertEqual(composed.getpixel((383, 383)), (0, 0, 255))
++        self.assertEqual(composed.getpixel((127, 127)), (255, 0, 0))
++        self.assertEqual(composed.getpixel((384, 256)), (255, 0, 0))
++        self.assertEqual(outer.getpixel((256, 256)), (255, 0, 0), "outer image must not be modified")
++
++    def test_feathered_paste_restores_center_and_fades_edge(self):
++        base = Image.new("RGB", (512, 512), (255, 0, 0))
++        inner = Image.new("RGB", (512, 512), (0, 0, 255))
++        result = seq.feathered_paste(base, inner, 128, 128, feather=16)
++        self.assertEqual(result.getpixel((256, 256)), (0, 0, 255))
++        self.assertEqual(result.getpixel((128 + 20, 256)), (0, 0, 255))
++        self.assertEqual(result.getpixel((128, 256)), (255, 0, 0))
++        red, _, blue = result.getpixel((128 + 8, 256))
++        self.assertTrue(100 < red < 160 and 100 < blue < 160, (red, blue))
++        self.assertEqual(result.getpixel((100, 256)), (255, 0, 0))
++        self.assertEqual(base.getpixel((256, 256)), (255, 0, 0), "base must not be modified")
++
++    def test_seam_mask_is_a_ring_across_the_center_edge(self):
++        # mask 128, band 64 outward, overlap 8 inward: white x in [64, 135] and [376, 447]
++        self.assertEqual(seq.seam_band_size(128, 128, 0.5), 64)
++        mask = seq.seam_mask(512, 512, 128, 128, band=64, overlap=8)
++        self.assertEqual(mask.mode, "RGB")
++        white, black = (255, 255, 255), (0, 0, 0)
++        expected = {63: black, 64: white, 128: white, 135: white, 136: black, 256: black,
++                    375: black, 376: white, 447: white, 448: black}
++        for x, colour in expected.items():
++            with self.subTest(x=x):
++                self.assertEqual(mask.getpixel((x, 256)), colour)
++        self.assertEqual(mask.getpixel((0, 0)), black)
++        self.assertEqual(seq.seam_band_size(128, 128, 0.01), 2)
++
++
++class LoadTest(unittest.TestCase):
++    def test_transparent_png_becomes_rgb_on_black(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            path = os.path.join(tmp, "alpha.png")
++            array = np.zeros((10, 10, 4), dtype=np.uint8)
++            array[:5, :, :] = (255, 255, 255, 255)
++            Image.fromarray(array, "RGBA").save(path)
++            image = seq.load_image(path)
++            self.assertEqual(image.mode, "RGB")
++            self.assertEqual(image.getpixel((0, 0)), (255, 255, 255))
++            self.assertEqual(image.getpixel((0, 9)), (0, 0, 0))
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/test_keyframes.py b/tests/test_keyframes.py
+new file mode 100644
+index 0000000..92f99ec
+--- /dev/null
++++ b/tests/test_keyframes.py
+@@ -0,0 +1,251 @@
++import math
++import os
++import sys
++import unittest
++
++import numpy as np
++
++sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++
++from iz_helpers import keyframes as kf  # noqa: E402
++
++PYTTI_SAMPLE = (
++    '(lambda builtins, fps, kf: kf[builtins["min"](kf, key = lambda x: builtins["abs"](x-(t*fps)//1))])'
++    '([a for a in (1).__class__.__base__.__subclasses__() if a.__name__ == "catch_warnings"][0]()'
++    '._module.__builtins__, 12, {0: (1.00), 1: (1.53), 2: (2.00)})'
++)
++
++
++class ParseTest(unittest.TestCase):
++    def test_disco_from_generator(self):
++        frames = kf.parse_keyframes("0: (1.00), 1: (1.53), 2: (2.00)")
++        self.assertEqual(frames.format, "Disco/Deforum")
++        self.assertEqual(frames.points, [(0, 1.0), (1, 1.53), (2, 2.0)])
++        self.assertIsNone(frames.fps)
++
++    def test_sparse_deforum_is_interpolated(self):
++        dense = kf.parse_keyframes("0: (1.0), 10: (2.0)").dense()
++        self.assertEqual(len(dense), 11)
++        self.assertAlmostEqual(dense[5], 1.5)
++
++    def test_values_before_first_key_hold(self):
++        dense = kf.parse_keyframes("5: (2.0), 10: (1.0)").dense()
++        self.assertTrue(np.all(dense[:6] == 2.0))
++        self.assertAlmostEqual(dense[10], 1.0)
++
++    def test_disco_without_parentheses_and_newlines(self):
++        frames = kf.parse_keyframes("0: 1,\n1: 1.5\n2:2")
++        self.assertEqual(frames.points, [(0, 1.0), (1, 1.5), (2, 2.0)])
++
++    def test_pytti_is_read_not_executed(self):
++        frames = kf.parse_keyframes(PYTTI_SAMPLE)
++        self.assertEqual(frames.format, "PyTTI")
++        self.assertEqual(frames.fps, 12.0)
++        self.assertEqual(frames.points, [(0, 1.0), (1, 1.53), (2, 2.0)])
++
++    def test_csv_single_column(self):
++        frames = kf.parse_keyframes("1.00\n1.53\r\n2.00\n")
++        self.assertEqual(frames.format, "CSV")
++        self.assertEqual(frames.points, [(0, 1.0), (1, 1.53), (2, 2.0)])
++
++    def test_csv_two_columns_with_header(self):
++        frames = kf.parse_keyframes("frame,value\n0,1\n4,2")
++        self.assertEqual(frames.points, [(0, 1.0), (4, 2.0)])
++
++    def test_json_list_and_object(self):
++        self.assertEqual(kf.parse_keyframes("[1, 1.5]").points, [(0, 1.0), (1, 1.5)])
++        self.assertEqual(kf.parse_keyframes('{"0": 1, "3": 2}').points, [(0, 1.0), (3, 2.0)])
++        self.assertEqual(kf.parse_keyframes("[[0, 1], [2, 3]]").points, [(0, 1.0), (2, 3.0)])
++
++    def test_bom_is_ignored(self):
++        self.assertEqual(kf.parse_keyframes("﻿0: (1.00)").points, [(0, 1.0)])
++
++    def test_rejections(self):
++        bad = [
++            "",
++            "   ",
++            "0: (1.02+0.01*sin(t))",
++            "0: (1), 0: (2)",
++            "hello",
++            "[[-1, 1]]",
++            '{"0": NaN}',
++            "0.5,1",
++            "a,b,c\n1,2,3",
++            "0: (1.0), rm -rf",
++        ]
++        for text in bad:
++            with self.subTest(text=text):
++                with self.assertRaises(kf.KeyframeError):
++                    kf.parse_keyframes(text)
++
++
++class FpsTest(unittest.TestCase):
++    def setUp(self):
++        self.frames = kf.parse_keyframes(", ".join(f"{i}: (1.00)" for i in range(1230)))
++
++    def test_manual(self):
++        self.assertEqual(kf.resolve_fps(self.frames, 24, 30)[0], 24.0)
++
++    def test_pytti(self):
++        fps, note, warning = kf.resolve_fps(kf.parse_keyframes(PYTTI_SAMPLE), 0, 30)
++        self.assertEqual((fps, warning), (12.0, None))
++
++    def test_detected_from_soundtrack(self):
++        # the generator makes ceil(duration * fps) frames: 102.4 s at 12 fps -> 1229 (1230 here)
++        fps, note, warning = kf.resolve_fps(self.frames, 0, 30, audio_duration=102.4)
++        self.assertEqual((fps, warning), (12.0, None))
++
++    def test_odd_rate_warns(self):
++        fps, note, warning = kf.resolve_fps(self.frames, 0, 30, audio_duration=70.0)
++        self.assertAlmostEqual(fps, 1230 / 70.0)
++        self.assertIsNotNone(warning)
++
++    def test_fallback_to_video_fps_warns(self):
++        fps, note, warning = kf.resolve_fps(self.frames, 0, 30)
++        self.assertEqual(fps, 30.0)
++        self.assertIsNotNone(warning)
++
++
++class TimelineTest(unittest.TestCase):
++    def test_speed_one_is_one_step_per_zoom_speed(self):
++        pos = kf.zoom_positions(np.ones(90), 30, 30, 1.0)
++        np.testing.assert_allclose(pos, np.arange(90) / 30)
++        pos = kf.zoom_positions(np.ones(90), 30, 30, 2.0)
++        np.testing.assert_allclose(pos, np.arange(90) / 60)
++
++    def test_speed_two_and_pause(self):
++        np.testing.assert_allclose(kf.zoom_positions(np.full(30, 2.0), 30, 30, 1.0), 2 * np.arange(30) / 30)
++        self.assertTrue(np.all(kf.zoom_positions(np.zeros(30), 30, 30, 1.0) == 0))
++
++    def test_pace_is_independent_of_frame_rates(self):
++        pos = kf.zoom_positions(np.ones(36), 12, 30, 1.0)  # 3 s of keyframes at 12 fps, video at 30 fps
++        self.assertEqual(len(pos), 90)
++        np.testing.assert_allclose(pos, np.arange(90) / 30)
++
++    def test_piecewise_speeds(self):
++        values = np.concatenate([np.ones(30), np.zeros(30), np.full(30, 2.0)])
++        pos = kf.zoom_positions(values, 30, 30, 1.0)
++        self.assertAlmostEqual(pos[30], 1.0)
++        self.assertAlmostEqual(pos[60], 1.0)
++        self.assertAlmostEqual(pos[89], 1.0 + 29 * 2 / 30)
++
++    def test_deforum_zoom(self):
++        pos = kf.zoom_positions(np.full(60, 2 ** (1 / 30)), 30, 30, 1.0, kf.MODE_DEFORUM, zoom_factor=2.0)
++        self.assertAlmostEqual(pos[30], 1.0)
++        self.assertAlmostEqual(pos[59], 59 / 30)
++
++    def test_playback_zoom_in_and_steps(self):
++        forward = np.arange(91) / 30
++        out_pos, steps = kf.playback_positions(forward, zoom_in=False)
++        self.assertEqual(steps, 3)
++        in_pos, steps = kf.playback_positions(forward, zoom_in=True)
++        self.assertEqual(steps, 3)
++        self.assertAlmostEqual(in_pos[0], 3.0)
++        self.assertAlmostEqual(in_pos[-1], 0.0)
++
++    def test_max_steps_clamps(self):
++        pos, needed = kf.playback_positions(np.arange(91) / 30, zoom_in=False, max_steps=2)
++        self.assertEqual(needed, 3)
++        self.assertEqual(pos.max(), 2.0)
++
++    def test_plan_and_description(self):
++        text = ", ".join(f"{i}: (1.00)" for i in range(24))
++        plan = kf.build_plan(text, 12, kf.MODE_SPEED, 30, 0.5, zoom_in=False)
++        self.assertEqual(plan.frame_count, 60)
++        self.assertEqual(plan.steps_needed, 4)
++        description = kf.describe_plan(plan)
++        self.assertIn("Outpaint steps needed:** 4", description)
++        img_plan = kf.build_plan(text, 12, kf.MODE_SPEED, 30, 0.5, zoom_in=False, max_steps=2)
++        self.assertIn("through 3 images over the whole video", kf.describe_plan(img_plan, available_steps=2))
++
++    def test_images_fill_the_whole_video(self):
++        # keyframes worth ~4 steps, but only 2 image steps: the pace is scaled instead of holding still
++        text = ", ".join(f"{i}: (1.00)" for i in range(24))
++        out_plan = kf.build_plan(text, 12, kf.MODE_SPEED, 30, 0.5, zoom_in=False, max_steps=2)
++        self.assertEqual(out_plan.steps_needed, 2)
++        self.assertEqual(out_plan.warnings, [])
++        self.assertIn("pace scaled", out_plan.notes[0])
++        self.assertAlmostEqual(out_plan.positions[-1], 2.0)
++        self.assertTrue(np.all(np.diff(out_plan.positions) > 0), "the zoom must never stand still")
++
++        in_plan = kf.build_plan(text, 12, kf.MODE_SPEED, 30, 0.5, zoom_in=True, max_steps=2)
++        self.assertAlmostEqual(in_plan.positions[0], 2.0)
++        self.assertAlmostEqual(in_plan.positions[-1], 0.0)
++        self.assertLess(in_plan.positions[1], in_plan.positions[0], "zoom-in must start moving at once")
++
++    def test_scaled_pace_still_follows_the_keyframes(self):
++        text = ", ".join(f"{i}: ({1 if i < 12 else 3})" for i in range(24))
++        plan = kf.build_plan(text, 12, kf.MODE_SPEED, 30, 1.0, zoom_in=False, max_steps=4)
++        first_second = plan.positions[29] - plan.positions[0]
++        second_second = plan.positions[59] - plan.positions[30]
++        self.assertAlmostEqual(second_second / first_second, 3.0, delta=0.15)
++
++
++class FunctionTest(unittest.TestCase):
++    def test_generator_default(self):
++        f = kf.compile_function("1 + x^4")
++        np.testing.assert_allclose(f([0, 0.5, 1], [0, 1, 2]), [1, 1.0625, 2])
++
++    def test_documented_example_and_functions(self):
++        f = kf.compile_function("1 + x^4 + sin(pi*y/12)")
++        np.testing.assert_allclose(f([1.0], [6]), [3.0])
++        np.testing.assert_allclose(kf.compile_function("max(x, 0.5)")([0.2, 0.9], [0, 0]), [0.5, 0.9])
++        np.testing.assert_allclose(kf.compile_function("log(8, 2) + t")([0], [2]), [5.0])
++        np.testing.assert_allclose(kf.compile_function("-x^2")([3], [0]), [-9.0])
++
++    def test_rejects_code(self):
++        for source in ["__import__('os')", "x.real", "lambda: 1", "(1).__class__", "x if y else 1",
++                       "a + 1", "open('f')", "[x]", "x < 1", "'s'", "exp(x=1)"]:
++            with self.subTest(source=source):
++                with self.assertRaises(kf.KeyframeError):
++                    kf.compile_function(source)
++
++
++class JsCompatibilityTest(unittest.TestCase):
++    def test_to_fixed_rounding(self):
++        self.assertEqual(kf.format_value(1.125), "1.13")
++        self.assertEqual(kf.format_value(-1.125), "-1.13")
++        self.assertEqual(kf.format_value(1.005), "1.00")
++        self.assertEqual(kf.format_value(0.005), "0.01")
++        self.assertEqual(kf.format_value(2), "2.00")
++
++    def test_disco_format(self):
++        self.assertEqual(kf.format_disco([1, 1.5, 2]), "0: (1.00), 1: (1.50), 2: (2.00)")
++
++    @staticmethod
++    def js_filter_data(left, right, sample_rate, fps):
++        """Line-by-line port of the website's filterData arithmetic (Float32Array stores round to float32)."""
++        raw = [float(np.float32(abs(float(a)) + abs(float(b)))) for a, b in zip(left, right)]
++        raw = [float(np.float32(x / 2)) for x in raw]
++        samples = (len(raw) / sample_rate) * fps
++        block = math.floor(len(raw) / samples)
++        result = []
++        i = 0
++        while i < samples:
++            chunk = raw[i * block:(i + 1) * block - 1]
++            total = 0.0
++            for value in chunk:
++                total = total + value
++            result.append(total / len(chunk) if chunk else math.nan)
++            i += 1
++        return result
++
++    def test_loudness_matches_website_arithmetic(self):
++        rng = np.random.default_rng(7)
++        pcm = rng.uniform(-1, 1, size=(1009, 2)).astype(np.float32)
++        for fps in (12, 12.5, 30):
++            with self.subTest(fps=fps):
++                expected = self.js_filter_data(pcm[:, 0], pcm[:, 1], 97, fps)
++                actual = kf.generator_loudness(pcm, 97, fps)
++                np.testing.assert_array_equal(actual, np.array(expected))
++
++    def test_generate_constant_and_silence(self):
++        loud = np.full((4800, 2), 0.5, dtype=np.float32)
++        text, values = kf.generate_keyframes(loud, 4800, 4)
++        self.assertEqual(text, "0: (2.00), 1: (2.00), 2: (2.00), 3: (2.00)")
++        text, values = kf.generate_keyframes(np.zeros((4800, 2), dtype=np.float32), 4800, 2)
++        self.assertEqual(text, "0: (1.00), 1: (1.00)")
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/test_render_checks.py b/tests/test_render_checks.py
+new file mode 100644
+index 0000000..5a5f8ed
+--- /dev/null
++++ b/tests/test_render_checks.py
+@@ -0,0 +1,26 @@
++import os
++import sys
++import unittest
++
++sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++
++from iz_helpers.render_checks import lcm_warning, lcm_without_lora  # noqa: E402
++
++
++class LcmCheckTest(unittest.TestCase):
++    def test_warns_only_for_lcm_without_any_lora(self):
++        self.assertTrue(lcm_without_lora("LCM", ""))
++        self.assertTrue(lcm_without_lora("LCM Karras", "cinematic photo", None))
++        self.assertFalse(lcm_without_lora("LCM", "<lora:LCM_SDXL15:1> cinematic photo"))
++        self.assertFalse(lcm_without_lora("lcm", "", "style <LORA:hyper-sdxl:0.8>"))
++        self.assertFalse(lcm_without_lora("Euler a", ""))
++        self.assertFalse(lcm_without_lora(None, ""))
++
++    def test_warning_says_where_to_add_the_lora(self):
++        text = lcm_warning("Blend prompt")
++        self.assertIn("Blend prompt", text)
++        self.assertIn("<lora:LCM_SDXL15:1>", text)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/test_video.py b/tests/test_video.py
+new file mode 100644
+index 0000000..ab11c3d
+--- /dev/null
++++ b/tests/test_video.py
+@@ -0,0 +1,107 @@
++import os
++import sys
++import tempfile
++import unittest
++
++import imageio
++import imageio_ffmpeg
++import numpy as np
++from PIL import Image
++
++sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++
++from iz_helpers.video import ZoomVideoWriter, unique_video_path, write_video  # noqa: E402
++
++
++def original_write_video(file_path, frames, fps, reversed=True, start_frame_dupe_amount=15, last_frame_dupe_amount=30):
++    """Verbatim copy of write_video before the update."""
++    if reversed == True:
++        frames = frames[::-1]
++
++    # Drop missformed frames
++    frames = [frame for frame in frames if frame.size == frames[0].size]
++
++    # Create an imageio video writer, avoid block size of 512.
++    writer = imageio.get_writer(file_path, fps=fps, macro_block_size=None)
++
++    # Duplicate the start and end frames
++    start_frames = [frames[0]] * start_frame_dupe_amount
++    end_frames = [frames[-1]] * last_frame_dupe_amount
++
++    # Write the duplicated frames to the video writer
++    for frame in start_frames:
++        # Convert PIL image to numpy array
++        np_frame = np.array(frame)
++        writer.append_data(np_frame)
++
++    # Write the frames to the video writer
++    for frame in frames:
++        np_frame = np.array(frame)
++        writer.append_data(np_frame)
++
++    # Write the duplicated frames to the video writer
++    for frame in  end_frames:
++        np_frame = np.array(frame)
++        writer.append_data(np_frame)
++
++    # Close the video writer
++    writer.close()
++
++
++def decoded(path):
++    reader = imageio_ffmpeg.read_frames(path)
++    meta = next(reader)
++    width, height = meta["size"]
++    return [np.frombuffer(data, dtype=np.uint8).reshape(height, width, 3).copy() for data in reader]
++
++
++class WriterTest(unittest.TestCase):
++    def setUp(self):
++        rng = np.random.default_rng(11)
++        self.frames = [Image.fromarray(rng.integers(0, 256, size=(64, 96, 3), dtype=np.uint8)) for _ in range(9)]
++        self.frames.insert(4, Image.new("RGB", (64, 64), "white"))  # misformed frame
++        self.tmp = tempfile.TemporaryDirectory()
++
++    def tearDown(self):
++        self.tmp.cleanup()
++
++    def test_matches_original_write_video(self):
++        for reverse in (0, 1):
++            for dupes in ((0, 0), (3, 2)):
++                with self.subTest(reverse=reverse, dupes=dupes):
++                    old = os.path.join(self.tmp.name, f"old_{reverse}_{dupes[0]}.mp4")
++                    new = os.path.join(self.tmp.name, f"new_{reverse}_{dupes[0]}.mp4")
++                    original_write_video(old, self.frames, 12, reverse, *dupes)
++                    write_video(new, self.frames, 12, reverse, *dupes)
++                    old_frames, new_frames = decoded(old), decoded(new)
++                    self.assertEqual(len(new_frames), len(old_frames))
++                    for a, b in zip(old_frames, new_frames):
++                        self.assertTrue(np.array_equal(a, b))
++
++    def test_counts_and_duration(self):
++        path = os.path.join(self.tmp.name, "count.mp4")
++        writer = ZoomVideoWriter(path, 12, start_frame_dupe_amount=2, last_frame_dupe_amount=1)
++        for frame in self.frames:
++            writer.append(frame)
++        writer.close()
++        self.assertEqual(writer.frames_dropped, 1)
++        self.assertEqual(writer.frames_written, 9 + 2 + 1)
++        self.assertAlmostEqual(writer.duration, 1.0)
++        self.assertEqual(len(decoded(path)), 12)
++
++
++class UniquePathTest(unittest.TestCase):
++    def test_renders_in_the_same_second_get_distinct_names(self):
++        with tempfile.TemporaryDirectory() as folder:
++            first = unique_video_path(folder, "123")
++            self.assertEqual(os.path.basename(first), "infinite_zoom_123.mp4")
++            open(first, "wb").close()
++            second = unique_video_path(folder, "123")
++            self.assertEqual(os.path.basename(second), "infinite_zoom_123_1.mp4")
++            open(second[:-4] + "_silent.mp4", "wb").close()  # a render still adding its soundtrack
++            self.assertEqual(os.path.basename(unique_video_path(folder, "123")), "infinite_zoom_123_2.mp4")
++            self.assertEqual(os.path.basename(unique_video_path(folder, "124")), "infinite_zoom_124.mp4")
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/tests/test_zoom_frames.py b/tests/test_zoom_frames.py
+new file mode 100644
+index 0000000..0d8b1e3
+--- /dev/null
++++ b/tests/test_zoom_frames.py
+@@ -0,0 +1,164 @@
++import math
++import os
++import sys
++import unittest
++
++import numpy as np
++from PIL import Image
++
++sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++
++from iz_helpers.image import shrink_and_paste_on_blank  # noqa: E402
++from iz_helpers.zoom_frames import (  # noqa: E402
++    FrameRequest,
++    classic_requests,
++    render_request,
++    requests_from_positions,
++)
++
++
++def original_all_frames(main_frames, width, height, mask_width, mask_height, num_interpol_frames):
++    """Verbatim copy of the interpolation loop in create_zoom_single before the update
++    (upscale and collect calls removed; they do not change the frames)."""
++    all_frames = []
++    current_image = main_frames[0]
++    all_frames.append(main_frames[0])
++    for i in range(len(main_frames) - 1):
++        # interpolation steps between 2 inpainted images (=sequential zoom and crop)
++        for j in range(num_interpol_frames - 1):
++            current_image = main_frames[i + 1]
++            interpol_image = current_image
++
++            interpol_width = math.ceil(
++                (
++                    1
++                    - (1 - 2 * mask_width / width)
++                    ** (1 - (j + 1) / num_interpol_frames)
++                )
++                * width
++                / 2
++            )
++
++            interpol_height = math.ceil(
++                (
++                    1
++                    - (1 - 2 * mask_height / height)
++                    ** (1 - (j + 1) / num_interpol_frames)
++                )
++                * height
++                / 2
++            )
++
++            interpol_image = interpol_image.crop(
++                (
++                    interpol_width,
++                    interpol_height,
++                    width - interpol_width,
++                    height - interpol_height,
++                )
++            )
++
++            interpol_image = interpol_image.resize((width, height))
++
++            # paste the higher resolution previous image in the middle to avoid drop in quality caused by zooming
++            interpol_width2 = math.ceil(
++                (1 - (width - 2 * mask_width) / (width - 2 * interpol_width))
++                / 2
++                * width
++            )
++
++            interpol_height2 = math.ceil(
++                (1 - (height - 2 * mask_height) / (height - 2 * interpol_height))
++                / 2
++                * height
++            )
++
++            prev_image_fix_crop = shrink_and_paste_on_blank(
++                main_frames[i], interpol_width2, interpol_height2
++            )
++
++            interpol_image.paste(prev_image_fix_crop, mask=prev_image_fix_crop)
++
++            all_frames.append(interpol_image)
++
++        all_frames.append(current_image)
++    return all_frames
++
++
++def random_frames(count, width, height, seed):
++    rng = np.random.default_rng(seed)
++    return [Image.fromarray(rng.integers(0, 256, size=(height, width, 3), dtype=np.uint8), "RGB")
++            for _ in range(count)]
++
++
++class GoldenInterpolationTest(unittest.TestCase):
++    def test_classic_requests_reproduce_original_frames(self):
++        cases = [((512, 512), 2), ((512, 512), 5), ((1024, 576), 5), ((576, 1024), 2), ((512, 288), 30)]
++        for (width, height), n in cases:
++            with self.subTest(size=(width, height), n=n):
++                main_frames = random_frames(4, width, height, seed=width + n)
++                mask_width, mask_height = math.trunc(width / 4), math.trunc(height / 4)
++                expected = original_all_frames(main_frames, width, height, mask_width, mask_height, n)
++                requests = classic_requests(len(main_frames), n)
++                self.assertEqual(len(requests), len(expected))
++                for index, request in enumerate(requests):
++                    actual = render_request(main_frames, request, width, height, mask_width, mask_height)
++                    self.assertEqual(actual.size, expected[index].size)
++                    self.assertTrue(
++                        np.array_equal(np.array(actual), np.array(expected[index])),
++                        f"frame {index} differs ({request})",
++                    )
++
++    def test_single_frame_per_step_uses_the_next_main_frame(self):
++        main_frames = random_frames(3, 64, 64, seed=1)
++        frames = [render_request(main_frames, r, 64, 64, 16, 16) for r in classic_requests(3, 1)]
++        self.assertEqual([id(f) for f in frames], [id(f) for f in main_frames])
++
++    def test_collect_names_match_original(self):
++        names = []
++        main_frames = random_frames(2, 64, 64, seed=2)
++        request = classic_requests(2, 3)[1]
++        render_request(main_frames, request, 64, 64, 16, 16, collect=lambda image, name: names.append(name))
++        self.assertEqual(names, ["interpol_img_0_0].png", "interpol_resize_0_0.png", "interpol_prevcrop_0_0.png"])
++
++
++class FeatherTest(unittest.TestCase):
++    @staticmethod
++    def mixed_pixels(feather):
++        inner = Image.new("RGB", (256, 256), (0, 0, 255))
++        outer = Image.new("RGB", (256, 256), (255, 0, 0))
++        frame = render_request([inner, outer], FrameRequest(0, 0.5), 256, 256, 64, 64, feather=feather)
++        row = np.array(frame)[128]
++        red, blue = row[:, 0], row[:, 2]
++        return int(np.sum((red > 20) & (red < 235) & (blue > 20) & (blue < 235)))
++
++    def test_feather_softens_the_pasted_edge_only_when_asked(self):
++        self.assertLessEqual(self.mixed_pixels(0), 2)
++        self.assertGreaterEqual(self.mixed_pixels(8), 6)
++
++
++class PositionRequestTest(unittest.TestCase):
++    def test_positions_to_requests(self):
++        requests = requests_from_positions([0, 0.5, 1.0, 1.9999999, 2.25, 9.0], main_frame_count=4)
++        self.assertEqual(requests[0], FrameRequest(0, 0.0))
++        self.assertEqual(requests[1].step, 0)
++        self.assertAlmostEqual(requests[1].fraction, 0.5)
++        self.assertEqual(requests[2], FrameRequest(1, 0.0))
++        self.assertEqual(requests[3], FrameRequest(2, 0.0))
++        self.assertEqual(requests[4].step, 2)
++        self.assertAlmostEqual(requests[4].fraction, 0.25)
++        self.assertEqual(requests[5], FrameRequest(3, 0.0))
++
++    def test_uniform_positions_match_classic_frames(self):
++        main_frames = random_frames(3, 128, 128, seed=3)
++        n = 4
++        positions = [k / n for k in range(2 * n + 1)]
++        by_position = [render_request(main_frames, r, 128, 128, 32, 32)
++                       for r in requests_from_positions(positions, 3)]
++        classic = [render_request(main_frames, r, 128, 128, 32, 32) for r in classic_requests(3, n)]
++        for a, b in zip(by_position, classic):
++            self.assertTrue(np.array_equal(np.array(a), np.array(b)))
++
++
++if __name__ == "__main__":
++    unittest.main()

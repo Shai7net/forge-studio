@@ -1,0 +1,257 @@
+[
+ {
+  "i": 0,
+  "en": "Init image",
+  "ctx": ""
+ },
+ {
+  "i": 1,
+  "en": "the path to your init image",
+  "ctx": "[h] "
+ },
+ {
+  "i": 2,
+  "en": "overlay mask",
+  "ctx": ""
+ },
+ {
+  "i": 3,
+  "en": "Overlay the masked image at the end of the generation so it does not get degraded by encoding and decoding",
+  "ctx": "[h] "
+ },
+ {
+  "i": 4,
+  "en": "Video init path",
+  "ctx": ""
+ },
+ {
+  "i": 5,
+  "en": "the directory / URL at which your video file is located for Video Input mode only",
+  "ctx": "[h] "
+ },
+ {
+  "i": 6,
+  "en": "Interpolate key frames",
+  "ctx": ""
+ },
+ {
+  "i": 7,
+  "en": "selects whether to ignore prompt schedule or _x_frames.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 8,
+  "en": "Interpolate x frames",
+  "ctx": ""
+ },
+ {
+  "i": 9,
+  "en": "the number of frames to transition thru between prompts (when interpolate_key_frames = true, then the numbers in front of the animation prompts will dynamically guide the images based on their value. If set to false, will ignore the prompt numbers and force interpole_x_frames value regardless of prompt number)",
+  "ctx": "[h] "
+ },
+ {
+  "i": 10,
+  "en": "Output format",
+  "ctx": ""
+ },
+ {
+  "i": 11,
+  "en": "select the type of video file to output",
+  "ctx": "[h] "
+ },
+ {
+  "i": 12,
+  "en": "PIL gif",
+  "ctx": ""
+ },
+ {
+  "i": 13,
+  "en": "create an animated GIF",
+  "ctx": "[h] "
+ },
+ {
+  "i": 14,
+  "en": "FFMPEG mp4",
+  "ctx": ""
+ },
+ {
+  "i": 15,
+  "en": "create an MP4 video file",
+  "ctx": "[h] "
+ },
+ {
+  "i": 16,
+  "en": "FFmpeg location",
+  "ctx": ""
+ },
+ {
+  "i": 17,
+  "en": "the path to where ffmpeg is located. Leave at default 'ffmpeg' if ffmpeg is in your PATH!",
+  "ctx": "[h] "
+ },
+ {
+  "i": 18,
+  "en": "FFmpeg crf",
+  "ctx": ""
+ },
+ {
+  "i": 19,
+  "en": "controls quality where lower is better, less compressed. values: 0 to 51, default 17",
+  "ctx": "[h] "
+ },
+ {
+  "i": 20,
+  "en": "FFmpeg preset",
+  "ctx": ""
+ },
+ {
+  "i": 21,
+  "en": "controls how good the compression is, and the operation speed. If you're not in a rush keep it at 'veryslow'",
+  "ctx": "[h] "
+ },
+ {
+  "i": 22,
+  "en": "Use manual settings",
+  "ctx": ""
+ },
+ {
+  "i": 23,
+  "en": "when this is unchecked, the video will automatically be created in the same output folder as the images. Check this box to specify different settings for the creation of the video, specified by the following options",
+  "ctx": "[h] "
+ },
+ {
+  "i": 24,
+  "en": "Render steps",
+  "ctx": ""
+ },
+ {
+  "i": 25,
+  "en": "render each step of diffusion as a separate frame",
+  "ctx": "[h] "
+ },
+ {
+  "i": 26,
+  "en": "Max video frames",
+  "ctx": ""
+ },
+ {
+  "i": 27,
+  "en": "the maximum number of frames to include in the video, when use_manual_settings is checked",
+  "ctx": "[h] "
+ },
+ {
+  "i": 28,
+  "en": "MP4 path",
+  "ctx": ""
+ },
+ {
+  "i": 29,
+  "en": "the output location of the mp4 file, when use_manual_settings is checked",
+  "ctx": "[h] "
+ },
+ {
+  "i": 30,
+  "en": "Interpolate an existing video",
+  "ctx": ""
+ },
+ {
+  "i": 31,
+  "en": "This feature allows you to interpolate any video with a dedicated button. Video could be completly unrelated to deforum",
+  "ctx": "[h] "
+ },
+ {
+  "i": 32,
+  "en": "First Frame as init image",
+  "ctx": ""
+ },
+ {
+  "i": 33,
+  "en": "If True, uses the first frame of the video as the init_image. False can create interesting transition effects into the video, depending on settings.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 34,
+  "en": "Bass",
+  "ctx": "[c] Raw keyframes, like the website"
+ },
+ {
+  "i": 35,
+  "en": "Mids",
+  "ctx": "[c] Raw keyframes, like the website"
+ },
+ {
+  "i": 36,
+  "en": "Highs",
+  "ctx": "[c] Raw keyframes, like the website"
+ },
+ {
+  "i": 37,
+  "en": "Loudness jumps",
+  "ctx": "[c] 5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 38,
+  "en": "Loudest moments",
+  "ctx": "[c] 5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 39,
+  "en": "Quietest moments",
+  "ctx": "[c] 5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 40,
+  "en": "Biggest image change (lowest Strength)",
+  "ctx": "[c] 5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 41,
+  "en": "Song part starts",
+  "ctx": "[c] 5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 42,
+  "en": "Midas+AdaBins (old)",
+  "ctx": "[c] depth_warp_fov_tab"
+ },
+ {
+  "i": 43,
+  "en": "Zoe+AdaBins (old)",
+  "ctx": "[c] depth_warp_fov_tab"
+ },
+ {
+  "i": 44,
+  "en": "Midas-3-Hybrid",
+  "ctx": "[c] depth_warp_fov_tab"
+ },
+ {
+  "i": 45,
+  "en": "AdaBins",
+  "ctx": "[c] depth_warp_fov_tab"
+ },
+ {
+  "i": 46,
+  "en": "Zoe",
+  "ctx": "[c] depth_warp_fov_tab"
+ },
+ {
+  "i": 47,
+  "en": "Leres",
+  "ctx": "[c] depth_warp_fov_tab"
+ },
+ {
+  "i": 48,
+  "en": "Anime Remove Background",
+  "ctx": "[c] component-6959"
+ },
+ {
+  "i": 49,
+  "en": "Mixed",
+  "ctx": "[c] component-6959"
+ },
+ {
+  "i": 50,
+  "en": "None (just grayscale)",
+  "ctx": "[c] component-6959"
+ }
+]

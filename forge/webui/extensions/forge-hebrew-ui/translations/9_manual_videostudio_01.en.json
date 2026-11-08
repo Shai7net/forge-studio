@@ -1,0 +1,622 @@
+[
+ {
+  "i": 0,
+  "en": "Video Studio",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 1,
+  "en": "First + Last Frame",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 2,
+  "en": "Image to Video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 3,
+  "en": "Text to Video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 4,
+  "en": "First frame",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 5,
+  "en": "Last frame",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 6,
+  "en": "Swap first and last",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 7,
+  "en": "Start picture",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 8,
+  "en": "Forge draws the first frame from your prompt with the checkpoint selected at the top of the page (and any LoRA tags in the picture prompt); then Wan animates it.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 9,
+  "en": "Shape",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 10,
+  "en": "Sampler for the picture",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 11,
+  "en": "Picture prompt (empty: the video prompt)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 12,
+  "en": "Picture steps",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 13,
+  "en": "Picture CFG",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 14,
+  "en": "Prompt: what happens in the video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 15,
+  "en": "Describe the motion and the camera, in English, e.g. 'The man stands up, catches a suit thrown to him and walks into the next room.'",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 16,
+  "en": "Quality",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 17,
+  "en": "Length (seconds)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 18,
+  "en": "Seed (-1 random)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 19,
+  "en": "Smooth motion: 32 fps (FILM)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 20,
+  "en": "Enlarge the finished video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 21,
+  "en": "LoRA 1",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 22,
+  "en": "Strength 1",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 23,
+  "en": "LoRA 2",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 24,
+  "en": "Strength 2",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 25,
+  "en": "Wan 2.2 LoRAs from models/VideoStudio/loras or models/Lora/wan. A file whose name says 'high' or 'low' goes to that expert only; any other goes to both.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 26,
+  "en": "Refresh list",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 27,
+  "en": "Negative prompt (used only when CFG is above 1)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 28,
+  "en": "Attention",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 29,
+  "en": "Fast int8 math (about 1.5x faster)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 30,
+  "en": "Width (0: from quality)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 31,
+  "en": "Height (0: from quality)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 32,
+  "en": "Models",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 33,
+  "en": "Download the missing files of this model",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 34,
+  "en": "Generate video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 35,
+  "en": "Stop",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 36,
+  "en": "Preview (middle frame while it is made)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 37,
+  "en": "Details",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 38,
+  "en": "Continue from the last frame",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 39,
+  "en": "Open the output folder",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 40,
+  "en": "Starting",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 41,
+  "en": "Reading the prompt",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 42,
+  "en": "Preparing the frames",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 43,
+  "en": "Loading the model",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 44,
+  "en": "Making the video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 45,
+  "en": "Turning it into frames",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 46,
+  "en": "Smoothing motion (FILM)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 47,
+  "en": "Enlarging",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 48,
+  "en": "Saving the video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 49,
+  "en": "Done",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 50,
+  "en": "Error",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 51,
+  "en": "Stopped",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 52,
+  "en": "Drawing the first frame",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 53,
+  "en": "Ready",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 54,
+  "en": "Refine the last video: same motion, sharper",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 55,
+  "en": "Refine to",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 56,
+  "en": "Strength",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 57,
+  "en": "Make takes quickly at 480p; when you like one, refine it here. The clip is drawn again at the larger size from its own frames, keeping the motion.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 58,
+  "en": "Refine the last video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 59,
+  "en": "Show the last video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 60,
+  "en": "Sound and speech for the last video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 61,
+  "en": "AI sound effects from the picture (MMAudio)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 62,
+  "en": "Effects volume (dB)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 63,
+  "en": "What is heard (plain English words; empty: from the picture alone)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 64,
+  "en": "Sounds not wanted",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 65,
+  "en": "Speech",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 66,
+  "en": "No speech",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 67,
+  "en": "Text",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 68,
+  "en": "My recording",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 69,
+  "en": "What the character says",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 70,
+  "en": "Language",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 71,
+  "en": "Voice",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 72,
+  "en": "Recording: a sound file",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 73,
+  "en": "Recording: the microphone",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 74,
+  "en": "A recording is either what the character says (Speech: My recording) or, with the voice 'Copy the voice of my recording', the voice the text is spoken in.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 75,
+  "en": "Speech starts at (seconds)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 76,
+  "en": "Expressiveness",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 77,
+  "en": "Voice volume (dB)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 78,
+  "en": "Move the lips to the words (MuseTalk)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 79,
+  "en": "Sound seed",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 80,
+  "en": "Add sound",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 81,
+  "en": "Making the voice",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 82,
+  "en": "Making the sound effects",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 83,
+  "en": "Moving the lips",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 84,
+  "en": "Mixing the sound",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 85,
+  "en": "Refresh styles",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 86,
+  "en": "Write into the prompt",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 87,
+  "en": "Save the prompt as a style",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 88,
+  "en": "Style name",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 89,
+  "en": "Save style",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 90,
+  "en": "Saved in Forge's own styles list (the txt2img one too). A style can carry a LoRA: `<lora:file name:1>, trigger words`. In Video Studio a tag that names a Wan LoRA loads it (both halves of a high/low pair); the trigger words stay in the prompt.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 91,
+  "en": "Add AI sound automatically (MMAudio, about 1.5 min)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 92,
+  "en": "Sound: what is heard (plain English; empty: the prompt and the picture)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 93,
+  "en": "Wan 2.2 LoRAs from models/VideoStudio/loras or models/Lora/wan. A file whose name says 'high' or 'low' goes to that expert only, and its other half (same name, high/low) is loaded with it; any other goes to both. `<lora:name:1>` in the prompt or a style works too.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 94,
+  "en": "Replace a character",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 95,
+  "en": "The person in your video becomes the character in your picture: the motion, the face's expressions, the camera and the background stay (Wan 2.2 Animate). One person per run; for two, run again on the result. The prompt is optional here.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 96,
+  "en": "The new character (best: whole body, plain background)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 97,
+  "en": "Start at (seconds)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 98,
+  "en": "Find the people",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 99,
+  "en": "People found (numbered from the left)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 100,
+  "en": "Person to replace",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 101,
+  "en": "Frames per second",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 102,
+  "en": "Area redrawn",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 103,
+  "en": "Box: the character may differ in shape (official)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 104,
+  "en": "Outline: keeps more of the background",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 105,
+  "en": "Keep the video's own sound",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 106,
+  "en": "Light the character like the scene (relight LoRA)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 107,
+  "en": "Steps",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 108,
+  "en": "Download the missing files",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 109,
+  "en": "480p - fast (about 6 min per 5 s)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 110,
+  "en": "576p - sharper (about 10 min per 5 s)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 111,
+  "en": "Reading the video (pose, face, the person's outline)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 112,
+  "en": "Models: all here (Wan 2.2 Animate 14B Q3, lightx2v, relight, SAM 2.1, DWPose, CLIP-H).",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 113,
+  "en": "Length to replace (seconds)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 114,
+  "en": "Quality of the replacement",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 115,
+  "en": "Steps of the replacement",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 116,
+  "en": "Person in the picture",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 117,
+  "en": "Who becomes whom",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 118,
+  "en": "Only the chosen person (with the chosen person of the picture)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 119,
+  "en": "Everyone in the picture, in the same order from the left",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 120,
+  "en": "Everyone in the picture, in reverse order",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 121,
+  "en": "People found (numbered from the left): the video, then the picture",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 122,
+  "en": "The person in your video becomes the character in your picture: the motion, the face's expressions, the camera and the background stay (Wan 2.2 Animate). A picture of several people: choose one, or 'Everyone in the picture' (one pass per person). Describe the character in the prompt (clothes, hair) for the best likeness.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 123,
+  "en": "Make the faces like the picture (FaceFusion face swap, about 1 min per person)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ }
+]

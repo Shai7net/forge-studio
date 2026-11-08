@@ -1,0 +1,22 @@
+[
+ {
+  "i": 0,
+  "en": "🎧 Listen and mark frames",
+  "ctx": "[t] Deforum Audio Keyframes (audio_keyframes_ui.py)"
+ },
+ {
+  "i": 1,
+  "en": "Listen",
+  "ctx": "[t] Deforum Audio Keyframes player"
+ },
+ {
+  "i": 2,
+  "en": "Reaction time (s)",
+  "ctx": "[t] Deforum Audio Keyframes player"
+ },
+ {
+  "i": 3,
+  "en": "While the song plays, M and P mark this much earlier. 0 = exactly what you hear.",
+  "ctx": "[h] Deforum Audio Keyframes player"
+ }
+]

@@ -1,0 +1,1302 @@
+[
+ {
+  "i": 0,
+  "en": "SelfAttentionGuidance Integrated",
+  "ctx": "SelfAttentionGuidance Integrated"
+ },
+ {
+  "i": 1,
+  "en": "Scale",
+  "ctx": "SelfAttentionGuidance Integrated"
+ },
+ {
+  "i": 2,
+  "en": "Blur Sigma",
+  "ctx": "SelfAttentionGuidance Integrated"
+ },
+ {
+  "i": 3,
+  "en": "HyperTile Integrated",
+  "ctx": "HyperTile Integrated"
+ },
+ {
+  "i": 4,
+  "en": "Tile Size",
+  "ctx": "HyperTile Integrated"
+ },
+ {
+  "i": 5,
+  "en": "Swap Size",
+  "ctx": "HyperTile Integrated"
+ },
+ {
+  "i": 6,
+  "en": "Max Depth",
+  "ctx": "HyperTile Integrated"
+ },
+ {
+  "i": 7,
+  "en": "Scale Depth",
+  "ctx": "HyperTile Integrated"
+ },
+ {
+  "i": 8,
+  "en": "Kohya HRFix Integrated",
+  "ctx": "Kohya HRFix Integrated"
+ },
+ {
+  "i": 9,
+  "en": "Block Number",
+  "ctx": "Kohya HRFix Integrated"
+ },
+ {
+  "i": 10,
+  "en": "Downscale Factor",
+  "ctx": "Kohya HRFix Integrated"
+ },
+ {
+  "i": 11,
+  "en": "Start Percent",
+  "ctx": "Kohya HRFix Integrated"
+ },
+ {
+  "i": 12,
+  "en": "End Percent",
+  "ctx": "Kohya HRFix Integrated"
+ },
+ {
+  "i": 13,
+  "en": "Downscale After Skip",
+  "ctx": "Kohya HRFix Integrated"
+ },
+ {
+  "i": 14,
+  "en": "Downscale Method",
+  "ctx": "Kohya HRFix Integrated"
+ },
+ {
+  "i": 15,
+  "en": "bicubic",
+  "ctx": "[c] Kohya HRFix Integrated"
+ },
+ {
+  "i": 16,
+  "en": "nearest-exact",
+  "ctx": "[c] Kohya HRFix Integrated"
+ },
+ {
+  "i": 17,
+  "en": "bilinear",
+  "ctx": "[c] Kohya HRFix Integrated"
+ },
+ {
+  "i": 18,
+  "en": "area",
+  "ctx": "[c] Kohya HRFix Integrated"
+ },
+ {
+  "i": 19,
+  "en": "bislerp",
+  "ctx": "[c] Kohya HRFix Integrated"
+ },
+ {
+  "i": 20,
+  "en": "Upscale Method",
+  "ctx": "Kohya HRFix Integrated"
+ },
+ {
+  "i": 21,
+  "en": "LatentModifier Integrated",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 22,
+  "en": "Sharpness Multiplier",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 23,
+  "en": "Sharpness Method",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 24,
+  "en": "anisotropic",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 25,
+  "en": "joint-anisotropic",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 26,
+  "en": "gaussian",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 27,
+  "en": "cas",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 28,
+  "en": "Tonemap Multiplier",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 29,
+  "en": "Tonemap Method",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 30,
+  "en": "reinhard",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 31,
+  "en": "arctan",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 32,
+  "en": "quantile",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 33,
+  "en": "gated",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 34,
+  "en": "cfg-mimic",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 35,
+  "en": "spatial-norm",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 36,
+  "en": "Tonemap Percentile",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 37,
+  "en": "Contrast Multiplier",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 38,
+  "en": "Combat Method",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 39,
+  "en": "subtract",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 40,
+  "en": "sharpen",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 41,
+  "en": "Combat Cfg Drift",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 42,
+  "en": "Rescale Cfg Phi",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 43,
+  "en": "Extra Noise Type",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 44,
+  "en": "uniform",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 45,
+  "en": "perlin",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 46,
+  "en": "pink",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 47,
+  "en": "green",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 48,
+  "en": "pyramid",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 49,
+  "en": "Extra Noise Method",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 50,
+  "en": "add",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 51,
+  "en": "speckle",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 52,
+  "en": "cads",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 53,
+  "en": "Extra Noise Multiplier",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 54,
+  "en": "Extra Noise Lowpass",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 55,
+  "en": "Divisive Norm Size",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 56,
+  "en": "Divisive Norm Multiplier",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 57,
+  "en": "Spectral Mod Mode",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 58,
+  "en": "Spectral Mod Percentile",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 59,
+  "en": "Spectral Mod Multiplier",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 60,
+  "en": "Affect Uncond",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 61,
+  "en": "Sharpness",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 62,
+  "en": "Dyn Cfg Augmentation",
+  "ctx": "LatentModifier Integrated"
+ },
+ {
+  "i": 63,
+  "en": "dyncfg-halfcosine",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 64,
+  "en": "dyncfg-halfcosine-mimic",
+  "ctx": "[c] LatentModifier Integrated"
+ },
+ {
+  "i": 65,
+  "en": "MultiDiffusion Integrated",
+  "ctx": "MultiDiffusion Integrated"
+ },
+ {
+  "i": 66,
+  "en": "Method",
+  "ctx": "MultiDiffusion Integrated"
+ },
+ {
+  "i": 67,
+  "en": "MultiDiffusion",
+  "ctx": "[c] MultiDiffusion Integrated"
+ },
+ {
+  "i": 68,
+  "en": "Mixture of Diffusers",
+  "ctx": "[c] MultiDiffusion Integrated"
+ },
+ {
+  "i": 69,
+  "en": "Tile Width",
+  "ctx": "MultiDiffusion Integrated"
+ },
+ {
+  "i": 70,
+  "en": "Tile Height",
+  "ctx": "MultiDiffusion Integrated"
+ },
+ {
+  "i": 71,
+  "en": "Tile Overlap",
+  "ctx": "MultiDiffusion Integrated"
+ },
+ {
+  "i": 72,
+  "en": "Tile Batch Size",
+  "ctx": "MultiDiffusion Integrated"
+ },
+ {
+  "i": 73,
+  "en": "StyleAlign Integrated",
+  "ctx": "StyleAlign Integrated"
+ },
+ {
+  "i": 74,
+  "en": "Share attention in batch",
+  "ctx": "StyleAlign Integrated"
+ },
+ {
+  "i": 75,
+  "en": "Never OOM Integrated",
+  "ctx": "Never OOM Integrated"
+ },
+ {
+  "i": 76,
+  "en": "Enabled for UNet (always maximize offload)",
+  "ctx": "Never OOM Integrated"
+ },
+ {
+  "i": 77,
+  "en": "Enabled for VAE (always tiled)",
+  "ctx": "Never OOM Integrated"
+ },
+ {
+  "i": 78,
+  "en": "Script",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 79,
+  "en": "Put variable parts at start of prompt",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 80,
+  "en": "Use different seed for each picture",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 81,
+  "en": "Select prompt",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 82,
+  "en": "positive",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 83,
+  "en": "negative",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 84,
+  "en": "Select joining char",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 85,
+  "en": "comma",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 86,
+  "en": "space",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 87,
+  "en": "Grid margins (px)",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 88,
+  "en": "Iterate seed every line",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 89,
+  "en": "Use same random seed for all lines",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 90,
+  "en": "Insert prompts at the",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 91,
+  "en": "start",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 92,
+  "en": "end",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 93,
+  "en": "List of prompt inputs",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 94,
+  "en": "Upload prompt inputs",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 95,
+  "en": "X type",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 96,
+  "en": "X values",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 97,
+  "en": "Y type",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 98,
+  "en": "Y values",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 99,
+  "en": "Z type",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 100,
+  "en": "Z values",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 101,
+  "en": "Draw legend",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 102,
+  "en": "Keep -1 for seeds",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 103,
+  "en": "Vary seeds for X",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 104,
+  "en": "Vary seeds for Y",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 105,
+  "en": "Vary seeds for Z",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 106,
+  "en": "Include Sub Images",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 107,
+  "en": "Include Sub Grids",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 108,
+  "en": "Use text inputs instead of dropdowns",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 109,
+  "en": "Swap X/Y axes",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 110,
+  "en": "Swap Y/Z axes",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 111,
+  "en": "Swap X/Z axes",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 112,
+  "en": "Interpolate method",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 113,
+  "en": "Travel steps between stages",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 114,
+  "en": "Reset Cuda",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 115,
+  "en": "Reference image folder (one ref image per stage :)",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 116,
+  "en": "mid",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 117,
+  "en": "Video file format",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 118,
+  "en": "Video FPS",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 119,
+  "en": "Pad begin/end frames",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 120,
+  "en": "Pick frame by slice",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 121,
+  "en": "Ext. export video",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 122,
+  "en": "Ext. skip latent fusion",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 123,
+  "en": "Save RIFE intermediates",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 124,
+  "en": "Travel mode",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 125,
+  "en": "linear",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 126,
+  "en": "replace",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 127,
+  "en": "Linear interp method",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 128,
+  "en": "Replace dimension",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 129,
+  "en": "Replace order",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 130,
+  "en": "Frame genesis",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 131,
+  "en": "Denoise strength",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 132,
+  "en": "Denoise steps for embryo",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 133,
+  "en": "Depth image file",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 134,
+  "en": "Ext. depth-image-io (for depth2img models)",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 135,
+  "en": "Structual Similarity Index Metric",
+  "ctx": "Structual Similarity Index Metric"
+ },
+ {
+  "i": 136,
+  "en": "SSIM threshold",
+  "ctx": "Structual Similarity Index Metric"
+ },
+ {
+  "i": 137,
+  "en": "SSIM CenterCrop%",
+  "ctx": "Structual Similarity Index Metric"
+ },
+ {
+  "i": 138,
+  "en": "SSIM minimum step",
+  "ctx": "Structual Similarity Index Metric"
+ },
+ {
+  "i": 139,
+  "en": "SSIM min threshold",
+  "ctx": "Structual Similarity Index Metric"
+ },
+ {
+  "i": 140,
+  "en": "SSIM blur (helps with images featuring many small changing details)",
+  "ctx": "Structual Similarity Index Metric"
+ },
+ {
+  "i": 141,
+  "en": "Interrupt",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 142,
+  "en": "Skip",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 143,
+  "en": "Interrupting...",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 144,
+  "en": "Generate",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 145,
+  "en": "Panorama",
+  "ctx": "Panorama"
+ },
+ {
+  "i": 146,
+  "en": "Preset Manager",
+  "ctx": "Preset Manager"
+ },
+ {
+  "i": 147,
+  "en": "Quick",
+  "ctx": "Preset Manager"
+ },
+ {
+  "i": 148,
+  "en": "Detailed",
+  "ctx": "Preset Manager"
+ },
+ {
+  "i": 149,
+  "en": "Restart",
+  "ctx": "[c] Preset Manager"
+ },
+ {
+  "i": 150,
+  "en": "Print",
+  "ctx": "Preset Manager"
+ },
+ {
+  "i": 151,
+  "en": "Info",
+  "ctx": "Preset Manager"
+ },
+ {
+  "i": 152,
+  "en": "Stackable",
+  "ctx": "component-2915"
+ },
+ {
+  "i": 153,
+  "en": "Quick Save",
+  "ctx": "component-2915"
+ },
+ {
+  "i": 154,
+  "en": "Basic info",
+  "ctx": "Basic info"
+ },
+ {
+  "i": 155,
+  "en": "❌Delete",
+  "ctx": "component-2924"
+ },
+ {
+  "i": 156,
+  "en": "Detailed Save As",
+  "ctx": "component-2924"
+ },
+ {
+  "i": 157,
+  "en": "This preset affects?",
+  "ctx": "component-2924"
+ },
+ {
+  "i": 158,
+  "en": "Gather",
+  "ctx": "component-2937"
+ },
+ {
+  "i": 159,
+  "en": "Dropdown",
+  "ctx": "component-2937"
+ },
+ {
+  "i": 160,
+  "en": "Edit user metadata",
+  "ctx": "txt2img_textual_inversion"
+ },
+ {
+  "i": 161,
+  "en": "Description",
+  "ctx": "txt2img_textual_inversion"
+ },
+ {
+  "i": 162,
+  "en": "Notes",
+  "ctx": "txt2img_textual_inversion"
+ },
+ {
+  "i": 163,
+  "en": "Replace preview",
+  "ctx": "txt2img_textual_inversion"
+ },
+ {
+  "i": 164,
+  "en": "Preferred VAE",
+  "ctx": "txt2img_checkpoints"
+ },
+ {
+  "i": 165,
+  "en": "Stable Diffusion version",
+  "ctx": "txt2img_lora"
+ },
+ {
+  "i": 166,
+  "en": "Training dataset tags",
+  "ctx": "txt2img_lora"
+ },
+ {
+  "i": 167,
+  "en": "Activation text",
+  "ctx": "txt2img_lora"
+ },
+ {
+  "i": 168,
+  "en": "Will be added to prompt along with Lora",
+  "ctx": "txt2img_lora"
+ },
+ {
+  "i": 169,
+  "en": "Preferred weight",
+  "ctx": "txt2img_lora"
+ },
+ {
+  "i": 170,
+  "en": "Set to 0 to disable",
+  "ctx": "txt2img_lora"
+ },
+ {
+  "i": 171,
+  "en": "Will be added to negative prompts",
+  "ctx": "txt2img_lora"
+ },
+ {
+  "i": 172,
+  "en": "Random prompt",
+  "ctx": "txt2img_lora"
+ },
+ {
+  "i": 173,
+  "en": "Save preview",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 174,
+  "en": "Refresh",
+  "ctx": "[t] tab_txt2img"
+ },
+ {
+  "i": 175,
+  "en": "Inpaint sketch",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 176,
+  "en": "Inpaint upload",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 177,
+  "en": "Batch",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 178,
+  "en": "Image for img2img",
+  "ctx": "img2img_img2img_tab"
+ },
+ {
+  "i": 179,
+  "en": "Copy image to:",
+  "ctx": "img2img_img2img_tab"
+ },
+ {
+  "i": 180,
+  "en": "sketch",
+  "ctx": "img2img_img2img_tab"
+ },
+ {
+  "i": 181,
+  "en": "inpaint",
+  "ctx": "[c] img2img_img2img_tab"
+ },
+ {
+  "i": 182,
+  "en": "inpaint sketch",
+  "ctx": "img2img_img2img_tab"
+ },
+ {
+  "i": 183,
+  "en": "Alt + wheel",
+  "ctx": "img2img_img2img_sketch_tab"
+ },
+ {
+  "i": 184,
+  "en": "- Zoom canvas",
+  "ctx": "img2img_img2img_sketch_tab"
+ },
+ {
+  "i": 185,
+  "en": "Ctrl + wheel",
+  "ctx": "img2img_img2img_sketch_tab"
+ },
+ {
+  "i": 186,
+  "en": "- Adjust brush size",
+  "ctx": "img2img_img2img_sketch_tab"
+ },
+ {
+  "i": 187,
+  "en": "R",
+  "ctx": "img2img_img2img_sketch_tab"
+ },
+ {
+  "i": 188,
+  "en": "- Reset zoom",
+  "ctx": "img2img_img2img_sketch_tab"
+ },
+ {
+  "i": 189,
+  "en": "S",
+  "ctx": "img2img_img2img_sketch_tab"
+ },
+ {
+  "i": 190,
+  "en": "- Fullscreen mode",
+  "ctx": "img2img_img2img_sketch_tab"
+ },
+ {
+  "i": 191,
+  "en": "F",
+  "ctx": "img2img_img2img_sketch_tab"
+ },
+ {
+  "i": 192,
+  "en": "- Move canvas",
+  "ctx": "img2img_img2img_sketch_tab"
+ },
+ {
+  "i": 193,
+  "en": "Image for inpainting with mask",
+  "ctx": "img2img_inpaint_tab"
+ },
+ {
+  "i": 194,
+  "en": "Color sketch inpainting",
+  "ctx": "img2img_inpaint_sketch_tab"
+ },
+ {
+  "i": 195,
+  "en": "Input directory",
+  "ctx": "img2img_batch_tab"
+ },
+ {
+  "i": 196,
+  "en": "Output directory",
+  "ctx": "img2img_batch_tab"
+ },
+ {
+  "i": 197,
+  "en": "Inpaint batch mask directory (required for inpaint batch processing only)",
+  "ctx": "img2img_batch_tab"
+ },
+ {
+  "i": 198,
+  "en": "Controlnet input directory",
+  "ctx": "img2img_batch_tab"
+ },
+ {
+  "i": 199,
+  "en": "PNG info",
+  "ctx": "PNG info"
+ },
+ {
+  "i": 200,
+  "en": "Append png info to prompts",
+  "ctx": "PNG info"
+ },
+ {
+  "i": 201,
+  "en": "PNG info directory",
+  "ctx": "PNG info"
+ },
+ {
+  "i": 202,
+  "en": "Parameters to take from png info",
+  "ctx": "PNG info"
+ },
+ {
+  "i": 203,
+  "en": "Prompts from png info will be appended to prompts set in ui.",
+  "ctx": "PNG info"
+ },
+ {
+  "i": 204,
+  "en": "CFG scale",
+  "ctx": "[c] PNG info"
+ },
+ {
+  "i": 205,
+  "en": "Sampler",
+  "ctx": "[c] PNG info"
+ },
+ {
+  "i": 206,
+  "en": "Steps",
+  "ctx": "[c] PNG info"
+ },
+ {
+  "i": 207,
+  "en": "Model hash",
+  "ctx": "[c] PNG info"
+ },
+ {
+  "i": 208,
+  "en": "Resize mode",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 209,
+  "en": "Just resize",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 210,
+  "en": "Crop and resize",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 211,
+  "en": "Resize and fill",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 212,
+  "en": "Just resize (latent upscale)",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 213,
+  "en": "Mask blur",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 214,
+  "en": "Mask transparency",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 215,
+  "en": "Mask mode",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 216,
+  "en": "Inpaint masked",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 217,
+  "en": "Inpaint not masked",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 218,
+  "en": "Masked content",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 219,
+  "en": "fill",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 220,
+  "en": "original",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 221,
+  "en": "latent noise",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 222,
+  "en": "latent nothing",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 223,
+  "en": "Inpaint area",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 224,
+  "en": "Whole picture",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 225,
+  "en": "Only masked",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 226,
+  "en": "Only masked padding, pixels",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 227,
+  "en": "Soft inpainting",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 228,
+  "en": "Schedule bias",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 229,
+  "en": "Shifts when preservation of original content occurs during denoising.",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 230,
+  "en": "Preservation strength",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 231,
+  "en": "How strongly partially masked content should be preserved.",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 232,
+  "en": "Transition contrast boost",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 233,
+  "en": "Amplifies the contrast that may be lost in partially masked regions.",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 234,
+  "en": "Pixel Composite Settings",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 235,
+  "en": "Mask influence",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 236,
+  "en": "How strongly the original mask should bias the difference threshold.",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 237,
+  "en": "Difference threshold",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 238,
+  "en": "How much an image region can change before the original pixels are not blended in anymore.",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 239,
+  "en": "Difference contrast",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 240,
+  "en": "How sharp the transition should be between blended and not blended.",
+  "ctx": "Soft inpainting"
+ },
+ {
+  "i": 241,
+  "en": "Help",
+  "ctx": "Help"
+ },
+ {
+  "i": 242,
+  "en": "Resize to",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 243,
+  "en": "Resize by",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 244,
+  "en": "no image selected",
+  "ctx": "img2img_tab_resize_by"
+ },
+ {
+  "i": 245,
+  "en": "Unused",
+  "ctx": "img2img_tab_resize_by"
+ },
+ {
+  "i": 246,
+  "en": "Image CFG Scale",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 247,
+  "en": "I2V Traditional",
+  "ctx": "I2V Traditional"
+ },
+ {
+  "i": 248,
+  "en": "Latent power",
+  "ctx": "I2V Traditional"
+ },
+ {
+  "i": 249,
+  "en": "Latent scale",
+  "ctx": "I2V Traditional"
+ },
+ {
+  "i": 250,
+  "en": "Optional latent power for last frame",
+  "ctx": "I2V Traditional"
+ },
+ {
+  "i": 251,
+  "en": "Optional latent scale for last frame",
+  "ctx": "I2V Traditional"
+ },
+ {
+  "i": 252,
+  "en": "Optional last frame. Leave it blank if you do not need one.",
+  "ctx": "I2V Traditional"
+ },
+ {
+  "i": 253,
+  "en": "Save Original (Swap in generated only)",
+  "ctx": "component-3485"
+ },
+ {
+  "i": 254,
+  "en": "Use img2img seed",
+  "ctx": "Replacer"
+ },
+ {
+  "i": 255,
+  "en": "Copy to Inpaint Upload & img2img ControlNet Inpainting",
+  "ctx": "component-3641"
+ },
+ {
+  "i": 256,
+  "en": "Upload independent control image",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 257,
+  "en": "should be 2 or lower.",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 258,
+  "en": "Override `Sampling method` to Euler?(this method is built for it)",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 259,
+  "en": "Override `prompt` to the same value as `original prompt`?(and `negative prompt`)",
+  "ctx": "component-3119"
+ }
+]

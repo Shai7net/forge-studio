@@ -1,0 +1,82 @@
+[
+ {
+  "i": 0,
+  "en": "Preview",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 1,
+  "en": "Preview a frame",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 2,
+  "en": "Preview from second",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 3,
+  "en": "Preview length (seconds)",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 4,
+  "en": "Compare with the original",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 5,
+  "en": "Take the moment the source video is standing on",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 6,
+  "en": "Quality of videos made in Extras (H.264 CRF)",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 7,
+  "en": "(lower = better picture and a bigger file; 16 is hard to tell from the frames themselves, 23 is ffmpeg's default)",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 8,
+  "en": "Keep restored faces steady from frame to frame in videos made in Extras",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 9,
+  "en": "(GFPGAN and CodeFormer restore each frame on its own, so faces shimmer and pop in and out; off = every frame as a picture would come out)",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 10,
+  "en": "Hires seed",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 11,
+  "en": "Added to the prompt",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 12,
+  "en": "Keep the drawing steady from frame to frame",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 13,
+  "en": "Faster on large sizes (attention in tiles)",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 14,
+  "en": "Empty: the prompt the video or picture was made with, when it still carries it",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ },
+ {
+  "i": 15,
+  "en": "Empty: the negative prompt it was made with",
+  "ctx": "[t] Extras > Video (ui_postprocessing.py, shared_options.py)"
+ }
+]

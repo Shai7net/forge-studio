@@ -1,0 +1,3044 @@
+diff --git a/scripts/animatediff.py b/scripts/animatediff.py
+index 9a6916b..1d1c36c 100644
+--- a/scripts/animatediff.py
++++ b/scripts/animatediff.py
+@@ -57,6 +57,10 @@ class AnimateDiffScript(scripts.Script):
+         params.apply_xyz()
+         xyz_attrs.clear()
+ 
++        if params.dance_mode:
++            from scripts.animatediff_dance import apply_dance_mode
++            apply_dance_mode(params, p)
++
+         if params.enable:
+             logger.info("AnimateDiff process start.")
+             motion_module.load(params.model)
+@@ -66,13 +70,22 @@ class AnimateDiffScript(scripts.Script):
+ 
+ 
+     def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
+-        if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and not params.is_i2i_batch:
++        if params.enable and params.segments:
++            params.next_segment(p, kwargs.get("batch_number", 0))
++        # Image-to-video turns the picture into noise frame by frame. With a mask (one, or one for every frame)
++        # the picture is the background of every frame, and what is drawn inside the mask has to fit it: against
++        # the noise it came out as a wavy pattern.
++        if params.enable and isinstance(p, StableDiffusionProcessingImg2Img) and not params.is_i2i_batch \
++                and getattr(p, "image_mask", None) is None:
+             AnimateDiffI2VLatent().randomize(p, params)
+ 
+ 
+     def process_batch(self, p, params: AnimateDiffProcess, **kwargs):
+         if params.enable:
+             motion_module.set_ddim_alpha(p.sd_model)
++            if params.dance_mode:
++                from scripts.animatediff_dance import apply_region_masks
++                apply_region_masks(params, p)
+ 
+ 
+     def process_before_every_sampling(self, p, params: AnimateDiffProcess, **kwargs):
+@@ -80,6 +93,18 @@ class AnimateDiffScript(scripts.Script):
+             motion_module.inject(p.sd_model, params.model)
+ 
+ 
++    def postprocess_image(self, p: StableDiffusionProcessing, pp, params: AnimateDiffProcess):
++        if params.enable and params.frame_masks:
++            from scripts.animatediff_i2ibatch import enlarge_cut_out
++            enlarge_cut_out(p, pp)
++
++
++    def postprocess_image_after_composite(self, p: StableDiffusionProcessing, pp, params: AnimateDiffProcess):
++        if params.enable and params.frame_masks:
++            from scripts.animatediff_i2ibatch import draw_balls
++            draw_balls(p, pp)
++
++
+     def postprocess_batch_list(self, p: StableDiffusionProcessing, pp: PostprocessBatchListArgs, params: AnimateDiffProcess, **kwargs):
+         if params.enable:
+             params.prompt_scheduler.save_infotext_img(p)
+diff --git a/scripts/animatediff_dance.py b/scripts/animatediff_dance.py
+new file mode 100644
+index 0000000..37fb720
+--- /dev/null
++++ b/scripts/animatediff_dance.py
+@@ -0,0 +1,987 @@
++"""
++Dance transfer: objects that dance like the people in a video.
++
++- Frames are taken evenly at a fixed FPS (ffmpeg fps filter), so the render stays in sync with the
++  video's music. The old extractor (mpdecimate) drops similar frames and drifts.
++- A clean black-and-white silhouette of the dancers (YOLO, kept steady over time) goes to the QR Code
++  Monster ControlNet unit, which makes the object take the dancers' shape. Everything is cached per
++  video, FPS and mask settings, so trying another seed or prompt does not redo it.
++"""
++import gc
++import hashlib
++import os
++import subprocess
++import time
++from pathlib import Path
++
++import numpy as np
++from PIL import Image, ImageFilter
++
++from modules import shared
++from modules.paths import data_path
++
++from scripts.animatediff_logger import logger_animatediff as logger
++
++QR_MODEL_WORDS = ("qrcode", "qr_code", "monster")
++# QR Code Monster reads mid gray as "no instruction", black as "dark here" and white as "bright here"
++SILHOUETTE_GRAY = "White dancers on gray (keeps the prompt's background)"
++SILHOUETTE_BLACK = "White dancers on black (dark background)"
++SILHOUETTE_INVERT = "Black dancers on white"
++SILHOUETTE_STYLES = [SILHOUETTE_GRAY, SILHOUETTE_BLACK, SILHOUETTE_INVERT]
++_STYLE_TAG = {SILHOUETTE_GRAY: "gray", SILHOUETTE_BLACK: "black", SILHOUETTE_INVERT: "inv"}
++FRAME_EXT = (".png", ".jpg", ".jpeg", ".webp")
++
++
++def is_qr_unit(cn_unit) -> bool:
++    model = str(getattr(cn_unit, "model", "") or "").lower()
++    return any(word in model for word in QR_MODEL_WORDS)
++
++
++def _video_key(video: str) -> str:
++    """Content key: the same video uploaded again (new Gradio temp name) reuses the cache."""
++    size = os.path.getsize(video)
++    h = hashlib.md5(str(size).encode())
++    with open(video, "rb") as f:
++        h.update(f.read(1 << 20))
++        if size > 2 << 20:
++            f.seek(-(1 << 20), os.SEEK_END)
++            h.update(f.read(1 << 20))
++    return h.hexdigest()[:10]
++
++
++def cache_root(video: str, fps: float) -> Path:
++    base = shared.opts.data.get("animatediff_frame_extract_path", "") or f"{data_path}/tmp/animatediff-frames"
++    key = f"{fps:g}fps-{_video_key(video)}"
++    # the content decides: the same video uploaded under another name reuses what was made for it
++    existing = sorted(Path(base).glob(f"dance-*-{key}")) if Path(base).is_dir() else []
++    if existing:
++        return existing[0]
++    stem = "".join(c for c in Path(video).stem if c.isalnum() or c in "-_")[:40] or "video"
++    return Path(base) / f"dance-{stem}-{key}"
++
++
++def list_frames(folder) -> list:
++    folder = Path(folder)
++    if not folder.is_dir():
++        return []
++    return sorted(str(p) for p in folder.iterdir() if p.suffix.lower() in FRAME_EXT)
++
++
++def extract_frames_at_fps(video: str, fps: float) -> str:
++    """Frames taken evenly at `fps`, cached. Returns the frames folder."""
++    import imageio_ffmpeg
++
++    out = cache_root(video, fps) / "frames"
++    done = out / ".done"
++    if done.exists() and list_frames(out):
++        logger.info(f"Using cached frames ({len(list_frames(out))} at {fps:g} FPS): {out}")
++        return str(out)
++    out.mkdir(parents=True, exist_ok=True)
++    for old in list_frames(out):
++        os.remove(old)
++    cmd = [imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-hide_banner", "-loglevel", "error",
++           "-i", video, "-vf", f"fps={fps:g}", "-qscale:v", "1", "-qmin", "1", str(out / "%09d.jpg")]
++    logger.info(f"Taking frames at {fps:g} FPS from {video}")
++    subprocess.run(cmd, check=True, capture_output=True)
++    done.touch()
++    logger.info(f"Took {len(list_frames(out))} frames: {out}")
++    return str(out)
++
++
++RAW_DIR = "silhouette-raw-v4"   # v4: v3 with edges refined by Segment Anything (v3: people kept over time, no half tones)
++YOLO_URL = "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11m-seg.pt"
++MASK_SIDE = 960                 # the masks are worked out at this size; ControlNet resizes them to the picture anyway
++SURE, UNSURE = 0.35, 0.05       # YOLO confidence of a dancer: sure, and worth keeping only next to a sure one
++
++
++def _yolo_weights():
++    """Ultralytics' official YOLO11m person segmentation, kept in models/yolo (fetched once, 45 MB)."""
++    from modules import modelloader
++    from modules.paths import models_path
++    folder = os.path.join(models_path, "yolo")
++    path = os.path.join(folder, "yolo11m-seg.pt")
++    if not os.path.isfile(path):
++        modelloader.load_file_from_url(YOLO_URL, model_dir=folder, file_name="yolo11m-seg.pt")
++    return path
++
++
++def _mask_size(size) -> tuple:
++    width, height = size
++    scale = min(1.0, MASK_SIDE / max(width, height))
++    return max(8, round(width * scale)), max(8, round(height * scale))
++
++
++class DancerSegmenter:
++    """
++    Where the dancers are. YOLO finds people by shape, so dark clothes on a dark, smoky stage are found too;
++    u2net (the rembg model) finds the foreground by contrast and loses them, so it is only used for videos
++    without people, or when YOLO is not available.
++    """
++
++    def __init__(self):
++        self.yolo = self.u2net = None
++        try:
++            import torch
++            from ultralytics import YOLO
++            self.cuda = torch.cuda.is_available()
++            self.yolo = YOLO(_yolo_weights())
++        except Exception as e:
++            logger.warning(f"YOLO person segmentation unavailable, the silhouette uses u2net only: {e}")
++
++    def people(self, rgb: Image.Image, size) -> list:
++        """Every person YOLO sees, the unsure ones too: [(confidence, mask)], bool masks of `size` (w, h)."""
++        import cv2
++        result = self.yolo.predict(cv2.cvtColor(np.asarray(rgb), cv2.COLOR_RGB2BGR), classes=[0], conf=UNSURE,
++                                   retina_masks=True, verbose=False, device=0 if self.cuda else "cpu",
++                                   half=self.cuda)[0]
++        if result.masks is None:
++            return []
++        return [(float(conf), cv2.resize(mask.astype(np.float32), size, interpolation=cv2.INTER_AREA) > 0.5)
++                for mask, conf in zip(result.masks.data.cpu().numpy(), result.boxes.conf.cpu().numpy())]
++
++    def foreground(self, rgb: Image.Image, size) -> np.ndarray:
++        """The foreground by contrast (u2net), bool mask of `size`."""
++        import cv2
++        from rembg import new_session, remove
++        if self.u2net is None:
++            # after torch: once onnxruntime-gpu has loaded its own cuDNN, torch's cuDNN DLLs fail to load (WinError 127)
++            self.u2net = new_session("u2net", providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
++        fine = np.asarray(remove(rgb, session=self.u2net, only_mask=True), dtype=np.uint8)
++        return cv2.resize(fine, size, interpolation=cv2.INTER_AREA) > 127
++
++    def mask(self, rgb: Image.Image) -> np.ndarray:
++        """One frame on its own, for the preview: bool mask at the mask size."""
++        size = _mask_size(rgb.size)
++        found = self.people(rgb, size) if self.yolo is not None else []
++        masks = [m for conf, m in found if conf >= 0.25] or [m for _, m in found]
++        return np.logical_or.reduce(masks) if masks else self.foreground(rgb, size)
++
++    def close(self):
++        self.u2net = self.yolo = None
++        gc.collect()
++        try:
++            import torch
++            torch.cuda.empty_cache()
++        except Exception:
++            pass
++
++
++def _pack(mask: np.ndarray) -> np.ndarray:
++    return np.packbits(mask)
++
++
++def _unpack(packed: np.ndarray, size) -> np.ndarray:
++    width, height = size
++    return np.unpackbits(packed)[:width * height].reshape(height, width).astype(bool)
++
++
++def _kept_over_time(found: list, size, sure: float) -> list:
++    """
++    Which of each frame's detections are dancers. A dancer in dark clothes is often seen with a low confidence,
++    and so is a shadow or a prop. An unsure detection is kept only where the frame before or after it has a
++    dancer in the same place, so a dancer does not blink out and a stray shape does not blink in.
++    """
++    import cv2
++    width, height = size
++    reach = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * max(1, int(height * 0.04)) + 1,) * 2)
++
++    def sweep(order):
++        kept, before = [set() for _ in found], None
++        for t in order:
++            near = cv2.dilate(before.astype(np.uint8), reach).astype(bool) if before is not None else None
++            union = np.zeros((height, width), bool)
++            for k, (confidence, packed) in enumerate(found[t]):
++                mask = _unpack(packed, size)
++                area = mask.sum()
++                if confidence >= sure or (near is not None and area and (mask & near).sum() >= 0.6 * area):
++                    kept[t].add(k)
++                    union |= mask
++            before = union if union.any() else None
++        return kept
++
++    forward, backward = sweep(range(len(found))), sweep(range(len(found) - 1, -1, -1))
++    return [f | b for f, b in zip(forward, backward)]
++
++
++def _tidy(mask: np.ndarray) -> np.ndarray:
++    """Small holes closed, specks dropped."""
++    import cv2
++    height, width = mask.shape
++    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * max(1, int(height * 0.006)) + 1,) * 2)
++    mask = cv2.morphologyEx(mask.astype(np.uint8), cv2.MORPH_CLOSE, kernel)
++    count, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
++    if count > 2:
++        areas = stats[1:, cv2.CC_STAT_AREA]
++        keep = [i + 1 for i, a in enumerate(areas) if a >= max(0.002 * width * height, 0.08 * areas.max())]
++        return np.isin(labels, keep)
++    return mask.astype(bool)
++
++
++def _drop_bystanders(masks: list) -> int:
++    """
++    Someone who hardly leaves one spot for the whole video and is much smaller than the dancers is a person in
++    the background. Left in, they become one more small figure. Their spot is found once for the whole video,
++    so they are dropped from every frame alike. Returns how many frames lost a shape.
++    """
++    import cv2
++    if len(masks) < 8:
++        return 0
++    height = masks[0].shape[0]
++    seen = np.zeros(masks[0].shape, np.uint16)
++    largest = []
++    parts = []
++    for mask in masks:
++        seen += mask
++        count, labels, stats, _ = cv2.connectedComponentsWithStats(mask.astype(np.uint8), connectivity=8)
++        parts.append((count, labels, stats))
++        if count > 1:
++            largest.append(stats[1:, cv2.CC_STAT_AREA].max())
++    if not largest:
++        return 0
++    dancer = float(np.median(largest))           # the usual size of a dancer in this video
++    still = (seen >= 0.5 * len(masks)).astype(np.uint8)
++    count, labels, stats, _ = cv2.connectedComponentsWithStats(still, connectivity=8)
++    spots = np.zeros(still.shape, np.uint8)
++    for i in range(1, count):
++        if stats[i, cv2.CC_STAT_AREA] < 0.25 * dancer:
++            spots[labels == i] = 1
++    if not spots.any():
++        return 0
++    reach = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * max(1, int(height * 0.02)) + 1,) * 2)
++    spots = cv2.dilate(spots, reach).astype(bool)
++    dropped = 0
++    for mask, (count, labels, stats) in zip(masks, parts):
++        hit = False
++        for i in range(1, count):
++            area = stats[i, cv2.CC_STAT_AREA]
++            if area < 0.5 * dancer:
++                part = labels == i
++                if (part & spots).sum() >= 0.6 * area:
++                    mask[part] = False
++                    hit = True
++        dropped += hit
++    return dropped
++
++
++SAM_MODELS = (("vit_l", "sam_vit_l_0b3195.pth"), ("vit_h", "sam_vit_h_4b8939.pth"), ("vit_b", "sam_vit_b_01ec64.pth"))
++
++
++def _sam_checkpoint():
++    """A Segment Anything model already on this computer, the large one first: (kind, path), or None."""
++    from modules.paths import models_path
++    folders = [os.path.join(models_path, "sam"),
++               os.path.join(data_path, "extensions", "sd-webui-segment-anything", "models", "sam")]
++    for kind, name in SAM_MODELS:
++        for folder in folders:
++            if os.path.isfile(os.path.join(folder, name)):
++                return kind, os.path.join(folder, name)
++    return None
++
++
++def _sam_prompt(mask: np.ndarray) -> np.ndarray:
++    """A mask as Segment Anything's mask prompt: logits, 256 px on the long side, padded to 256x256."""
++    import cv2
++    height, width = mask.shape
++    scale = 256.0 / max(height, width)
++    small = cv2.resize(mask.astype(np.float32), (int(width * scale + 0.5), int(height * scale + 0.5)),
++                       interpolation=cv2.INTER_AREA)
++    prompt = np.full((256, 256), -8.0, np.float32)
++    prompt[:small.shape[0], :small.shape[1]] = small * 16.0 - 8.0
++    return prompt[None]
++
++
++def _refine_edges(frames: list, masks: list) -> list:
++    """
++    The masks say who the dancers are, but their edges are loose (YOLO draws masks at a coarse size), so a rim
++    of background comes along and gets drawn as part of the figure. Segment Anything cuts each shape again from
++    its box, the shape itself and a few points inside it. Its cut is taken only where it agrees with the shape;
++    it may not reach far outside the dancers and may not open holes in them (a white dress on a white curtain).
++    Without a Segment Anything model on disk, or without a GPU, the masks stay as they are.
++    """
++    found = _sam_checkpoint()
++    if found is None or not masks:
++        return masks
++    import cv2
++    started = time.time()
++    try:
++        import torch
++        if not torch.cuda.is_available():
++            return masks
++        from segment_anything import SamPredictor, sam_model_registry
++        try:    # Forge's own models leave the GPU while this runs; Forge brings them back when it draws
++            from ldm_patched.modules import model_management
++            model_management.unload_all_models()
++            model_management.soft_empty_cache()
++        except Exception:
++            pass
++        kind, path = found
++        sam = sam_model_registry[kind](checkpoint=path).to("cuda").eval()
++        predictor = SamPredictor(sam)
++    except Exception as e:
++        logger.warning(f"Segment Anything is unavailable, the dancers keep their rougher edges: {e}")
++        return masks
++    logger.info(f"Refining the dancers' edges with Segment Anything ({kind}) in {len(masks)} frames...")
++    height, width = masks[0].shape
++    reach = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * max(1, int(height * 0.02)) + 1,) * 2)
++    core = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * max(1, int(height * 0.012)) + 1,) * 2)
++    refined = []
++    try:
++        for frame, mask in zip(frames, masks):
++            if not mask.any():
++                refined.append(mask)
++                continue
++            with Image.open(frame) as im:
++                predictor.set_image(np.asarray(im.convert("RGB").resize((width, height), Image.LANCZOS)))
++            count, labels, stats, _ = cv2.connectedComponentsWithStats(mask.astype(np.uint8), connectivity=8)
++            fine = np.zeros_like(mask)
++            for i in range(1, count):
++                part = labels == i
++                x, y, w, h = stats[i, :4]
++                pad = 0.03 * max(w, h)
++                box = np.array([max(0, x - pad), max(0, y - pad), min(width, x + w + pad), min(height, y + h + pad)])
++                depth = cv2.distanceTransform(part.astype(np.uint8), cv2.DIST_L2, 5)
++                points = []
++                for _ in range(4):                       # a few points deep inside the shape
++                    py, px = np.unravel_index(depth.argmax(), depth.shape)
++                    if depth[py, px] < 2:
++                        break
++                    points.append((px, py))
++                    cv2.circle(depth, (int(px), int(py)), int(max(6, depth[py, px] * 1.5)), 0, -1)
++                cut, _, _ = predictor.predict(
++                    point_coords=np.array(points, np.float32) if points else None,
++                    point_labels=np.ones(len(points), np.int32) if points else None,
++                    box=box, mask_input=_sam_prompt(part), multimask_output=False)
++                agree = (cut[0] & part).sum() / max((cut[0] | part).sum(), 1)
++                fine |= cut[0] if agree >= 0.7 else part
++            near = cv2.dilate(mask.astype(np.uint8), reach).astype(bool)
++            inside = cv2.erode(mask.astype(np.uint8), core).astype(bool)
++            refined.append(_tidy((fine & near) | inside))
++    except Exception as e:
++        logger.warning(f"Segment Anything stopped ({e}), so the dancers keep their rougher edges.")
++        refined = masks
++    finally:
++        del predictor, sam
++        gc.collect()
++        torch.cuda.empty_cache()
++    logger.info(f"Edges refined in {time.time() - started:.0f} s.")
++    return refined
++
++
++def dancer_masks(frames: list, fps: float = 12.0):
++    """
++    A clean black-and-white mask of the dancers for every frame (bool arrays at the mask size).
++    QR Code Monster reads every gray tone and every stray shape as something to draw, so a ghost of the
++    neighbouring poses, a floor shadow or a frame without the dancers fills the whole background with clutter.
++    """
++    def load(frame):
++        with Image.open(frame) as im:
++            return im.convert("RGB")
++
++    with Image.open(frames[0]) as im:
++        size = _mask_size(im.size)
++    width, height = size
++    segmenter = DancerSegmenter()
++    try:
++        found = []
++        if segmenter.yolo is not None:
++            found = [[(c, _pack(m)) for c, m in segmenter.people(load(frame), size)] for frame in frames]
++        best = np.array([max((c for c, _ in f), default=0.0) for f in found])
++        sure = next((s for s in (SURE, 0.2) if len(best) and (best >= s).mean() >= 0.3), None)
++        if sure is None:
++            logger.info("No people found in this video, so the silhouette is the foreground by contrast (u2net).")
++            masks = [segmenter.foreground(load(frame), size) for frame in frames]
++        else:
++            kept = _kept_over_time(found, size, sure)
++            masks = []
++            for t, keep in enumerate(kept):
++                union = np.zeros((height, width), bool)
++                for k in keep:
++                    union |= _unpack(found[t][k][1], size)
++                masks.append(union)
++    finally:
++        segmenter.close()
++
++    bystanders = _drop_bystanders(masks)
++
++    # the dancers' lowest point moves smoothly: a mask that suddenly reaches lower took the shadow on the floor
++    bottom = np.array([rows[-1] if len(rows) else -1
++                       for rows in (np.flatnonzero(m.sum(axis=1) >= 0.01 * width) for m in masks)])
++    span = max(2, round(fps / 2))
++    cut = 0
++    for t, mask in enumerate(masks):
++        around = bottom[max(0, t - span):t + span + 1]
++        around = around[around >= 0]
++        if len(around) and bottom[t] > np.median(around) + 0.025 * height:
++            mask[int(np.median(around) + 0.025 * height) + 1:] = False
++            cut += 1
++    masks = [_tidy(m) for m in masks]
++
++    # a frame that still lost most of the dancers takes the nearest good frame
++    area = np.array([m.mean() for m in masks])
++    usual = np.array([np.median(area[max(0, t - 3):t + 4]) for t in range(len(masks))])
++    gaps = set(np.flatnonzero(area < 0.4 * usual).tolist())
++    for t in gaps:
++        good = [s for s in sorted(range(len(masks)), key=lambda s: abs(s - t)) if s not in gaps]
++        if good:
++            masks[t] = masks[good[0]]
++    logger.info(f"Dancers found in {len(masks)} frames; floor shadow cut in {cut}, {len(gaps)} gaps filled"
++                + (f", a bystander left out of {bystanders} frames." if bystanders else "."))
++    return _refine_edges(frames, masks)
++
++
++def _style(style) -> str:
++    return style if style in SILHOUETTE_STYLES else SILHOUETTE_GRAY
++
++
++def _finish_mask(mask: np.ndarray, style, softness: float) -> Image.Image:
++    """Black-and-white mask (bool or 0..255) to the hint QR Code Monster gets; `softness` is a blur radius in px."""
++    if mask.dtype == bool:
++        mask = mask * 255.0
++    img = Image.fromarray(np.clip(mask, 0, 255).astype(np.uint8), "L")
++    if softness > 0:
++        img = img.filter(ImageFilter.GaussianBlur(radius=softness))
++    style = _style(style)
++    if style == SILHOUETTE_INVERT:
++        img = Image.eval(img, lambda v: 255 - v)
++    elif style == SILHOUETTE_GRAY:
++        img = Image.eval(img, lambda v: 128 + v * 127 // 255)
++    return img
++
++
++def make_silhouettes(frames_dir: str, style=SILHOUETTE_GRAY, softness: float = 6, fps: float = 12.0) -> str:
++    """Silhouette of the dancers for every frame. Cached."""
++    frames = list_frames(frames_dir)
++    out = Path(frames_dir).parent / f"silhouette-v4-{_STYLE_TAG[_style(style)]}-soft{softness:g}"
++    done = out / ".done"
++    if done.exists() and len(list_frames(out)) == len(frames):
++        logger.info(f"Using cached silhouettes: {out}")
++        return str(out)
++    out.mkdir(parents=True, exist_ok=True)
++
++    # the black-and-white masks are shared by every style/softness choice (and by the dancer/background regions)
++    raw_dir = Path(frames_dir).parent / RAW_DIR
++    raw_paths = [raw_dir / f"{Path(frame).stem}.png" for frame in frames]
++    if not ((raw_dir / ".done").exists() and all(p.exists() for p in raw_paths)):
++        raw_dir.mkdir(exist_ok=True)
++        logger.info(f"Finding the dancers in {len(frames)} frames (YOLO)...")
++        for path, mask in zip(raw_paths, dancer_masks(frames, fps)):
++            Image.fromarray(mask.astype(np.uint8) * 255, "L").save(path)
++        (raw_dir / ".done").touch()
++
++    with Image.open(frames[0]) as im:
++        frame_width = im.size[0]
++    for frame, raw_path in zip(frames, raw_paths):
++        with Image.open(raw_path) as raw:
++            mask = np.asarray(raw.convert("L"))
++        # softness is given in px of the video; the mask is smaller
++        _finish_mask(mask, style, softness * mask.shape[1] / frame_width).save(out / f"{Path(frame).stem}.png")
++    done.touch()
++    logger.info(f"Silhouettes ready: {out}")
++    return str(out)
++
++
++def preview_silhouettes(video: str, style, softness: float, count: int = 6):
++    """A few silhouettes spread over the video, for a quick look before rendering."""
++    import cv2
++    cap = cv2.VideoCapture(video)
++    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
++    segmenter = DancerSegmenter()
++    images = []
++    try:
++        for k in range(count):
++            cap.set(cv2.CAP_PROP_POS_FRAMES, int(total * (k + 0.5) / count))
++            ok, frame = cap.read()
++            if not ok:
++                continue
++            rgb = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
++            mask = segmenter.mask(rgb)
++            images.append(_finish_mask(mask, style, softness * mask.shape[1] / rgb.size[0]))
++    finally:
++        cap.release()
++        segmenter.close()
++    return images
++
++
++def video_has_audio(video: str) -> bool:
++    try:
++        import av
++        with av.open(video) as container:
++            return any(s.type == "audio" for s in container.streams)
++    except Exception:
++        return False
++
++
++def cache_preprocessed(p, cn_unit, frames_dir: str, limit=None):
++    """
++    Run a ControlNet unit's preprocessor (OpenPose, depth...) over the video frames once and keep the maps
++    next to the frames. Returns the folder of maps, to be used with preprocessor None, or None when the
++    preprocessor does not produce images (IP-Adapter and the like) or fails.
++    """
++    import cv2
++    from lib_controlnet import global_state, external_code
++    from lib_controlnet.utils import align_dim_latent, judge_image_type
++    from modules_forge.forge_util import HWC3
++
++    module = str(getattr(cn_unit, "module", "None") or "None")
++    if module.lower() == "none":
++        return None
++    preprocessor = global_state.get_preprocessor(module)
++    if preprocessor is None:
++        return None
++    body_only = module == "dw_openpose_full" and getattr(cn_unit, "dance_body_only", False)
++    if body_only:
++        # objects that dance: the body skeleton only; face and finger points pull the picture towards people
++        from legacy_preprocessors.preprocessor import g_openpose_model
++
++        def preprocessor(input_image, input_mask=None, resolution=512, slider_1=None, slider_2=None):
++            result, _ = g_openpose_model.run_model(img=input_image, include_body=True, include_hand=False,
++                                                   include_face=False, use_dw_pose=True, res=resolution)
++            return result
++        preprocessor.unload_function = g_openpose_model.unload
++        module = "dw_openpose_body"
++
++    frames = list_frames(frames_dir)
++    if limit:
++        frames = frames[:limit]
++    h, w = align_dim_latent(p.height), align_dim_latent(p.width)
++    resize_mode = external_code.resize_mode_from_value(cn_unit.resize_mode)
++
++    def resolution_for(img):
++        if cn_unit.pixel_perfect:
++            return external_code.pixel_perfect_resolution(img, target_H=h, target_W=w, resize_mode=resize_mode)
++        return cn_unit.processor_res
++
++    first = HWC3(np.ascontiguousarray(cv2.imread(frames[0])[:, :, ::-1]))
++    res = resolution_for(first)
++    safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in module)
++    out = Path(frames_dir).parent / f"cn-{safe}-r{res}-a{cn_unit.threshold_a:g}-b{cn_unit.threshold_b:g}"
++    todo = [f for f in frames if not (out / f"{Path(f).stem}.png").exists()]
++    if todo:
++        out.mkdir(parents=True, exist_ok=True)
++        logger.info(f"Preparing {module} maps once for {len(todo)} frames (next renders of this video reuse them)...")
++        from tqdm import tqdm
++        # Forge's legacy preprocessors unload their model after every image, so a frame loop reloads it
++        # every time (OpenPose: 3 models per frame). Keep it loaded for the loop and unload once at the end.
++        unload = getattr(preprocessor, "unload_function", None)
++        if unload is not None:
++            preprocessor.unload_function = None
++        try:
++            for frame in tqdm(todo):
++                img = HWC3(np.ascontiguousarray(cv2.imread(frame)[:, :, ::-1]))
++                try:
++                    result = preprocessor(input_image=img, input_mask=None, resolution=resolution_for(img),
++                                          slider_1=cn_unit.threshold_a, slider_2=cn_unit.threshold_b)
++                except Exception as e:
++                    logger.warning(f"Could not cache {module} maps, ControlNet runs it as usual: {e}")
++                    return None
++                if not judge_image_type(result):
++                    return None
++                Image.fromarray(HWC3(result.astype(np.uint8))).save(out / f"{Path(frame).stem}.png")
++        finally:
++            if unload is not None:
++                preprocessor.unload_function = unload
++                unload()
++    else:
++        logger.info(f"Using cached {module} maps: {out}")
++    return _steady_poses(out, frames) if body_only else str(out)
++
++
++def _steady_poses(folder: Path, frames: list) -> str:
++    """
++    On dark or blurred frames the pose detector loses a dancer for a moment, and the figure drawn from it
++    blinks. A frame with well under the usual amount of skeleton takes the pose map of the nearest full frame.
++    """
++    import shutil
++    names = [f"{Path(frame).stem}.png" for frame in frames]
++    out = folder.with_name(folder.name + "-steady")
++    if (out / ".done").exists() and all((out / name).exists() for name in names):
++        return str(out)
++    out.mkdir(exist_ok=True)
++    ink = []
++    for name in names:
++        with Image.open(folder / name) as im:
++            ink.append((np.asarray(im.convert("L")) > 16).mean())
++    ink = np.array(ink)
++    usual = np.array([np.median(ink[max(0, t - 3):t + 4]) for t in range(len(ink))])
++    weak = set(np.flatnonzero(ink < 0.6 * usual).tolist())
++    for t, name in enumerate(names):
++        full = [s for s in sorted(range(len(names)), key=lambda s: abs(s - t)) if s not in weak] if t in weak else [t]
++        shutil.copyfile(folder / names[full[0] if full else t], out / name)
++    (out / ".done").touch()
++    logger.info(f"Poses: {len(weak)} of {len(names)} frames lost a dancer and take the pose next to them.")
++    return str(out)
++
++
++# ---------------------------------------------------------------------------------------------------------
++# 💃 Dance video: one switch sets up AnimateDiff and ControlNet from a dance video and reference pictures
++# ---------------------------------------------------------------------------------------------------------
++
++DANCE_FPS_CHOICES = ["8 (quick test)", "12", "24 (smooth, FILM)"]
++DANCE_ONE_PASS_MAX = 240     # frames drawn in one pass (20 s); longer videos go in parts
++DANCE_PART_FRAMES = 120
++DANCE_PART_OVERLAP = 16
++SECONDS_PER_FRAME = 6.0      # first render at 408x720 on his 3070 Laptop: prep, drawing, FILM, encode (measured 2026-09-30)
++# objects that dance: without these the checkpoint and the pose turn the figures into people
++DANCE_FINAL_SIZES = ["As drawn", "x1.5", "x2"]
++# for the final size; the first one installed is the default. RTX Video keeps the picture as drawn and takes
++# about 5 ms a frame, R-ESRGAN redraws it with harder edges in about 0.4 s a frame (408x728 x2, RTX 3070 Laptop)
++DANCE_UPSCALERS = ("RTX Video Super Resolution", "R-ESRGAN 4x+", "ESRGAN_4x", "Lanczos")
++NO_PEOPLE_WORDS = ("person", "people", "face", "eyes", "skin", "hair", "clothes", "doll", "mannequin")
++
++
++def dance_upscalers() -> list:
++    """The upscalers for the final size, the preferred ones first."""
++    names = [u.name for u in shared.sd_upscalers if u.name != "None"]
++    return [n for n in DANCE_UPSCALERS if n in names] + [n for n in names if n not in DANCE_UPSCALERS]
++
++
++def draw_plan(choice, source_fps: float = 0) -> tuple:
++    """
++    Frames drawn per second of video and the FILM factor, for the panel's frames-per-second choice.
++    A source video with fewer frames a second (an 8 FPS export) is drawn at its own rate, since drawing more
++    would only repeat frames; the smooth choice then lets FILM fill up to 24.
++    """
++    text = str(choice)
++    if text.startswith("8"):
++        fps, film = 8, 1
++    elif text.startswith("12"):
++        fps, film = 12, 1
++    else:
++        fps, film = 12, 2    # 24 FPS: 12 are drawn and FILM doubles them, in half the drawing time
++    if 0 < source_fps < fps - 0.5:
++        film = max(2, round(fps * film / source_fps)) if film > 1 else 1
++        fps = source_fps
++    return fps, film
++
++
++def _file_path(value):
++    """A path from a Gradio file/video value, a path string or a base64 data URI (API)."""
++    if value is None:
++        return None
++    if isinstance(value, dict):
++        value = value.get("name") or value.get("data")
++    value = getattr(value, "name", value)
++    if not isinstance(value, str) or not value.strip():
++        return None
++    value = value.strip().strip('"')
++    if value.startswith("data:") or len(value) > 1024:
++        import base64
++        import tempfile
++        payload = value.partition(",")[2] if value.startswith("data:") else value
++        with tempfile.NamedTemporaryFile(delete=False, suffix=".png", prefix="dance_ref_") as f:
++            f.write(base64.b64decode(payload))
++            return f.name
++    return value if os.path.isfile(value) else None
++
++
++def load_pictures(values, limit: int = 4):
++    if values is None:
++        return []
++    if not isinstance(values, (list, tuple)):
++        values = [values]
++    pictures = []
++    for value in values:
++        path = _file_path(value)
++        if not path:
++            continue
++        try:
++            with Image.open(path) as im:
++                pictures.append(im.convert("RGB"))
++        except Exception as e:
++            logger.warning(f"Could not open reference picture {path}: {e}")
++    return pictures[:limit]
++
++
++def reference_image(pictures, tile: int = 512):
++    """
++    IP-Adapter in Forge takes one picture per unit, so several pictures are tiled into one square
++    (it crops to a square anyway): 2 -> a b / b a, 3 -> a b / c a, 4 -> a b / c d.
++    """
++    if not pictures:
++        return None
++
++    def square(im):
++        side = min(im.size)
++        left, top = (im.width - side) // 2, (im.height - side) // 2
++        return im.crop((left, top, left + side, top + side)).resize((tile, tile), Image.LANCZOS)
++
++    tiles = [square(im) for im in pictures]
++    if len(tiles) == 1:
++        return np.asarray(tiles[0])
++    a, b = tiles[0], tiles[1]
++    c = tiles[2] if len(tiles) > 2 else b
++    d = tiles[3] if len(tiles) > 3 else a
++    grid = Image.new("RGB", (tile * 2, tile * 2))
++    for im, xy in ((a, (0, 0)), (b, (tile, 0)), (c, (0, tile)), (d, (tile, tile))):
++        grid.paste(im, xy)
++    return np.asarray(grid)
++
++
++def video_info(video: str):
++    import cv2
++    cap = cv2.VideoCapture(video)
++    fps = cap.get(cv2.CAP_PROP_FPS) or 0
++    count = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
++    width, height = cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
++    cap.release()
++    seconds = count / fps if fps > 0 else 0
++    return seconds, fps, int(width), int(height)
++
++
++def size_like_video(width: int, height: int, video_w: int, video_h: int):
++    """Keep the chosen number of pixels, take the video's shape (multiples of 8)."""
++    if not video_w or not video_h:
++        return width, height
++    area, ratio = width * height, video_w / video_h
++    new_w = int(round((area * ratio) ** 0.5 / 8)) * 8
++    new_h = int(round(new_w / ratio / 8)) * 8
++    return max(64, new_w), max(64, new_h)
++
++
++def plan_text(video: str, width, height, fps_choice=DANCE_FPS_CHOICES[2], final: str = "As drawn",
++              upscaler: str = "") -> str:
++    """What the dance video will do, shown under the upload."""
++    seconds, fps, video_w, video_h = video_info(video)
++    if seconds <= 0:
++        return "Could not read this video."
++    draw_fps, film = draw_plan(fps_choice, fps)
++    frames = int(round(seconds * draw_fps))
++    parts = f"{-(-frames // DANCE_PART_FRAMES)} × {DANCE_PART_FRAMES}" if frames > DANCE_ONE_PASS_MAX else "1 ×"
++    w, h = size_like_video(int(width or 408), int(height or 720), video_w, video_h)
++    minutes = frames * SECONDS_PER_FRAME * (w * h) / (408 * 720) / 60
++    out_fps = draw_fps * film
++    scale = {"x1.5": 1.5, "x2": 2.0}.get(str(final), 1.0)
++    size = f"{w}×{h}"
++    if scale > 1:
++        size += f" → {int(w * scale) // 2 * 2}×{int(h * scale) // 2 * 2}"
++        per_frame = 0.02 if "RTX" in str(upscaler) else 0.38      # seconds at x2, measured: RTX Video, R-ESRGAN
++        minutes += frames * film * per_frame * scale * scale / 4 / 60
++    # numbers and symbols only, so the line reads the same in the Hebrew UI
++    return (f"🎬 {seconds:.1f}s · {video_w}×{video_h} · {fps:.0f} FPS  →  🖼 {frames} · {size} · {parts}  →  "
++            f"🎞 {out_fps:g} FPS + 🎵  ·  ⏱ ~{max(1, round(minutes))} min")
++
++
++def _find_cn_model(match, prefer=()):
++    from lib_controlnet import global_state
++    names = [n for n in global_state.get_all_controlnet_names() if n and n != "None"]
++    candidates = [n for n in names if match(n.lower().replace("-", "").replace("_", ""))]
++    for word in prefer:
++        for name in candidates:
++            if word in name.lower():
++                return name
++    return candidates[0] if candidates else None
++
++
++def dance_units(params):
++    """The ControlNet units of a dance video, with the models found in this Forge."""
++    from lib_controlnet import global_state
++    from lib_controlnet.external_code import ControlNetUnit
++
++    units, missing = [], []
++    qr = _find_cn_model(lambda n: "qrcode" in n or "monster" in n, prefer=("v20", "v2"))
++    if qr:
++        units.append(("shape", ControlNetUnit(enabled=True, module="None", model=qr, weight=float(params.dance_w_shape),
++                                              guidance_end=0.9, resize_mode="Crop and Resize")))
++    else:
++        missing.append("QR Code Monster")
++    if float(params.dance_w_pose) > 0:
++        pose = _find_cn_model(lambda n: "openpose" in n and "xl" not in n, prefer=("control_v11p",))
++        module = "dw_openpose_full" if global_state.get_preprocessor("dw_openpose_full") else "openpose_full"
++        if pose:
++            unit = ControlNetUnit(enabled=True, module=module, model=pose, weight=float(params.dance_w_pose),
++                                  pixel_perfect=True, resize_mode="Crop and Resize")
++            unit.dance_body_only = True
++            units.append(("pose", unit))
++        else:
++            missing.append("OpenPose")
++    ip = _find_cn_model(lambda n: "ipadapter" in n and "plus" in n and "sd15" in n and "face" not in n,
++                        prefer=("ip-adapter-plus_sd15",))
++    for kind, pictures, weight in (("characters", params.dance_characters, params.dance_w_character),
++                                   ("background", params.dance_background, params.dance_w_background)):
++        image = reference_image(load_pictures(pictures))
++        if image is None or float(weight) <= 0:
++            continue
++        if not ip:
++            missing.append("IP-Adapter plus SD1.5")
++            break
++        units.append((kind, ControlNetUnit(enabled=True, module="CLIP-ViT-H (IPAdapter)", model=ip,
++                                           weight=float(weight),
++                                           image={"image": image, "mask": np.zeros_like(image)},
++                                           resize_mode="Crop and Resize")))
++    return units, missing
++
++
++def install_units(p, units):
++    """Put the dance units into ControlNet's slots (the user's own units are switched off for this run)."""
++    from lib_controlnet.external_code import ControlNetUnit
++    for script in p.scripts.alwayson_scripts:
++        if script.title().lower() != "controlnet":
++            continue
++        slots = script.args_to - script.args_from
++        if len(units) > slots:
++            dropped = [name for name, _ in units[slots:]]
++            logger.warning(f"Only {slots} ControlNet units are available, so the {', '.join(dropped)} unit(s) are "
++                           f"left out. Settings → ControlNet → Multi-ControlNet unit number: set it to 4.")
++            units = units[:slots]
++        chosen = [unit for _, unit in units] + [ControlNetUnit(enabled=False) for _ in range(slots - len(units))]
++        p.script_args = list(p.script_args)
++        p.script_args[script.args_from:script.args_to] = chosen
++        return [name for name, _ in units]
++    raise RuntimeError("ControlNet is not loaded, so a dance video cannot be made.")
++
++
++def _lcm_lora_tag():
++    try:
++        import networks
++        for name in networks.available_networks:
++            low = name.lower()
++            if "lcm" in low and "xl" not in low:
++                return f"<lora:{name}:1>"
++    except Exception:
++        pass
++    return None
++
++
++def apply_dance_mode(params, p):
++    """Everything the dance video needs, set right before AnimateDiff starts."""
++    video = _file_path(params.dance_video)
++    if not video:
++        raise ValueError("💃 Dance video: upload the dance video first (or switch the dance video off).")
++    seconds, source_fps, video_w, video_h = video_info(video)
++
++    params.enable = True
++    if params.dance_model:
++        params.model = params.dance_model
++    params.video_source, params.video_path = video, ""
++    params.dance_sync = params.dance_mask = True
++    params.closed_loop, params.batch_size, params.stride, params.overlap = "N", 16, 1, 4
++    params.video_length = 0
++    draw_fps, film = draw_plan(params.dance_fps, source_fps)
++    params.fps, params.interp = int(round(draw_fps * film)), "FILM" if film > 1 else "Off"
++    if film > 1:
++        params.interp_x = film
++    params.format = ["MP4"]
++    if not params.segment_length and seconds * draw_fps > DANCE_ONE_PASS_MAX:
++        params.segment_length, params.segment_overlap = DANCE_PART_FRAMES, DANCE_PART_OVERLAP
++    final = {"x1.5": 1.5, "x2": 2.0}.get(str(params.dance_final_size), 1.0)
++    if final > 1:
++        names = dance_upscalers()
++        chosen = str(getattr(params, "dance_upscaler", "") or "")
++        params.upscaler = chosen if chosen in names else (names[0] if names else "Lanczos")
++        params.upscale_by = final
++    music = _file_path(params.dance_music)
++    if music:
++        params.audio_source, params.audio_path = music, ""
++
++    notes = []
++    if params.dance_match_size:
++        width, height = size_like_video(p.width, p.height, video_w, video_h)
++        if (width, height) != (p.width, p.height):
++            notes.append(f"size {p.width}x{p.height} → {width}x{height} (the video's shape)")
++            p.width, p.height = width, height
++    if params.dance_auto_lcm and "lcm" in str(params.model).lower():
++        from modules import sd_samplers
++        if "LCM" in sd_samplers.all_samplers_map and p.sampler_name != "LCM":
++            notes.append(f"sampler {p.sampler_name} → LCM")
++            p.sampler_name = "LCM"
++        if p.steps > 12:
++            notes.append(f"steps {p.steps} → 8")
++            p.steps = 8
++        if p.cfg_scale > 3:
++            notes.append(f"CFG {p.cfg_scale:g} → 2")
++            p.cfg_scale = 2
++        if isinstance(p.prompt, str) and "lcm" not in p.prompt.lower():
++            tag = _lcm_lora_tag()
++            if tag:
++                p.prompt = f"{p.prompt}, {tag}"
++                notes.append(f"added {tag}")
++
++    if params.dance_no_people:
++        present = str(p.negative_prompt or "").lower()
++        extra = [w for w in NO_PEOPLE_WORDS if w not in present]
++        if extra:
++            p.negative_prompt = ", ".join(x for x in (p.negative_prompt, ", ".join(extra)) if x)
++            notes.append("negative: no people")
++
++    units, missing = dance_units(params)
++    if missing:
++        logger.warning(f"💃 Dance video: no ControlNet model found for {', '.join(missing)}.")
++    used = install_units(p, units)
++    params.dance_unit_names = used
++    logger.info(f"💃 Dance video: {seconds:.1f} s, motion module {params.model}, ControlNet: {', '.join(used)}"
++                + (f"; {'; '.join(notes)}" if notes else ""))
++
++
++# ---------------------------------------------------------------------------------------------------------
++# Regions: every dance unit acts only where it should
++# ---------------------------------------------------------------------------------------------------------
++
++REGION_UNITS = ("characters", "background")
++REGION_GROW = 1      # px at 1/8 size (= 8 px in the picture): the dancers' look reaches just past their edge
++REGION_SOFTEN = 5    # blur kernel at 1/8 size: a soft seam, so the two looks melt into each other
++SHAPE_REACH = 0.06   # the shape unit also acts this far around the dancers (share of the picture's width)
++
++
++def region_masks(raw_dir: str, frames: list, width: int, height: int, grow: int = REGION_GROW):
++    """
++    Per-frame dancer masks, 0..1, at 1/8 of the picture (ControlNet scales them to each layer it acts on).
++    They come from the same dancer masks as the shape unit, grown a little and softened.
++    """
++    import cv2
++    import torch
++    size = (max(8, width // 8), max(8, height // 8))
++    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * grow + 1, 2 * grow + 1))
++    masks = []
++    for frame in frames:
++        path = Path(raw_dir) / f"{Path(frame).stem}.png"
++        m = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
++        if m is None:
++            return None
++        m = cv2.resize(m, size, interpolation=cv2.INTER_AREA).astype(np.float32) / 255.0
++        m = cv2.dilate(m, kernel)
++        m = cv2.GaussianBlur(m, (REGION_SOFTEN, REGION_SOFTEN), 0)
++        masks.append(np.clip(m, 0, 1))
++    return torch.from_numpy(np.stack(masks))[:, None]      # (frames, 1, h/8, w/8)
++
++
++def apply_region_masks(params, p):
++    """
++    After ControlNet prepared this part's units, before sampling: each unit gets the region it acts on.
++    - The dancer pictures act inside the dancers, the background pictures outside them.
++    - The shape unit (white dancers on gray) acts on the dancers and a little around them. Acting on the whole
++      frame, QR Code Monster kept redrawing the background: on Dance_2 the background changed 4 times more
++      from frame to frame. On black or inverted silhouettes it keeps the whole frame, which is their point.
++    - The pose unit gets the same region, so a skeleton found on someone in the background (who is left out
++      of the dancers' masks) draws nothing.
++    AnimateDiff passes each context window's frame indices, so every unit picks the masks of exactly those frames.
++    """
++    names = getattr(params, "dance_unit_names", None) or []
++    pictures = params.dance_regions and any(name in REGION_UNITS for name in names)
++    shape = "shape" in names and _style(params.dance_style) == SILHOUETTE_GRAY
++    pose = "pose" in names
++    if not (pictures or shape or pose) or not params.video_path:
++        return
++    raw_dir = Path(params.video_path).parent / RAW_DIR
++    frames = list_frames(params.video_path)[params.seg_start:params.seg_start + params.video_length]
++    regions = {}
++    if pictures:
++        inside = region_masks(str(raw_dir), frames, p.width, p.height)
++        regions.update(characters=inside, background=None if inside is None else 1.0 - inside)
++    if shape or pose:
++        around = region_masks(str(raw_dir), frames, p.width, p.height, grow=max(2, round(p.width / 8 * SHAPE_REACH)))
++        regions.update({name: around for name, wanted in (("shape", shape), ("pose", pose)) if wanted})
++    if any(mask is None for mask in regions.values()):
++        logger.warning("💃 No dancer silhouettes found, so every unit acts on the whole picture.")
++        return
++    for script in p.scripts.alwayson_scripts:
++        if script.title().lower() != "controlnet":
++            continue
++        current = getattr(script, "current_params", {}) or {}
++        used = []
++        for index, name in enumerate(names):
++            if name in regions and index in current:
++                current[index].control_mask = regions[name]
++                current[index].control_mask_for_hr_fix = regions[name]
++                used.append(name)
++        logger.info(f"💃 Regions over {len(frames)} frames: {', '.join(used)}.")
++        return
+diff --git a/scripts/animatediff_i2ibatch.py b/scripts/animatediff_i2ibatch.py
+index 7bd1101..67ac745 100644
+--- a/scripts/animatediff_i2ibatch.py
++++ b/scripts/animatediff_i2ibatch.py
+@@ -23,156 +23,343 @@ from scripts.animatediff_logger import logger_animatediff as logger
+ from scripts.animatediff_utils import get_animatediff_arg, get_controlnet_units
+ 
+ 
+-def animatediff_i2i_init(self, all_prompts, all_seeds, all_subseeds): # only hack this when i2i-batch with batch mask
++MASK_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff")
++# A dot in the masks that stands for a ball, as a part of the frame's area. The model draws nothing in so small
++# a place: a 15 px ball in a 536x960 frame is 0.0004 of it, two cells of the latent.
++BALL_LARGEST = 0.0015
++BALL_SMALLEST = 0.00005
++
++
++def mask_files(folder: str) -> list:
++    """The mask pictures of a folder, in the order of their names (frame_2 before frame_10)."""
++    return [f for f in shared.listfiles(folder) if f.lower().endswith(MASK_EXTENSIONS)]
++
++
++def black_and_white(mask: Image.Image) -> Image.Image:
++    """
++    Masks that are frames of a video carry its compression: the white is 240-254 and the black has gray specks.
++    Left as they are, the specks let some of the drawn picture through all over the background.
++    """
++    return create_binary_mask(mask).point(lambda v: 255 if v > 127 else 0)
++
++
++def soften(p: StableDiffusionProcessingImg2Img, mask: Image.Image) -> Image.Image:
++    """Inverted for "Inpaint not masked" and blurred by Mask blur, as img2img's init() does to its one mask."""
++    if p.inpainting_mask_invert:
++        mask = ImageOps.invert(mask)
++    if p.mask_blur_x > 0:
++        kernel_size = 2 * int(2.5 * p.mask_blur_x + 0.5) + 1
++        mask = Image.fromarray(cv2.GaussianBlur(np.array(mask), (kernel_size, 1), p.mask_blur_x))
++    if p.mask_blur_y > 0:
++        kernel_size = 2 * int(2.5 * p.mask_blur_y + 0.5) + 1
++        mask = Image.fromarray(cv2.GaussianBlur(np.array(mask), (1, kernel_size), p.mask_blur_y))
++    return mask
++
++
++def find_balls(masks: list):
++    """
++    A small dot in the masks, such as a ball marked by hand. The dots are taken out of the masks (in place) and
++    drawn as a ball once the frame is finished, see draw_balls.
++
++    A dot counts when it is small, about as wide as it is tall, about the size of the other dots, and there in at
++    least a quarter of the frames. That keeps out a hand or a paddle that broke off its figure in a frame or two.
++    Returns for every frame its dots as (centre x, centre y, diameter) in parts of the mask's width and height,
++    or None when the masks have no such dots.
++    """
++    found = []
++    for mask in masks:
++        binary = (np.array(mask) > 127).astype(np.uint8)
++        count, labels, stats, centres = cv2.connectedComponentsWithStats(binary, 8)
++        dots = []
++        for k in range(1, count):
++            _, _, w, h, area = stats[k]
++            if BALL_SMALLEST * binary.size <= area <= BALL_LARGEST * binary.size and 0.5 <= w / h <= 2 and area >= 0.55 * w * h:
++                dots.append((k, area, centres[k], w, h))
++        found.append((labels, dots))
++
++    areas = [dot[1] for _, dots in found for dot in dots]
++    if not areas or sum(bool(dots) for _, dots in found) < 0.25 * len(masks):
++        return None
++    usual = float(np.median(areas))
++    balls = []
++    for index, (labels, dots) in enumerate(found):
++        dots = [dot for dot in dots if 0.5 * usual <= dot[1] <= 2 * usual]
++        if dots:
++            without = np.array(masks[index])
++            without[np.isin(labels, [dot[0] for dot in dots])] = 0
++            masks[index] = Image.fromarray(without)
++        height, width = labels.shape
++        balls.append([((centre[0] + 0.5) / width, (centre[1] + 0.5) / height, (w + h) / 2 / width)
++                      for _, _, centre, w, h in dots])
++    return balls
++
++
++def fit_frame_to_region(p: StableDiffusionProcessingImg2Img, drawn: Image.Image):
++    """
++    "Only masked" draws the region that holds the masks, enlarged to Width x Height. When the region has another
++    shape, img2img widens it until the two match, and for a wide strip in a tall picture that is the whole picture
++    again. So the frame takes the region's shape instead, with the same number of pixels: all of them go to the
++    region. For two players across a 1072x1920 picture, 536x960 becomes 736x696 and the figures are drawn 37% larger.
++    """
++    drawn = soften(p, drawn)
++    if not drawn.getbbox():
++        return
++    x1, y1, x2, y2 = masking.get_crop_region(np.array(drawn), p.inpaint_full_res_padding)
++    shape = min(2.0, max(0.5, (x2 - x1) / (y2 - y1)))      # a frame more than twice as wide as tall is drawn badly
++    pixels = p.width * p.height
++    width = max(64, int(round((pixels * shape) ** 0.5 / 8)) * 8)
++    height = max(64, int(round((pixels / shape) ** 0.5 / 8)) * 8)
++    if (width, height) != (p.width, p.height):
++        logger.info(f"Only masked: the masks of all the frames lie within {x2 - x1}x{y2 - y1} of the picture, so the "
++                    f"frames are drawn at {width}x{height} instead of {p.width}x{p.height} (the same number of pixels).")
++        p.width, p.height = width, height
++
++
++def use_frame_masks(p: StableDiffusionProcessingImg2Img, masks: list, balls: bool = False):
++    """
++    Inpainting where every frame has a mask of its own: img2img Batch with a folder of masks, or one picture
++    with a folder of masks (Inpaint upload).
++
++    The masks are kept in p.animatediff_frame_masks for animatediff_i2i_init, which replaces p.init.
++    p.image_mask becomes one mask, everything that is drawn in any of the frames: ControlNet reads p.image_mask
++    as a single picture, and "Only masked" needs one region for the whole video.
++    """
++    picture = p.init_images[0].size
++    masks = [black_and_white(mask) for mask in masks]
++    p.animatediff_balls = find_balls(masks) if balls and not p.inpainting_mask_invert else None
++    if p.animatediff_balls:
++        logger.info(f"{sum(bool(dots) for dots in p.animatediff_balls)} masks have a small dot: it is drawn as a ball.")
++    # "Only masked" cuts the picture by the mask's pixels, so there the two must be the same size. Otherwise a
++    # smaller mask of the picture's shape is left alone: it is resized once, straight to the frame's size.
++    same_shape = abs(masks[0].width * picture[1] - masks[0].height * picture[0]) <= 0.01 * masks[0].height * picture[0]
++    size = masks[0].size if same_shape and not p.inpaint_full_res else picture
++    masks = [mask if mask.size == size else mask.resize(size, Image.LANCZOS) for mask in masks]
++
++    combine = np.minimum if p.inpainting_mask_invert else np.maximum
++    drawn = np.array(masks[0])
++    for mask in masks[1:]:
++        combine(drawn, np.array(mask), out=drawn)
++
++    p.animatediff_frame_masks = masks
++    p.image_mask = Image.fromarray(drawn)
++    p.init = MethodType(animatediff_i2i_init, p)
++    if p.inpaint_full_res:
++        fit_frame_to_region(p, p.image_mask)
++
++
++def enlarge_cut_out(p: StableDiffusionProcessingImg2Img, pp):
++    """
++    "Only masked": the drawn cut-out goes back into the picture at the size it was cut at, which is usually larger
++    than it was drawn. img2img enlarges it with Settings > "Upscaler for img2img", and plainly (Lanczos) when none
++    is chosen there. The figures then look soft next to the picture, so without a choice the first upscaler of the
++    dance panel is used (RTX Video Super Resolution when installed: a few milliseconds a frame).
++    """
++    paste_to = getattr(p, "paste_to", None)
++    if paste_to is None or opts.upscaler_for_img2img not in (None, "None"):
++        return
++    width, height = paste_to[2], paste_to[3]
++    scale = max(width / pp.image.width, height / pp.image.height)
++    if scale <= 1.01:
++        return
++    from scripts.animatediff_dance import dance_upscalers
++    chosen = next((u for name in dance_upscalers()[:1] for u in shared.sd_upscalers if u.name == name), None)
++    if chosen is None or chosen.name in ("Lanczos", "Nearest", "None"):
++        return
++    image = chosen.scaler.upscale(pp.image, scale, chosen.data_path)
++    pp.image = image if image.size == (width, height) else image.resize((width, height), Image.LANCZOS)
++
++
++def figure_material(image: np.ndarray, mask: Image.Image):
++    """What was drawn inside the mask: its light colour, its dark colour, and where its light comes from (x, y)."""
++    inside = (np.array(mask.resize((image.shape[1], image.shape[0]), Image.NEAREST)) > 127).astype(np.uint8)
++    reach = max(1, round(image.shape[0] * 0.006))      # keeps clear of the soft edge of the mask
++    core = cv2.erode(inside, np.ones((2 * reach + 1, 2 * reach + 1), np.uint8))
++    if core.sum() < 200:
++        core = inside
++    if not core.any():
++        return np.array([225.0, 205.0, 170.0]), np.array([120.0, 95.0, 70.0]), np.array([0.5, -0.6])
++    luma = image.astype(np.float32) @ np.array([0.299, 0.587, 0.114], np.float32)
++    low, high = np.percentile(luma[core > 0], (20, 80))
++    light, dark = image[(core > 0) & (luma >= high)].mean(axis=0), image[(core > 0) & (luma <= low)].mean(axis=0)
++    # every figure on its own: where its light pixels lie against its dark ones
++    toward = np.zeros(2)
++    count, labels, stats, _ = cv2.connectedComponentsWithStats(core, 8)
++    for k in range(1, count):
++        figure = labels == k
++        bright, shaded = np.nonzero(figure & (luma >= high)), np.nonzero(figure & (luma <= low))
++        if len(bright[0]) > 20 and len(shaded[0]) > 20:
++            size = max(stats[k, cv2.CC_STAT_WIDTH], stats[k, cv2.CC_STAT_HEIGHT])
++            toward += stats[k, cv2.CC_STAT_AREA] * np.array([bright[1].mean() - shaded[1].mean(),
++                                                             bright[0].mean() - shaded[0].mean()]) / size
++    length = float(np.hypot(*toward))
++    toward = toward / length if length > 0 and length / max(1, core.sum()) > 0.02 else np.array([0.5, -0.6])
++    return light.astype(np.float64), dark.astype(np.float64), toward
++
++
++def paint_ball(image: np.ndarray, x: float, y: float, diameter: float, material):
++    """A ball shaded like the figures, straight onto the frame."""
++    light, dark, toward = material
++    radius = max(1.5, diameter / 2)
++    x1, y1 = max(0, int(x - radius) - 1), max(0, int(y - radius) - 1)
++    x2, y2 = min(image.shape[1], int(x + radius) + 2), min(image.shape[0], int(y + radius) + 2)
++    if x2 <= x1 or y2 <= y1:
++        return
++    fine = 4        # drawn four times as fine and averaged, for a smooth edge
++    ys, xs = np.mgrid[y1 * fine:y2 * fine, x1 * fine:x2 * fine]
++    nx, ny = ((xs + 0.5) / fine - x) / radius, ((ys + 0.5) / fine - y) / radius
++    on_ball = (nx * nx + ny * ny) <= 1
++    nz = np.sqrt(np.clip(1 - nx * nx - ny * ny, 0, 1))
++    sun = np.array([toward[0], toward[1], 0.8])
++    sun /= np.linalg.norm(sun)
++    lit = np.clip(nx * sun[0] + ny * sun[1] + nz * sun[2], 0, 1) ** 0.8
++    colour = (dark + (light - dark) * lit[..., None]) * on_ball[..., None]
++
++    def averaged(a):
++        return a.reshape(y2 - y1, fine, x2 - x1, fine, -1).mean(axis=(1, 3))
++    cover = averaged(on_ball.astype(np.float64))
++    patch = image[y1:y2, x1:x2].astype(np.float64) * (1 - cover) + averaged(colour)
++    image[y1:y2, x1:x2] = np.clip(np.rint(patch), 0, 255).astype(np.uint8)
++
++
++def draw_balls(p: StableDiffusionProcessingImg2Img, pp):
++    """The dots that find_balls took out of this frame's mask, drawn as balls in the colours of the figures."""
++    balls = getattr(p, "animatediff_balls", None)
++    index = getattr(p, "batch_index", 0)
++    if not balls or index >= len(balls) or not balls[index]:
++        return
++    image = np.array(pp.image.convert("RGB"))
++    material = getattr(p, "animatediff_ball_material", None)
++    if material is None:        # one look for the whole video, taken from the first frame that has a ball
++        material = p.animatediff_ball_material = figure_material(image, p.animatediff_frame_masks[index])
++    for x, y, diameter in balls[index]:
++        paint_ball(image, x * image.shape[1], y * image.shape[0], diameter * image.shape[1], material)
++    pp.image = Image.fromarray(image)
++
++
++def animatediff_i2i_init(self, all_prompts, all_seeds, all_subseeds):
++    """
++    img2img's init() for a video whose frames each have a mask (see use_frame_masks). It follows
++    StableDiffusionProcessingImg2Img.init(), except that:
++    - "Only masked" cuts every frame to the same region, the one that holds the masks of all the frames. A region
++      per frame would shift the picture under the motion module from one frame to the next.
++    - One picture for all the frames is encoded once.
++    """
+     self.extra_generation_params["Denoising strength"] = self.denoising_strength
+ 
+     self.image_cfg_scale: float = self.image_cfg_scale if shared.sd_model.cond_stage_key == "edit" else None
+ 
+     self.sampler = sd_samplers.create_sampler(self.sampler_name, self.sd_model)
+-    crop_regions = []
+-    paste_to = []
+-    masks_for_overlay = []
+ 
+-    image_masks = self.image_mask
+-
+-    for idx, image_mask in enumerate(image_masks):
+-        # image_mask is passed in as RGBA by Gradio to support alpha masks,
+-        # but we still want to support binary masks.
+-        image_mask = create_binary_mask(image_mask)
+-
+-        if self.inpainting_mask_invert:
+-            image_mask = ImageOps.invert(image_mask)
+-
+-        if self.mask_blur_x > 0:
+-            np_mask = np.array(image_mask)
+-            kernel_size = 2 * int(2.5 * self.mask_blur_x + 0.5) + 1
+-            np_mask = cv2.GaussianBlur(np_mask, (kernel_size, 1), self.mask_blur_x)
+-            image_mask = Image.fromarray(np_mask)
+-
+-        if self.mask_blur_y > 0:
+-            np_mask = np.array(image_mask)
+-            kernel_size = 2 * int(2.5 * self.mask_blur_y + 0.5) + 1
+-            np_mask = cv2.GaussianBlur(np_mask, (1, kernel_size), self.mask_blur_y)
+-            image_mask = Image.fromarray(np_mask)
+-
+-        if self.inpaint_full_res:
+-            masks_for_overlay.append(image_mask)
+-            mask = image_mask.convert('L')
+-            crop_region = masking.get_crop_region(np.array(mask), self.inpaint_full_res_padding)
+-            crop_region = masking.expand_crop_region(crop_region, self.width, self.height, mask.width, mask.height)
+-            crop_regions.append(crop_region)
+-            x1, y1, x2, y2 = crop_region
+-
+-            mask = mask.crop(crop_region)
+-            image_mask = images.resize_image(2, mask, self.width, self.height)
+-            paste_to.append((x1, y1, x2-x1, y2-y1))
+-        else:
+-            image_mask = images.resize_image(self.resize_mode, image_mask, self.width, self.height)
+-            np_mask = np.array(image_mask)
+-            np_mask = np.clip((np_mask.astype(np.float32)) * 2, 0, 255).astype(np.uint8)
+-            masks_for_overlay.append(Image.fromarray(np_mask))
+-
+-        image_masks[idx] = image_mask
+-
+-    self.mask_for_overlay = masks_for_overlay[0] # only for saving purpose
+-    if paste_to:
+-        self.paste_to = paste_to[0]
+-        self._animatediff_paste_to_full = paste_to
++    frame_masks = [soften(self, mask) for mask in self.animatediff_frame_masks]
++    if self.inpainting_mask_invert:
++        self.extra_generation_params["Mask mode"] = "Inpaint not masked"
++    if self.mask_blur_x > 0 or self.mask_blur_y > 0:
++        self.extra_generation_params["Mask blur"] = self.mask_blur
++
++    crop_region = None
++    drawn = soften(self, self.image_mask)       # the same picture ControlNet cuts its own input by
++    if self.inpaint_full_res and drawn.getbbox():
++        crop_region = masking.get_crop_region(np.array(drawn), self.inpaint_full_res_padding)
++        crop_region = masking.expand_crop_region(crop_region, self.width, self.height, drawn.width, drawn.height)
++        x1, y1, x2, y2 = crop_region
++        self.paste_to = (x1, y1, x2 - x1, y2 - y1)
++        masks_for_overlay = frame_masks
++        image_masks = [images.resize_image(2, mask.crop(crop_region), self.width, self.height) for mask in frame_masks]
++        self.extra_generation_params["Inpaint area"] = "Only masked"
++        self.extra_generation_params["Masked area padding"] = self.inpaint_full_res_padding
++    else:
++        image_masks = [images.resize_image(self.resize_mode, mask, self.width, self.height) for mask in frame_masks]
++        masks_for_overlay = [Image.fromarray(np.clip(np.array(mask).astype(np.float32) * 2, 0, 255).astype(np.uint8))
++                             for mask in image_masks]
++    self.mask_for_overlay = masks_for_overlay[0]    # the one "Save mask" saves
+ 
+     self.overlay_images = []
+     add_color_corrections = opts.img2img_color_correction and self.color_corrections is None
+     if add_color_corrections:
+         self.color_corrections = []
++    # "original" leaves the picture as it is under the mask, so one picture is the same for every frame
++    encode_once = len(self.init_images) == 1 and self.inpainting_fill == 1
+     imgs = []
+-    for idx, img in enumerate(self.init_images):
+-        latent_mask = (self.latent_mask[idx] if isinstance(self.latent_mask, list) else self.latent_mask) if self.latent_mask is not None else image_masks[idx]
+-        # Save init image
+-        if opts.save_init_img:
+-            self.init_img_hash = hashlib.md5(img.tobytes()).hexdigest()
+-            images.save_image(img, path=opts.outdir_init_images, basename=None, forced_filename=self.init_img_hash, save_to_dirs=False)
+-
+-        image = images.flatten(img, opts.img2img_background_color)
+-
+-        if not crop_regions and self.resize_mode != 3:
+-            image = images.resize_image(self.resize_mode, image, self.width, self.height)
+-
+-        if image_masks:
+-            image_masked = Image.new('RGBa', (image.width, image.height))
+-            image_masked.paste(image.convert("RGBA").convert("RGBa"), mask=ImageOps.invert(masks_for_overlay[idx].convert('L')))
+-
+-            self.overlay_images.append(image_masked.convert('RGBA'))
+-
+-        # crop_region is not None if we are doing inpaint full res
+-        if crop_regions:
+-            image = image.crop(crop_regions[idx])
+-            image = images.resize_image(2, image, self.width, self.height)
+-
+-        if image_masks:
+-            if self.inpainting_fill != 1:
+-                image = masking.fill(image, latent_mask)
++    for idx, image_mask in enumerate(image_masks):
++        if idx < len(self.init_images):
++            img = self.init_images[idx]
++            if opts.save_init_img:
++                self.init_img_hash = hashlib.md5(img.tobytes()).hexdigest()
++                images.save_image(img, path=opts.outdir_init_images, basename=None, forced_filename=self.init_img_hash, save_to_dirs=False)
++
++            picture = images.flatten(img, opts.img2img_background_color)
++            if crop_region is None and self.resize_mode != 3:
++                picture = images.resize_image(self.resize_mode, picture, self.width, self.height)
++            premultiplied = picture.convert("RGBA").convert("RGBa")
++            # crop_region is not None if we are doing inpaint full res
++            framed = picture if crop_region is None else images.resize_image(2, picture.crop(crop_region), self.width, self.height)
++
++        image_masked = Image.new('RGBa', (picture.width, picture.height))
++        image_masked.paste(premultiplied, mask=ImageOps.invert(masks_for_overlay[idx].convert('L')))
++        self.overlay_images.append(image_masked.convert('RGBA'))
++
++        image = framed
++        if self.inpainting_fill != 1:
++            latent_mask = image_mask if self.latent_mask is None else \
++                (self.latent_mask[idx] if isinstance(self.latent_mask, list) else self.latent_mask)
++            image = masking.fill(image, latent_mask)
++            if self.inpainting_fill == 0:
++                self.extra_generation_params["Masked content"] = 'fill'
+ 
+         if add_color_corrections:
+             self.color_corrections.append(setup_color_correction(image))
+ 
+-        image = np.array(image).astype(np.float32) / 255.0
+-        image = np.moveaxis(image, 2, 0)
+-
+-        imgs.append(image)
+-
+-    if len(imgs) == 1:
+-        batch_images = np.expand_dims(imgs[0], axis=0).repeat(self.batch_size, axis=0)
+-        if self.overlay_images is not None:
+-            self.overlay_images = self.overlay_images * self.batch_size
++        if not (encode_once and imgs):
++            imgs.append(np.moveaxis(np.array(image).astype(np.float32) / 255.0, 2, 0))
+ 
+-        if self.color_corrections is not None and len(self.color_corrections) == 1:
+-            self.color_corrections = self.color_corrections * self.batch_size
++    frames = len(image_masks)
++    if frames > self.batch_size:
++        raise RuntimeError(f"bad number of masks passed: {frames}; expecting {self.batch_size} or less")
++    self.batch_size = frames
+ 
+-    elif len(imgs) <= self.batch_size:
+-        self.batch_size = len(imgs)
+-        batch_images = np.array(imgs)
+-    else:
+-        raise RuntimeError(f"bad number of images passed: {len(imgs)}; expecting {self.batch_size} or less")
+-
+-    image = torch.from_numpy(batch_images)
+-    image = image.to(shared.device, dtype=devices.dtype_vae)
++    image = torch.from_numpy(np.array(imgs))
++    image = image.to(shared.device, dtype=torch.float32)
+ 
+     if opts.sd_vae_encode_method != 'Full':
+         self.extra_generation_params['VAE Encoder'] = opts.sd_vae_encode_method
+ 
+     self.init_latent = images_tensor_to_samples(image, approximation_indexes.get(opts.sd_vae_encode_method), self.sd_model)
+     devices.torch_gc()
++    if self.init_latent.shape[0] == 1 and frames > 1:
++        self.init_latent = self.init_latent.repeat(frames, 1, 1, 1)
+ 
+     if self.resize_mode == 3:
+         self.init_latent = torch.nn.functional.interpolate(self.init_latent, size=(self.height // opt_f, self.width // opt_f), mode="bilinear")
+ 
+-    if image_masks is not None:
+-        def process_letmask(init_mask):
+-            # init_mask = latent_mask
+-            latmask = init_mask.convert('RGB').resize((self.init_latent.shape[3], self.init_latent.shape[2]))
+-            latmask = np.moveaxis(np.array(latmask, dtype=np.float32), 2, 0) / 255
+-            latmask = latmask[0]
++    def latent_mask_of(init_mask):
++        latmask = init_mask.convert('RGB').resize((self.init_latent.shape[3], self.init_latent.shape[2]))
++        latmask = np.moveaxis(np.array(latmask, dtype=np.float32), 2, 0) / 255
++        latmask = latmask[0]
++        if self.mask_round:
+             latmask = np.around(latmask)
+-            return np.tile(latmask[None], (4, 1, 1))
++        return np.tile(latmask[None], (4, 1, 1))
+ 
+-        if self.latent_mask is not None and not isinstance(self.latent_mask, list):
+-            latmask = process_letmask(self.latent_mask)
+-        else:
+-            if isinstance(self.latent_mask, list):
+-                latmask = [process_letmask(x) for x in self.latent_mask]
+-            else:
+-                latmask = [process_letmask(x) for x in image_masks]
+-            latmask = np.stack(latmask, axis=0)
++    if self.latent_mask is not None and not isinstance(self.latent_mask, list):
++        latmask = latent_mask_of(self.latent_mask)
++    else:
++        latmask = np.stack([latent_mask_of(mask) for mask in (self.latent_mask or image_masks)], axis=0)
+ 
+-        self.mask = torch.asarray(1.0 - latmask).to(shared.device).type(self.sd_model.dtype)
+-        self.nmask = torch.asarray(latmask).to(shared.device).type(self.sd_model.dtype)
++    self.mask = torch.asarray(1.0 - latmask).to(shared.device).type(self.sd_model.dtype)
++    self.nmask = torch.asarray(latmask).to(shared.device).type(self.sd_model.dtype)
+ 
+-        # this needs to be fixed to be done in sample() using actual seeds for batches
+-        if self.inpainting_fill == 2:
+-            self.init_latent = self.init_latent * self.mask + create_random_tensors(self.init_latent.shape[1:], all_seeds[0:self.init_latent.shape[0]]) * self.nmask
+-        elif self.inpainting_fill == 3:
+-            self.init_latent = self.init_latent * self.mask
++    # this needs to be fixed to be done in sample() using actual seeds for batches
++    if self.inpainting_fill == 2:
++        self.init_latent = self.init_latent * self.mask + create_random_tensors(self.init_latent.shape[1:], all_seeds[0:self.init_latent.shape[0]]) * self.nmask
++        self.extra_generation_params["Masked content"] = 'latent noise'
++    elif self.inpainting_fill == 3:
++        self.init_latent = self.init_latent * self.mask
++        self.extra_generation_params["Masked content"] = 'latent nothing'
+ 
+-    self.image_conditioning = self.img2img_image_conditioning(image * 2 - 1, self.init_latent, image_masks) # let's ignore this image_masks which is related to inpaint model with different arch
++    # an inpainting checkpoint is given the masks as one tensor, a frame each; other checkpoints do not read them
++    conditioning_mask = torch.from_numpy(np.stack([np.array(mask.convert("L"), dtype=np.float32) / 255.0 for mask in image_masks])[:, None])
++    if self.mask_round:
++        conditioning_mask = torch.round(conditioning_mask)
++    self.image_conditioning = self.img2img_image_conditioning(image * 2 - 1, self.init_latent, conditioning_mask, self.mask_round)
+ 
+ 
+ def animatediff_i2i_batch(
+@@ -198,9 +385,6 @@ def animatediff_i2i_batch(
+         if is_inpaint_batch:
+             assert len(inpaint_masks) == 1 or len(inpaint_masks) == len(images), 'The number of masks must be 1 or equal to the number of images.'
+             logger.info(f"[i2i batch] Inpaint batch is enabled. {len(inpaint_masks)} masks found.")
+-            if len(inpaint_masks) > 1: # batch mask
+-                p.init = MethodType(animatediff_i2i_init, p)
+-
+             cn_units = get_controlnet_units(p)
+             for idx, cn_unit in enumerate(cn_units):
+                 # batch path broadcast
+@@ -296,8 +480,8 @@ def animatediff_i2i_batch(
+             p.override_settings['samples_filename_pattern'] = f'{image_path.stem}'
+ 
+     p.init_images = frame_images
+-    if len(frame_masks) > 0:
+-        p.image_mask = frame_masks
++    if len(frame_masks) > 0: # batch mask
++        use_frame_masks(p, frame_masks)
+ 
+     proc = scripts.scripts_img2img.run(p, *args) # we should not support this, but just leave it here
+ 
+@@ -322,11 +506,23 @@ def animatediff_i2i_batch(
+     return batch_results
+ 
+ 
++def animatediff_img2img_function(id_task: str, mode: int, *args, **kwargs):
++    """Notes which img2img tab Generate was pressed on: the mask folder belongs to Inpaint upload (4)."""
++    img2img.animatediff_tab = mode
++    try:
++        return img2img.original_img2img_function(id_task, mode, *args, **kwargs)
++    finally:
++        img2img.animatediff_tab = None
++
++
+ def animatediff_hook_i2i_batch():
+     if getattr(img2img, "original_i2i_batch", None) is None:
+         logger.info("AnimateDiff Hooking i2i_batch")
+         img2img.original_i2i_batch = img2img.process_batch
+         img2img.process_batch = animatediff_i2i_batch
++    if getattr(img2img, "original_img2img_function", None) is None:
++        img2img.original_img2img_function = img2img.img2img_function
++        img2img.img2img_function = animatediff_img2img_function
+ 
+ 
+ def animatediff_unhook_i2i_batch():
+@@ -334,3 +530,6 @@ def animatediff_unhook_i2i_batch():
+         logger.info("AnimateDiff Unhooking i2i_batch")
+         img2img.process_batch = img2img.original_i2i_batch
+         img2img.original_i2i_batch = None
++    if getattr(img2img, "original_img2img_function", None) is not None:
++        img2img.img2img_function = img2img.original_img2img_function
++        img2img.original_img2img_function = None
+diff --git a/scripts/animatediff_infv2v.py b/scripts/animatediff_infv2v.py
+index e870696..83e0fcf 100644
+--- a/scripts/animatediff_infv2v.py
++++ b/scripts/animatediff_infv2v.py
+@@ -2,6 +2,7 @@ import gc
+ import numpy as np
+ import torch
+ 
++from ldm_patched.modules.controlnet import ControlNet
+ from ldm_patched.modules.model_management import get_torch_device, soft_empty_cache
+ from modules import shared
+ from modules.sd_samplers_cfg_denoiser import pad_cond
+@@ -11,6 +12,12 @@ from scripts.animatediff_mm import mm_animatediff as motion_module
+ 
+ 
+ class AnimateDiffInfV2V:
++    # ControlNet runs inside each context window instead of for every frame at once. For every frame at once
++    # its output waits in RAM for the whole step (at 408x720 about 30 MB a frame per ControlNet, and CFG doubles
++    # the frames): a 240-frame dance with two ControlNets needs ~36 GB, and Windows starts paging to disk.
++    control_per_window = True
++    control_window = False
++
+ 
+     # Returns fraction that has denominator that is a power of 2
+     @staticmethod
+@@ -105,6 +112,7 @@ class AnimateDiffInfV2V:
+         logger.debug("Running special forward for AnimateDiff")
+         x_out = torch.zeros_like(info["input"])
+         ad_params = motion_module.ad_params
++        control_head = AnimateDiffInfV2V.deferred_control(info)
+         for context in AnimateDiffInfV2V.uniform(ad_params.step, ad_params.video_length, ad_params.batch_size, ad_params.stride, ad_params.overlap, ad_params.closed_loop):
+             if x_out.shape[0] == 2 * ad_params.video_length:
+                 _context = context + [c + ad_params.video_length for c in context]
+@@ -128,12 +136,19 @@ class AnimateDiffInfV2V:
+                     else:
+                         info_c[k] = v
+                 else:
+-                    if k == "control":
++                    if k == "transformer_options" and isinstance(v, dict):
++                        # which frames this context window holds, so per-frame IP-Adapter masks line up
++                        # (read by Forge's IP-Adapter as extra_options["ad_params"], as in ComfyUI)
++                        info_c[k] = {**v, "ad_params": {"sub_idxs": list(context),
++                                                        "full_length": ad_params.video_length}}
++                    elif k == "control" and v is not None:  # None once every ControlNet unit has ended
+                         current_control = {}
+                         for c_k, c_v in v.items(): # c_k: "input" | "middle" | "output"
+                             current_control[c_k] = []
+                             for c_tensor in c_v:
+-                                if c_tensor.shape[0] == 2 * ad_params.video_length:
++                                if c_tensor is None:
++                                    current_control[c_k].append(None)
++                                elif c_tensor.shape[0] == 2 * ad_params.video_length:
+                                     current_control[c_k].append(c_tensor[_context].to(get_torch_device()))
+                                 elif c_tensor.shape[0] == ad_params.video_length:
+                                     current_control[c_k].append(c_tensor[context].to(get_torch_device()))
+@@ -143,6 +158,8 @@ class AnimateDiffInfV2V:
+                     else:          
+                         info_c[k] = v
+ 
++            if control_head is not None:
++                info_c["control"] = AnimateDiffInfV2V.window_control(control_head, info, info_c, context, _context)
+             out = apply_model(info["input"][_context], info["timestep"][_context], **info_c)
+             x_out = x_out.to(dtype=out.dtype)
+             x_out[_context] = out
+@@ -152,3 +169,67 @@ class AnimateDiffInfV2V:
+             gc.collect()
+ 
+         return x_out
++
++
++    @staticmethod
++    def control_chain(head):
++        chain = []
++        while head is not None:
++            chain.append(head)
++            head = head.previous_controlnet
++        return chain
++
++
++    @staticmethod
++    def deferred_control(info):
++        """The ControlNet chain left for the context windows (see control_per_window), or None."""
++        head = info["c"].get("control_model", None)
++        if head is None or not AnimateDiffInfV2V.control_per_window:
++            return None
++        if all(isinstance(cn, ControlNet) for cn in AnimateDiffInfV2V.control_chain(head)):
++            return head
++        # a T2I-Adapter makes its output for every frame by itself: every frame at once for this generation
++        AnimateDiffInfV2V.control_per_window = False
++        cond = {k: v for k, v in info["c"].items() if k not in ("control", "control_model")}
++        info["c"]["control"] = head.get_control(info["input"], info["timestep"], cond, len(info["cond_or_uncond"]))
++        return None
++
++
++    @staticmethod
++    def window_control(head, info, info_c, context, _context):
++        """Run the ControlNet chain on the frames of one context window."""
++        ad_params = motion_module.ad_params
++        full = info["input"].shape[0]
++
++        def window_of(value):  # a per-frame tensor or list, cut to this window
++            if isinstance(value, torch.Tensor) and value.ndim > 0 and value.shape[0] in (full, ad_params.video_length):
++                return value[_context if value.shape[0] == full else context]
++            if isinstance(value, list) and len(value) == ad_params.video_length:
++                return [value[i] for i in context]
++            return value
++
++        options = dict(info_c.get("transformer_options", head.transformer_options))
++        for key in ("cond_mark", "sigmas"):
++            if key in options:
++                options[key] = window_of(options[key])
++        saved = [(cn, cn.cond_hint, cn.transformer_options, getattr(cn, "advanced_mask_weighting", None),
++                  getattr(cn, "advanced_frame_weighting", None)) for cn in AnimateDiffInfV2V.control_chain(head)]
++        try:
++            for cn, hint, _, mask, frame_weights in saved:
++                cn.transformer_options = options
++                cn.cond_hint = window_of(hint)
++                cn.advanced_mask_weighting = window_of(mask)
++                cn.advanced_frame_weighting = window_of(frame_weights)
++            cond = {k: v for k, v in info_c.items() if k not in ("control", "control_model")}
++            cond["transformer_options"] = options
++            x = info["input"][_context]
++            dtype = head.manual_cast_dtype or head.control_model.dtype
++            if dtype in (torch.float16, torch.bfloat16):
++                x = x.to(dtype)  # keeps the output in half precision, which is what the UNet adds it in
++            AnimateDiffInfV2V.control_window = True
++            return head.get_control(x, info["timestep"][_context], cond, len(info["cond_or_uncond"]))
++        finally:
++            AnimateDiffInfV2V.control_window = False
++            for cn, hint, cn_options, mask, frame_weights in saved:
++                cn.cond_hint, cn.transformer_options = hint, cn_options
++                cn.advanced_mask_weighting, cn.advanced_frame_weighting = mask, frame_weights
+diff --git a/scripts/animatediff_mm.py b/scripts/animatediff_mm.py
+index 52a2b23..fb3595d 100644
+--- a/scripts/animatediff_mm.py
++++ b/scripts/animatediff_mm.py
+@@ -47,7 +47,15 @@ class AnimateDiffMM:
+             if unet_manual_cast(unet_dtype(), get_torch_device()) is not None:
+                 mm_config["operations"] = manual_cast
+             self.mm = MotionWrapper(**mm_config)
+-            self.mm.load_state_dict(mm_state_dict)
++            # some modules (AnimateLCM) are saved without the sinusoidal pos_encoder.pe buffers,
++            # which MotionWrapper computes itself, so only those may be missing
++            missing, unexpected = self.mm.load_state_dict(mm_state_dict, strict=False)
++            not_pe = [k for k in missing if not k.endswith("pos_encoder.pe")]
++            if not_pe or unexpected:
++                raise RuntimeError(f"Motion module {model_name} does not match {model_type}: "
++                                   f"missing {not_pe[:5]}, unexpected {unexpected[:5]}")
++            if missing:
++                logger.info(f"{model_name} has no positional encoding saved, using the computed one.")
+         self.set_layer_mapping(shared.sd_model)
+ 
+ 
+@@ -93,6 +101,12 @@ class AnimateDiffMM:
+             return unet.memory_required(input_shape)
+ 
+         def mm_cn_forward(model, inner_model, hint, **kwargs):
++            if AnimateDiffInfV2V.control_window:  # one context window: the inputs are already its frames
++                device = get_torch_device()
++                return inner_model(hint=hint.to(device), **{k: (v.to(device) if type(v) == torch.Tensor else v)
++                                                            for k, v in kwargs.items()})
++            if AnimateDiffInfV2V.control_per_window:
++                return []  # left for the context windows (AnimateDiffInfV2V.window_control)
+             controls = []
+             control_batch_size = shared.opts.data.get("animatediff_control_batch_size", 0)
+             if control_batch_size == 0:
+@@ -118,6 +132,7 @@ class AnimateDiffMM:
+             return controls
+ 
+         from scripts.animatediff_infv2v import AnimateDiffInfV2V
++        AnimateDiffInfV2V.control_per_window = not shared.opts.data.get("animatediff_disable_control_wrapper", False)
+         mm_patcher = unet.add_extra_torch_module_during_sampling(self.mm)
+         unet.add_extra_preserved_memory_during_sampling(mm_patcher.model_size())
+         unet.set_model_unet_function_wrapper(AnimateDiffInfV2V.mm_sd_forward)
+diff --git a/scripts/animatediff_output.py b/scripts/animatediff_output.py
+index bee23e7..79d6feb 100644
+--- a/scripts/animatediff_output.py
++++ b/scripts/animatediff_output.py
+@@ -25,11 +25,18 @@ class AnimateDiffOutput:
+         date = datetime.datetime.now().strftime('%Y-%m-%d')
+         output_dir = Path(f"{p.outpath_samples}/AnimateDiff/{date}")
+         output_dir.mkdir(parents=True, exist_ok=True)
+-        step = params.video_length if params.video_length > params.batch_size else params.batch_size
+-        for i in range(res.index_of_first_image, len(res.images), step):
++        if params.segments:
++            # a long video rendered in parts becomes one video again
++            videos = [(res.index_of_first_image, self._join_segments(res, params))]
++        else:
++            step = params.video_length if params.video_length > params.batch_size else params.batch_size
+             # frame interpolation replaces video_list with interpolated frames
+             # so make a copy instead of a slice (reference), to avoid modifying res
+-            frame_list = [image.copy() for image in res.images[i : i + params.video_length]]
++            videos = [(i, [image.copy() for image in res.images[i : i + params.video_length]])
++                      for i in range(res.index_of_first_image, len(res.images), step)]
++        for i, frame_list in videos:
++            if not frame_list:
++                continue
+             if from_xyz:
+                 first_frames.append(res.images[i].copy())
+             
+@@ -41,6 +48,7 @@ class AnimateDiffOutput:
+ 
+             frame_list = self._add_reverse(params, frame_list)
+             frame_list = self._interp(p, params, frame_list, filename)
++            frame_list = self._upscale(params, frame_list)
+             video_paths += self._save(params, frame_list, video_path_prefix, res, i)
+ 
+         if len(video_paths) == 0:
+@@ -56,8 +64,161 @@ class AnimateDiffOutput:
+             self._remove_frame_extract(params)
+ 
+ 
++    def _join_segments(self, res: Processed, params: AnimateDiffProcess):
++        """Put the parts back on one timeline; where two parts overlap, fade linearly from one to the next."""
++        frames = res.images[res.index_of_first_image:]
++        length = params.video_length
++        parts = [(start, frames[k * length:(k + 1) * length])
++                 for k, start in enumerate(params.segments) if len(frames) >= (k + 1) * length]
++        if len(parts) < len(params.segments):
++            logger.warning(f"Only {len(parts)} of {len(params.segments)} parts were rendered, saving those.")
++        if not parts:
++            return []
++        total = parts[-1][0] + length
++        joined = []
++        for g in range(total):
++            layers = []
++            for k, (start, images) in enumerate(parts):
++                if not start <= g < start + length:
++                    continue
++                weight = 1.0
++                if k > 0:  # fade in over the overlap with the previous part
++                    common = parts[k - 1][0] + length - start
++                    if g - start < common:
++                        weight = min(weight, (g - start + 1) / (common + 1))
++                if k + 1 < len(parts):  # fade out over the overlap with the next part
++                    common = start + length - parts[k + 1][0]
++                    if start + length - g <= common:
++                        weight = min(weight, (start + length - g) / (common + 1))
++                layers.append((weight, images[g - start]))
++            if len(layers) == 1:
++                joined.append(layers[0][1].copy())
++            else:
++                total_weight = sum(w for w, _ in layers)
++                mixed = sum(w * np.asarray(img, dtype=np.float32) for w, img in layers) / total_weight
++                joined.append(Image.fromarray(np.clip(mixed + 0.5, 0, 255).astype(np.uint8)))
++        logger.info(f"Joined {len(parts)} parts into {len(joined)} frames.")
++        return joined
++
++
++    def _upscale(self, params: AnimateDiffProcess, frame_list: list):
++        """Upscale every frame after frame interpolation (FILM at the small size is much faster)."""
++        name = getattr(params, "upscaler", "None")
++        scale = float(getattr(params, "upscale_by", 1) or 1)
++        if not name or name == "None" or scale <= 1:
++            return frame_list
++        upscaler = next((u for u in shared.sd_upscalers if u.name == name), None)
++        if upscaler is None:
++            logger.warning(f"Upscaler {name} not found, the frames keep their size.")
++            return frame_list
++        from tqdm import tqdm
++        import time
++        started = time.time()
++        width, height = frame_list[0].size
++        size = (int(round(width * scale / 8) * 8), int(round(height * scale / 8) * 8))
++        model = self._load_frame_upscaler(upscaler, scale)
++        logger.info(f"Upscaling {len(frame_list)} frames x{scale:g} with {name}"
++                    + (" (model loaded once, whole frames)" if model is not None else ""))
++        result = []
++        try:
++            for frame in tqdm(frame_list):
++                if shared.state.interrupted:
++                    logger.warning("Interrupted while upscaling, the rest of the frames keep their size.")
++                    return frame_list
++                if model is not None:
++                    image = self._upscale_frame(model, frame.convert("RGB"), size)
++                else:
++                    image = upscaler.scaler.upscale(frame.convert("RGB"), scale, upscaler.data_path)
++                if image.size != size:
++                    image = image.resize(size, Image.LANCZOS)
++                result.append(image)
++        finally:
++            del model
++            from modules import devices
++            devices.torch_gc()
++        logger.info(f"Upscaled {len(result)} frames in {time.time() - started:.0f} s.")
++        return result
++
++
++    @staticmethod
++    def _load_frame_upscaler(upscaler, scale: float = 4):
++        """
++        Forge's upscalers load their model from disk, clean the memory and cut the picture into 192 px tiles
++        for every single image: about 3 s a frame. For a video the model is loaded once instead.
++        Returns a Spandrel model, or None to fall back to the upscaler's own per-image path.
++        """
++        scaler = upscaler.scaler
++        kind = type(scaler).__name__
++        try:
++            from modules import modelloader
++            from modules.shared import cmd_opts
++            prefer_half = not cmd_opts.no_half and not cmd_opts.upcast_sampling
++            if kind in ("UpscalerRealESRGAN", "UpscalerDAT"):
++                path = AnimateDiffOutput._realesrgan_x2(scale) if kind == "UpscalerRealESRGAN" else None
++                if path:
++                    logger.info("Using RealESRGAN x2plus (the same family, native x2: ~3.5x faster than x4 and back down).")
++                else:
++                    path = scaler.load_model(upscaler.data_path).local_data_path
++                model = modelloader.load_spandrel_model(
++                    path, device=scaler.device, prefer_half=prefer_half,
++                    expected_architecture="DAT" if kind == "UpscalerDAT" else "ESRGAN")
++            elif kind == "UpscalerESRGAN":
++                model = scaler.load_model(upscaler.data_path)
++            else:
++                return None
++            try:
++                from modules_forge.forge_util import prepare_free_memory
++                prepare_free_memory()
++            except Exception:
++                pass
++            return model
++        except Exception as e:
++            logger.warning(f"Could not load {upscaler.name} once for all frames, upscaling frame by frame: {e}")
++            return None
++
++
++    @staticmethod
++    def _realesrgan_x2(scale: float):
++        """
++        R-ESRGAN 4x+ always works at x4. Up to x2, its official x2 model gives the same look for about a quarter
++        of the work (0.31 s instead of 1.1 s a 408x728 frame on an RTX 3070 laptop). Fetched once if missing.
++        """
++        if scale > 2:
++            return None
++        import os
++        from modules import modelloader
++        from modules.paths import models_path
++        folder = os.path.join(models_path, "RealESRGAN")
++        path = os.path.join(folder, "RealESRGAN_x2plus.pth")
++        if not os.path.isfile(path):
++            try:
++                modelloader.load_file_from_url(
++                    "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth",
++                    model_dir=folder, file_name="RealESRGAN_x2plus.pth")
++            except Exception as e:
++                logger.warning(f"Could not fetch RealESRGAN x2plus, using x4: {e}")
++                return None
++        return path if os.path.isfile(path) else None
++
++
++    @staticmethod
++    def _upscale_frame(model, image, size):
++        """Run the model until the picture reaches the size (a x4 model runs once for x2 or x4)."""
++        from modules.upscaler_utils import upscale_pil_patch, upscale_with_model
++        while image.width < size[0] or image.height < size[1]:
++            before = image.width
++            if image.width * image.height <= 1024 * 1024:
++                image = upscale_pil_patch(model, image)        # small frames go through whole: no tile seams
++            else:
++                image = upscale_with_model(model, image, tile_size=512, tile_overlap=32)
++            if image.width <= before:                          # a model that does not enlarge: stop
++                break
++        return image
++
++
+     def _remove_frame_extract(self, params: AnimateDiffProcess):
+-        if params.video_source and params.video_path and Path(params.video_path).exists():
++        # cached dance frames are kept so the next render of the same video reuses them
++        if params.video_source and params.video_path and Path(params.video_path).exists() and not params.frames_cached:
+             logger.info(f"Removing extracted frames from {params.video_path}")
+             import shutil
+             shutil.rmtree(params.video_path)
+@@ -156,18 +317,25 @@ class AnimateDiffOutput:
+         infotext = res.infotexts[index]
+         s3_enable =shared.opts.data.get("animatediff_s3_enable", False) 
+         use_infotext = shared.opts.enable_pnginfo and infotext is not None
++        
++        logger.info(f"Starting save process for formats: {params.format}")
++        
+         if "PNG" in params.format and (shared.opts.data.get("animatediff_save_to_custom", True) or getattr(params, "force_save_to_custom", False)):
++            logger.info("Saving PNG frames...")
+             video_path_prefix.mkdir(exist_ok=True, parents=True)
+             for i, frame in enumerate(frame_list):
+                 png_filename = video_path_prefix/f"{i:05}.png"
+                 png_info = PngImagePlugin.PngInfo()
+                 png_info.add_text('parameters', infotext)
+                 imageio.imwrite(png_filename, frame, pnginfo=png_info)
++            logger.info("PNG frames saved successfully")
+ 
+         if "GIF" in params.format:
++            logger.info("Starting GIF save...")
+             video_path_gif = str(video_path_prefix) + ".gif"
+             video_paths.append(video_path_gif)
+             if shared.opts.data.get("animatediff_optimize_gif_palette", False):
++                logger.info("Using optimized GIF palette...")
+                 try:
+                     import av
+                 except ImportError:
+@@ -176,25 +344,14 @@ class AnimateDiffOutput:
+                         "install imageio[pyav]",
+                         "sd-webui-animatediff GIF palette optimization requirement: imageio[pyav]",
+                     )
++                # Use pillow plugin instead of pyav to avoid time_base issues
+                 imageio.imwrite(
+-                    video_path_gif, video_array, plugin='pyav', fps=params.fps, 
+-                    codec='gif', out_pixel_format='pal8',
+-                    filter_graph=(
+-                        {
+-                            "split": ("split", ""),
+-                            "palgen": ("palettegen", ""),
+-                            "paluse": ("paletteuse", ""),
+-                            "scale": ("scale", f"{frame_list[0].width}:{frame_list[0].height}")
+-                        },
+-                        [
+-                            ("video_in", "scale", 0, 0),
+-                            ("scale", "split", 0, 0),
+-                            ("split", "palgen", 1, 0),
+-                            ("split", "paluse", 0, 0),
+-                            ("palgen", "paluse", 0, 1),
+-                            ("paluse", "video_out", 0, 0),
+-                        ]
+-                    )
++                    video_path_gif,
++                    video_array,
++                    plugin='pillow',
++                    duration=(1000 / params.fps),
++                    loop=params.loop_number,
++                    comment=(infotext if use_infotext else "")
+                 )
+                 # imageio[pyav].imwrite doesn't support comment parameter
+                 if use_infotext:
+@@ -218,6 +375,7 @@ class AnimateDiffOutput:
+                                 "exiftool not found, required for infotext with optimized GIF palette, try: apt install libimage-exiftool-perl or https://exiftool.org/"
+                             )
+             else:
++                logger.info("Using standard GIF save...")
+                 imageio.imwrite(
+                     video_path_gif,
+                     video_array,
+@@ -226,42 +384,84 @@ class AnimateDiffOutput:
+                     loop=params.loop_number,
+                     comment=(infotext if use_infotext else "")
+                 )
++            logger.info("GIF saved successfully")
+             if shared.opts.data.get("animatediff_optimize_gif_gifsicle", False):
+                 self._optimize_gif(video_path_gif)
+ 
+         if "MP4" in params.format:
++            logger.info("Starting MP4 save...")
+             video_path_mp4 = str(video_path_prefix) + ".mp4"
+             video_paths.append(video_path_mp4)
++            
++            # Method 1: H.264 through the ffmpeg that imageio_ffmpeg ships (imageio v3 has no 'ffmpeg' plugin here,
++            # which left every MP4 to OpenCV's low quality mp4v)
+             try:
+-                import av
+-            except ImportError:
+-                from launch import run_pip
+-                run_pip(
+-                    "install imageio[pyav]",
+-                    "sd-webui-animatediff MP4 save requirement: imageio[pyav]",
+-                )
+-                import av
+-            options = {
+-                "crf": str(shared.opts.data.get("animatediff_mp4_crf", 23))
+-            }
+-            preset = shared.opts.data.get("animatediff_mp4_preset", "")
+-            if preset != "": options["preset"] = preset
+-            tune = shared.opts.data.get("animatediff_mp4_tune", "")
+-            if tune != "": options["tune"] = tune
+-            output = av.open(video_path_mp4, "w")
+-            logger.info(f"Saving {video_path_mp4}")
+-            if use_infotext:
+-                output.metadata["Comment"] = infotext
+-            stream = output.add_stream('libx264', params.fps, options=options)
+-            stream.width = frame_list[0].width
+-            stream.height = frame_list[0].height
+-            for img in video_array:
+-                frame = av.VideoFrame.from_ndarray(img)
+-                packet = stream.encode(frame)
+-                output.mux(packet)
+-            packet = stream.encode(None)
+-            output.mux(packet)
+-            output.close()
++                import imageio_ffmpeg
++                crf = str(shared.opts.data.get("animatediff_mp4_crf", 18))
++                output_params = ["-crf", crf, "-preset", shared.opts.data.get("animatediff_mp4_preset", "") or "slow",
++                                 "-movflags", "+faststart"]
++                tune = shared.opts.data.get("animatediff_mp4_tune", "")
++                if tune:
++                    output_params += ["-tune", tune]
++                if use_infotext:
++                    output_params += ["-metadata", "comment=" + infotext.replace("\n", " ")]
++                height, width = video_array[0].shape[:2]
++                logger.info(f"Saving {video_path_mp4} as H.264, crf {crf}")
++                writer = imageio_ffmpeg.write_frames(video_path_mp4, (width, height), fps=params.fps, codec="libx264",
++                                                     quality=None, macro_block_size=2, output_params=output_params)
++                writer.send(None)
++                for frame in video_array:
++                    writer.send(np.ascontiguousarray(frame[:, :, :3], dtype=np.uint8))
++                writer.close()
++                logger.info("MP4 saved successfully with imageio-ffmpeg")
++            except Exception as e:
++                logger.warning(f"Failed to save MP4 with imageio-ffmpeg: {e}")
++                
++                # Method 2: Try with OpenCV
++                try:
++                    logger.info("Trying MP4 save with OpenCV...")
++                    import cv2
++                    height, width = video_array[0].shape[:2]
++                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
++                    out = cv2.VideoWriter(video_path_mp4, fourcc, float(params.fps), (width, height))
++                    
++                    if not out.isOpened():
++                        raise Exception("Could not open video writer")
++                    
++                    for frame in video_array:
++                        # Convert RGB to BGR for OpenCV
++                        frame_bgr = cv2.cvtColor(frame.astype('uint8'), cv2.COLOR_RGB2BGR)
++                        out.write(frame_bgr)
++                    out.release()
++                    logger.info("MP4 saved successfully with OpenCV")
++                except Exception as e2:
++                    logger.warning(f"Failed to save MP4 with OpenCV: {e2}")
++                    
++                    # Method 3: Try with pyav but different approach
++                    try:
++                        logger.info("Trying MP4 save with pyav (alternative method)...")
++                        import av
++                        container = av.open(video_path_mp4, mode='w')
++                        stream = container.add_stream('libx264', rate=params.fps)
++                        stream.width = video_array[0].shape[1]
++                        stream.height = video_array[0].shape[0]
++                        stream.pix_fmt = 'yuv420p'
++                        
++                        for frame_array in video_array:
++                            frame = av.VideoFrame.from_ndarray(frame_array.astype('uint8'), format='rgb24')
++                            for packet in stream.encode(frame):
++                                container.mux(packet)
++                        
++                        # Flush stream
++                        for packet in stream.encode():
++                            container.mux(packet)
++                        
++                        container.close()
++                        logger.info("MP4 saved successfully with pyav (alternative)")
++                    except Exception as e3:
++                        logger.error(f"All MP4 save methods failed: ffmpeg={e}, opencv={e2}, pyav={e3}")
++                        # Remove MP4 from video_paths if it failed
++                        video_paths.remove(video_path_mp4)
+ 
+         if "TXT" in params.format and res.images[index].info is not None:
+             video_path_txt = str(video_path_prefix) + ".txt"
+@@ -292,14 +492,36 @@ class AnimateDiffOutput:
+             video_path_webm = str(video_path_prefix) + ".webm"
+             video_paths.append(video_path_webm)
+             logger.info(f"Saving {video_path_webm}")
+-            with imageio.imopen(video_path_webm, "w", plugin="pyav") as file:
++            # imageio's pyav plugin crashes on PyAV 15 (frame time_base is None), so write with av directly
++            import av
++            with av.open(video_path_webm, mode="w") as container:
+                 if use_infotext:
+-                    file.container_metadata["Title"] = infotext
+-                    file.container_metadata["Comment"] = infotext
+-                file.write(video_array, codec="vp9", fps=params.fps)
++                    container.metadata["Title"] = infotext
++                    container.metadata["Comment"] = infotext
++                stream = container.add_stream("libvpx-vp9", rate=params.fps)
++                stream.width = video_array[0].shape[1]
++                stream.height = video_array[0].shape[0]
++                stream.pix_fmt = "yuv420p"
++                for frame_array in video_array:
++                    frame = av.VideoFrame.from_ndarray(frame_array.astype("uint8"), format="rgb24")
++                    for packet in stream.encode(frame):
++                        container.mux(packet)
++                for packet in stream.encode():
++                    container.mux(packet)
++
++        audio_path = params.get_audio()
++        if audio_path:
++            from scripts.animatediff_utils import add_audio_to_video
++            for video_path in video_paths:
++                if video_path.lower().endswith((".mp4", ".webm")):
++                    add_audio_to_video(video_path, audio_path, len(frame_list) / params.fps,
++                                       params.audio_offset, params.audio_mode, params.audio_fade)
+         
+         if s3_enable:
++            logger.info("Uploading to S3...")
+             for video_path in video_paths: self._save_to_s3_stroge(video_path)  
++        
++        logger.info(f"Save process completed. Generated {len(video_paths)} video files.")
+         return video_paths
+ 
+ 
+diff --git a/scripts/animatediff_settings.py b/scripts/animatediff_settings.py
+index 9b0f469..43b546a 100644
+--- a/scripts/animatediff_settings.py
++++ b/scripts/animatediff_settings.py
+@@ -22,7 +22,7 @@ def on_ui_settings():
+         "animatediff_control_batch_size",
+         shared.OptionInfo(
+             0,
+-            "ControlNet batch size for AnimateDiff (default: 2 * context_batch_size)",
++            "ControlNet batch size for AnimateDiff with a T2I-Adapter (ControlNet itself runs per context window; default: 2 * context_batch_size)",
+             gr.Slider,
+             {"minimum": 0, "maximum": 128, "step": 4},
+             section=section,
+diff --git a/scripts/animatediff_ui.py b/scripts/animatediff_ui.py
+index 8873ee6..f021cf5 100644
+--- a/scripts/animatediff_ui.py
++++ b/scripts/animatediff_ui.py
+@@ -4,6 +4,7 @@ import os
+ import cv2
+ import subprocess
+ import gradio as gr
++from PIL import Image
+ 
+ from modules import shared
+ from modules.launch_utils import git
+@@ -13,9 +14,20 @@ from scripts.animatediff_mm import mm_animatediff as motion_module
+ from scripts.animatediff_xyz import xyz_attrs
+ from scripts.animatediff_logger import logger_animatediff as logger
+ from scripts.animatediff_utils import get_controlnet_units, extract_frames_from_video
++from scripts.animatediff_dance import (is_qr_unit, SILHOUETTE_STYLES, SILHOUETTE_GRAY, DANCE_FINAL_SIZES,
++                                       DANCE_FPS_CHOICES, dance_upscalers)
++from scripts.animatediff_utils import (AUDIO_FILE_TYPES, AUDIO_MODES, AUDIO_MODE_CUT,
++                                       resolve_audio_path, get_audio_duration)
+ 
+ supported_save_formats = ["GIF", "MP4", "WEBP", "WEBM", "PNG", "TXT"]
+ 
++DANCE_GUIDE = """Upload up to three things, write the prompt in the usual place and press **Generate**:
++1. **Dance video**: real people dancing. Only their movement is taken, not how they look.
++2. **The dancers**: pictures of what the dancers are made of (a water drop, glass, spaghetti). Close-ups of the material work best. In the prompt, describe them as the material: *two figures made entirely of spaghetti*, rather than *two dancers*.
++3. **The background** (optional): pictures of the place behind the dancers (a jungle, a beach, a stage). They give the background its atmosphere and colors; the picture itself is not copied. Without them the background comes only from the prompt. Pick a picture taken from the same angle as the dance video (a stage filmed from the side needs a side view; a picture from above turns the whole scene into a top view). A picture of the place without the dancers' material works best (a bowl with sauce on a table, not a bowl full of spaghetti), so the dancers stand out. When the dancers are small in the frame, keep the picture plain (an empty table and wall): objects in it get repeated around the empty space.
++
++Length, music, size and ControlNet are set automatically; the checkpoint is the usual one. Your own ControlNet units are switched off while this is on."""
++
+ class ToolButton(gr.Button, gr.components.FormComponent):
+     """Small button with single emoji as text, fits inside gradio forms"""
+ 
+@@ -27,6 +39,20 @@ class ToolButton(gr.Button, gr.components.FormComponent):
+         return "button"
+ 
+ 
++def mask_folder_fields():
++    """The last two img2img parameters, in their order: the mask folder and its ball switch."""
++    folder = gr.Textbox(
++        label="Mask folder for an AnimateDiff video (a mask for every frame, used instead of the mask above)",
++        info="Each frame is drawn only where its own mask is white, and the picture stays as it is everywhere else. "
++             "With Number of frames at 0 the video gets one frame for every mask.",
++        placeholder=r"C:\my video\masks   (quotes are fine)",
++        elem_id="img2img_inpaint_mask_dir", **shared.hide_dirs)
++    ball = gr.Checkbox(
++        value=True, label="A small dot in the masks is a ball (it is drawn as a ball in the colors of the figures)",
++        elem_id="img2img_inpaint_mask_ball", **shared.hide_dirs)
++    return folder, ball
++
++
+ class AnimateDiffProcess:
+ 
+     def __init__(
+@@ -46,11 +72,44 @@ class AnimateDiffProcess:
+         video_source=None,
+         video_path='',
+         mask_path='',
++        audio_source=None,
++        audio_path='',
++        audio_offset=0,
++        audio_mode=AUDIO_MODE_CUT,
++        audio_fade=True,
++        dance_sync=True,
++        dance_mask=False,
++        dance_style=SILHOUETTE_GRAY,
++        dance_softness=6,
++        dance_audio=True,
++        segment_length=0,
++        segment_overlap=12,
++        upscaler="None",
++        upscale_by=2,
++        dance_mode=False,
++        dance_video=None,
++        dance_characters=None,
++        dance_background=None,
++        dance_music=None,
++        dance_model="",
++        dance_fps=DANCE_FPS_CHOICES[2],
++        dance_match_size=True,
++        dance_auto_lcm=True,
++        dance_w_shape=1.0,
++        dance_w_pose=0.25,
++        dance_w_character=1.0,
++        dance_w_background=0.6,
++        dance_regions=True,
++        dance_no_people=True,
++        dance_final_size=DANCE_FINAL_SIZES[-1],
++        dance_upscaler="",
+         latent_power=1,
+         latent_scale=32,
+         last_frame=None,
+         latent_power_last=1,
+         latent_scale_last=32,
++        inpaint_mask_dir='',
++        inpaint_ball=True,
+         request_id = '',
+     ):
+         self.model = model
+@@ -68,21 +127,60 @@ class AnimateDiffProcess:
+         self.video_source = video_source
+         self.video_path = video_path
+         self.mask_path = mask_path
++        self.audio_source = audio_source
++        self.audio_path = audio_path
++        self.audio_offset = audio_offset
++        self.audio_mode = audio_mode
++        self.audio_fade = audio_fade
++        self.dance_sync = dance_sync
++        self.dance_mask = dance_mask
++        self.dance_style = dance_style
++        self.dance_softness = dance_softness
++        self.dance_audio = dance_audio
++        self.segment_length = segment_length
++        self.segment_overlap = segment_overlap
++        self.upscaler = upscaler
++        self.upscale_by = upscale_by
++        self.dance_mode = dance_mode
++        self.dance_video = dance_video
++        self.dance_characters = dance_characters
++        self.dance_background = dance_background
++        self.dance_music = dance_music
++        self.dance_model = dance_model
++        self.dance_fps = dance_fps
++        self.dance_match_size = dance_match_size
++        self.dance_auto_lcm = dance_auto_lcm
++        self.dance_w_shape = dance_w_shape
++        self.dance_w_pose = dance_w_pose
++        self.dance_w_character = dance_w_character
++        self.dance_w_background = dance_w_background
++        self.dance_regions = dance_regions
++        self.dance_no_people = dance_no_people
++        self.dance_final_size = dance_final_size
++        self.dance_upscaler = dance_upscaler
+         self.latent_power = latent_power
+         self.latent_scale = latent_scale
+         self.last_frame = last_frame
+         self.latent_power_last = latent_power_last
+         self.latent_scale_last = latent_scale_last
++        self.inpaint_mask_dir = inpaint_mask_dir
++        self.inpaint_ball = inpaint_ball
+ 
+         # non-ui states
+         self.request_id = request_id
+         self.video_default = False
+         self.is_i2i_batch = False
+         self.prompt_scheduler = None
++        self.frames_cached = False
++        self.segments = None     # start frame of every part when a long video is rendered in parts
++        self.seg_start = 0
++        self.total_frames = 0
++        self.base_seed = 0
++        self.frame_masks = 0     # img2img with a mask of its own for every frame: how many
+ 
+ 
+     def get_list(self, is_img2img: bool):
+-        return list(vars(self).values())[:(20 if is_img2img else 15)]
++        return list(vars(self).values())[:(53 if is_img2img else 46)]
+ 
+ 
+     def get_dict(self, is_img2img: bool):
+@@ -98,6 +196,15 @@ class AnimateDiffProcess:
+             "interp": self.interp,
+             "interp_x": self.interp_x,
+         }
++        if self.segments:
++            infotext['parts'] = f"{len(self.segments)} x {self.video_length} frames, overlap {self.segment_overlap}"
++        if self.dance_mode:
++            infotext['dance_video'] = (f"shape {self.dance_w_shape}, pose {self.dance_w_pose}, "
++                                       f"dancers {self.dance_w_character}, background {self.dance_w_background}")
++        if self.dance_mask:
++            infotext['dance_silhouette'] = f"{self.dance_style.split(' (')[0]}, soft {self.dance_softness}"
++        if self.frame_masks:
++            infotext['frame_masks'] = self.frame_masks
+         if self.request_id:
+             infotext['request_id'] = self.request_id
+         if motion_module.mm is not None and motion_module.mm.mm_hash is not None:
+@@ -122,6 +229,32 @@ class AnimateDiffProcess:
+         return infotext_str
+ 
+ 
++    def get_audio(self):
++        """Path of the music to put on the video, or None. Falls back to the dance video's own sound."""
++        audio = resolve_audio_path(self.audio_source, self.audio_path)
++        if audio is None and self.dance_audio and self.dance_sync and isinstance(self.video_source, str)                 and os.path.isfile(self.video_source):
++            from scripts.animatediff_dance import video_has_audio
++            if video_has_audio(self.video_source):
++                audio = self.video_source
++        return audio
++
++
++    def extract_fps(self):
++        """Frames per second taken from the video: with FILM on, the frames in between are interpolated back."""
++        if self.interp == "FILM" and self.interp_x and self.interp_x > 1:
++            return self.fps / self.interp_x
++        return self.fps
++
++
++    def extract_frames(self):
++        if self.dance_sync and self.video_source:
++            from scripts.animatediff_dance import extract_frames_at_fps
++            self.video_path = extract_frames_at_fps(self.video_source, self.extract_fps())
++            self.frames_cached = True
++        else:
++            extract_frames_from_video(self)
++
++
+     def get_param_names(self, is_img2img: bool):
+         preserve = ["model", "enable", "video_length", "fps", "loop_number", "closed_loop", "batch_size", "stride", "overlap", "format", "interp", "interp_x"]
+         if is_img2img:
+@@ -146,6 +279,7 @@ class AnimateDiffProcess:
+ 
+     def set_p(self, p: StableDiffusionProcessing):
+         self._check()
++        self.hires_to_frame_upscale(p)
+         if self.video_length < self.batch_size:
+             p.batch_size = self.batch_size
+         else:
+@@ -155,20 +289,49 @@ class AnimateDiffProcess:
+             self.video_default = True
+         if self.overlap == -1:
+             self.overlap = self.batch_size // 4
++        if self.get_audio() and not {"MP4", "WEBM"} & set(self.format):
++            logger.info("Music was added, so MP4 is saved too (GIF and WEBP cannot hold sound).")
++            self.format = list(self.format) + ["MP4"]
+         if "PNG" not in self.format or shared.opts.data.get("animatediff_save_to_custom", True):
+             p.do_not_save_samples = True
++        # a grid of every frame is a giant image (146 MB for 343 frames) nobody looks at
++        p.do_not_save_grid = True
+ 
+         cn_units = get_controlnet_units(p)
+         min_batch_in_cn = -1
++        silhouette_path = None
++        frame_masks = self.frame_mask_files(p)
+         for cn_unit in cn_units:
+             # batch path broadcast
+             if (cn_unit.input_mode.name == 'SIMPLE' and cn_unit.image is None) or \
+                (cn_unit.input_mode.name == 'BATCH' and not cn_unit.batch_image_dir) or \
+                (cn_unit.input_mode.name == 'MERGE' and not cn_unit.batch_input_gallery):
++                if frame_masks and is_qr_unit(cn_unit):
++                    # the masks are white where something is drawn: the very shape QR Code Monster follows
++                    cn_unit.input_mode = cn_unit.input_mode.__class__.BATCH
++                    cn_unit.batch_image_dir = os.path.dirname(frame_masks[0])
++                    logger.info(f"ControlNet {cn_unit.model} follows the masks of the mask folder.")
++                    continue
+                 if not self.video_path:
+-                    extract_frames_from_video(self)
++                    self.extract_frames()
+                 cn_unit.input_mode = cn_unit.input_mode.__class__.BATCH
+                 cn_unit.batch_image_dir = self.video_path
++                # dance transfer: the QR Code Monster unit gets the dancers' silhouette instead of the frames
++                if self.dance_mask and is_qr_unit(cn_unit):
++                    if silhouette_path is None:
++                        from scripts.animatediff_dance import make_silhouettes
++                        silhouette_path = make_silhouettes(self.video_path, self.dance_style, float(self.dance_softness),
++                                                           self.extract_fps())
++                    cn_unit.batch_image_dir = silhouette_path
++                    logger.info(f"ControlNet {cn_unit.model} follows the dancers' silhouette.")
++                elif self.frames_cached:
++                    # OpenPose & co. run once per video instead of on every render
++                    from scripts.animatediff_dance import cache_preprocessed
++                    maps = cache_preprocessed(p, cn_unit, self.video_path,
++                                              None if self.video_default else self.video_length)
++                    if maps:
++                        cn_unit.batch_image_dir = maps
++                        cn_unit.module = "None"
+ 
+             # mask path broadcast
+             if cn_unit.input_mode.name == 'BATCH' and self.mask_path and not cn_unit.batch_mask_dir:
+@@ -180,17 +343,134 @@ class AnimateDiffProcess:
+                 if min_batch_in_cn == -1 or cn_unit_batch_num < min_batch_in_cn:
+                     min_batch_in_cn = cn_unit_batch_num
+ 
++        if self.dance_mask and silhouette_path is None:
++            logger.warning("Dancers' silhouette is on, but no ControlNet unit with a QR Code Monster model "
++                           "and an empty image was found, so it was not used.")
++
++        if frame_masks:
++            min_batch_in_cn = len(frame_masks) if min_batch_in_cn == -1 else min(min_batch_in_cn, len(frame_masks))
++
+         if min_batch_in_cn != -1:
+             self.fix_video_length(p, min_batch_in_cn)
+             def cn_batch_modifler(batch_image_files: List[str], p: StableDiffusionProcessing):
+-                return batch_image_files[:self.video_length]
++                return batch_image_files[self.seg_start:self.seg_start + self.video_length]
+             for cn_unit in cn_units:
+                 if cn_unit.input_mode.name == 'BATCH':
+                     cur_batch_modifier = getattr(cn_unit, "batch_modifiers", [])
+                     cur_batch_modifier.append(cn_batch_modifler)
+                     cn_unit.batch_modifiers = cur_batch_modifier
+         self.post_setup_cn_for_i2i_batch(p)
+-        logger.info(f"AnimateDiff + ControlNet will generate {self.video_length} frames.")
++        if frame_masks:
++            from scripts.animatediff_i2ibatch import use_frame_masks
++            self.frame_masks = self.video_length
++            use_frame_masks(p, [Image.open(mask) for mask in frame_masks[:self.video_length]], bool(self.inpaint_ball))
++            logger.info(f"Every frame is drawn inside its own mask ({self.frame_masks} of the {len(frame_masks)} masks in "
++                        f"{os.path.dirname(frame_masks[0])}); the rest of the picture stays as it is.")
++        self.plan_segments(p)
++        logger.info(f"AnimateDiff + ControlNet will generate {self.total_frames or self.video_length} frames.")
++
++
++    def frame_mask_files(self, p: StableDiffusionProcessing):
++        """
++        img2img, Inpaint upload: the pictures of the mask folder, one for every frame of the video. The picture of
++        that tab stays as it is in every frame, and each frame is drawn only where its own mask is white.
++        None when the folder is not used.
++        """
++        folder = str(self.inpaint_mask_dir or "").strip().strip('"').strip()
++        if not folder or self.is_i2i_batch or not isinstance(p, StableDiffusionProcessingImg2Img):
++            return None
++        from modules import img2img
++        tab = getattr(img2img, "animatediff_tab", None)     # None from the API, which has no tabs
++        if tab is not None and tab != 4:
++            logger.info("The mask folder is not used: it belongs to the Inpaint upload tab.")
++            return None
++        from scripts.animatediff_i2ibatch import mask_files
++        assert os.path.isdir(folder), f"Mask folder not found: {folder}"
++        files = mask_files(folder)
++        assert files, f"No mask pictures in the mask folder: {folder}"
++        assert p.init_images and p.init_images[0] is not None, \
++            "Upload the picture on the Inpaint upload tab: the masks say where it is drawn over."
++        return files
++
++
++    def hires_to_frame_upscale(self, p: StableDiffusionProcessing):
++        """
++        Hires fix on an animation redraws every frame again at up to 4x the pixels, with ControlNet and the
++        motion module at that size: hours, and the VRAM spills. The finished frames are upscaled instead
++        (R-ESRGAN 4x+: well under a second a frame), at the scale Hires fix was set to.
++        """
++        if not getattr(p, "enable_hr", False):
++            return
++        scale = float(getattr(p, "hr_scale", 2) or 2)
++        if getattr(p, "hr_resize_x", 0) or getattr(p, "hr_resize_y", 0):
++            scale = max(p.hr_resize_x / p.width if p.hr_resize_x else 0, p.hr_resize_y / p.height if p.hr_resize_y else 0)
++        names = [u.name for u in shared.sd_upscalers]
++        chosen = getattr(p, "hr_upscaler", None)
++        if not chosen or chosen not in names or chosen.lower().startswith("latent") or chosen in ("None", "Nearest"):
++            chosen = next((n for n in ("R-ESRGAN 4x+", "ESRGAN_4x", "Lanczos") if n in names), "Lanczos")
++        if not self.upscaler or self.upscaler == "None":
++            self.upscaler, self.upscale_by = chosen, max(1.0, scale)
++        p.enable_hr = False
++        logger.info(f"Hires fix on an animation would redraw every frame at x{scale:g}; the frames are upscaled "
++                    f"with {self.upscaler} x{self.upscale_by:g} instead (much faster).")
++
++
++    def plan_segments(self, p: StableDiffusionProcessing):
++        """
++        A long video is rendered as several AnimateDiff runs of `segment_length` frames (Forge's own batch loop,
++        so the progress bar, Interrupt and memory cleanup work per part). Neighbouring parts share
++        `segment_overlap` frames, start from the same noise there, and are cross-faded when saving.
++        """
++        import re
++        length, total = int(self.segment_length or 0), int(self.video_length)
++        if length <= 0 or total <= length or self.is_i2i_batch or isinstance(p, StableDiffusionProcessingImg2Img):
++            return
++        if isinstance(p.prompt, str) and re.search(r"^\d+:", p.prompt, re.M):
++            logger.warning("Prompt travel numbers frames over the whole video, so this video is rendered in one pass.")
++            return
++        length = max(length, self.batch_size)  # a part holds at least one context window
++        if total <= length:
++            return
++        overlap = max(0, min(int(self.segment_overlap or 0), length // 2))
++        starts, s = [], 0
++        while True:
++            starts.append(min(s, total - length))
++            if s + length >= total:
++                break
++            s += length - overlap
++        if self.closed_loop != 'N':
++            logger.info("Closed loop is set to N for a video rendered in parts.")
++            self.closed_loop = 'N'
++        self.segments, self.total_frames, self.seg_start = starts, total, starts[0]
++        self.video_length = length
++        p.batch_size, p.n_iter = length, len(starts)
++        logger.info(f"{total} frames are rendered in {len(starts)} parts of {length} frames "
++                    f"(starting at {', '.join(map(str, starts))}), {overlap} frames overlap.")
++
++
++    def next_segment(self, p: StableDiffusionProcessing, n: int):
++        """
++        Before part n: every frame gets the noise it would have in one pass (seed + frame number), so the
++        frames two parts share start alike; then ControlNet is pointed at that part's frames and reloaded.
++        """
++        if not self.segments or n >= len(self.segments):
++            return
++        from modules import rng
++        start, length = self.segments[n], self.video_length
++        if n == 0:
++            self.base_seed = int(p.all_seeds[0])
++        seeds = [self.base_seed + start + j for j in range(length)]
++        p.seeds = seeds
++        p.all_seeds[n * length:(n + 1) * length] = seeds
++        p.rng = rng.ImageRNG(p.rng.shape, seeds, subseeds=p.subseeds, subseed_strength=p.subseed_strength,
++                             seed_resize_from_h=p.seed_resize_from_h, seed_resize_from_w=p.seed_resize_from_w)
++        if n == 0:
++            return
++        self.seg_start = start
++        logger.info(f"Part {n + 1}/{len(self.segments)}: frames {start}-{start + length - 1}")
++        for script in p.scripts.alwayson_scripts:
++            if script.title().lower() == "controlnet":
++                script.process(p, *p.script_args[script.args_from:script.args_to])
+ 
+ 
+     def fix_video_length(self, p: StableDiffusionProcessing, min_batch_in_cn: int):
+@@ -211,8 +491,10 @@ class AnimateDiffProcess:
+ 
+         if len(p.init_images) > self.video_length:
+             p.init_images = p.init_images[:self.video_length]
+-            if p.image_mask and isinstance(p.image_mask, list) and len(p.image_mask) > self.video_length:
+-                p.image_mask = p.image_mask[:self.video_length]
++            masks = getattr(p, "animatediff_frame_masks", None)
++            if masks and len(masks) > self.video_length:
++                from scripts.animatediff_i2ibatch import use_frame_masks
++                use_frame_masks(p, masks[:self.video_length])
+         if len(p.init_images) < self.video_length:
+             self.video_length = len(p.init_images)
+             p.batch_size = len(p.init_images)
+@@ -223,6 +505,8 @@ class AnimateDiffProcess:
+ class AnimateDiffUiGroup:
+     txt2img_submit_button = None
+     img2img_submit_button = None
++    inpaint_mask_fields = None   # the mask folder and its ball switch, on img2img's Inpaint upload tab
++    size_components = {}
+     setting_sd_model_checkpoint = None
+     animatediff_ui_group = []
+ 
+@@ -259,8 +543,119 @@ class AnimateDiffUiGroup:
+         return gr.Dropdown.update(choices=new_model_list, value=selected)
+ 
+ 
++    def render_dance(self, is_img2img: bool):
++        """
++        💃 Dance video: a panel of its own in txt2img. The switch, the dance video and the pictures are all it
++        needs; AnimateDiff and ControlNet are set up from them when Generate is pressed (apply_dance_mode).
++        In img2img the same components exist hidden, since the parameters are passed by position.
++        """
++        from scripts.animatediff_dance import plan_text
++        prefix = "img2img-dance-" if is_img2img else "txt2img-dance-"
++        with gr.Accordion("💃 Dance video", open=False, visible=not is_img2img, elem_id=f"{prefix}accordion"):
++            gr.Markdown(DANCE_GUIDE)
++            with gr.Row():
++                self.params.dance_mode = gr.Checkbox(value=False, label="Make a dance video",
++                                                     elem_id=f"{prefix}enable")
++                model_list = self.get_model_list()
++                lcm = [m for m in model_list if "lcm" in m.lower()]
++                self.params.dance_model = gr.Dropdown(
++                    choices=model_list, value=(lcm[0] if lcm else (model_list[0] if model_list else None)),
++                    label="Motion module", elem_id=f"{prefix}motion-module")
++            with gr.Row():
++                self.params.dance_video = gr.Video(label="1 · Dance video (only the movement is taken)", elem_id=f"{prefix}video")
++                self.params.dance_characters = gr.File(
++                    label="2 · The dancers: what they are made of (1-4 pictures)", file_count="multiple",
++                    file_types=["image"], elem_id=f"{prefix}characters")
++                self.params.dance_background = gr.File(
++                    label="3 · The background behind the dancers (1-4 pictures, optional)", file_count="multiple",
++                    file_types=["image"], elem_id=f"{prefix}background")
++            dance_plan = gr.Markdown("", elem_id=f"{prefix}plan")
++            self.params.dance_fps = gr.Radio(
++                choices=DANCE_FPS_CHOICES, value=DANCE_FPS_CHOICES[2],
++                label="Frames per second (8 and 12 draw faster, for tests)", elem_id=f"{prefix}fps")
++            with gr.Row():
++                self.params.dance_final_size = gr.Radio(
++                    choices=DANCE_FINAL_SIZES, value=DANCE_FINAL_SIZES[-1],
++                    label="Final size (the finished frames are upscaled)", elem_id=f"{prefix}final-size")
++                upscalers = dance_upscalers()
++                self.params.dance_upscaler = gr.Dropdown(
++                    choices=upscalers, value=upscalers[0] if upscalers else None,
++                    label="Final size upscaler", elem_id=f"{prefix}upscaler")
++            with gr.Accordion("Advanced", open=False, elem_id=f"{prefix}advanced"):
++                with gr.Row():
++                    self.params.dance_w_shape = gr.Slider(0, 2, step=0.05, value=1.0, label="Follow the dancers' shape",
++                                                          elem_id=f"{prefix}w-shape")
++                    self.params.dance_w_pose = gr.Slider(0, 1.5, step=0.05, value=0.25, label="Follow the pose (arms and legs)",
++                                                         elem_id=f"{prefix}w-pose")
++                    self.params.dance_w_character = gr.Slider(0, 1.5, step=0.05, value=1.0, label="Dancers like their pictures",
++                                                              elem_id=f"{prefix}w-character")
++                    self.params.dance_w_background = gr.Slider(0, 1.5, step=0.05, value=0.6, label="Background like its pictures",
++                                                               elem_id=f"{prefix}w-background")
++                with gr.Row():
++                    self.params.dance_match_size = gr.Checkbox(value=True, label="Width and height in the video's shape",
++                                                               elem_id=f"{prefix}match-size")
++                    self.params.dance_auto_lcm = gr.Checkbox(value=True, label="LCM motion module: sampler LCM, 8 steps, CFG 2, LCM LoRA",
++                                                             elem_id=f"{prefix}auto-lcm")
++                with gr.Row():
++                    self.params.dance_regions = gr.Checkbox(
++                        value=True, label="Dancer pictures only on the dancers, background pictures only behind them",
++                        elem_id=f"{prefix}regions")
++                    self.params.dance_no_people = gr.Checkbox(
++                        value=True, label="Objects, not people (adds person, face, skin, hair to the negative prompt)",
++                        elem_id=f"{prefix}no-people")
++                with gr.Row():
++                    self.params.dance_music = gr.File(label="Other music (otherwise the dance's own sound)",
++                                                      file_types=AUDIO_FILE_TYPES, elem_id=f"{prefix}music")
++                    with gr.Column():
++                        self.params.dance_style = gr.Radio(choices=SILHOUETTE_STYLES, value=self.params.dance_style,
++                                                           label="Silhouette", elem_id=f"{prefix}style")
++                        self.params.dance_softness = gr.Slider(minimum=0, maximum=30, step=1, value=self.params.dance_softness,
++                                                               label="Silhouette edge softness", elem_id=f"{prefix}softness")
++                with gr.Row():
++                    self.params.dance_sync = gr.Checkbox(value=self.params.dance_sync,
++                                                         label="Take frames evenly at the FPS (stays in sync with the music)",
++                                                         elem_id=f"{prefix}sync")
++                    self.params.dance_audio = gr.Checkbox(value=self.params.dance_audio,
++                                                          label="Use the dance video's own sound when no music is uploaded",
++                                                          elem_id=f"{prefix}audio")
++                    self.params.dance_mask = gr.Checkbox(value=False, visible=False, elem_id=f"{prefix}mask")
++                    dance_preview = gr.Button("👁 Preview silhouette", size="sm", elem_id=f"{prefix}preview")
++                dance_gallery = gr.Gallery(label="Silhouette preview", columns=6, height=240,
++                                           visible=False, elem_id=f"{prefix}gallery")
++
++            size = [c for c in (AnimateDiffUiGroup.size_components.get(("img2img" if is_img2img else "txt2img", k))
++                                for k in ("width", "height")) if c is not None]
++
++            def describe(video, fps_choice, final, upscaler, *wh):
++                if not video:
++                    return ""
++                width, height = wh if len(wh) == 2 else (408, 720)
++                return plan_text(video, width, height, fps_choice, final, upscaler)
++            plan_inputs = [self.params.dance_video, self.params.dance_fps, self.params.dance_final_size,
++                           self.params.dance_upscaler] + (size if len(size) == 2 else [])
++            self.params.dance_video.change(describe, inputs=plan_inputs, outputs=dance_plan, queue=False)
++            for trigger in [self.params.dance_fps, self.params.dance_final_size, self.params.dance_upscaler] + \
++                           (size if len(size) == 2 else []):
++                trigger.change(describe, inputs=plan_inputs, outputs=dance_plan, queue=False)
++
++            def switch_on(video, *_):
++                # uploading a video switches the dance video on; removing it switches it off
++                return bool(video)
++            self.params.dance_video.upload(switch_on, inputs=[self.params.dance_video], outputs=self.params.dance_mode,
++                                           queue=False)
++
++            def preview(video, style, softness):
++                if not video:
++                    return gr.update(visible=False), "Upload the dance video first."
++                from scripts.animatediff_dance import preview_silhouettes
++                return gr.update(value=preview_silhouettes(video, style, float(softness)), visible=True), gr.update()
++            dance_preview.click(preview, inputs=[self.params.dance_video, self.params.dance_style, self.params.dance_softness],
++                                outputs=[dance_gallery, dance_plan])
++
++
+     def render(self, is_img2img: bool, infotext_fields, paste_field_names):
+         elemid_prefix = "img2img-ad-" if is_img2img else "txt2img-ad-"
++        self.render_dance(is_img2img)
+         with gr.Accordion("AnimateDiff", open=False):
+             gr.Markdown(value="Please click [this link](https://github.com/continue-revolution/sd-webui-animatediff/blob/forge/master/docs/how-to-use.md#parameters) to read the documentation of each parameter.")
+             with gr.Row():
+@@ -347,28 +742,32 @@ class AnimateDiffUiGroup:
+                     value=self.params.interp_x, label="Interp X", precision=0, 
+                     elem_id=f"{elemid_prefix}interp-x"
+                 )
++            with gr.Row():
++                self.params.segment_length = gr.Number(
++                    value=self.params.segment_length, minimum=0, precision=0,
++                    label="Long video: render in parts of (frames, 0 = one pass)",
++                    elem_id=f"{elemid_prefix}segment-length",
++                )
++                self.params.segment_overlap = gr.Number(
++                    value=self.params.segment_overlap, minimum=0, precision=0,
++                    label="Frames shared by neighbouring parts",
++                    elem_id=f"{elemid_prefix}segment-overlap",
++                )
++                upscaler_names = ["None"] + [u.name for u in shared.sd_upscalers if u.name not in ("None", "Nearest")]
++                self.params.upscaler = gr.Dropdown(
++                    choices=upscaler_names, value=self.params.upscaler,
++                    label="Upscale the frames with",
++                    elem_id=f"{elemid_prefix}upscaler",
++                )
++                self.params.upscale_by = gr.Slider(
++                    minimum=1, maximum=4, step=0.25, value=self.params.upscale_by,
++                    label="Upscale by",
++                    elem_id=f"{elemid_prefix}upscale-by",
++                )
+             self.params.video_source = gr.Video(
+                 value=self.params.video_source,
+                 label="Video source",
+             )
+-            def update_fps(video_source):
+-                if video_source is not None and video_source != '':
+-                    cap = cv2.VideoCapture(video_source)
+-                    fps = int(cap.get(cv2.CAP_PROP_FPS))
+-                    cap.release()
+-                    return fps
+-                else:
+-                    return int(self.params.fps.value)
+-            self.params.video_source.change(update_fps, inputs=self.params.video_source, outputs=self.params.fps)
+-            def update_frames(video_source):
+-                if video_source is not None and video_source != '':
+-                    cap = cv2.VideoCapture(video_source)
+-                    frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+-                    cap.release()
+-                    return frames
+-                else:
+-                    return int(self.params.video_length.value)
+-            self.params.video_source.change(update_frames, inputs=self.params.video_source, outputs=self.params.video_length)
+             with gr.Row():
+                 self.params.video_path = gr.Textbox(
+                     value=self.params.video_path,
+@@ -380,6 +779,94 @@ class AnimateDiffUiGroup:
+                     label="Mask path",
+                     elem_id=f"{elemid_prefix}mask-path"
+                 )
++            def on_video(video_source, dance_sync, fps, video_length):
++                # the video's own FPS and frame count, as AnimateDiff always did; the frames are then taken
++                # evenly at this FPS (dance_sync), so the count matches and the music stays in sync
++                if not video_source:
++                    return gr.update(), gr.update()
++                cap = cv2.VideoCapture(video_source)
++                video_fps = int(cap.get(cv2.CAP_PROP_FPS))
++                frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
++                cap.release()
++                return video_fps, frames
++            self.params.video_source.change(
++                on_video,
++                inputs=[self.params.video_source, self.params.dance_sync, self.params.fps, self.params.video_length],
++                outputs=[self.params.fps, self.params.video_length])
++
++            with gr.Accordion("🎵 Music", open=False, elem_id=f"{elemid_prefix}music-accordion"):
++                gr.Markdown("The MP4 / WEBM comes out with this music already on it. "
++                            "GIF and WEBP cannot hold sound, so MP4 is added when neither MP4 nor WEBM is selected.")
++                with gr.Row():
++                    self.params.audio_source = gr.File(
++                        label="Upload music (audio, or a video with sound)",
++                        file_types=AUDIO_FILE_TYPES,
++                        elem_id=f"{elemid_prefix}audio-source",
++                    )
++                    with gr.Column():
++                        self.params.audio_path = gr.Textbox(
++                            value=self.params.audio_path,
++                            label="Or music path",
++                            placeholder=r"D:\Music\song.mp3   (quotes are fine)",
++                            elem_id=f"{elemid_prefix}audio-path",
++                        )
++                        with gr.Row():
++                            self.params.audio_offset = gr.Number(
++                                value=self.params.audio_offset,
++                                minimum=0,
++                                label="Start the music from second",
++                                elem_id=f"{elemid_prefix}audio-offset",
++                            )
++                            self.params.audio_fade = gr.Checkbox(
++                                value=self.params.audio_fade,
++                                label="Fade out at the end",
++                                elem_id=f"{elemid_prefix}audio-fade",
++                            )
++                self.params.audio_mode = gr.Radio(
++                    choices=AUDIO_MODES,
++                    value=self.params.audio_mode,
++                    label="When the music is longer than the video",
++                    elem_id=f"{elemid_prefix}audio-mode",
++                )
++                with gr.Row():
++                    fit_frames = gr.Button(
++                        "⏱ Set Number of frames to fit the music",
++                        size="sm",
++                        elem_id=f"{elemid_prefix}audio-fit-frames",
++                    )
++                    audio_info = gr.Markdown("", elem_id=f"{elemid_prefix}audio-info")
++
++                def describe_audio(audio_source, audio_path, offset, fps, frames):
++                    path = resolve_audio_path(audio_source, audio_path)
++                    if not path:
++                        return ""
++                    seconds = get_audio_duration(path)
++                    if seconds is None:
++                        return f"🎵 **{os.path.basename(path)}**"
++                    left = max(0.0, seconds - float(offset or 0))
++                    fps = max(1, int(fps or 1))
++                    text = f"🎵 **{os.path.basename(path)}**: {seconds:.1f}s, from second {float(offset or 0):g}: {left:.1f}s = {int(round(left * fps))} frames at {fps} FPS"
++                    if frames:
++                        text += f". Video now: {int(frames)} frames = {int(frames) / fps:.1f}s"
++                    return text
++
++                def fit_frames_to_audio(audio_source, audio_path, offset, fps, frames):
++                    path = resolve_audio_path(audio_source, audio_path)
++                    seconds = get_audio_duration(path) if path else None
++                    if seconds is None:
++                        return gr.update(), "Upload music first."
++                    fps = max(1, int(fps or 1))
++                    frames = max(1, int(round(max(0.0, seconds - float(offset or 0)) * fps)))
++                    return frames, describe_audio(audio_source, audio_path, offset, fps, frames)
++
++                audio_inputs = [self.params.audio_source, self.params.audio_path, self.params.audio_offset,
++                                self.params.fps, self.params.video_length]
++                for trigger in (self.params.audio_source.change, self.params.audio_path.blur,
++                                self.params.audio_offset.blur):
++                    trigger(describe_audio, inputs=audio_inputs, outputs=audio_info, queue=False)
++                fit_frames.click(fit_frames_to_audio, inputs=audio_inputs,
++                                 outputs=[self.params.video_length, audio_info], queue=False)
++
+             if is_img2img:
+                 with gr.Accordion("I2V Traditional", open=False):
+                     with gr.Row():
+@@ -417,6 +904,11 @@ class AnimateDiffUiGroup:
+                         label="Optional last frame. Leave it blank if you do not need one.",
+                         type="pil",
+                     )
++                # the last img2img parameters. They sit on the Inpaint upload tab (on_after_component); should
++                # that tab ever lose its Mask picture, the fields are here instead
++                if AnimateDiffUiGroup.inpaint_mask_fields is None:
++                    AnimateDiffUiGroup.inpaint_mask_fields = mask_folder_fields()
++                self.params.inpaint_mask_dir, self.params.inpaint_ball = AnimateDiffUiGroup.inpaint_mask_fields
+ 
+         # Set up controls to be copy-pasted using infotext
+         fields = self.params.get_param_names(is_img2img)
+@@ -449,10 +941,19 @@ class AnimateDiffUiGroup:
+             AnimateDiffUiGroup.txt2img_submit_button = component
+             return
+ 
++        if elem_id in ("txt2img_width", "txt2img_height", "img2img_width", "img2img_height"):
++            tab, key = elem_id.split("_")
++            AnimateDiffUiGroup.size_components[(tab, key)] = component
++            return
++
+         if elem_id == "img2img_generate":
+             AnimateDiffUiGroup.img2img_submit_button = component
+             return
+ 
++        if elem_id == "img_inpaint_mask":
++            AnimateDiffUiGroup.inpaint_mask_fields = mask_folder_fields()
++            return
++
+         if elem_id == "setting_sd_model_checkpoint":
+             for group in AnimateDiffUiGroup.animatediff_ui_group:
+                 component.change( # this step cannot success. I don't know why.
+diff --git a/scripts/animatediff_utils.py b/scripts/animatediff_utils.py
+index a71d76d..4449f09 100644
+--- a/scripts/animatediff_utils.py
++++ b/scripts/animatediff_utils.py
+@@ -56,16 +56,19 @@ def get_controlnet_units(p: StableDiffusionProcessing):
+         if script.title().lower() == "controlnet":
+             cn_units = p.script_args[script.args_from:script.args_to]
+ 
+-            if p.is_api and len(cn_units) > 0 and isinstance(cn_units[0], dict):
++            if p.is_api and any(isinstance(cn_unit, dict) for cn_unit in cn_units):
+                from lib_controlnet.external_code import ControlNetUnit
+                from lib_controlnet.enums import InputMode
+-               cn_units_dataclass = [ControlNetUnit.from_dict(cn_unit_dict) for cn_unit_dict in cn_units]
++               # the API pads missing units with ControlNetUnit objects, so only the dicts need converting
++               cn_units_dataclass = [ControlNetUnit.from_dict(u) if isinstance(u, dict) else u for u in cn_units]
+                for cn_unit_dataclass in cn_units_dataclass:
+                     if cn_unit_dataclass.image is None:
+                         cn_unit_dataclass.input_mode = InputMode.BATCH
+                p.script_args[script.args_from:script.args_to] = cn_units_dataclass
++               cn_units = cn_units_dataclass
+ 
+-            return [x for x in cn_units if x.enabled] if not p.is_api else cn_units
++            # API too: a disabled unit must not pull in the video source
++            return [x for x in cn_units if getattr(x, "enabled", False)]
+ 
+     return []
+ 
+@@ -119,3 +122,116 @@ def extract_frames_from_video(params):
+     except Exception as e:
+         logger.error(f"[AnimateDiff] Error extracting frames via ffmpeg: {e}, fall back to OpenCV.")
+         cv2_extract_frames(params.video_source, params.video_path)
++
++
++AUDIO_FILE_TYPES = ["audio", "video", ".mp3", ".wav", ".flac", ".ogg", ".opus", ".m4a", ".aac", ".wma", ".aiff",
++                    ".mp4", ".mov", ".mkv", ".webm"]
++AUDIO_MODE_CUT = "Cut the music to the video"
++AUDIO_MODE_LOOP = "Loop the video for the whole music"
++AUDIO_MODES = [AUDIO_MODE_CUT, AUDIO_MODE_LOOP]
++
++
++def resolve_audio_path(audio_source, audio_path=""):
++    """
++    Music for the video: an uploaded file (Gradio temp file, or a path / base64 data URI from the API),
++    else a path typed in the textbox. Returns an existing file path or None.
++    """
++    path = audio_source
++    if isinstance(path, dict):
++        path = path.get("name") or path.get("data")
++    path = getattr(path, "name", path)
++    if not path and audio_path:
++        path = audio_path
++    if not isinstance(path, str) or not path.strip():
++        return None
++    path = path.strip().strip('"').strip("'")
++
++    if path.startswith("data:"):
++        import base64
++        import tempfile
++        header, _, payload = path.partition(",")
++        ext = "." + header.split("/")[-1].split(";")[0] if "/" in header else ".mp3"
++        with tempfile.NamedTemporaryFile(delete=False, suffix=ext, prefix="animatediff_audio_") as f:
++            f.write(base64.b64decode(payload))
++            return f.name
++
++    if not os.path.isfile(path):
++        logger.warning(f"Music file not found, the video is saved without sound: {path}")
++        return None
++    return path
++
++
++def get_audio_duration(path: str):
++    """Length of the audio track in seconds, or None."""
++    try:
++        import av
++        with av.open(path) as container:
++            stream = next((s for s in container.streams if s.type == "audio"), None)
++            if stream is None:
++                return None
++            if stream.duration is not None and stream.time_base is not None:
++                return float(stream.duration * stream.time_base)
++            if container.duration is not None:
++                return container.duration / 1_000_000
++    except Exception as e:
++        logger.warning(f"Could not read the music length of {path}: {e}")
++    return None
++
++
++def add_audio_to_video(video_path: str, audio_path: str, video_seconds: float,
++                       offset: float = 0, mode: str = AUDIO_MODE_CUT, fade_out: bool = True):
++    """
++    Mux the music into an already-saved MP4/WEBM in place. The video stream is copied, not re-encoded.
++    Cut mode: the video length decides. Loop mode: the video repeats until the music ends.
++    """
++    import imageio_ffmpeg
++
++    offset = max(0.0, float(offset or 0))
++    audio_seconds = get_audio_duration(audio_path)
++    if audio_seconds is not None:
++        audio_seconds = max(0.0, audio_seconds - offset)
++        if audio_seconds <= 0:
++            logger.warning(f"Music start ({offset}s) is past the end of the music, the video is saved without sound.")
++            return False
++
++    if mode == AUDIO_MODE_LOOP and audio_seconds:
++        target = audio_seconds
++    else:
++        if mode == AUDIO_MODE_LOOP:
++            logger.warning("Music length unknown, cutting the music to the video instead of looping.")
++            mode = AUDIO_MODE_CUT
++        target = video_seconds  # a shorter song just ends; the video is never cut
++    sound_end = target if audio_seconds is None else min(target, audio_seconds)
++
++    src = Path(video_path)
++    silent = src.with_name(f"{src.stem}.noaudio{src.suffix}")
++    os.replace(src, silent)
++
++    is_webm = src.suffix.lower() == ".webm"
++    cmd = [imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-hide_banner", "-loglevel", "error"]
++    if mode == AUDIO_MODE_LOOP:
++        cmd += ["-stream_loop", "-1"]
++    cmd += ["-i", str(silent)]
++    if offset > 0:
++        cmd += ["-ss", f"{offset:.3f}"]
++    cmd += ["-i", str(audio_path),
++            "-map", "0:v:0", "-map", "1:a:0", "-map_metadata", "0",
++            "-c:v", "copy"]
++    cmd += ["-c:a", "libopus", "-b:a", "160k"] if is_webm else ["-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart"]
++    fade = min(2.0, sound_end / 3)
++    if fade_out and fade > 0.05:
++        cmd += ["-af", f"afade=t=out:st={sound_end - fade:.3f}:d={fade:.3f}"]
++    cmd += ["-t", f"{target:.3f}", str(src)]
++
++    logger.info(f"Adding music to {src.name}: {Path(audio_path).name} from {offset:g}s, {target:.2f}s, {mode}")
++    try:
++        subprocess.run(cmd, check=True, capture_output=True, text=True, encoding="utf-8", errors="replace")
++    except Exception as e:
++        err = getattr(e, "stderr", "") or e
++        logger.error(f"Adding music failed, keeping the video without sound: {err}")
++        if src.exists():
++            src.unlink()
++        os.replace(silent, src)
++        return False
++    silent.unlink(missing_ok=True)
++    return True

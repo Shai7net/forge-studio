@@ -1,0 +1,432 @@
+[
+ {
+  "i": 0,
+  "en": "Generate video",
+  "ctx": "tab_iz_interface"
+ },
+ {
+  "i": 1,
+  "en": "IMG",
+  "ctx": "tab_iz_interface"
+ },
+ {
+  "i": 2,
+  "en": "Music & Keyframes",
+  "ctx": "tab_iz_interface"
+ },
+ {
+  "i": 3,
+  "en": "Outpaint",
+  "ctx": "tab_iz_interface"
+ },
+ {
+  "i": 4,
+  "en": "Post proccess",
+  "ctx": "tab_iz_interface"
+ },
+ {
+  "i": 5,
+  "en": "Batch Count",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 6,
+  "en": "Total video length [s]",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 7,
+  "en": "Common Prompt Prefix",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 8,
+  "en": "Start at second [0,1,...]",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 9,
+  "en": "a dense tropical forest",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 10,
+  "en": "a Lush jungle",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 11,
+  "en": "a Thick rainforest",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 12,
+  "en": "a Verdant canopy",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 13,
+  "en": "Export prompts",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 14,
+  "en": "Import prompts",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 15,
+  "en": "Clear prompts",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 16,
+  "en": "Common Prompt Suffix",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 17,
+  "en": "Negative Prompt",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 18,
+  "en": "Render settings",
+  "ctx": "Render settings"
+ },
+ {
+  "i": 19,
+  "en": "Output Width",
+  "ctx": "Render settings"
+ },
+ {
+  "i": 20,
+  "en": "Output Height",
+  "ctx": "Render settings"
+ },
+ {
+  "i": 21,
+  "en": "Guidance Scale",
+  "ctx": "Render settings"
+ },
+ {
+  "i": 22,
+  "en": "Sampling Steps for each outpaint",
+  "ctx": "Render settings"
+ },
+ {
+  "i": 23,
+  "en": "Custom initial image",
+  "ctx": "Render settings"
+ },
+ {
+  "i": 24,
+  "en": "Custom exit image",
+  "ctx": "Render settings"
+ },
+ {
+  "i": 25,
+  "en": "Zoom images",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 26,
+  "en": "Zoom order",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 27,
+  "en": "Sort by file name",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 28,
+  "en": "Reverse order",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 29,
+  "en": "Match output size to first image",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 30,
+  "en": "Zoom factor between images",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 31,
+  "en": "2 for Midjourney Zoom Out 2x; 1.33 for its Zoom Out 1.5x button",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 32,
+  "en": "AI blend strength",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 33,
+  "en": "0 = no AI, for ready-made nested images. Higher = Stable Diffusion repaints the seam between unrelated images",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 34,
+  "en": "Seam width (% of zoom border)",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 35,
+  "en": "How far the repainted ring reaches into the next image; Mask Blur is limited to this width",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 36,
+  "en": "Blend prompt",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 37,
+  "en": "Blend negative prompt",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 38,
+  "en": "Generate video from images",
+  "ctx": "component-5665"
+ },
+ {
+  "i": 39,
+  "en": "Frames per second",
+  "ctx": "component-5683"
+ },
+ {
+  "i": 40,
+  "en": "Zoom mode",
+  "ctx": "component-5683"
+ },
+ {
+  "i": 41,
+  "en": "Zoom-out",
+  "ctx": "[c] component-5683"
+ },
+ {
+  "i": 42,
+  "en": "Zoom-in",
+  "ctx": "[c] component-5683"
+ },
+ {
+  "i": 43,
+  "en": "number of start frame dupe",
+  "ctx": "component-5683"
+ },
+ {
+  "i": 44,
+  "en": "Frames to freeze at the start of the video",
+  "ctx": "component-5683"
+ },
+ {
+  "i": 45,
+  "en": "number of last frame dupe",
+  "ctx": "component-5683"
+ },
+ {
+  "i": 46,
+  "en": "Frames to freeze at the end of the video",
+  "ctx": "component-5683"
+ },
+ {
+  "i": 47,
+  "en": "Zoom Speed",
+  "ctx": "component-5683"
+ },
+ {
+  "i": 48,
+  "en": "Zoom speed in seconds (higher values create slower zoom)",
+  "ctx": "component-5683"
+ },
+ {
+  "i": 49,
+  "en": "Soundtrack",
+  "ctx": "Soundtrack"
+ },
+ {
+  "i": 50,
+  "en": "Soundtrack (any audio file, or a video with sound)",
+  "ctx": "Soundtrack"
+ },
+ {
+  "i": 51,
+  "en": "Fade-out when music is cut (s)",
+  "ctx": "Soundtrack"
+ },
+ {
+  "i": 52,
+  "en": "Keyframes (zoom pace)",
+  "ctx": "Keyframes (zoom pace)"
+ },
+ {
+  "i": 53,
+  "en": "Keyframes file",
+  "ctx": "Keyframes (zoom pace)"
+ },
+ {
+  "i": 54,
+  "en": "Keyframe values mean",
+  "ctx": "Keyframes (zoom pace)"
+ },
+ {
+  "i": 55,
+  "en": "Speed multiplier: 1 = Zoom Speed, 2 = twice as fast, 0 = pause. Deforum zoom: 1.00 = still, 1.02 = 2% zoom per frame",
+  "ctx": "Keyframes (zoom pace)"
+ },
+ {
+  "i": 56,
+  "en": "Speed multiplier",
+  "ctx": "[c] Keyframes (zoom pace)"
+ },
+ {
+  "i": 57,
+  "en": "Deforum zoom",
+  "ctx": "[c] Keyframes (zoom pace)"
+ },
+ {
+  "i": 58,
+  "en": "Keyframes FPS (0 = auto)",
+  "ctx": "Keyframes (zoom pace)"
+ },
+ {
+  "i": 59,
+  "en": "Analyze keyframes",
+  "ctx": "Keyframes (zoom pace)"
+ },
+ {
+  "i": 60,
+  "en": "Generate keyframes from the soundtrack",
+  "ctx": "Generate keyframes from the soundtrack"
+ },
+ {
+  "i": 61,
+  "en": "x = loudness 0..1, y = frame number, ^ = power (as on the website)",
+  "ctx": "Generate keyframes from the soundtrack"
+ },
+ {
+  "i": 62,
+  "en": "Generator FPS (0 = video FPS)",
+  "ctx": "Generate keyframes from the soundtrack"
+ },
+ {
+  "i": 63,
+  "en": "Generate keyframes",
+  "ctx": "Generate keyframes from the soundtrack"
+ },
+ {
+  "i": 64,
+  "en": "Mask Blur",
+  "ctx": "component-5713"
+ },
+ {
+  "i": 65,
+  "en": "Enable Upscale",
+  "ctx": "component-5717"
+ },
+ {
+  "i": 66,
+  "en": "Upscale by factor",
+  "ctx": "component-5717"
+ },
+ {
+  "i": 67,
+  "en": "How many separate videos to create",
+  "ctx": "[t] component-5635"
+ },
+ {
+  "i": 68,
+  "en": "For each seconds frame (FPS) will be generated. Define prompts at which time they should start wihtin this duration.",
+  "ctx": "[t] component-5635"
+ },
+ {
+  "i": 69,
+  "en": "Prompt inserted before each step",
+  "ctx": "[t] component-5635"
+ },
+ {
+  "i": 70,
+  "en": "At which time the prompt has to be occure. We need at least one prompt starting at time 0",
+  "ctx": "[t] component-5635"
+ },
+ {
+  "i": 71,
+  "en": "Prompt inserted after each step",
+  "ctx": "[t] component-5635"
+ },
+ {
+  "i": 72,
+  "en": "What your model shall avoid",
+  "ctx": "[t] component-5635"
+ },
+ {
+  "i": 73,
+  "en": "Order by file name (1, 2, 10) instead of upload order",
+  "ctx": "[t] component-5665"
+ },
+ {
+  "i": 74,
+  "en": "Use this when the first file is the outermost image",
+  "ctx": "[t] component-5665"
+ },
+ {
+  "i": 75,
+  "en": "How much larger each image is than the image inside it",
+  "ctx": "[t] component-5665"
+ },
+ {
+  "i": 76,
+  "en": "0 keeps your images untouched. Higher values let Stable Diffusion repaint the seam around the pasted center",
+  "ctx": "[t] component-5665"
+ },
+ {
+  "i": 77,
+  "en": "Width of the band around the seam that gets repainted",
+  "ctx": "[t] component-5665"
+ },
+ {
+  "i": 78,
+  "en": "Prompt used only to repaint the seams. With the LCM sampler, put your LCM LoRA here too",
+  "ctx": "[t] component-5665"
+ },
+ {
+  "i": 79,
+  "en": "Negative prompt used only to repaint the seams",
+  "ctx": "[t] component-5665"
+ },
+ {
+  "i": 80,
+  "en": "Varies additional frames per second",
+  "ctx": "[t] component-5683"
+ },
+ {
+  "i": 81,
+  "en": "Fade applied at the end when the music is longer than the video",
+  "ctx": "[t] Soundtrack"
+ },
+ {
+  "i": 82,
+  "en": "How keyframe values control the zoom",
+  "ctx": "[t] Keyframes (zoom pace)"
+ },
+ {
+  "i": 83,
+  "en": "Frame rate the keyframes were made for (the website default is 12). 0 reads it from PyTTI text or the soundtrack length",
+  "ctx": "[t] Keyframes (zoom pace)"
+ },
+ {
+  "i": 84,
+  "en": "Frame rate of the generated keyframes",
+  "ctx": "[t] Generate keyframes from the soundtrack"
+ },
+ {
+  "i": 85,
+  "en": "Optional: style or content of your images. With the LCM sampler add your LCM LoRA, e.g. <lora:LCM_SDXL15:1>",
+  "ctx": "[p] component-5665"
+ }
+]

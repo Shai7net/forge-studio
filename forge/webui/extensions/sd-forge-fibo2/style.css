@@ -1,0 +1,9 @@
+#txt2img_fibo2_panel, #img2img_fibo2_panel {
+    border-inline-start: 3px solid var(--primary-500, #0ea5e9);
+    padding-inline-start: 0.5rem;
+}
+
+body:not(.fibo2-active) #txt2img_fibo2_panel,
+body:not(.fibo2-active) #img2img_fibo2_panel {
+    display: none !important;
+}

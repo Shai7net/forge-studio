@@ -1,0 +1,17 @@
+[
+ {
+  "i": 0,
+  "en": "Time Strata",
+  "ctx": "[t] The tab and the Settings section of the sd-forge-time-strata extension (strata_script.py); the tab's own content draws both languages itself"
+ },
+ {
+  "i": 1,
+  "en": "Folder for projects (empty: time-strata inside the webui folder)",
+  "ctx": "Settings > Time Strata (strata_script.py)"
+ },
+ {
+  "i": 2,
+  "en": "Folder for recorded videos (empty: output\time-strata inside the webui folder)",
+  "ctx": "Settings > Time Strata (strata_script.py)"
+ }
+]

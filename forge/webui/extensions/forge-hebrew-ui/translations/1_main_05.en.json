@@ -1,0 +1,852 @@
+[
+ {
+  "i": 0,
+  "en": "Stop generation of current batch and continues onto next batch",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 1,
+  "en": "Interrupting generation...",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 2,
+  "en": "Right click generate forever menu",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 3,
+  "en": "Open images output directory.",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 4,
+  "en": "Save the image to a dedicated directory (log\\images).",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 5,
+  "en": "Save zip archive with images to a dedicated directory (log\\images)",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 6,
+  "en": "Send image and generation parameters to img2img tab.",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 7,
+  "en": "Send image and generation parameters to img2img inpaint tab.",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 8,
+  "en": "Send image and generation parameters to extras tab.",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 9,
+  "en": "Send to Cleaner",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 10,
+  "en": "Panorama Gallery.",
+  "ctx": "[t] Panorama"
+ },
+ {
+  "i": 11,
+  "en": "Panorama Cube.",
+  "ctx": "[t] Panorama"
+ },
+ {
+  "i": 12,
+  "en": "Convert to Cubemap.",
+  "ctx": "[t] Panorama"
+ },
+ {
+  "i": 13,
+  "en": "Convert to Equirectangular.",
+  "ctx": "[t] Panorama"
+ },
+ {
+  "i": 14,
+  "en": "Send image and generation parameters to SVD tab.",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 15,
+  "en": "Create an upscaled version of the current image using hires fix settings.",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 16,
+  "en": "Copy path to clipboard",
+  "ctx": "[t] txt2img_checkpoints"
+ },
+ {
+  "i": 17,
+  "en": "Show internal metadata",
+  "ctx": "[t] txt2img_checkpoints"
+ },
+ {
+  "i": 18,
+  "en": "Edit metadata",
+  "ctx": "[t] txt2img_checkpoints"
+ },
+ {
+  "i": 19,
+  "en": "Preferred VAE: refresh",
+  "ctx": "[t] txt2img_checkpoints"
+ },
+ {
+  "i": 20,
+  "en": "Interrogate CLIP - use CLIP neural network to create a text describing the image, and put it into the prompt field",
+  "ctx": "[t] tab_img2img"
+ },
+ {
+  "i": 21,
+  "en": "Interrogate DeepBooru - use DeepBooru neural network to create a text describing the image, and put it into the prompt field",
+  "ctx": "[t] tab_img2img"
+ },
+ {
+  "i": 22,
+  "en": "Resize image to target resolution. Unless height and width match, you will get incorrect aspect ratio.",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 23,
+  "en": "Resize the image so that entirety of target resolution is filled with the image. Crop parts that stick out.",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 24,
+  "en": "Resize the image so that entirety of image is inside target resolution. Fill empty space with image's colors.",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 25,
+  "en": "How much to blur the mask before processing, in pixels.",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 26,
+  "en": "What to put inside the masked area before processing it with Stable Diffusion.",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 27,
+  "en": "fill it with colors of the image",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 28,
+  "en": "keep whatever was there originally",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 29,
+  "en": "fill it with latent space noise",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 30,
+  "en": "fill it with latent space zeroes",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 31,
+  "en": "Auto detect size from img2img",
+  "ctx": "[ht] img2img_tab_resize_to"
+ },
+ {
+  "i": 32,
+  "en": "How many times to process an image. Each output is used as the input of the next loop. If set to 1, behavior will be as if this script were not used.",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 33,
+  "en": "The denoising strength for the final loop of each image in the batch.",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 34,
+  "en": "The denoising curve controls the rate of denoising strength change each loop. Aggressive: Most of the change will happen towards the start of the loops. Linear: Change will be constant through all loops. Lazy: Most of the change will happen towards the end of the loops.",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 35,
+  "en": "For SD upscale, how much overlap in pixels should there be between tiles. Tiles overlap so that when they are merged back into one picture, there is no clearly visible seam.",
+  "ctx": "[ht] component-3119"
+ },
+ {
+  "i": 36,
+  "en": "3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]",
+  "ctx": "[t] "
+ },
+ {
+  "i": 37,
+  "en": "955df99bd220015c3c3078549ad3e3ddd721bf2407976e04135ab14ce0fe9351",
+  "ctx": "[t] "
+ },
+ {
+  "i": 38,
+  "en": "Prompt\n(Press Ctrl+Enter to generate, Alt+Enter to skip, Esc to interrupt)",
+  "ctx": "[p] tab_txt2img"
+ },
+ {
+  "i": 39,
+  "en": "Negative prompt\n(Press Ctrl+Enter to generate, Alt+Enter to skip, Esc to interrupt)",
+  "ctx": "[p] tab_txt2img"
+ },
+ {
+  "i": 40,
+  "en": "Filter files",
+  "ctx": "[p] tab_txt2img"
+ },
+ {
+  "i": 41,
+  "en": "Prompt for hires fix pass.\nLeave empty to use the same prompt as in first pass.",
+  "ctx": "[p] Hires. fix"
+ },
+ {
+  "i": 42,
+  "en": "Negative prompt for hires fix pass.\nLeave empty to use the same negative prompt as in first pass.",
+  "ctx": "[p] Hires. fix"
+ },
+ {
+  "i": 43,
+  "en": "Regular expression pattern for blocking terms out of the generated prompt. Applied case-insensitively. For instance, to block both \"purple\" and \"interdimensional\", you could use the pattern \"purple|interdimensional\".",
+  "ctx": "[p] Prompt Magic"
+ },
+ {
+  "i": 44,
+  "en": "Paste here the path to the folder containing source faces images",
+  "ctx": "[p] component-2004"
+ },
+ {
+  "i": 45,
+  "en": "Which face(s) to use as Source (comma separated)",
+  "ctx": "[p] component-2004"
+ },
+ {
+  "i": 46,
+  "en": "Which face(s) to Swap into Target (comma separated)",
+  "ctx": "[p] component-2004"
+ },
+ {
+  "i": 47,
+  "en": "Please type any name (e.g. Elena)",
+  "ctx": "[p] component-2082"
+ },
+ {
+  "i": 48,
+  "en": "You must enter text prompts to enable groundingdino. Otherwise this extension will fall back to point prompts only.",
+  "ctx": "[p] component-2160"
+ },
+ {
+  "i": 49,
+  "en": "Enter input path",
+  "ctx": "[p] component-2262"
+ },
+ {
+  "i": 50,
+  "en": "Enter output path",
+  "ctx": "[p] component-2262"
+ },
+ {
+  "i": 51,
+  "en": "Enter categody ids, separated by +. For example, if you want bed+person, your input should be 7+12 for ade20k and 59+0 for coco.",
+  "ctx": "[p] component-2274"
+ },
+ {
+  "i": 52,
+  "en": "Input directory path to the control images.",
+  "ctx": "[p] component-2367"
+ },
+ {
+  "i": 53,
+  "en": "Mask directory path to the control images.",
+  "ctx": "[p] component-2367"
+ },
+ {
+  "i": 54,
+  "en": "Leave empty to use input directory",
+  "ctx": "[p] img2img_batch_tab"
+ },
+ {
+  "i": 55,
+  "en": "Open images output directory",
+  "ctx": "[h] "
+ },
+ {
+  "i": 56,
+  "en": "Save style",
+  "ctx": "[h] "
+ },
+ {
+  "i": 57,
+  "en": "Apply selected styles to current prompt",
+  "ctx": "[h] "
+ },
+ {
+  "i": 58,
+  "en": "Paste available values into the field",
+  "ctx": "[h] "
+ },
+ {
+  "i": 59,
+  "en": "Show/hide extra networks",
+  "ctx": "[h] "
+ },
+ {
+  "i": 60,
+  "en": "Inpaint a part of image",
+  "ctx": ""
+ },
+ {
+  "i": 61,
+  "en": "Draw a mask over an image, and the script will regenerate the masked area with content according to prompt",
+  "ctx": "[h] "
+ },
+ {
+  "i": 62,
+  "en": "SD upscale",
+  "ctx": "[c] "
+ },
+ {
+  "i": 63,
+  "en": "Upscale image normally, split result into tiles, improve each tile using img2img, merge whole image back",
+  "ctx": "[h] "
+ },
+ {
+  "i": 64,
+  "en": "Inpaint at full resolution",
+  "ctx": ""
+ },
+ {
+  "i": 65,
+  "en": "Upscale masked region to target resolution, do inpainting, downscale back and paste into original image",
+  "ctx": "[h] "
+ },
+ {
+  "i": 66,
+  "en": "Stop processing current image and continue processing.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 67,
+  "en": "Stop processing images and return any results accumulated so far.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 68,
+  "en": "Write image to a directory (default - log/images) and generation parameters into csv file.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 69,
+  "en": "Prompt matrix",
+  "ctx": "[c] "
+ },
+ {
+  "i": 70,
+  "en": "Separate prompts into parts using vertical pipe character (|) and the script will create a picture for every combination of them (except for the first part, which will be present in all combinations)",
+  "ctx": "[h] "
+ },
+ {
+  "i": 71,
+  "en": "X/Y/Z plot",
+  "ctx": ""
+ },
+ {
+  "i": 72,
+  "en": "Create grid(s) where images will have different parameters. Use inputs below to specify which parameters will be shared by columns and rows",
+  "ctx": "[h] "
+ },
+ {
+  "i": 73,
+  "en": "Custom code",
+  "ctx": ""
+ },
+ {
+  "i": 74,
+  "en": "Run Python code. Advanced user only. Must run program with --allow-code for this to work",
+  "ctx": "[h] "
+ },
+ {
+  "i": 75,
+  "en": "Prompt S/R",
+  "ctx": ""
+ },
+ {
+  "i": 76,
+  "en": "Separate a list of words with commas, and the first word will be used as a keyword: script will search for this word in the prompt, and replace it with others",
+  "ctx": "[h] "
+ },
+ {
+  "i": 77,
+  "en": "Prompt order",
+  "ctx": "[c] "
+ },
+ {
+  "i": 78,
+  "en": "Separate a list of words with commas, and the script will make a variation of prompt with those words for their every possible order",
+  "ctx": "[h] "
+ },
+ {
+  "i": 79,
+  "en": "Make an attempt to produce a picture similar to what would have been produced with same seed at specified resolution",
+  "ctx": "[h] "
+ },
+ {
+  "i": 80,
+  "en": "Reconstruct prompt from existing image and put it into the prompt field.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 81,
+  "en": "Use tags like [seed] and [date] to define how filenames for images are chosen. Leave empty for default.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 82,
+  "en": "Use tags like [seed] and [date] to define how subdirectories for images and grids are chosen. Leave empty for default.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 83,
+  "en": "Max prompt words",
+  "ctx": ""
+ },
+ {
+  "i": 84,
+  "en": "Set the maximum number of words to be used in the [prompt_words] option; ATTENTION: If the words are too long, they may exceed the maximum length of the file path that the system can handle",
+  "ctx": "[h] "
+ },
+ {
+  "i": 85,
+  "en": "Loopback",
+  "ctx": "[c] "
+ },
+ {
+  "i": 86,
+  "en": "Performs img2img processing multiple times. Output images are used as input for the next loop.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 87,
+  "en": "Style 1",
+  "ctx": ""
+ },
+ {
+  "i": 88,
+  "en": "Style to apply; styles have components for both positive and negative prompts and apply to both",
+  "ctx": "[h] "
+ },
+ {
+  "i": 89,
+  "en": "Style 2",
+  "ctx": ""
+ },
+ {
+  "i": 90,
+  "en": "Apply style",
+  "ctx": ""
+ },
+ {
+  "i": 91,
+  "en": "Insert selected styles into prompt fields",
+  "ctx": "[h] "
+ },
+ {
+  "i": 92,
+  "en": "Create style",
+  "ctx": ""
+ },
+ {
+  "i": 93,
+  "en": "Save current prompts as a style. If you add the token {prompt} to the text, the style uses that as a placeholder for your prompt when you use the style in the future.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 94,
+  "en": "Checkpoint name",
+  "ctx": "[c] "
+ },
+ {
+  "i": 95,
+  "en": "Loads weights from checkpoint before making images. You can either use hash or a part of filename (as seen in settings) for checkpoint name. Recommended to use with Y axis for less switching.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 96,
+  "en": "If this values is non-zero, it will be added to seed and used to initialize RNG for noises when using samplers with Eta. You can use this to produce even more variation of images, or you can use this to match images of other software if you know what you are doing.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 97,
+  "en": "Learning rate",
+  "ctx": ""
+ },
+ {
+  "i": 98,
+  "en": "How fast should training go. Low values will take longer to train, high values may fail to converge (not generate accurate results) and/or may break the embedding (This has happened if you see Loss: nan in the training info textbox. If this happens, you need to manually restore your embedding from an older not-broken backup).\n\nYou can set a single numeric value, or multiple learning rates using the syntax:\n\n   rate_1:max_steps_1, rate_2:max_steps_2, ...\n\nEG:   0.005:100, 1e-3:1000, 1e-5\n\nWill train with rate of 0.005 for first 100 steps, then 1e-3 until 1000 steps, then 1e-5 for all remaining steps.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 99,
+  "en": "Comma-separated list of tab names; tabs listed here will appear in the extra networks UI first and in order listed.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 100,
+  "en": "Skip negative prompt for steps where image is already mostly denoised; the higher this value, the more skips there will be; provides increased performance in exchange for minor quality reduction.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 101,
+  "en": "Magic Prompt batch size",
+  "ctx": ""
+ },
+ {
+  "i": 102,
+  "en": "The number of prompts to generate per batch. Increasing this can speed up prompt generation at the expense of slightly increased VRAM usage.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 103,
+  "en": "Prompts from file or textbox",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 104,
+  "en": "ControlNet Travel",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 105,
+  "en": "Prompt Travel",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 106,
+  "en": "Nothing",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 107,
+  "en": "Var. seed",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 108,
+  "en": "Var. strength",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 109,
+  "en": "Hires sampler",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 110,
+  "en": "Sigma Churn",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 111,
+  "en": "Sigma min",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 112,
+  "en": "Sigma max",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 113,
+  "en": "Sigma noise",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 114,
+  "en": "Schedule type",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 115,
+  "en": "Schedule min sigma",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 116,
+  "en": "Schedule max sigma",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 117,
+  "en": "Schedule rho",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 118,
+  "en": "Eta",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 119,
+  "en": "Initial noise multiplier",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 120,
+  "en": "Extra noise",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 121,
+  "en": "Hires upscaler",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 122,
+  "en": "UniPC Order",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 123,
+  "en": "Face restore",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 124,
+  "en": "Token merging ratio high-res",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 125,
+  "en": "Refiner checkpoint",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 126,
+  "en": "Refiner switch at",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 127,
+  "en": "RNG source",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 128,
+  "en": "FP8 mode",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 129,
+  "en": "[AnimateDiff] Enabled",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 130,
+  "en": "[AnimateDiff] Motion Module",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 131,
+  "en": "[AnimateDiff] Video length",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 132,
+  "en": "[AnimateDiff] FPS",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 133,
+  "en": "[AnimateDiff] Use main seed",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 134,
+  "en": "[AnimateDiff] Closed loop",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 135,
+  "en": "[AnimateDiff] Batch size",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 136,
+  "en": "[AnimateDiff] Stride",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 137,
+  "en": "[AnimateDiff] Overlap",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 138,
+  "en": "[AnimateDiff] Interp",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 139,
+  "en": "[AnimateDiff] Interp X",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 140,
+  "en": "[AnimateDiff] Video path",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 141,
+  "en": "[ReActor] CodeFormer Weight",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 142,
+  "en": "[ReActor] Restorer Visibility",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 143,
+  "en": "[ReActor] Face Mask Correction",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 144,
+  "en": "[ReActor] Face Models",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 145,
+  "en": "linear (weight sum)",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 146,
+  "en": "rife (optical flow)",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 147,
+  "en": "mp4",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 148,
+  "en": "gif",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 149,
+  "en": "webm",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 150,
+  "en": "lerp",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 151,
+  "en": "slerp",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 152,
+  "en": "token",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 153,
+  "en": "channel",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 154,
+  "en": "similar",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 155,
+  "en": "different",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 156,
+  "en": "successive",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 157,
+  "en": "embryo",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 158,
+  "en": "Unknown",
+  "ctx": "[c] txt2img_lora"
+ },
+ {
+  "i": 159,
+  "en": "img2img alternative test",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 160,
+  "en": "Outpainting mk2",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 161,
+  "en": "Poor man's outpainting",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 162,
+  "en": "Aggressive",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 163,
+  "en": "Linear",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 164,
+  "en": "Lazy",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 165,
+  "en": "Cond. Image Mask Weight",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 166,
+  "en": "[AnimateDiff] Latent power",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 167,
+  "en": "[AnimateDiff] Latent scale",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 168,
+  "en": "[AnimateDiff] Latent power last",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 169,
+  "en": "[AnimateDiff] Latent scale last",
+  "ctx": "[c] component-3119"
+ }
+]

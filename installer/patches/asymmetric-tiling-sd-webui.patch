@@ -1,0 +1,19 @@
+diff --git a/scripts/asymmetric_tiling.py b/scripts/asymmetric_tiling.py
+index 31dd77a..8e7981d 100644
+--- a/scripts/asymmetric_tiling.py
++++ b/scripts/asymmetric_tiling.py
+@@ -71,9 +71,11 @@ class Script(modules.scripts.Script):
+     # [Private]
+     # Go through all the "Conv2D" layers in the model and restore them to their origanal behaviour.
+     def __restoreConv2DMethods(self):
+-        for layer in modules.sd_hijack.model_hijack.layers:
+-            if type(layer) == Conv2d:
+-                layer._conv_forward = Conv2d._conv_forward.__get__(layer, Conv2d)
++        import modules.sd_hijack
++        if getattr(modules.sd_hijack.model_hijack, 'layers', None) is not None:
++            for layer in modules.sd_hijack.model_hijack.layers:
++                if type(layer) == Conv2d:
++                    layer._conv_forward = Conv2d._conv_forward.__get__(layer, Conv2d)
+ 
+     # [Private]
+     # A replacement for the Conv2d._conv_forward method that pads axes asymmetrically.

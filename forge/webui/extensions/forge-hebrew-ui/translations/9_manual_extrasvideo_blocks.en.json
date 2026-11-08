@@ -1,0 +1,12 @@
+[
+ {
+  "i": 0,
+  "text": "Upload a video and choose below what to do with its frames: Hires. fix, an upscaler, face restoration. Preview a frame renders the one frame at “Preview from second”, Preview a short part from there. Both are shown with a line to drag across the picture: the original on one side, the result on the other. After a click on the picture the mouse wheel zooms in, and dragging then moves it. Generate renders the whole video. The result is an MP4 with the original sound.RTX Video Super Resolution is made for video and is by far the fastest; for a video from a phone or the web, its (compressed video) version also cleans away the compression blocks. R-ESRGAN redraws more and takes a second or more a frame; at ×2, R-ESRGAN 2x+ is about three times faster than 4x+. DAT is only for a few seconds of video.",
+  "html": ""
+ },
+ {
+  "i": 1,
+  "text": "The picture, or every frame of the video, is enlarged with the upscaler and then drawn over by the loaded checkpoint: this is what adds sharpness and detail. The panel starts on the LCM setup: sampler LCM, 8 steps, CFG 1, and the LCM LoRA in Added to the prompt, which joins the prompt the picture or video was made with (or the one written here). Denoising strength is how much is drawn anew: 0.2 to 0.3 sharpens and keeps the picture; 0.5 adds much more, invents things that were not there, and in a video more of it flickers. As in Hires. fix, all the Hires steps are run, on every frame: fewer steps are faster. 0 steps, 0 CFG, seed -1 and “Use same sampler” take what it was made with. Every frame is a generation of its own at the new size, so try Preview a frame first.",
+  "html": ""
+ }
+]

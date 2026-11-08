@@ -1,0 +1,23 @@
+﻿name,prompt,negative_prompt
+Powerful,"(High quality: 1.5) (Masterpiece: 1.4), (Detailed: 1.5), (Powerful: 1.6)","(Poor quality: 1.3), (Blurry: 1.2), (Shabby: 1.5), (Grainy: 1.4)"
+<lora:LCM_SDXL15:1>,<lora:LCM_SDXL15:1>,
+<lora:LCM_SD15:1>,<lora:LCM_SD15:1>,
+Midjourney V6.1,<lora:aidmaMJ6.1_v0.5_2:1>,
+moreDetails.,<lora:moreDetails.5pEa:1>,
+cinematic film SD1.5,<lora:cinematic film IMAX 1570 SD1.5 v1:1>,
+Digital Impressionist_SD1.5,<lora:Digital_Impressionist_SD1.5_r1:1>,
+Animatediff,<lora:explosiveAnimatediff_v10:1>,
+Animatediff Zooom,<lora:spinZoomLoop_v10:1>,
+Van Gogh Style," <lora:vgv1:1>, vg",
+GLASS SD1.5,"<lora:glasssculpture_v8:1>, glasssculpture",
+oil ," , <lora:bichu-v0612:1> ,oil painting, ",
+4k-data_lora SDXL," ,<lora:spo_sdxl_10ep_4k-data_lora_webui:1>",
+3D SDXL,"<lora:ral-3dwvz:1>, ral-3dwvz",
+more_details SD1.5," <lora:more_details:1>, D9CF2F88DE",
+Nature SD1," <lora:naturepron_nolabels:1>, naturepron",
+Realistic Skin SD1.5,"<lora:skin texture style sd1.5 v1:0.36>, Detailed skin",
+"nsfw, nude",,"nsfw, nude"
+Yarnwoven (Wan),"<lora:[WAN2]YarnwovenStyle-Redmond_high_noise:1>, Yarnwoven Style",
+Skin morph,,
+Skin morph (WAN),Skin morph,
+FLUX 3- Upscale image 4k,Upscale image 4k,

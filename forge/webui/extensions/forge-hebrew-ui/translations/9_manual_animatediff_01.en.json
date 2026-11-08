@@ -1,0 +1,237 @@
+[
+ {
+  "i": 0,
+  "en": "🎵 Music",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 1,
+  "en": "The MP4 / WEBM comes out with this music already on it. GIF and WEBP cannot hold sound, so MP4 is added when neither MP4 nor WEBM is selected.",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 2,
+  "en": "Or music path",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 3,
+  "en": "Start the music from second",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 4,
+  "en": "Fade out at the end",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 5,
+  "en": "When the music is longer than the video",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 6,
+  "en": "Cut the music to the video",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 7,
+  "en": "Loop the video for the whole music",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 8,
+  "en": "⏱ Set Number of frames to fit the music",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 9,
+  "en": "Upload music first.",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 10,
+  "en": "Take frames evenly at the FPS (stays in sync with the music)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 11,
+  "en": "Use the dance video's own sound when no music is uploaded",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 12,
+  "en": "Black dancers on white",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 13,
+  "en": "White dancers on gray (keeps the prompt's background)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 14,
+  "en": "White dancers on black (dark background)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 15,
+  "en": "Silhouette",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 16,
+  "en": "Silhouette edge softness",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 17,
+  "en": "👁 Preview silhouette",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 18,
+  "en": "Silhouette preview",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 19,
+  "en": "Long video: render in parts of (frames, 0 = one pass)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 20,
+  "en": "Frames shared by neighbouring parts",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 21,
+  "en": "Upscale the frames with",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 22,
+  "en": "💃 Dance video",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 23,
+  "en": "Make a dance video",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 24,
+  "en": "1 · Dance video (only the movement is taken)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 25,
+  "en": "2 · The dancers: what they are made of (1-4 pictures)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 26,
+  "en": "3 · The background behind the dancers (1-4 pictures, optional)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 27,
+  "en": "Follow the dancers' shape",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 28,
+  "en": "Follow the pose (arms and legs)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 29,
+  "en": "Dancers like their pictures",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 30,
+  "en": "Background like its pictures",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 31,
+  "en": "Frames per second (8 and 12 draw faster, for tests)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 32,
+  "en": "8 (quick test)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 33,
+  "en": "24 (smooth, FILM)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 34,
+  "en": "Width and height in the video's shape",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 35,
+  "en": "LCM motion module: sampler LCM, 8 steps, CFG 2, LCM LoRA",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 36,
+  "en": "Other music (otherwise the dance's own sound)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 37,
+  "en": "Upload the dance video first.",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 38,
+  "en": "Dancer pictures only on the dancers, background pictures only behind them",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 39,
+  "en": "Objects, not people (adds person, face, skin, hair to the negative prompt)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 40,
+  "en": "Final size (the finished frames are upscaled)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 41,
+  "en": "Final size upscaler",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 42,
+  "en": "As drawn",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 43,
+  "en": "Mask folder for an AnimateDiff video (a mask for every frame, used instead of the mask above)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 44,
+  "en": "Each frame is drawn only where its own mask is white, and the picture stays as it is everywhere else. With Number of frames at 0 the video gets one frame for every mask.",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 45,
+  "en": "C:\\my video\\masks   (quotes are fine)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ },
+ {
+  "i": 46,
+  "en": "A small dot in the masks is a ball (it is drawn as a ball in the colors of the figures)",
+  "ctx": "[t] AnimateDiff Music / Dance video (animatediff_ui.py)"
+ }
+]

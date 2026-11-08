@@ -1,0 +1,67 @@
+[
+ {
+  "i": 0,
+  "en": "Switch",
+  "ctx": "[t] Deforum Audio Keyframes camera row"
+ },
+ {
+  "i": 1,
+  "en": "🎬 Camera directing",
+  "ctx": "[t] Deforum Audio Keyframes (audio_keyframes_ui.py)"
+ },
+ {
+  "i": 2,
+  "en": "Camera mode",
+  "ctx": "[t] Deforum Audio Keyframes camera directing"
+ },
+ {
+  "i": 3,
+  "en": "🎬 Direct the camera for this song",
+  "ctx": "[t] Deforum Audio Keyframes camera directing"
+ },
+ {
+  "i": 4,
+  "en": "Name for a new mode",
+  "ctx": "[t] Deforum Audio Keyframes camera directing"
+ },
+ {
+  "i": 5,
+  "en": "💾 Save the camera rows as a mode",
+  "ctx": "[t] Deforum Audio Keyframes camera directing"
+ },
+ {
+  "i": 6,
+  "en": "🧠 Learn a mode from the Motion tab",
+  "ctx": "[t] Deforum Audio Keyframes camera directing"
+ },
+ {
+  "i": 7,
+  "en": "🗑 Delete the chosen mode",
+  "ctx": "[t] Deforum Audio Keyframes camera directing"
+ },
+ {
+  "i": 8,
+  "en": "e.g. Space orbit",
+  "ctx": "[p] Deforum Audio Keyframes camera directing"
+ },
+ {
+  "i": 9,
+  "en": "Flip the direction (+ becomes −). The speed stays.",
+  "ctx": "[title] Deforum Motion direction tools (camera_directing_ui.py)"
+ },
+ {
+  "i": 10,
+  "en": "Switch the direction more often (every N − 1 frames)",
+  "ctx": "[title] Deforum Motion direction tools"
+ },
+ {
+  "i": 11,
+  "en": "Switch the direction every N frames (off = one direction). Click to apply it again.",
+  "ctx": "[title] Deforum Motion direction tools"
+ },
+ {
+  "i": 12,
+  "en": "Switch the direction less often (every N + 1 frames)",
+  "ctx": "[title] Deforum Motion direction tools"
+ }
+]

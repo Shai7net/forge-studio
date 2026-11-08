@@ -1,0 +1,12 @@
+# Code and text are stored with LF; Windows scripts need CRLF; patches must stay byte for byte.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.patch -text
+*.png binary
+*.jpg binary
+*.ico binary
+*.pth binary
+*.xz binary
+*.whl binary

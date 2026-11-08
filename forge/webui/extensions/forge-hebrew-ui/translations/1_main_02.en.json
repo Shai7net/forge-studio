@@ -1,0 +1,1302 @@
+[
+ {
+  "i": 0,
+  "en": "Comma separated face number(s); Example: 0,2,1",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 1,
+  "en": "Gender Detection (Source)",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 2,
+  "en": "No",
+  "ctx": "[c] component-2004"
+ },
+ {
+  "i": 3,
+  "en": "Female Only",
+  "ctx": "[c] component-2004"
+ },
+ {
+  "i": 4,
+  "en": "Male Only",
+  "ctx": "[c] component-2004"
+ },
+ {
+  "i": 5,
+  "en": "Target Image (result):",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 6,
+  "en": "Comma separated face number(s); Example: 1,0,2",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 7,
+  "en": "Gender Detection (Target)",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 8,
+  "en": "Restore Face",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 9,
+  "en": "None",
+  "ctx": "[c] component-2004"
+ },
+ {
+  "i": 10,
+  "en": "Restore Face Visibility",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 11,
+  "en": "CodeFormer Weight (Fidelity)",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 12,
+  "en": "0 = far from original (max restoration), 1 = close to original (min restoration)",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 13,
+  "en": "Swap in source image",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 14,
+  "en": "Swap in generated image",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 15,
+  "en": "Threshold",
+  "ctx": "component-2054"
+ },
+ {
+  "i": 16,
+  "en": "The higher the value, the more sensitive the detection is to what is considered a face (0.5 by default)",
+  "ctx": "component-2054"
+ },
+ {
+  "i": 17,
+  "en": "Max Faces",
+  "ctx": "component-2054"
+ },
+ {
+  "i": 18,
+  "en": "Maximum number of faces to detect (0 is unlimited)",
+  "ctx": "component-2054"
+ },
+ {
+  "i": 19,
+  "en": "Clear Source Images Hash (Single)",
+  "ctx": "component-2054"
+ },
+ {
+  "i": 20,
+  "en": "Clear Source Images Hash (Multiple)",
+  "ctx": "component-2054"
+ },
+ {
+  "i": 21,
+  "en": "Clear Target Image Hash",
+  "ctx": "component-2054"
+ },
+ {
+  "i": 22,
+  "en": "Clear All Hash",
+  "ctx": "component-2054"
+ },
+ {
+  "i": 23,
+  "en": "Postprocessing Order",
+  "ctx": "component-2066"
+ },
+ {
+  "i": 24,
+  "en": "1. Restore Face -> 2. Upscale (-Uncheck- if you want vice versa)",
+  "ctx": "component-2066"
+ },
+ {
+  "i": 25,
+  "en": "Upscale anyway - even if no face found",
+  "ctx": "component-2066"
+ },
+ {
+  "i": 26,
+  "en": "Force Upscale",
+  "ctx": "component-2066"
+ },
+ {
+  "i": 27,
+  "en": "Won't scale if you choose -Swap in Source- via img2img, only 1x-postprocessing will affect (texturing, denoising, restyling etc.)",
+  "ctx": "component-2066"
+ },
+ {
+  "i": 28,
+  "en": "Scale by",
+  "ctx": "component-2066"
+ },
+ {
+  "i": 29,
+  "en": "Upscaler Visibility (if scale = 1)",
+  "ctx": "component-2066"
+ },
+ {
+  "i": 30,
+  "en": "Face Models",
+  "ctx": "component-2080"
+ },
+ {
+  "i": 31,
+  "en": "Single",
+  "ctx": "component-2081"
+ },
+ {
+  "i": 32,
+  "en": "Blend",
+  "ctx": "[c] component-2081"
+ },
+ {
+  "i": 33,
+  "en": "Load an image containing one person, name it and click 'Build and Save'",
+  "ctx": "component-2082"
+ },
+ {
+  "i": 34,
+  "en": "Load an Image to build -Face Model-",
+  "ctx": "component-2082"
+ },
+ {
+  "i": 35,
+  "en": "Face Model Name",
+  "ctx": "component-2082"
+ },
+ {
+  "i": 36,
+  "en": "Build and Save",
+  "ctx": "component-2082"
+ },
+ {
+  "i": 37,
+  "en": "You can find saved models in 'models/reactor/faces'",
+  "ctx": "component-2082"
+ },
+ {
+  "i": 38,
+  "en": "Load a set of images containing any person, name it and click 'Build and Save'",
+  "ctx": "component-2090"
+ },
+ {
+  "i": 39,
+  "en": "Load Images to build -Blended Face Model-",
+  "ctx": "component-2090"
+ },
+ {
+  "i": 40,
+  "en": "Compute Method",
+  "ctx": "component-2090"
+ },
+ {
+  "i": 41,
+  "en": "Mean (recommended) - Average value (best result 👍); Median* - Mid-point value (may be funny 😅); Mode - Most common value (may be scary 😨); *Mean and Median will be simillar if you load two images",
+  "ctx": "component-2090"
+ },
+ {
+  "i": 42,
+  "en": "Mean",
+  "ctx": "[c] component-2090"
+ },
+ {
+  "i": 43,
+  "en": "Median",
+  "ctx": "[c] component-2090"
+ },
+ {
+  "i": 44,
+  "en": "Mode",
+  "ctx": "[c] component-2090"
+ },
+ {
+  "i": 45,
+  "en": "(Experimental) Turn it ON if you want to skip the faces which are too much different from the first one in the list to prevent some probable 'shape mismatches'",
+  "ctx": "component-2090"
+ },
+ {
+  "i": 46,
+  "en": "Check -Embedding Shape- on Similarity",
+  "ctx": "component-2090"
+ },
+ {
+  "i": 47,
+  "en": "Execution Provider",
+  "ctx": "component-2105"
+ },
+ {
+  "i": 48,
+  "en": "Click 'Save' to apply. If you already run 'Generate' - RESTART is required: (A1111) Extensions Tab -> 'Apply and restart UI' or (SD.Next) close the Server and start it again",
+  "ctx": "component-2105"
+ },
+ {
+  "i": 49,
+  "en": "CPU",
+  "ctx": "[c] component-2105"
+ },
+ {
+  "i": 50,
+  "en": "CUDA",
+  "ctx": "[c] component-2105"
+ },
+ {
+  "i": 51,
+  "en": "Model",
+  "ctx": "component-2105"
+ },
+ {
+  "i": 52,
+  "en": "Console Log Level",
+  "ctx": "component-2105"
+ },
+ {
+  "i": 53,
+  "en": "No log",
+  "ctx": "[c] component-2105"
+ },
+ {
+  "i": 54,
+  "en": "Minimum",
+  "ctx": "[c] component-2105"
+ },
+ {
+  "i": 55,
+  "en": "Default",
+  "ctx": "[c] component-2105"
+ },
+ {
+  "i": 56,
+  "en": "Recommended to keep it ON. Processing is faster when Source Image is the same.",
+  "ctx": "component-2105"
+ },
+ {
+  "i": 57,
+  "en": "Source Image Hash Check",
+  "ctx": "component-2105"
+ },
+ {
+  "i": 58,
+  "en": "Affects if you use Extras tab or img2img with only 'Swap in source image' on.",
+  "ctx": "component-2105"
+ },
+ {
+  "i": 59,
+  "en": "Target Image Hash Check",
+  "ctx": "component-2105"
+ },
+ {
+  "i": 60,
+  "en": "by",
+  "ctx": "ReActor"
+ },
+ {
+  "i": 61,
+  "en": "Eugene Gourieff",
+  "ctx": "ReActor"
+ },
+ {
+  "i": 62,
+  "en": "This script takes all Replacer settings from its tab",
+  "ctx": "Replacer"
+ },
+ {
+  "i": 63,
+  "en": "Save originals",
+  "ctx": "Replacer"
+ },
+ {
+  "i": 64,
+  "en": "Follow txt2img",
+  "ctx": "[c] Replacer"
+ },
+ {
+  "i": 65,
+  "en": "On",
+  "ctx": "[c] Replacer"
+ },
+ {
+  "i": 66,
+  "en": "Use txt2img seed",
+  "ctx": "Replacer"
+ },
+ {
+  "i": 67,
+  "en": "Append positive prompt",
+  "ctx": "Replacer"
+ },
+ {
+  "i": 68,
+  "en": "Be sure you use inpainting model here",
+  "ctx": "Replacer"
+ },
+ {
+  "i": 69,
+  "en": "Force override stable diffusion model",
+  "ctx": "Replacer"
+ },
+ {
+  "i": 70,
+  "en": "Segment Anything",
+  "ctx": "Segment Anything"
+ },
+ {
+  "i": 71,
+  "en": "SAM Model",
+  "ctx": "Segment Anything"
+ },
+ {
+  "i": 72,
+  "en": "Use CPU for SAM",
+  "ctx": "Segment Anything"
+ },
+ {
+  "i": 73,
+  "en": "Single Image",
+  "ctx": "Segment Anything"
+ },
+ {
+  "i": 74,
+  "en": "Batch Process",
+  "ctx": "Segment Anything"
+ },
+ {
+  "i": 75,
+  "en": "Auto SAM",
+  "ctx": "Segment Anything"
+ },
+ {
+  "i": 76,
+  "en": "Upload Mask to ControlNet Inpainting",
+  "ctx": "Segment Anything"
+ },
+ {
+  "i": 77,
+  "en": "Image for Segment Anything",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 78,
+  "en": "Remove all point prompts",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 79,
+  "en": "Enable GroundingDINO",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 80,
+  "en": "GroundingDINO Model (Auto download from huggingface)",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 81,
+  "en": "GroundingDINO Detection Prompt",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 82,
+  "en": "GroundingDINO Box Threshold",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 83,
+  "en": "I want to preview GroundingDINO detection result and select the boxes I want.",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 84,
+  "en": "Image",
+  "ctx": "[c] component-2160"
+ },
+ {
+  "i": 85,
+  "en": "Generate bounding box",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 86,
+  "en": "Select your favorite boxes:",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 87,
+  "en": "GroundingDINO preview status",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 88,
+  "en": "Segment Anything Output",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 89,
+  "en": "Preview Segmentation",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 90,
+  "en": "Segment Anything status",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 91,
+  "en": "Choose your favorite mask:",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 92,
+  "en": "Preview automatically when add/remove points",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 93,
+  "en": "Copy to txt2img ControlNet Inpainting",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 94,
+  "en": "ControlNet inpaint not masked",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 95,
+  "en": "ControlNet Inpaint Index",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 96,
+  "en": "Expand Mask",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 97,
+  "en": "Specify the amount that you wish to expand the mask by (recommend 30)",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 98,
+  "en": "Expanded Mask",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 99,
+  "en": "Update Mask",
+  "ctx": "component-2160"
+ },
+ {
+  "i": 100,
+  "en": "Specify the amount that you wish to expand the mask by (recommend 0-10)",
+  "ctx": "component-2200"
+ },
+ {
+  "i": 101,
+  "en": "Source directory",
+  "ctx": "component-2200"
+ },
+ {
+  "i": 102,
+  "en": "Destination directory",
+  "ctx": "component-2200"
+ },
+ {
+  "i": 103,
+  "en": "Output per image:",
+  "ctx": "component-2200"
+ },
+ {
+  "i": 104,
+  "en": "Save masked image",
+  "ctx": "component-2200"
+ },
+ {
+  "i": 105,
+  "en": "Save mask",
+  "ctx": "component-2200"
+ },
+ {
+  "i": 106,
+  "en": "Save original image with mask and bounding box",
+  "ctx": "component-2200"
+ },
+ {
+  "i": 107,
+  "en": "Save background instead of foreground",
+  "ctx": "component-2200"
+ },
+ {
+  "i": 108,
+  "en": "Start batch process",
+  "ctx": "component-2200"
+ },
+ {
+  "i": 109,
+  "en": "GroundingDINO batch progress status",
+  "ctx": "component-2200"
+ },
+ {
+  "i": 110,
+  "en": "Auto SAM Config",
+  "ctx": "Auto SAM Config"
+ },
+ {
+  "i": 111,
+  "en": "ControlNet",
+  "ctx": "component-2220"
+ },
+ {
+  "i": 112,
+  "en": "Image Layout",
+  "ctx": "component-2220"
+ },
+ {
+  "i": 113,
+  "en": "Mask by Category",
+  "ctx": "component-2220"
+ },
+ {
+  "i": 114,
+  "en": "Choose preprocessor for semantic segmentation:",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 115,
+  "en": "random",
+  "ctx": "[c] component-2242"
+ },
+ {
+  "i": 116,
+  "en": "Preprocessor resolution",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 117,
+  "en": "Resize Mode",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 118,
+  "en": "Just Resize",
+  "ctx": "[c] component-2242"
+ },
+ {
+  "i": 119,
+  "en": "Crop and Resize",
+  "ctx": "[c] component-2242"
+ },
+ {
+  "i": 120,
+  "en": "Resize and Fill",
+  "ctx": "[c] component-2242"
+ },
+ {
+  "i": 121,
+  "en": "Select ControlNet input from random segmentation gallery. Choose 2 for Edit-Anything ControlNet.",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 122,
+  "en": "Enable Pixel Perfect from lllyasviel. Configure your target width and height on txt2img/img2img default panel before preview if you wish to enable pixel perfect.",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 123,
+  "en": "Image for Auto Segmentation",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 124,
+  "en": "Auto segmentation output",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 125,
+  "en": "Preview segmentation image",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 126,
+  "en": "Segmentation status",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 127,
+  "en": "Copy to ControlNet Segmentation",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 128,
+  "en": "ControlNet Segmentation Index",
+  "ctx": "component-2242"
+ },
+ {
+  "i": 129,
+  "en": "Choose mode:",
+  "ctx": "component-2262"
+ },
+ {
+  "i": 130,
+  "en": "single image",
+  "ctx": "[c] component-2262"
+ },
+ {
+  "i": 131,
+  "en": "batch process",
+  "ctx": "[c] component-2262"
+ },
+ {
+  "i": 132,
+  "en": "Image for Image Layout",
+  "ctx": "component-2262"
+ },
+ {
+  "i": 133,
+  "en": "Input path",
+  "ctx": "component-2262"
+ },
+ {
+  "i": 134,
+  "en": "Output path",
+  "ctx": "component-2262"
+ },
+ {
+  "i": 135,
+  "en": "Generate layout for single image",
+  "ctx": "component-2262"
+ },
+ {
+  "i": 136,
+  "en": "Generate layout for batch process",
+  "ctx": "component-2262"
+ },
+ {
+  "i": 137,
+  "en": "Image layout status",
+  "ctx": "component-2262"
+ },
+ {
+  "i": 138,
+  "en": "Enter category IDs",
+  "ctx": "component-2274"
+ },
+ {
+  "i": 139,
+  "en": "Image to be masked",
+  "ctx": "component-2287"
+ },
+ {
+  "i": 140,
+  "en": "Output",
+  "ctx": "component-2287"
+ },
+ {
+  "i": 141,
+  "en": "Number",
+  "ctx": "component-2287"
+ },
+ {
+  "i": 142,
+  "en": "Resized image",
+  "ctx": "component-2287"
+ },
+ {
+  "i": 143,
+  "en": "Preview mask",
+  "ctx": "component-2287"
+ },
+ {
+  "i": 144,
+  "en": "Categorical mask status",
+  "ctx": "component-2287"
+ },
+ {
+  "i": 145,
+  "en": "Enable uploading manually created mask to SAM.",
+  "ctx": "component-2323"
+ },
+ {
+  "i": 146,
+  "en": "ControlNet Inpaint Number",
+  "ctx": "component-2323"
+ },
+ {
+  "i": 147,
+  "en": "Image for ControlNet Inpaint",
+  "ctx": "component-2323"
+ },
+ {
+  "i": 148,
+  "en": "Mask for ControlNet Inpaint",
+  "ctx": "component-2323"
+ },
+ {
+  "i": 149,
+  "en": "Switch to Inpaint Upload",
+  "ctx": "Segment Anything"
+ },
+ {
+  "i": 150,
+  "en": "Unload all models from memory",
+  "ctx": "Segment Anything"
+ },
+ {
+  "i": 151,
+  "en": "Uncheck all copies",
+  "ctx": "Segment Anything"
+ },
+ {
+  "i": 152,
+  "en": "Send mask to Cleaner",
+  "ctx": "[t] Segment Anything"
+ },
+ {
+  "i": 153,
+  "en": "ControlNet Integrated",
+  "ctx": "ControlNet Integrated"
+ },
+ {
+  "i": 154,
+  "en": "Fetch from ControlNet",
+  "ctx": "ControlNet Integrated"
+ },
+ {
+  "i": 155,
+  "en": "Send to ControlNet",
+  "ctx": "ControlNet Integrated"
+ },
+ {
+  "i": 156,
+  "en": "Edit",
+  "ctx": "ControlNet Integrated"
+ },
+ {
+  "i": 157,
+  "en": "ControlNet Unit 0",
+  "ctx": "ControlNet Integrated"
+ },
+ {
+  "i": 158,
+  "en": "Checkbox",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 159,
+  "en": "Batch Folder",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 160,
+  "en": "Batch Upload",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 161,
+  "en": "Upload JSON",
+  "ctx": "component-2350"
+ },
+ {
+  "i": 162,
+  "en": "Preprocessor Preview",
+  "ctx": "component-2350"
+ },
+ {
+  "i": 163,
+  "en": "JSON",
+  "ctx": "component-2350"
+ },
+ {
+  "i": 164,
+  "en": "Mask",
+  "ctx": "component-2350"
+ },
+ {
+  "i": 165,
+  "en": "Input Directory",
+  "ctx": "component-2367"
+ },
+ {
+  "i": 166,
+  "en": "Mask Directory",
+  "ctx": "component-2367"
+ },
+ {
+  "i": 167,
+  "en": "Images",
+  "ctx": "component-2372"
+ },
+ {
+  "i": 168,
+  "en": "Upload Images",
+  "ctx": "component-2372"
+ },
+ {
+  "i": 169,
+  "en": "Clear Images",
+  "ctx": "component-2372"
+ },
+ {
+  "i": 170,
+  "en": "Masks",
+  "ctx": "component-2372"
+ },
+ {
+  "i": 171,
+  "en": "Upload Masks",
+  "ctx": "component-2372"
+ },
+ {
+  "i": 172,
+  "en": "Clear Masks",
+  "ctx": "component-2372"
+ },
+ {
+  "i": 173,
+  "en": "Open New Canvas",
+  "ctx": "Open New Canvas"
+ },
+ {
+  "i": 174,
+  "en": "New Canvas Width",
+  "ctx": "Open New Canvas"
+ },
+ {
+  "i": 175,
+  "en": "New Canvas Height",
+  "ctx": "Open New Canvas"
+ },
+ {
+  "i": 176,
+  "en": "Create New Canvas",
+  "ctx": "Open New Canvas"
+ },
+ {
+  "i": 177,
+  "en": "Cancel",
+  "ctx": "Open New Canvas"
+ },
+ {
+  "i": 178,
+  "en": "Enable",
+  "ctx": "[c] ControlNet Unit 0"
+ },
+ {
+  "i": 179,
+  "en": "Pixel Perfect",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 180,
+  "en": "Allow Preview",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 181,
+  "en": "Use Mask",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 182,
+  "en": "Preview as Input",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 183,
+  "en": "Control Type",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 184,
+  "en": "All",
+  "ctx": "[c] ControlNet Unit 0"
+ },
+ {
+  "i": 185,
+  "en": "Blur",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 186,
+  "en": "Canny",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 187,
+  "en": "Depth",
+  "ctx": "[c] ControlNet Unit 0"
+ },
+ {
+  "i": 188,
+  "en": "IP-Adapter",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 189,
+  "en": "Inpaint",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 190,
+  "en": "Instant-ID",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 191,
+  "en": "Lineart",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 192,
+  "en": "MLSD",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 193,
+  "en": "NormalMap",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 194,
+  "en": "OpenPose",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 195,
+  "en": "PhotoMaker",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 196,
+  "en": "Recolor",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 197,
+  "en": "Reference",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 198,
+  "en": "Revision",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 199,
+  "en": "Scribble",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 200,
+  "en": "Segmentation",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 201,
+  "en": "Shuffle",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 202,
+  "en": "Sketch",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 203,
+  "en": "SoftEdge",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 204,
+  "en": "T2I-Adapter",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 205,
+  "en": "Tile",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 206,
+  "en": "Preprocessor",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 207,
+  "en": "Control Weight",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 208,
+  "en": "Starting Control Step",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 209,
+  "en": "Ending Control Step",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 210,
+  "en": "Threshold A",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 211,
+  "en": "Threshold B",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 212,
+  "en": "Control Mode",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 213,
+  "en": "Balanced",
+  "ctx": "[c] ControlNet Unit 0"
+ },
+ {
+  "i": 214,
+  "en": "My prompt is more important",
+  "ctx": "[c] ControlNet Unit 0"
+ },
+ {
+  "i": 215,
+  "en": "ControlNet is more important",
+  "ctx": "[c] ControlNet Unit 0"
+ },
+ {
+  "i": 216,
+  "en": "Hires-Fix Option",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 217,
+  "en": "Both",
+  "ctx": "[c] ControlNet Unit 0"
+ },
+ {
+  "i": 218,
+  "en": "Low res only",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 219,
+  "en": "High res only",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 220,
+  "en": "Presets",
+  "ctx": "[c] ControlNet Unit 0"
+ },
+ {
+  "i": 221,
+  "en": "Preset name",
+  "ctx": "ControlNet Unit 0"
+ },
+ {
+  "i": 222,
+  "en": "ControlNet Unit 1",
+  "ctx": "ControlNet Integrated"
+ },
+ {
+  "i": 223,
+  "en": "ControlNet Unit 2",
+  "ctx": "ControlNet Integrated"
+ },
+ {
+  "i": 224,
+  "en": "DynamicThresholding (CFG-Fix) Integrated",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 225,
+  "en": "Enabled",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 226,
+  "en": "Mimic Scale",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 227,
+  "en": "Threshold Percentile",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 228,
+  "en": "Mimic Mode",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 229,
+  "en": "Constant",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 230,
+  "en": "Linear Down",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 231,
+  "en": "Cosine Down",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 232,
+  "en": "Half Cosine Down",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 233,
+  "en": "Linear Up",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 234,
+  "en": "Cosine Up",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 235,
+  "en": "Half Cosine Up",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 236,
+  "en": "Power Up",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 237,
+  "en": "Power Down",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 238,
+  "en": "Linear Repeating",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 239,
+  "en": "Cosine Repeating",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 240,
+  "en": "Sawtooth",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 241,
+  "en": "Mimic Scale Min",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 242,
+  "en": "Cfg Mode",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 243,
+  "en": "Cfg Scale Min",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 244,
+  "en": "Sched Val",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 245,
+  "en": "Separate Feature Channels",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 246,
+  "en": "enable",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 247,
+  "en": "disable",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 248,
+  "en": "Scaling Startpoint",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 249,
+  "en": "MEAN",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 250,
+  "en": "ZERO",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 251,
+  "en": "Variability Measure",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 252,
+  "en": "AD",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 253,
+  "en": "STD",
+  "ctx": "[c] DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 254,
+  "en": "Interpolate Phi",
+  "ctx": "DynamicThresholding (CFG-Fix) Integrat"
+ },
+ {
+  "i": 255,
+  "en": "FreeU Integrated",
+  "ctx": "FreeU Integrated"
+ },
+ {
+  "i": 256,
+  "en": "B1",
+  "ctx": "FreeU Integrated"
+ },
+ {
+  "i": 257,
+  "en": "B2",
+  "ctx": "FreeU Integrated"
+ },
+ {
+  "i": 258,
+  "en": "S1",
+  "ctx": "FreeU Integrated"
+ },
+ {
+  "i": 259,
+  "en": "S2",
+  "ctx": "FreeU Integrated"
+ }
+]

@@ -1,0 +1,233 @@
+/* Simulation 360. Every rule starts at #sim360_host, so it outranks Gradio's own resets of buttons,
+   inputs and checkboxes, and touches nothing outside the tab. */
+
+#sim360_host { padding: 0 !important; border: 0 !important; background: none !important; }
+#sim360_host > .prose { display: none; }
+
+#sim360_host .s360 {
+    --s-bg: var(--background-fill-secondary, #1b1e26);
+    --s-bg2: var(--background-fill-primary, #12141a);
+    --s-line: var(--border-color-primary, #343a48);
+    --s-text: var(--body-text-color, #e8eaf0);
+    --s-faint: var(--body-text-color-subdued, #9aa3b5);
+    --s-accent: #34c6ff;
+    --s-warm: #ffd25a;
+    color: var(--s-text); font-size: 13px; line-height: 1.4; direction: ltr;
+    display: flex; flex-direction: column; gap: 8px;
+}
+#sim360_host .s360 *, #sim360_host .s360 *::before, #sim360_host .s360 *::after { box-sizing: border-box; }
+#sim360_host .s360 .s360-strip, #sim360_host .s360 .s360-panel, #sim360_host .s360 .s360-info, #sim360_host .s360 .s360-help {
+    scrollbar-width: thin; scrollbar-color: var(--s-line) transparent;
+}
+
+/* the bar */
+#sim360_host .s360 .s360-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#sim360_host .s360 .s360-title { font-weight: 700; font-size: 15px; letter-spacing: .2px; margin-inline-end: 6px; }
+#sim360_host .s360 .s360-project { width: auto; min-width: 160px; max-width: 280px; flex: 0 1 auto; }
+#sim360_host .s360 .s360-status { flex: 1 1 120px; min-width: 0; color: var(--s-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; unicode-bidi: plaintext; }
+#sim360_host .s360 .s360-status[data-kind="error"] { color: #ff7a7a; }
+#sim360_host .s360 .s360-saved { color: var(--s-faint); font-size: 12px; white-space: nowrap; unicode-bidi: plaintext; }
+#sim360_host .s360 .s360-saved[data-kind="ok"] { color: #7fd39a; }
+#sim360_host .s360 .s360-saved[data-kind="warn"] { color: var(--s-warm); }
+#sim360_host .s360 .s360-saved[data-kind="error"] { color: #ff7a7a; }
+#sim360_host .s360 .s360-status[data-kind="warn"] { color: var(--s-warm); }
+
+/* the two columns */
+#sim360_host .s360 .s360-body { display: grid; grid-template-columns: minmax(0, 1fr) 372px; gap: 10px; align-items: start; }
+#sim360_host .s360 .s360-left { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+@media (max-width: 1100px) { #sim360_host .s360 .s360-body { grid-template-columns: minmax(0, 1fr); } }
+
+/* the stage */
+#sim360_host .s360 .s360-stage {
+    position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: 74vh; background: #06070a;
+    border: 1px solid var(--s-line); border-radius: 10px; overflow: hidden; outline: none; user-select: none;
+}
+#sim360_host .s360 .s360-stage:focus { border-color: var(--s-accent); }
+#sim360_host .s360 .s360-stage:fullscreen { max-height: none; border: 0; border-radius: 0; width: 100vw; height: 100vh; aspect-ratio: auto; }
+#sim360_host .s360 .s360-gl, #sim360_host .s360 .s360-over { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#sim360_host .s360 .s360-over { touch-action: none; }
+#sim360_host .s360 .s360-hud {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%); padding: 3px 12px; border-radius: 12px;
+    background: rgba(8, 10, 16, .55); color: #fff; font-size: 12px; pointer-events: none; white-space: nowrap; unicode-bidi: plaintext;
+}
+#sim360_host .s360 .s360-hud:empty { display: none; }
+#sim360_host .s360 .s360-banner {
+    position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); max-width: 92%; z-index: 2;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
+    padding: 8px 12px; border-radius: 10px; background: rgba(8, 10, 16, .82); color: #fff; border: 1px solid rgba(255, 255, 255, .18);
+}
+#sim360_host .s360 .s360-jobs { position: absolute; left: 12px; right: 200px; bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+#sim360_host .s360 .s360-job {
+    position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; overflow: hidden;
+    padding: 5px 6px 5px 12px; border-radius: 8px; background: rgba(8, 10, 16, .8); color: #fff; border: 1px solid rgba(255, 255, 255, .16);
+}
+#sim360_host .s360 .s360-job > span { position: relative; unicode-bidi: plaintext; }
+#sim360_host .s360 .s360-job > button { position: relative; }
+#sim360_host .s360 .s360-jobfill { position: absolute; inset: 0 auto 0 0; background: rgba(52, 198, 255, .32); transition: width .3s; }
+#sim360_host .s360 .s360-tools { position: absolute; left: 10px; top: 10px; display: flex; flex-direction: column; gap: 4px; }
+#sim360_host .s360 .s360-toolrow { display: flex; gap: 4px; }
+#sim360_host .s360 button.s360-tool {
+    display: flex; align-items: center; gap: 6px; min-width: 34px; height: 30px; padding: 0 9px; border-radius: 8px; cursor: pointer;
+    background: rgba(8, 10, 16, .72); color: #fff; border: 1px solid rgba(255, 255, 255, .18); font-size: 13px; line-height: 1;
+}
+#sim360_host .s360 button.s360-tool > span { font-size: 12px; }
+#sim360_host .s360 .s360-stage.s360-small button.s360-tool { height: 26px; padding: 0 7px; min-width: 30px; justify-content: center; }
+#sim360_host .s360 .s360-stage.s360-small button.s360-tool > span { display: none; }
+#sim360_host .s360 .s360-stage.s360-small .s360-tools { gap: 3px; left: 6px; top: 6px; }
+#sim360_host .s360 button.s360-tool:hover { border-color: #fff; }
+#sim360_host .s360 button.s360-tool.s360-on { background: var(--s-accent); color: #06121a; border-color: var(--s-accent); }
+#sim360_host .s360 .s360-help {
+    position: absolute; inset: 8% 12%; overflow: auto; padding: 18px 22px; border-radius: 12px;
+    background: rgba(10, 12, 18, .94); color: #fff; border: 1px solid rgba(255, 255, 255, .2);
+}
+#sim360_host .s360 .s360-help h3 { margin: 0 0 8px; font-size: 16px; }
+#sim360_host .s360 .s360-help ol { margin: 0 0 10px; padding-inline-start: 22px; }
+#sim360_host .s360 .s360-help li { margin: 5px 0; }
+
+/* the strip of worlds */
+#sim360_host .s360 .s360-strip { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; }
+#sim360_host .s360 button.s360-world {
+    position: relative; flex: 0 0 auto; width: 148px; height: 74px; padding: 0; overflow: hidden; cursor: pointer;
+    border-radius: 8px; border: 2px solid var(--s-line); background: var(--s-bg2); color: var(--s-faint);
+}
+#sim360_host .s360 button.s360-world.s360-on { border-color: var(--s-accent); }
+#sim360_host .s360 button.s360-world img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#sim360_host .s360 button.s360-world.s360-add { width: 74px; font-size: 30px; border-style: dashed; color: var(--s-text); }
+#sim360_host .s360 .s360-worldname {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 6px 3px; font-size: 11px; color: #fff; text-align: start;
+    background: linear-gradient(transparent, rgba(0, 0, 0, .78)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#sim360_host .s360 .s360-badge { position: absolute; top: 4px; left: 4px; padding: 0 6px; border-radius: 8px; background: rgba(0, 0, 0, .65); color: #fff; font-size: 10px; }
+#sim360_host .s360 .s360-badge.s360-first { left: auto; right: 4px; background: var(--s-warm); color: #201800; }
+#sim360_host .s360 .s360-worldbusy { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--s-accent); }
+#sim360_host .s360 .s360-empty { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 11px; }
+
+/* the side panel */
+#sim360_host .s360 .s360-side { background: var(--s-bg); border: 1px solid var(--s-line); border-radius: 10px; overflow: hidden; }
+#sim360_host .s360 .s360-tabs { display: flex; border-bottom: 1px solid var(--s-line); }
+#sim360_host .s360 button.s360-tab {
+    flex: 1 1 0; padding: 8px 2px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--s-faint);
+    cursor: pointer; font-size: 13px; border-radius: 0;
+}
+#sim360_host .s360 button.s360-tab:hover { color: var(--s-text); }
+#sim360_host .s360 button.s360-tab.s360-on { color: var(--s-text); border-bottom-color: var(--s-accent); font-weight: 600; }
+#sim360_host .s360 .s360-panel { padding: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 80vh; overflow-y: auto; }
+#sim360_host .s360.s360-he .s360-panel, #sim360_host .s360.s360-he .s360-help, #sim360_host .s360.s360-he .s360-banner { direction: rtl; }
+
+#sim360_host .s360 .s360-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+#sim360_host .s360 .s360-row > * { flex: 1 1 0; min-width: 0; }
+#sim360_host .s360 .s360-row > button.s360-icon, #sim360_host .s360 .s360-row > .s360-dot { flex: 0 0 auto; }
+#sim360_host .s360 .s360-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; margin: 0; }
+#sim360_host .s360 .s360-label { color: var(--s-faint); font-size: 12px; }
+#sim360_host .s360 .s360-subtitle { font-weight: 600; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--s-line); }
+#sim360_host .s360 .s360-note { margin: 0; color: var(--s-faint); font-size: 12px; }
+#sim360_host .s360 .s360-faint { color: var(--s-faint); font-size: 12px; margin: 0; overflow-wrap: anywhere; }
+#sim360_host .s360 .s360-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#sim360_host .s360 .s360-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+#sim360_host .s360 .s360-input {
+    width: 100%; min-width: 0; height: 30px; padding: 3px 8px; border-radius: 6px; font-size: 13px; font-family: inherit;
+    background: var(--input-background-fill, #0e1016); color: var(--s-text); border: 1px solid var(--s-line); appearance: auto;
+}
+#sim360_host .s360 select.s360-input { padding-inline: 4px; }
+#sim360_host .s360 textarea.s360-area { height: auto; resize: vertical; line-height: 1.35; padding: 6px 8px; }
+#sim360_host .s360 .s360-input:focus { outline: none; border-color: var(--s-accent); }
+#sim360_host .s360 input.s360-check { appearance: auto; width: 15px; height: 15px; margin: 0; accent-color: var(--s-accent); flex: 0 0 auto; }
+#sim360_host .s360 .s360-checkline { display: flex; align-items: center; gap: 6px; cursor: pointer; min-height: 30px; margin: 0; }
+#sim360_host .s360 .s360-slider { display: flex; align-items: center; gap: 6px; min-width: 0; }
+#sim360_host .s360 input.s360-range { flex: 1 1 auto; min-width: 40px; height: 18px; accent-color: var(--s-accent); appearance: auto; padding: 0; }
+#sim360_host .s360 .s360-value { min-width: 34px; text-align: end; color: var(--s-faint); font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+#sim360_host .s360 .s360-seed { display: flex; gap: 4px; }
+
+#sim360_host .s360 button.s360-btn, #sim360_host .s360 label.s360-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px; height: 30px; padding: 0 12px; border-radius: 6px;
+    background: var(--button-secondary-background-fill, #2a2f3b); color: var(--s-text); border: 1px solid var(--s-line);
+    font-size: 13px; cursor: pointer; white-space: nowrap; flex: 0 0 auto; margin: 0;
+}
+#sim360_host .s360 button.s360-btn:hover, #sim360_host .s360 label.s360-btn:hover { border-color: var(--s-accent); }
+#sim360_host .s360 button.s360-btn:disabled { opacity: .45; cursor: default; border-color: var(--s-line); }
+#sim360_host .s360 button.s360-btn.s360-primary { background: var(--s-accent); border-color: var(--s-accent); color: #06121a; font-weight: 600; }
+#sim360_host .s360 button.s360-btn.s360-danger { color: #ff8a8a; }
+#sim360_host .s360 button.s360-btn.s360-on { border-color: var(--s-accent); color: var(--s-accent); }
+#sim360_host .s360 button.s360-btn.s360-icon { width: 30px; padding: 0; }
+#sim360_host .s360 .s360-filebtn input { display: none; }
+#sim360_host .s360 .s360-toolgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+#sim360_host .s360 .s360-toolgrid > button.s360-btn { justify-content: flex-start; }
+
+#sim360_host .s360 details.s360-section { border: 1px solid var(--s-line); border-radius: 8px; }
+#sim360_host .s360 details.s360-section > summary { padding: 6px 10px; cursor: pointer; color: var(--s-text); user-select: none; }
+#sim360_host .s360 .s360-section-body { padding: 4px 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+#sim360_host .s360 .s360-card { border: 1px solid var(--s-line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; background: var(--s-bg2); }
+#sim360_host .s360 .s360-dot { width: 14px; height: 14px; border-radius: 50%; align-self: center; }
+#sim360_host .s360 .s360-info { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; color: var(--s-faint); max-height: 160px; overflow: auto; }
+
+#sim360_host .s360 .s360-subtitle.s360-first { border-top: 0; padding-top: 0; margin-top: 0; }
+#sim360_host .s360 .s360-objects { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
+#sim360_host .s360 button.s360-object {
+    position: relative; height: 96px; padding: 0; overflow: hidden; cursor: pointer; border-radius: 8px;
+    border: 2px solid var(--s-line); color: #fff;
+    background: repeating-conic-gradient(#2a2e38 0% 25%, #20232b 0% 50%) 0 0 / 14px 14px;
+}
+#sim360_host .s360 button.s360-object.s360-on { border-color: var(--s-warm); }
+#sim360_host .s360 button.s360-object img { width: 100%; height: 100%; object-fit: contain; display: block; }
+#sim360_host .s360 button.s360-object > span:not(.s360-badge) {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 4px 2px; font-size: 10px; text-align: center;
+    background: linear-gradient(transparent, rgba(0, 0, 0, .8)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#sim360_host .s360 .s360-version { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border: 1px solid var(--s-line); border-radius: 8px; background: var(--s-bg2); }
+#sim360_host .s360 .s360-versionwhen { flex: 0 0 auto; font-variant-numeric: tabular-nums; unicode-bidi: plaintext; }
+#sim360_host .s360 .s360-versionwhat { flex: 1 1 auto; min-width: 0; color: var(--s-faint); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sim360_host .s360 .s360-faint a { color: var(--s-accent); }
+
+#sim360_host .s360 .s360-key { display: flex; align-items: center; gap: 5px; padding: 4px 6px; border: 1px solid var(--s-line); border-radius: 8px; background: var(--s-bg2); }
+#sim360_host .s360 .s360-key.s360-other { opacity: .7; }
+#sim360_host .s360 .s360-line.s360-on { border-color: var(--s-warm); }
+#sim360_host .s360 .s360-linehead { display: flex; align-items: center; gap: 5px; }
+#sim360_host .s360 .s360-linehead select.s360-input { flex: 1 1 auto; min-width: 0; }
+#sim360_host .s360 .s360-warn { color: var(--s-warm); }
+#sim360_host .s360 .s360-keyn { width: 20px; height: 20px; border-radius: 50%; background: var(--s-warm); color: #201800; font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+#sim360_host .s360 .s360-keyname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sim360_host .s360 .s360-mini { display: flex; align-items: center; gap: 3px; width: 74px; flex: 0 0 auto; color: var(--s-faint); margin: 0; }
+#sim360_host .s360 .s360-mini .s360-input { padding: 2px 4px; height: 26px; }
+
+#sim360_host .s360 .s360-progressline { position: relative; height: 24px; border-radius: 6px; overflow: hidden; background: var(--s-bg2); border: 1px solid var(--s-line); }
+#sim360_host .s360 .s360-progressfill { position: absolute; inset: 0 auto 0 0; background: rgba(52, 198, 255, .35); }
+#sim360_host .s360 .s360-progressline > span { position: relative; display: block; text-align: center; line-height: 22px; font-size: 12px; }
+#sim360_host .s360 .s360-result { display: flex; flex-direction: column; gap: 4px; }
+#sim360_host .s360 .s360-video { width: 100%; border-radius: 8px; background: #000; }
+
+/* my objects: a kept object's card, with its small "forget" button */
+#sim360_host .s360 .s360-kept { position: relative; padding: 0; }
+#sim360_host .s360 .s360-kept .s360-keptpick { all: unset; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 6px; width: 100%; box-sizing: border-box; }
+#sim360_host .s360 .s360-kept .s360-keptpick[disabled] { opacity: 0.5; cursor: default; }
+#sim360_host .s360 .s360-kept .s360-icon { position: absolute; top: 2px; inset-inline-end: 2px; padding: 0 5px; min-height: 0; line-height: 18px; font-size: 11px; }
+
+/* the film's shots along the route's time (Route > Cuts) */
+#sim360_host .s360 .s360-shots { position: relative; height: 30px; margin: 4px 0 2px; border-radius: 6px; overflow: hidden; background: var(--s-bg2); border: 1px solid var(--s-line); cursor: pointer; }
+#sim360_host .s360 .s360-shots > .s360-shot { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; border-right: 1px solid var(--s-bg2); }
+#sim360_host .s360 .s360-shots > .s360-shot > span { padding: 0 4px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; }
+#sim360_host .s360 .s360-shots > .s360-main { background: rgba(52, 198, 255, 0.3); }
+#sim360_host .s360 .s360-shots > .s360-second { background: rgba(255, 196, 60, 0.62); color: #1b1e26; }
+#sim360_host .s360 .s360-shots > .s360-pass { position: absolute; top: 0; bottom: 0; pointer-events: none; }
+#sim360_host .s360 .s360-shots > .s360-dissolve { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent); }
+#sim360_host .s360 .s360-shots > .s360-dip { background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.85), transparent); }
+#sim360_host .s360 .s360-shots > .s360-blink { width: 6px; margin-left: -3px; background: rgba(0, 0, 0, 0.85); border-radius: 3px; }
+#sim360_host .s360 .s360-shots > .s360-head { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; pointer-events: none; }
+#sim360_host .s360 .s360-shots-times { display: flex; justify-content: space-between; font-size: 11px; color: var(--s-faint); margin-bottom: 4px; }
+/* a cut of the film (Route > Cuts): one line, and a second one for whom the second camera follows */
+#sim360_host .s360 .s360-cut { flex-wrap: wrap; row-gap: 4px; }
+#sim360_host .s360 .s360-cut .s360-grow { flex: 1 1 120px; min-width: 0; }
+#sim360_host .s360 .s360-cut .s360-pick { flex: 0 1 130px; min-width: 90px; }
+#sim360_host .s360 .s360-cut .s360-grow > select, #sim360_host .s360 .s360-cut .s360-pick > select { width: 100%; }
+#sim360_host .s360 .s360-cut > .s360-cutmore { flex: 1 1 100%; display: flex; gap: 5px; padding-left: 26px; }
+
+#sim360_host .s360 .s360-viewmeter { margin: 2px 0 6px; font-size: 12px; unicode-bidi: plaintext; }
+
+/* a big view: the world as wide and tall as the page, the panel under it */
+#sim360_host .s360.s360-wide .s360-body { grid-template-columns: minmax(0, 1fr); }
+#sim360_host .s360.s360-wide .s360-stage { aspect-ratio: auto; height: 84vh; max-height: none; }
+/* rows of choices with a big sign (a world's form, how one moves in it) */
+#sim360_host .s360 .s360-iconrow { display: flex; flex-wrap: wrap; gap: 5px; margin: 2px 0 6px; }
+#sim360_host .s360 .s360-iconbtn { display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 64px; padding: 5px 6px; height: auto; line-height: 1.1; }
+#sim360_host .s360 .s360-iconbtn .s360-bigicon { font-size: 20px; }
+#sim360_host .s360 .s360-iconbtn > span:last-child { font-size: 11px; }

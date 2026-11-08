@@ -1,0 +1,1302 @@
+[
+ {
+  "i": 0,
+  "en": "Contours only",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 1,
+  "en": "Files",
+  "ctx": "replacer_batch_process_tab"
+ },
+ {
+  "i": 2,
+  "en": "Keep original filenames",
+  "ctx": "replacer_batch_process_tab"
+ },
+ {
+  "i": 3,
+  "en": "Keep original filenames (batch from dir)",
+  "ctx": "replacer_batch_directory_tab"
+ },
+ {
+  "i": 4,
+  "en": "Apply HiresFix ✨",
+  "ctx": "tab_Replacer"
+ },
+ {
+  "i": 5,
+  "en": "HiresFix options",
+  "ctx": "HiresFix options"
+ },
+ {
+  "i": 6,
+  "en": "General",
+  "ctx": "HiresFix options"
+ },
+ {
+  "i": 7,
+  "en": "Advanced",
+  "ctx": "HiresFix options"
+ },
+ {
+  "i": 8,
+  "en": "Hires Denoising",
+  "ctx": "component-613"
+ },
+ {
+  "i": 9,
+  "en": "Limit render size",
+  "ctx": "component-613"
+ },
+ {
+  "i": 10,
+  "en": "Above limit upscaler",
+  "ctx": "component-613"
+ },
+ {
+  "i": 11,
+  "en": "Hires supersampling",
+  "ctx": "component-613"
+ },
+ {
+  "i": 12,
+  "en": "Extra mask expand",
+  "ctx": "component-613"
+ },
+ {
+  "i": 13,
+  "en": "Extra inpaint padding",
+  "ctx": "component-613"
+ },
+ {
+  "i": 14,
+  "en": "Extra mask blur",
+  "ctx": "component-613"
+ },
+ {
+  "i": 15,
+  "en": "Randomize seed for hires fix",
+  "ctx": "component-613"
+ },
+ {
+  "i": 16,
+  "en": "Hires CFG Scale",
+  "ctx": "component-636"
+ },
+ {
+  "i": 17,
+  "en": "Unload detection models before hires fix",
+  "ctx": "component-636"
+ },
+ {
+  "i": 18,
+  "en": "Suffix for positive prompt",
+  "ctx": "component-636"
+ },
+ {
+  "i": 19,
+  "en": "Override positive prompt",
+  "ctx": "component-636"
+ },
+ {
+  "i": 20,
+  "en": "Override negative prompt",
+  "ctx": "component-636"
+ },
+ {
+  "i": 21,
+  "en": "Disable ControlNet while hires fix",
+  "ctx": "component-636"
+ },
+ {
+  "i": 22,
+  "en": "Soft inpainting for hires fix",
+  "ctx": "component-636"
+ },
+ {
+  "i": 23,
+  "en": "Same",
+  "ctx": "[c] component-636"
+ },
+ {
+  "i": 24,
+  "en": "Disable",
+  "ctx": "[c] component-636"
+ },
+ {
+  "i": 25,
+  "en": "Pass into hires fix automatically",
+  "ctx": "tab_Replacer"
+ },
+ {
+  "i": 26,
+  "en": "Save images before hires fix",
+  "ctx": "tab_Replacer"
+ },
+ {
+  "i": 27,
+  "en": "Open dedicated page",
+  "ctx": "tab_Replacer"
+ },
+ {
+  "i": 28,
+  "en": "Step 1 (Project)",
+  "ctx": "tab_Replacer - video"
+ },
+ {
+  "i": 29,
+  "en": "Step 2 (Options)",
+  "ctx": "tab_Replacer - video"
+ },
+ {
+  "i": 30,
+  "en": "Step 3 (Masking)",
+  "ctx": "tab_Replacer - video"
+ },
+ {
+  "i": 31,
+  "en": "Step 4 (Generation)",
+  "ctx": "tab_Replacer - video"
+ },
+ {
+  "i": 32,
+  "en": "--Init--",
+  "ctx": "component-674"
+ },
+ {
+  "i": 33,
+  "en": "Init video",
+  "ctx": "component-674"
+ },
+ {
+  "i": 34,
+  "en": "Path to project",
+  "ctx": "component-674"
+ },
+ {
+  "i": 35,
+  "en": "Generate path",
+  "ctx": "component-674"
+ },
+ {
+  "i": 36,
+  "en": "--Select--",
+  "ctx": "component-674"
+ },
+ {
+  "i": 37,
+  "en": "Project path",
+  "ctx": "component-674"
+ },
+ {
+  "i": 38,
+  "en": "Select",
+  "ctx": "component-674"
+ },
+ {
+  "i": 39,
+  "en": "These options are not saved in the project",
+  "ctx": "component-690"
+ },
+ {
+  "i": 40,
+  "en": "AnimateDiff mode",
+  "ctx": "component-690"
+ },
+ {
+  "i": 41,
+  "en": "Frame by frame mode",
+  "ctx": "component-690"
+ },
+ {
+  "i": 42,
+  "en": "Fragment length, frames",
+  "ctx": "replacer_video_mode_animatediff"
+ },
+ {
+  "i": 43,
+  "en": "Set 0 to consider the full video as 1 fragment",
+  "ctx": "replacer_video_mode_animatediff"
+ },
+ {
+  "i": 44,
+  "en": "Internal AD FPS",
+  "ctx": "replacer_video_mode_animatediff"
+ },
+ {
+  "i": 45,
+  "en": "Set 0 to use the fps above",
+  "ctx": "replacer_video_mode_animatediff"
+ },
+ {
+  "i": 46,
+  "en": "Use FreeInit",
+  "ctx": "replacer_video_mode_animatediff"
+ },
+ {
+  "i": 47,
+  "en": "Filter Type",
+  "ctx": "Use FreeInit"
+ },
+ {
+  "i": 48,
+  "en": "Default as Butterworth. To fix large inconsistencies, consider using Gaussian.",
+  "ctx": "Use FreeInit"
+ },
+ {
+  "i": 49,
+  "en": "Stop frequency for spatial dimensions (0.0-1.0)",
+  "ctx": "Use FreeInit"
+ },
+ {
+  "i": 50,
+  "en": "Stop frequency for temporal dimension (0.0-1.0)",
+  "ctx": "Use FreeInit"
+ },
+ {
+  "i": 51,
+  "en": "FreeInit Iterations",
+  "ctx": "Use FreeInit"
+ },
+ {
+  "i": 52,
+  "en": "Larger value leads to smoother results & longer inference time.",
+  "ctx": "Use FreeInit"
+ },
+ {
+  "i": 53,
+  "en": "Useful if you want to test animatediff's options",
+  "ctx": "replacer_video_mode_animatediff"
+ },
+ {
+  "i": 54,
+  "en": "Generate only the first fragment",
+  "ctx": "replacer_video_mode_animatediff"
+ },
+ {
+  "i": 55,
+  "en": "Controlnet inpainting model",
+  "ctx": "Models"
+ },
+ {
+  "i": 56,
+  "en": "Occupies the last controlnet unit",
+  "ctx": "Models"
+ },
+ {
+  "i": 57,
+  "en": "Be sure you use NON-inpainting model here. Otherwise you will have OOM error in any case",
+  "ctx": "Models"
+ },
+ {
+  "i": 58,
+  "en": "! Frame by frame mode temporary doesn't work !",
+  "ctx": "replacer_video_mode_frame_by_frame"
+ },
+ {
+  "i": 59,
+  "en": "Pass the previous frame into ControlNet",
+  "ctx": "replacer_video_mode_frame_by_frame"
+ },
+ {
+  "i": 60,
+  "en": "Unit 0",
+  "ctx": "replacer_video_mode_frame_by_frame"
+ },
+ {
+  "i": 61,
+  "en": "Unit 1",
+  "ctx": "replacer_video_mode_frame_by_frame"
+ },
+ {
+  "i": 62,
+  "en": "Unit 2",
+  "ctx": "replacer_video_mode_frame_by_frame"
+ },
+ {
+  "i": 63,
+  "en": "⟳ Reload page",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 64,
+  "en": "Generate detected masks",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 65,
+  "en": "Generate empty masks",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 66,
+  "en": "Page 0/0",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 67,
+  "en": "← Prev. page",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 68,
+  "en": "Next page →",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 69,
+  "en": "⧉ Add masks on this page",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 70,
+  "en": "⧉ Subtract masks on this page",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 71,
+  "en": "Page to go",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 72,
+  "en": "Go to page",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 73,
+  "en": "You can copy old masks from project nested directory",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 74,
+  "en": "Fps affects on masks",
+  "ctx": "replacer_video_masking_tab"
+ },
+ {
+  "i": 75,
+  "en": "Generate 🎬",
+  "ctx": "component-809"
+ },
+ {
+  "i": 76,
+  "en": "❌ Project is not selected",
+  "ctx": "tab_Replacer - video"
+ },
+ {
+  "i": 77,
+  "en": "pause/resume video generation",
+  "ctx": "tab_Replacer - video"
+ },
+ {
+  "i": 78,
+  "en": "txt2img-grids",
+  "ctx": "tab_image_browser"
+ },
+ {
+  "i": 79,
+  "en": "img2img-grids",
+  "ctx": "tab_image_browser"
+ },
+ {
+  "i": 80,
+  "en": "Favorites",
+  "ctx": "tab_image_browser"
+ },
+ {
+  "i": 81,
+  "en": "Maintenance",
+  "ctx": "tab_image_browser"
+ },
+ {
+  "i": 82,
+  "en": "Favorites path from settings: log\\images",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 83,
+  "en": "Images directory",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 84,
+  "en": "Sub directory depth",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 85,
+  "en": "Add to / replace in saved directories",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 86,
+  "en": "Saved directories",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 87,
+  "en": "Remove from saved directories",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 88,
+  "en": "Sub directories",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 89,
+  "en": "Get sub directories",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 90,
+  "en": "First Page",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 91,
+  "en": "Prev Page",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 92,
+  "en": "Page Index",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 93,
+  "en": "Next Page",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 94,
+  "en": "End Page",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 95,
+  "en": "Current ranking",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 96,
+  "en": "Set ranking to",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 97,
+  "en": "Show video frame",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 98,
+  "en": "delete next",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 99,
+  "en": "also delete off-screen images",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 100,
+  "en": "Additional Generation Info",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 101,
+  "en": "Sort by",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 102,
+  "en": "Filename keyword search",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 103,
+  "en": "EXIF keyword search",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 104,
+  "en": "Search negative prompt",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 105,
+  "en": "Yes",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 106,
+  "en": "Only",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 107,
+  "en": "regex - e.g. ^(?!.*Hires).*$",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 108,
+  "en": "Ranking filter",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 109,
+  "en": "Min-max",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 110,
+  "en": "Minimum ranking",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 111,
+  "en": "Maximum ranking",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 112,
+  "en": "Choose Min-max to activate these controls",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 113,
+  "en": "Minimum score",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 114,
+  "en": "Maximum score",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 115,
+  "en": "Formatted display",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 116,
+  "en": "Generation Info",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 117,
+  "en": "Key",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 118,
+  "en": "Value",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 119,
+  "en": "File Name",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 120,
+  "en": "Move to favorites",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 121,
+  "en": "Send to openOutpaint",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 122,
+  "en": "Send to txt2img ControlNet",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 123,
+  "en": "Send to img2img ControlNet",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 124,
+  "en": "ControlNet number",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 125,
+  "en": "Directory path",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 126,
+  "en": "Move to directory",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 127,
+  "en": "Renew Page",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 128,
+  "en": "⚠ Caution: You should only use these options if you know what you are doing. ⚠",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 129,
+  "en": "Status:",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 130,
+  "en": "Last message",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 131,
+  "en": "Rebuild exif cache",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 132,
+  "en": "Delete 0-entries from exif cache",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 133,
+  "en": "Update directory names in database",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 134,
+  "en": "ranking",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 135,
+  "en": "From (full path)",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 136,
+  "en": "to (full path)",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 137,
+  "en": "Recreate hash for existing files",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 138,
+  "en": "Reapply ranking after moving files",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 139,
+  "en": "Restart debug",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 140,
+  "en": "Get javascript logs",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 141,
+  "en": "Javascript logs",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 142,
+  "en": "Rebuild ranking from exif info",
+  "ctx": "image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 143,
+  "en": "Loading...",
+  "ctx": "tab_sddp-wildcard-manager"
+ },
+ {
+  "i": 144,
+  "en": "Collection actions",
+  "ctx": "Collection actions"
+ },
+ {
+  "i": 145,
+  "en": "Select a collection",
+  "ctx": "Collection actions"
+ },
+ {
+  "i": 146,
+  "en": "Copy collection",
+  "ctx": "Collection actions"
+ },
+ {
+  "i": 147,
+  "en": "Overwrite existing",
+  "ctx": "Collection actions"
+ },
+ {
+  "i": 148,
+  "en": "Refresh wildcards",
+  "ctx": "Collection actions"
+ },
+ {
+  "i": 149,
+  "en": "Delete all wildcards",
+  "ctx": "Collection actions"
+ },
+ {
+  "i": 150,
+  "en": "Wildcards file",
+  "ctx": "tab_sddp-wildcard-manager"
+ },
+ {
+  "i": 151,
+  "en": "File editor",
+  "ctx": "tab_sddp-wildcard-manager"
+ },
+ {
+  "i": 152,
+  "en": "Save wildcards",
+  "ctx": "tab_sddp-wildcard-manager"
+ },
+ {
+  "i": 153,
+  "en": "Action",
+  "ctx": "tab_sddp-wildcard-manager"
+ },
+ {
+  "i": 154,
+  "en": "artists",
+  "ctx": "[c] settings_interrogate"
+ },
+ {
+  "i": 155,
+  "en": "Installed",
+  "ctx": "tab_extensions"
+ },
+ {
+  "i": 156,
+  "en": "Available",
+  "ctx": "tab_extensions"
+ },
+ {
+  "i": 157,
+  "en": "Install from URL",
+  "ctx": "tab_extensions"
+ },
+ {
+  "i": 158,
+  "en": "Backup/Restore",
+  "ctx": "tab_extensions"
+ },
+ {
+  "i": 159,
+  "en": "Apply and restart UI",
+  "ctx": "component-9383"
+ },
+ {
+  "i": 160,
+  "en": "Check for updates",
+  "ctx": "component-9383"
+ },
+ {
+  "i": 161,
+  "en": "Disable all extensions",
+  "ctx": "component-9383"
+ },
+ {
+  "i": 162,
+  "en": "none",
+  "ctx": "[c] component-9383"
+ },
+ {
+  "i": 163,
+  "en": "extra",
+  "ctx": "[c] component-9383"
+ },
+ {
+  "i": 164,
+  "en": "all",
+  "ctx": "[c] component-9383"
+ },
+ {
+  "i": 165,
+  "en": "Load from:",
+  "ctx": "component-9396"
+ },
+ {
+  "i": 166,
+  "en": "Extension index URL",
+  "ctx": "component-9396"
+ },
+ {
+  "i": 167,
+  "en": "Hide extensions with tags",
+  "ctx": "component-9396"
+ },
+ {
+  "i": 168,
+  "en": "ads",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 169,
+  "en": "localization",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 170,
+  "en": "installed",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 171,
+  "en": "Order",
+  "ctx": "component-9396"
+ },
+ {
+  "i": 172,
+  "en": "newest first",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 173,
+  "en": "oldest first",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 174,
+  "en": "a-z",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 175,
+  "en": "z-a",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 176,
+  "en": "internal order",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 177,
+  "en": "update time",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 178,
+  "en": "create time",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 179,
+  "en": "stars",
+  "ctx": "[c] component-9396"
+ },
+ {
+  "i": 180,
+  "en": "Search",
+  "ctx": "component-9396"
+ },
+ {
+  "i": 181,
+  "en": "URL for extension's git repository",
+  "ctx": "component-9411"
+ },
+ {
+  "i": 182,
+  "en": "Specific branch name",
+  "ctx": "component-9411"
+ },
+ {
+  "i": 183,
+  "en": "Local directory name",
+  "ctx": "component-9411"
+ },
+ {
+  "i": 184,
+  "en": "Install",
+  "ctx": "component-9411"
+ },
+ {
+  "i": 185,
+  "en": "Saved Configs",
+  "ctx": "component-9418"
+ },
+ {
+  "i": 186,
+  "en": "State to restore",
+  "ctx": "component-9418"
+ },
+ {
+  "i": 187,
+  "en": "extensions",
+  "ctx": "[c] component-9418"
+ },
+ {
+  "i": 188,
+  "en": "webui",
+  "ctx": "[c] component-9418"
+ },
+ {
+  "i": 189,
+  "en": "both",
+  "ctx": "[c] component-9418"
+ },
+ {
+  "i": 190,
+  "en": "Restore Selected Config",
+  "ctx": "component-9418"
+ },
+ {
+  "i": 191,
+  "en": "Save Current Config",
+  "ctx": "component-9418"
+ },
+ {
+  "i": 192,
+  "en": "Send image back to Replacer's input",
+  "ctx": "[t] tab_pnginfo"
+ },
+ {
+  "i": 193,
+  "en": "Primary model (A): refresh",
+  "ctx": "[t] tab_modelmerger"
+ },
+ {
+  "i": 194,
+  "en": "Secondary model (B): refresh",
+  "ctx": "[t] tab_modelmerger"
+ },
+ {
+  "i": 195,
+  "en": "Tertiary model (C): refresh",
+  "ctx": "[t] tab_modelmerger"
+ },
+ {
+  "i": 196,
+  "en": "Result = A",
+  "ctx": "[ht] tab_modelmerger"
+ },
+ {
+  "i": 197,
+  "en": "Result = A * (1 - M) + B * M",
+  "ctx": "[ht] tab_modelmerger"
+ },
+ {
+  "i": 198,
+  "en": "Result = A + (B - C) * M",
+  "ctx": "[ht] tab_modelmerger"
+ },
+ {
+  "i": 199,
+  "en": "Bake in VAE: refresh",
+  "ctx": "[t] tab_modelmerger"
+ },
+ {
+  "i": 200,
+  "en": "Regular expression; if weights's name matches it, the weights is not written to the resulting checkpoint. Use ^model_ema to discard EMA weights.",
+  "ctx": "[ht] tab_modelmerger"
+ },
+ {
+  "i": 201,
+  "en": "If the number of tokens is more than the number of vectors, some may be skipped.\nLeave the textbox empty to start with zeroed out vectors",
+  "ctx": "[ht] component-4899"
+ },
+ {
+  "i": 202,
+  "en": "Embedding: refresh",
+  "ctx": "[t] component-4926"
+ },
+ {
+  "i": 203,
+  "en": "Hypernetwork: refresh",
+  "ctx": "[t] component-4926"
+ },
+ {
+  "i": 204,
+  "en": "Prompt template: refresh",
+  "ctx": "[t] component-4926"
+ },
+ {
+  "i": 205,
+  "en": "description",
+  "ctx": "[t] tab_panorama-3dviewer"
+ },
+ {
+  "i": 206,
+  "en": "Preserve original width x height number of pixels, but follow generated mask's aspect ratio. In some cases can hide necessary context",
+  "ctx": "[ht] component-42"
+ },
+ {
+  "i": 207,
+  "en": "Mask dilation, px, relative to \"Max resolution on detection\"",
+  "ctx": "[ht] component-100"
+ },
+ {
+  "i": 208,
+  "en": "If one side of the image is smaller than that, it will be resized before detection. It doesn't have effect on inpainting. Reduces vram usage and mask generation time.",
+  "ctx": "[ht] component-100"
+ },
+ {
+  "i": 209,
+  "en": "Limit the canvas created by the button, using \"Max resolution on detection\" option",
+  "ctx": "[ht] component-184"
+ },
+ {
+  "i": 210,
+  "en": "1.0 is the resolution of original image's crop region, but not smaller then firstpass resolution. More then 1.0 - multiplying on this number each sides. It calculates before limiting resolution, so it still can't be bigger then you set above",
+  "ctx": "[ht] component-613"
+ },
+ {
+  "i": 211,
+  "en": "Extra mask dilation on hires fix step, px, relative to \"Max resolution on detection\"",
+  "ctx": "[ht] component-613"
+ },
+ {
+  "i": 212,
+  "en": "Get fps from video",
+  "ctx": "[t] component-690"
+ },
+ {
+  "i": 213,
+  "en": "Use checkbox to enable the extension; it will be enabled or disabled when you click apply button",
+  "ctx": "[t] component-9383"
+ },
+ {
+  "i": 214,
+  "en": "Use checkbox to mark the extension for update; it will be updated when you click apply button",
+  "ctx": "[t] component-9383"
+ },
+ {
+  "i": 215,
+  "en": "Saved Configs: refresh",
+  "ctx": "[t] component-9418"
+ },
+ {
+  "i": 216,
+  "en": "A directory on the same machine where the server is running.",
+  "ctx": "[p] extras_batch_directory_tab"
+ },
+ {
+  "i": 217,
+  "en": "Leave blank to save images to the default path.",
+  "ctx": "[p] extras_batch_directory_tab"
+ },
+ {
+  "i": 218,
+  "en": "1st and last digit must be 1. ex:'1, 2, 1'",
+  "ctx": "[p] component-4910"
+ },
+ {
+  "i": 219,
+  "en": "1st and last digit must be 0 and values should be between 0 and 1. ex:'0, 0.01, 0'",
+  "ctx": "[p] component-4910"
+ },
+ {
+  "i": 220,
+  "en": "Gradient clip value",
+  "ctx": "[p] component-4926"
+ },
+ {
+  "i": 221,
+  "en": "Path to directory with input images",
+  "ctx": "[p] component-4926"
+ },
+ {
+  "i": 222,
+  "en": "Path to directory where to write outputs",
+  "ctx": "[p] component-4926"
+ },
+ {
+  "i": 223,
+  "en": "enter username for submission",
+  "ctx": "[p] component-5825"
+ },
+ {
+  "i": 224,
+  "en": "enter any additional notes",
+  "ctx": "[p] component-5825"
+ },
+ {
+  "i": 225,
+  "en": "background",
+  "ctx": "[p] tab_Replacer"
+ },
+ {
+  "i": 226,
+  "en": "waterfall",
+  "ctx": "[p] tab_Replacer"
+ },
+ {
+  "i": 227,
+  "en": "cartoon, painting, illustration, (worst quality, low quality, normal quality:2)",
+  "ctx": "[p] tab_Replacer"
+ },
+ {
+  "i": 228,
+  "en": "Leave blank to save images to the default path: \"out\" subdirectory",
+  "ctx": "[p] replacer_batch_directory_tab"
+ },
+ {
+  "i": 229,
+  "en": "<lora:lcm-lora-sdv1-5:1>",
+  "ctx": "[p] component-636"
+ },
+ {
+  "i": 230,
+  "en": "leave empty to use the same prompt",
+  "ctx": "[p] component-636"
+ },
+ {
+  "i": 231,
+  "en": "A video on the same machine where the server is running.",
+  "ctx": "[p] component-674"
+ },
+ {
+  "i": 232,
+  "en": "Input images directory",
+  "ctx": "[p] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 233,
+  "en": "Search in wildcard names...",
+  "ctx": "[p] tab_sddp-wildcard-manager"
+ },
+ {
+  "i": 234,
+  "en": "Leave empty for default main branch",
+  "ctx": "[p] component-9411"
+ },
+ {
+  "i": 235,
+  "en": "Leave empty for auto",
+  "ctx": "[p] component-9411"
+ },
+ {
+  "i": 236,
+  "en": "Config Name",
+  "ctx": "[p] component-9418"
+ },
+ {
+  "i": 237,
+  "en": "disabled",
+  "ctx": "[c] component-4926"
+ },
+ {
+  "i": 238,
+  "en": "value",
+  "ctx": "[c] component-4926"
+ },
+ {
+  "i": 239,
+  "en": "norm",
+  "ctx": "[c] component-4926"
+ },
+ {
+  "i": 240,
+  "en": "turbo",
+  "ctx": "[c] Settings"
+ },
+ {
+  "i": 241,
+  "en": "default",
+  "ctx": "[c] Settings"
+ },
+ {
+  "i": 242,
+  "en": "long",
+  "ctx": "[c] Settings"
+ },
+ {
+  "i": 243,
+  "en": "quick",
+  "ctx": "[c] Settings"
+ },
+ {
+  "i": 244,
+  "en": "extensive",
+  "ctx": "[c] Settings"
+ },
+ {
+  "i": 245,
+  "en": "ludicrous",
+  "ctx": "[c] Settings"
+ },
+ {
+  "i": 246,
+  "en": "butterworth",
+  "ctx": "[c] Use FreeInit"
+ },
+ {
+  "i": 247,
+  "en": "ideal",
+  "ctx": "[c] Use FreeInit"
+ },
+ {
+  "i": 248,
+  "en": "Nothing selected",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 249,
+  "en": "path name",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 250,
+  "en": "date",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 251,
+  "en": "cfg scale",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 252,
+  "en": "steps",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 253,
+  "en": "seed",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 254,
+  "en": "sampler",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 255,
+  "en": "size",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 256,
+  "en": "model",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 257,
+  "en": "model hash",
+  "ctx": "[c] image_browser_tab_txt2img_image_browse"
+ },
+ {
+  "i": 258,
+  "en": "devilkkw",
+  "ctx": "[c] Collection actions"
+ },
+ {
+  "i": 259,
+  "en": "jumbo",
+  "ctx": "[c] Collection actions"
+ }
+]

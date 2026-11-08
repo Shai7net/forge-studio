@@ -1,0 +1,16 @@
+diff --git a/scripts/preprocessor_evaclip.py b/scripts/preprocessor_evaclip.py.disabled
+similarity index 97%
+rename from scripts/preprocessor_evaclip.py
+rename to scripts/preprocessor_evaclip.py.disabled
+index 3322f9f..9aa2297 100644
+--- a/scripts/preprocessor_evaclip.py
++++ b/scripts/preprocessor_evaclip.py.disabled
+@@ -10,7 +10,7 @@ from eva_clip.factory import create_model_and_transforms
+ from eva_clip.constants import OPENAI_DATASET_MEAN, OPENAI_DATASET_STD
+ 
+ # sd-webui-controlnet
+-from internal_controlnet.external_code import Preprocessor, PreprocessorParameter
++from lib_controlnet.external_code import Preprocessor, PreprocessorParameter
+ 
+ 
+ class EvaCLIPResult(NamedTuple):

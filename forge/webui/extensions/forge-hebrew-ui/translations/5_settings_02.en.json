@@ -1,0 +1,1042 @@
+[
+ {
+  "i": 0,
+  "en": "(in tokens - for texts shorter than specified, if they don't fit into 75 token limit, move them to the next 75 token chunk)",
+  "ctx": "settings_sd"
+ },
+ {
+  "i": 1,
+  "en": "Upcast cross attention layer to float32",
+  "ctx": "settings_sd"
+ },
+ {
+  "i": 2,
+  "en": "Random number generator source.",
+  "ctx": "settings_sd"
+ },
+ {
+  "i": 3,
+  "en": "(changes seeds drastically; use CPU to produce the same picture across different videocard vendors; use NV to produce same picture as on NVidia videocards)",
+  "ctx": "settings_sd"
+ },
+ {
+  "i": 4,
+  "en": "NV",
+  "ctx": "[c] settings_sd"
+ },
+ {
+  "i": 5,
+  "en": "(produce a tileable picture)",
+  "ctx": "settings_sd"
+ },
+ {
+  "i": 6,
+  "en": "Hires fix: which pass to enable refiner for",
+  "ctx": "settings_sd"
+ },
+ {
+  "i": 7,
+  "en": "first pass",
+  "ctx": "[c] settings_sd"
+ },
+ {
+  "i": 8,
+  "en": "second pass",
+  "ctx": "[c] settings_sd"
+ },
+ {
+  "i": 9,
+  "en": "both passes",
+  "ctx": "[c] settings_sd"
+ },
+ {
+  "i": 10,
+  "en": "Enable comments",
+  "ctx": "settings_sd"
+ },
+ {
+  "i": 11,
+  "en": "(Use # anywhere in the prompt to hide the text between # and the end of the line from the generation.)",
+  "ctx": "settings_sd"
+ },
+ {
+  "i": 12,
+  "en": "crop top coordinate",
+  "ctx": "settings_sdxl"
+ },
+ {
+  "i": 13,
+  "en": "crop left coordinate",
+  "ctx": "settings_sdxl"
+ },
+ {
+  "i": 14,
+  "en": "SDXL low aesthetic score",
+  "ctx": "settings_sdxl"
+ },
+ {
+  "i": 15,
+  "en": "(used for refiner model negative prompt)",
+  "ctx": "settings_sdxl"
+ },
+ {
+  "i": 16,
+  "en": "SDXL high aesthetic score",
+  "ctx": "settings_sdxl"
+ },
+ {
+  "i": 17,
+  "en": "(used for refiner model prompt)",
+  "ctx": "settings_sdxl"
+ },
+ {
+  "i": 18,
+  "en": "VAE Checkpoints to cache in RAM",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 19,
+  "en": "Selected VAE overrides per-model preferences",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 20,
+  "en": "(you can set per-model VAE either by editing user metadata for checkpoints, or by making the VAE have same name as checkpoint)",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 21,
+  "en": "Automatically convert VAE to bfloat16",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 22,
+  "en": "(triggers when a tensor with NaNs is produced in VAE; disabling the option in this case will result in a black square image; if enabled, overrides the option below)",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 23,
+  "en": "Automatically revert VAE to 32-bit floats",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 24,
+  "en": "(triggers when a tensor with NaNs is produced in VAE; disabling the option in this case will result in a black square image)",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 25,
+  "en": "VAE type for encode",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 26,
+  "en": "(method to encode image to latent (use in img2img, hires-fix or inpaint mask))",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 27,
+  "en": "TAESD",
+  "ctx": "[c] settings_vae"
+ },
+ {
+  "i": 28,
+  "en": "VAE type for decode",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 29,
+  "en": "(method to decode latent to image)",
+  "ctx": "settings_vae"
+ },
+ {
+  "i": 30,
+  "en": "Inpainting conditioning mask strength",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 31,
+  "en": "Noise multiplier for img2img",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 32,
+  "en": "Extra noise multiplier for img2img and hires fix",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 33,
+  "en": "(0 = disabled (default); should be lower than denoising strength)",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 34,
+  "en": "Apply color correction to img2img results to match original colors.",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 35,
+  "en": "With img2img, do exactly the amount of steps the slider specifies.",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 36,
+  "en": "(normally you'd do less with less denoising)",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 37,
+  "en": "With img2img, fill transparent parts of the input image with this color.",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 38,
+  "en": "Height of the image editor",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 39,
+  "en": "Sketch initial brush color",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 40,
+  "en": "(default brush color of img2img sketch)",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 41,
+  "en": "Inpaint mask brush color",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 42,
+  "en": "(brush color of inpaint mask)",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 43,
+  "en": "Inpaint sketch initial brush color",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 44,
+  "en": "(default brush color of img2img inpaint sketch)",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 45,
+  "en": "For inpainting, include the greyscale mask in results for web",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 46,
+  "en": "For inpainting, include masked composite in results for web",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 47,
+  "en": "Show the first N batch img2img results in UI",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 48,
+  "en": "(0: disable, -1: show all images. Too many images can cause lag)",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 49,
+  "en": "Overlay original for inpaint",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 50,
+  "en": "(when inpainting, overlay the original image over the areas that weren't inpainted.)",
+  "ctx": "settings_img2img"
+ },
+ {
+  "i": 51,
+  "en": "Show grid in gallery",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 52,
+  "en": "Do not show any images in gallery",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 53,
+  "en": "Full page image viewer: enable",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 54,
+  "en": "Full page image viewer: show images zoomed in by default",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 55,
+  "en": "Full page image viewer: navigate with gamepad",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 56,
+  "en": "Full page image viewer: gamepad repeat period",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 57,
+  "en": "(in milliseconds)",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 58,
+  "en": "Full page image viewer: control icon unfocused opacity",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 59,
+  "en": "(for mouse only)",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 60,
+  "en": "Full page image viewer: tool bar opacity",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 61,
+  "en": "Gallery height",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 62,
+  "en": "(can be any valid CSS value, for example 768px or 20em)",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 63,
+  "en": "What directory the [📂] button opens",
+  "ctx": "settings_ui_gallery"
+ },
+ {
+  "i": 64,
+  "en": "Output Root",
+  "ctx": "[c] settings_ui_gallery"
+ },
+ {
+  "i": 65,
+  "en": "Subdirectory",
+  "ctx": "[c] settings_ui_gallery"
+ },
+ {
+  "i": 66,
+  "en": "Subdirectory (even temp dir)",
+  "ctx": "[c] settings_ui_gallery"
+ },
+ {
+  "i": 67,
+  "en": "Infotext is what this software calls the text that contains generation parameters and can be used to generate the same picture again.\nIt is displayed in UI below the image. To use infotext, paste it into the prompt and click the ↙️ paste button.",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 68,
+  "en": "Write infotext to metadata of the generated image",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 69,
+  "en": "Create a text file with infotext next to every generated image",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 70,
+  "en": "Add model name to infotext",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 71,
+  "en": "Add model hash to infotext",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 72,
+  "en": "Add VAE name to infotext",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 73,
+  "en": "Add VAE hash to infotext",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 74,
+  "en": "Add user name to infotext when authenticated",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 75,
+  "en": "Add program version to infotext",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 76,
+  "en": "Disregard checkpoint information from pasted infotext",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 77,
+  "en": "(when reading generation parameters from text into UI)",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 78,
+  "en": "Disregard fields from pasted infotext",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 79,
+  "en": "Infer styles from prompts of pasted infotext",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 80,
+  "en": "(when reading generation parameters from text into UI))",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 81,
+  "en": "Ignore: keep prompt and styles dropdown as it is.",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 82,
+  "en": "Apply: remove style text from prompt, always replace styles dropdown value with found styles (even if none are found).",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 83,
+  "en": "Discard: remove style text from prompt, keep styles dropdown as it is.",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 84,
+  "en": "Apply if any: remove style text from prompt; if any styles are found in prompt, put them into styles dropdown, otherwise keep it as it is.",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 85,
+  "en": "Discard",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 86,
+  "en": "Apply if any",
+  "ctx": "settings_infotext"
+ },
+ {
+  "i": 87,
+  "en": "Show progressbar",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 88,
+  "en": "Show live previews of the created image",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 89,
+  "en": "Live preview file format",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 90,
+  "en": "jpeg",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 91,
+  "en": "png",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 92,
+  "en": "webp",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 93,
+  "en": "Show previews of all images generated in a batch as a grid",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 94,
+  "en": "Live preview display period",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 95,
+  "en": "(in sampling steps - show new live preview image every N sampling steps; -1 = only show after completion of batch)",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 96,
+  "en": "Live preview method",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 97,
+  "en": "(Approx NN: fast preview; TAESD = high-quality preview; Approx cheap = fastest but low-quality preview)",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 98,
+  "en": "Approx NN",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 99,
+  "en": "Approx cheap",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 100,
+  "en": "Allow Full live preview method with lowvram/medvram",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 101,
+  "en": "(If not, Approx NN will be used instead; Full live preview method is very detrimental to speed if lowvram/medvram optimizations are enabled)",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 102,
+  "en": "Live preview subject",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 103,
+  "en": "Combined",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 104,
+  "en": "Progressbar and preview update period",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 105,
+  "en": "Return image with chosen live preview method on interrupt",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 106,
+  "en": "(makes interrupts faster)",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 107,
+  "en": "Show Live preview in full page image viewer",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 108,
+  "en": "Precision for (attention:1.1) when editing the prompt with Ctrl+up/down",
+  "ctx": "settings_ui_prompt_editing"
+ },
+ {
+  "i": 109,
+  "en": "Precision for <extra networks:0.9> when editing the prompt with Ctrl+up/down",
+  "ctx": "settings_ui_prompt_editing"
+ },
+ {
+  "i": 110,
+  "en": "Word delimiters when editing the prompt with Ctrl+up/down",
+  "ctx": "settings_ui_prompt_editing"
+ },
+ {
+  "i": 111,
+  "en": "Ctrl+up/down whitespace delimiters",
+  "ctx": "settings_ui_prompt_editing"
+ },
+ {
+  "i": 112,
+  "en": "Tab",
+  "ctx": "[c] settings_ui_prompt_editing"
+ },
+ {
+  "i": 113,
+  "en": "Carriage Return",
+  "ctx": "[c] settings_ui_prompt_editing"
+ },
+ {
+  "i": 114,
+  "en": "Line Feed",
+  "ctx": "[c] settings_ui_prompt_editing"
+ },
+ {
+  "i": 115,
+  "en": "Alt+left/right moves prompt elements",
+  "ctx": "settings_ui_prompt_editing"
+ },
+ {
+  "i": 116,
+  "en": "Disable prompt token counters",
+  "ctx": "settings_ui_prompt_editing"
+ },
+ {
+  "i": 117,
+  "en": "Count tokens of enabled styles",
+  "ctx": "settings_ui_prompt_editing"
+ },
+ {
+  "i": 118,
+  "en": "(When calculating how many tokens the prompt has, also consider tokens added by enabled styles.)",
+  "ctx": "settings_ui_prompt_editing"
+ },
+ {
+  "i": 119,
+  "en": "This page allows you to add some settings to the main interface of txt2img and img2img tabs.",
+  "ctx": "settings_settings_in_ui"
+ },
+ {
+  "i": 120,
+  "en": "info",
+  "ctx": "settings_settings_in_ui"
+ },
+ {
+  "i": 121,
+  "en": "Settings for txt2img",
+  "ctx": "settings_settings_in_ui"
+ },
+ {
+  "i": 122,
+  "en": "(setting entries that also appear in txt2img interfaces)",
+  "ctx": "settings_settings_in_ui"
+ },
+ {
+  "i": 123,
+  "en": "Settings for img2img",
+  "ctx": "settings_settings_in_ui"
+ },
+ {
+  "i": 124,
+  "en": "(setting entries that also appear in img2img interfaces)",
+  "ctx": "settings_settings_in_ui"
+ },
+ {
+  "i": 125,
+  "en": "Number of columns for added settings",
+  "ctx": "settings_settings_in_ui"
+ },
+ {
+  "i": 126,
+  "en": "(displayed amount will depend on the actual browser window width)",
+  "ctx": "settings_settings_in_ui"
+ },
+ {
+  "i": 127,
+  "en": "Place added settings into an accordion",
+  "ctx": "settings_settings_in_ui"
+ },
+ {
+  "i": 128,
+  "en": "Compact prompt layout",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 129,
+  "en": "(puts prompt and negative prompt inside the Generate tab, leaving more vertical space for the image on the right)",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 130,
+  "en": "Use dropdown for sampler selection instead of radio group",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 131,
+  "en": "Show Width/Height and Batch sliders in same row",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 132,
+  "en": "Checkpoint dropdown: use filenames without paths",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 133,
+  "en": "Hires fix: show hires checkpoint and sampler selection",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 134,
+  "en": "Hires fix: show hires prompt and negative prompt",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 135,
+  "en": "Settings in txt2img hidden under Accordion",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 136,
+  "en": "Settings in img2img hidden under Accordion",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 137,
+  "en": "Don't Interrupt in the middle",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 138,
+  "en": "(when using Interrupt button, if generating more than one image, stop after the generation of an image has finished, instead of immediately)",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 139,
+  "en": "Localization",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 140,
+  "en": "Quicksettings list",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 141,
+  "en": "(setting entries that appear at the top of page rather than in settings tab)",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 142,
+  "en": "UI tab order",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 143,
+  "en": "Hidden UI tabs",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 144,
+  "en": "UI item order for txt2img/img2img tabs",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 145,
+  "en": "(selected items appear first)",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 146,
+  "en": "Gradio theme",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 147,
+  "en": "(you can also manually enter any of themes from the",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 148,
+  "en": "gallery",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 149,
+  "en": "Cache gradio themes locally",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 150,
+  "en": "(disable to update the selected Gradio theme)",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 151,
+  "en": "Show generation progress in window title.",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 152,
+  "en": "Send seed when sending prompt or image to other interface",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 153,
+  "en": "Send size when sending prompt or image to another interface",
+  "ctx": "settings_ui"
+ },
+ {
+  "i": 154,
+  "en": "Forbid URLs to local resources",
+  "ctx": "settings_API"
+ },
+ {
+  "i": 155,
+  "en": "User agent for requests",
+  "ctx": "settings_API"
+ },
+ {
+  "i": 156,
+  "en": "Automatically open webui in browser on startup",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 157,
+  "en": "Local",
+  "ctx": "[c] settings_system"
+ },
+ {
+  "i": 158,
+  "en": "Remote",
+  "ctx": "[c] settings_system"
+ },
+ {
+  "i": 159,
+  "en": "Print prompts to console when generating with txt2img and img2img.",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 160,
+  "en": "Show warnings in console.",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 161,
+  "en": "Show gradio deprecation warnings in console.",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 162,
+  "en": "VRAM usage polls per second during generation.",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 163,
+  "en": "(0 = disable)",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 164,
+  "en": "Always print all generation info to standard output",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 165,
+  "en": "Add a second progress bar to the console that shows progress for an entire job.",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 166,
+  "en": "Show a progress bar in the console for tiled upscaling.",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 167,
+  "en": "Print extra hypernetwork information to console.",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 168,
+  "en": "Load models/files in hidden directories",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 169,
+  "en": "(directory is hidden if its name starts with \".\")",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 170,
+  "en": "(fixes very slow loading speed in some cases)",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 171,
+  "en": "Prevent Stability-AI's ldm/sgm modules from printing noise to console.",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 172,
+  "en": "Print stack traces before exiting the program with ctrl+c.",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 173,
+  "en": "CodeFormer weight",
+  "ctx": "settings_face-restoration"
+ },
+ {
+  "i": 174,
+  "en": "(0 = maximum effect; 1 = minimum effect)",
+  "ctx": "settings_face-restoration"
+ },
+ {
+  "i": 175,
+  "en": "Move face restoration model from VRAM into RAM after processing",
+  "ctx": "settings_face-restoration"
+ },
+ {
+  "i": 176,
+  "en": "Enable postprocessing operations in txt2img and img2img tabs",
+  "ctx": "settings_postprocessing"
+ },
+ {
+  "i": 177,
+  "en": "Postprocessing operation order",
+  "ctx": "settings_postprocessing"
+ },
+ {
+  "i": 178,
+  "en": "Maximum number of images in upscaling cache",
+  "ctx": "settings_postprocessing"
+ },
+ {
+  "i": 179,
+  "en": "Action for existing captions",
+  "ctx": "settings_postprocessing"
+ },
+ {
+  "i": 180,
+  "en": "(when generating captions using postprocessing; Ignore = use generated; Keep = use original; Prepend/Append = combine both)",
+  "ctx": "settings_postprocessing"
+ },
+ {
+  "i": 181,
+  "en": "Keep",
+  "ctx": "[c] settings_postprocessing"
+ },
+ {
+  "i": 182,
+  "en": "Prepend",
+  "ctx": "[c] settings_postprocessing"
+ },
+ {
+  "i": 183,
+  "en": "Append",
+  "ctx": "[c] settings_postprocessing"
+ },
+ {
+  "i": 184,
+  "en": "Tile size for ESRGAN upscalers.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 185,
+  "en": "(0 = no tiling)",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 186,
+  "en": "Tile overlap for ESRGAN upscalers.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 187,
+  "en": "(Low values = visible seam)",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 188,
+  "en": "Select which Real-ESRGAN models to show in the web UI.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 189,
+  "en": "R-ESRGAN General 4xV3",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 190,
+  "en": "R-ESRGAN General WDN 4xV3",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 191,
+  "en": "R-ESRGAN AnimeVideo",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 192,
+  "en": "R-ESRGAN 2x+",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 193,
+  "en": "Select which DAT models to show in the web UI.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 194,
+  "en": "Tile size for DAT upscalers.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 195,
+  "en": "Tile overlap for DAT upscalers.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 196,
+  "en": "Upscaler for img2img",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 197,
+  "en": "LDSR processing steps. Lower = faster",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 198,
+  "en": "Cache LDSR model in memory",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 199,
+  "en": "Tile size for SCUNET upscalers.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 200,
+  "en": "Tile overlap for SCUNET upscalers.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 201,
+  "en": "Tile size for all SwinIR.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 202,
+  "en": "Tile overlap, in pixels for SwinIR. Low values = visible seam.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 203,
+  "en": "Use torch.compile to accelerate SwinIR.",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 204,
+  "en": "(Takes longer on first run)",
+  "ctx": "settings_upscaling"
+ },
+ {
+  "i": 205,
+  "en": "Move VAE and CLIP to RAM when training if possible. Saves VRAM.",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 206,
+  "en": "Turn on pin_memory for DataLoader. Makes training slightly faster but can increase memory usage.",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 207,
+  "en": "Saves Optimizer state as separate *.optim file. Training of embedding or HN can be resumed with the matching optim file.",
+  "ctx": "settings_training"
+ }
+]

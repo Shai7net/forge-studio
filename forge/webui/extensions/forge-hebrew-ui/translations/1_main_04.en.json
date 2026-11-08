@@ -1,0 +1,922 @@
+[
+ {
+  "i": 0,
+  "en": "Original prompt",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 1,
+  "en": "Original negative prompt",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 2,
+  "en": "Override `Sampling Steps` to the same value as `Decode steps`?",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 3,
+  "en": "Decode steps",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 4,
+  "en": "Override `Denoising strength` to 1?",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 5,
+  "en": "Decode CFG scale",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 6,
+  "en": "Randomness",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 7,
+  "en": "Sigma adjustment for finding noise for image",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 8,
+  "en": "Loops",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 9,
+  "en": "Final denoising strength",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 10,
+  "en": "Denoising strength curve",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 11,
+  "en": "Append interrogated prompt at each iteration",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 12,
+  "en": "Pixels to expand",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 13,
+  "en": "Outpainting direction",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 14,
+  "en": "left",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 15,
+  "en": "right",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 16,
+  "en": "up",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 17,
+  "en": "down",
+  "ctx": "[c] component-3119"
+ },
+ {
+  "i": 18,
+  "en": "Fall-off exponent (lower=higher detail)",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 19,
+  "en": "Color variation",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 20,
+  "en": "Tile overlap",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 21,
+  "en": "Scale Factor",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 22,
+  "en": "Lanczos",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 23,
+  "en": "Nearest",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 24,
+  "en": "DAT x2",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 25,
+  "en": "DAT x3",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 26,
+  "en": "DAT x4",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 27,
+  "en": "LDSR",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 28,
+  "en": "R-ESRGAN 4x+",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 29,
+  "en": "R-ESRGAN 4x+ Anime6B",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 30,
+  "en": "ScuNET GAN",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 31,
+  "en": "ScuNET PSNR",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 32,
+  "en": "SwinIR 4x",
+  "ctx": "component-3119"
+ },
+ {
+  "i": 33,
+  "en": "fixed",
+  "ctx": "[c] component-5969"
+ },
+ {
+  "i": 34,
+  "en": "Denoising",
+  "ctx": "[c] component-121"
+ },
+ {
+  "i": 35,
+  "en": "VAE",
+  "ctx": "[c] tab_settings"
+ },
+ {
+  "i": 36,
+  "en": "SD1",
+  "ctx": "[c] settings_extra_networks"
+ },
+ {
+  "i": 37,
+  "en": "SD2",
+  "ctx": "[c] settings_extra_networks"
+ },
+ {
+  "i": 38,
+  "en": "SDXL",
+  "ctx": "[c] settings_extra_networks"
+ },
+ {
+  "i": 39,
+  "en": "Negative Guidance minimum sigma",
+  "ctx": "[c] settings_optimizations"
+ },
+ {
+  "i": 40,
+  "en": "Token merging ratio",
+  "ctx": "[c] settings_optimizations"
+ },
+ {
+  "i": 41,
+  "en": "DPM++ 2M Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 42,
+  "en": "DPM++ SDE Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 43,
+  "en": "DPM++ 2M SDE Exponential",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 44,
+  "en": "DPM++ 2M SDE Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 45,
+  "en": "Euler a",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 46,
+  "en": "Euler",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 47,
+  "en": "LMS",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 48,
+  "en": "Heun",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 49,
+  "en": "DPM2",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 50,
+  "en": "DPM2 a",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 51,
+  "en": "DPM++ 2S a",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 52,
+  "en": "DPM++ 2M",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 53,
+  "en": "DPM++ SDE",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 54,
+  "en": "DPM++ 2M SDE",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 55,
+  "en": "DPM++ 2M SDE Heun",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 56,
+  "en": "DPM++ 2M SDE Heun Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 57,
+  "en": "DPM++ 2M SDE Heun Exponential",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 58,
+  "en": "DPM++ 3M SDE",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 59,
+  "en": "DPM++ 3M SDE Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 60,
+  "en": "DPM++ 3M SDE Exponential",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 61,
+  "en": "DPM fast",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 62,
+  "en": "DPM adaptive",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 63,
+  "en": "LMS Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 64,
+  "en": "DPM2 Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 65,
+  "en": "DPM2 a Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 66,
+  "en": "DPM++ 2S a Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 67,
+  "en": "DDIM",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 68,
+  "en": "PLMS",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 69,
+  "en": "UniPC",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 70,
+  "en": "LCM",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 71,
+  "en": "DDPM",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 72,
+  "en": "DDPM Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 73,
+  "en": "Euler A Turbo",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 74,
+  "en": "DPM++ 2M Turbo",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 75,
+  "en": "DPM++ 2M SDE Turbo",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 76,
+  "en": "LCM Karras",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 77,
+  "en": "Euler SGMUniform",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 78,
+  "en": "Euler A SGMUniform",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 79,
+  "en": "DPM++ 2M SGMUniform",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 80,
+  "en": "DPM++ 2M SDE SGMUniform",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 81,
+  "en": "Always discard next-to-last sigma",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 82,
+  "en": "SGM noise multiplier",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 83,
+  "en": "Change checkpoint",
+  "ctx": ""
+ },
+ {
+  "i": 84,
+  "en": "Use via API",
+  "ctx": ""
+ },
+ {
+  "i": 85,
+  "en": "Stable Diffusion checkpoint: refresh",
+  "ctx": "[t] "
+ },
+ {
+  "i": 86,
+  "en": "SD VAE: refresh",
+  "ctx": "[t] "
+ },
+ {
+  "i": 87,
+  "en": "Early stopping parameter for CLIP model; 1 is stop at last layer as usual, 2 is stop at penultimate layer, etc.",
+  "ctx": "[ht] "
+ },
+ {
+  "i": 88,
+  "en": "Restore low quality faces using GFPGAN neural network",
+  "ctx": "[ht] "
+ },
+ {
+  "i": 89,
+  "en": "Read generation parameters from prompt or last generation if prompt is empty into user interface.",
+  "ctx": "[ht] tab_txt2img"
+ },
+ {
+  "i": 90,
+  "en": "Clear prompt",
+  "ctx": "[ht] tab_txt2img"
+ },
+ {
+  "i": 91,
+  "en": "Apply all selected styles to prompts.",
+  "ctx": "[t] tab_txt2img"
+ },
+ {
+  "i": 92,
+  "en": "Restore progress",
+  "ctx": "[ht] tab_txt2img"
+ },
+ {
+  "i": 93,
+  "en": "Edit styles",
+  "ctx": "[t] tab_txt2img"
+ },
+ {
+  "i": 94,
+  "en": "Styles: refresh",
+  "ctx": "[t] tab_txt2img"
+ },
+ {
+  "i": 95,
+  "en": "Apply all selected styles from the style selction dropdown in main UI to the prompt.",
+  "ctx": "[t] tab_txt2img"
+ },
+ {
+  "i": 96,
+  "en": "Copy main UI prompt to style.",
+  "ctx": "[t] tab_txt2img"
+ },
+ {
+  "i": 97,
+  "en": "Sort by path",
+  "ctx": "[t] tab_txt2img"
+ },
+ {
+  "i": 98,
+  "en": "Sort ascending",
+  "ctx": "[t] tab_txt2img"
+ },
+ {
+  "i": 99,
+  "en": "Enable Tree View",
+  "ctx": "[t] tab_txt2img"
+ },
+ {
+  "i": 100,
+  "en": "Refresh page",
+  "ctx": "[t] tab_txt2img"
+ },
+ {
+  "i": 101,
+  "en": "Which algorithm to use to produce the image",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 102,
+  "en": "How many times to improve the generated image iteratively; higher values take longer; very low values can produce bad results",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 103,
+  "en": "Use a two step process to partially create an image at smaller resolution, upscale, and then improve details in it without changing composition",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 104,
+  "en": "Number of sampling steps for upscaled picture. If 0, uses same as for original.",
+  "ctx": "[ht] Hires. fix"
+ },
+ {
+  "i": 105,
+  "en": "Determines how little respect the algorithm should have for image's content. At 0, nothing will change, and at 1 you'll get an unrelated image. With values below 1.0, processing will take less steps than the Sampling Steps slider specifies.",
+  "ctx": "[ht] Hires. fix"
+ },
+ {
+  "i": 106,
+  "en": "Adjusts the size of the image by multiplying the original width and height by the selected value. Ignored if either Resize width to or Resize height to are non-zero.",
+  "ctx": "[ht] Hires. fix"
+ },
+ {
+  "i": 107,
+  "en": "Resizes image to this width. If 0, width is inferred from either of two nearby sliders.",
+  "ctx": "[ht] Hires. fix"
+ },
+ {
+  "i": 108,
+  "en": "Resizes image to this height. If 0, height is inferred from either of two nearby sliders.",
+  "ctx": "[ht] Hires. fix"
+ },
+ {
+  "i": 109,
+  "en": "Hires checkpoint: refresh",
+  "ctx": "[t] Hires. fix"
+ },
+ {
+  "i": 110,
+  "en": "switch to another model in the middle of generation",
+  "ctx": "[t] Refiner"
+ },
+ {
+  "i": 111,
+  "en": "Checkpoint: refresh",
+  "ctx": "[t] Refiner"
+ },
+ {
+  "i": 112,
+  "en": "fraction of sampling steps when the switch to refiner model should happen; 1=never, 0.5=switch in the middle of generation",
+  "ctx": "[t] Refiner"
+ },
+ {
+  "i": 113,
+  "en": "The width of the output images, in pixels (must be a multiple of 64)",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 114,
+  "en": "The height of the output images, in pixels (must be a multiple of 64)",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 115,
+  "en": "Switch width/height",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 116,
+  "en": "How many batches of images to create (has no impact on generation performance or VRAM usage)",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 117,
+  "en": "How many image to create in a single batch (increases generation performance at cost of higher VRAM usage)",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 118,
+  "en": "Classifier Free Guidance Scale - how strongly the image should conform to prompt - lower values produce more creative results",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 119,
+  "en": "A value that determines the output of random number generator - if you create an image with same parameters and seed as another image, you'll get the same result",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 120,
+  "en": "Set seed to -1, which will cause a new random number to be used every time",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 121,
+  "en": "Reuse seed from last generation, mostly useful if it was randomized",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 122,
+  "en": "Seed of a different picture to be mixed into the generation.",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 123,
+  "en": "How strong of a variation to produce. At 0, there will be no effect. At 1, you will get the complete picture with variation seed (except for ancestral samplers, where you will just get something).",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 124,
+  "en": "Normally, changing the resolution will completely change an image, even when using the same seed. If you generated an image with a particular seed and then changed the resolution, put the original resolution here to get an image that more closely resemles the original",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 125,
+  "en": "specify a custom settings file and ignore settings displayed in the interface",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 126,
+  "en": "Toggle to lock the \"average\" width/height values in the UI\nIt is recommended to \"Lock\" when switching between ARs in \"Offset\" mode.\n\n🔒 = Locked\n🔓 = Unlocked",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 127,
+  "en": "For \"Offset mode\" (default):\n▯ = Portrait resolutions\n▭ = Landscape resolutions\n\nFor \"One Dimension\" mode:\n▭ = Modify Width\n▯ = Modify Height",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 128,
+  "en": "Square",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 129,
+  "en": "Television Photography",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 130,
+  "en": "Photography",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 131,
+  "en": "Widescreen Displays",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 132,
+  "en": "Widescreen Television",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 133,
+  "en": "Ultrawide Cinematography",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 134,
+  "en": "Show the Information panel including additional settings.",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 135,
+  "en": "Hide the Information panel.",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 136,
+  "en": "Toggle the Mode for updating resolution.\nResolution is always rounded to precision (default 64px).\n\n⮃ = \"Offset\" updates both Width/Height from the average current resolution\n⮅ = \"One Dimension\" changes only Width or Height",
+  "ctx": "[t] Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 137,
+  "en": "Disable dynamic prompts by unchecking this box.",
+  "ctx": "[ht] Dynamic Prompts"
+ },
+ {
+  "i": 138,
+  "en": "Generate all possible prompt combinations.",
+  "ctx": "[t] Dynamic Prompts"
+ },
+ {
+  "i": 139,
+  "en": "Instead of generating random prompts from a template, combinatorial generation produces every possible prompt from the given string.\nThe prompt 'I {love|hate} {New York|Chicago} in {June|July|August}' will produce 12 variants in total.\n\nThe value of the 'Seed' field is only used for the first image. To change this, look for 'Fixed seed' in the 'Advanced options' section.",
+  "ctx": "[ht] Dynamic Prompts"
+ },
+ {
+  "i": 140,
+  "en": "Limit the maximum number of prompts generated. 0 (default) will generate all images. Useful to prevent an unexpected combinatorial explosion.",
+  "ctx": "[ht] Dynamic Prompts"
+ },
+ {
+  "i": 141,
+  "en": "Re-run your combinatorial batch this many times with a different seed each time.",
+  "ctx": "[ht] Dynamic Prompts"
+ },
+ {
+  "i": 142,
+  "en": "Automatically update your prompt with interesting modifiers. (Runs slowly the first time)",
+  "ctx": "[t] Prompt Magic"
+ },
+ {
+  "i": 143,
+  "en": "Magic Prompt adds interesting modifiers to your prompt for a little bit of extra spice.\nThe first time you use it, the MagicPrompt model is downloaded so be patient.\nIf you're running low on VRAM, you might get a CUDA error.",
+  "ctx": "[ht] Prompt Magic"
+ },
+ {
+  "i": 144,
+  "en": "Controls the maximum length in tokens of the generated prompt.",
+  "ctx": "[ht] Prompt Magic"
+ },
+ {
+  "i": 145,
+  "en": "Adjusts the generated prompt. You will need to experiment with this setting.",
+  "ctx": "[ht] Prompt Magic"
+ },
+ {
+  "i": 146,
+  "en": "Note: Each model will download between 300mb and 1.4gb of data on first use.",
+  "ctx": "[t] Prompt Magic"
+ },
+ {
+  "i": 147,
+  "en": "Generate random prompts from lexica.art (your prompt is used as a search query).",
+  "ctx": "[t] Prompt Magic"
+ },
+ {
+  "i": 148,
+  "en": "Uses the lexica.art API to create random prompts.\nThe prompt in the main prompt box is used as a search string.\nLeaving the prompt box blank returns a list of completely randomly chosen prompts.\nTry it out, it can be quite fun.",
+  "ctx": "[ht] Prompt Magic"
+ },
+ {
+  "i": 149,
+  "en": "Add emphasis to a randomly selected keyword in the prompt.",
+  "ctx": "[t] Prompt Magic"
+ },
+ {
+  "i": 150,
+  "en": "Randomly selects a keyword from the prompt and adds emphasis to it. Try this with Fixed Seed enabled.",
+  "ctx": "[ht] Prompt Magic"
+ },
+ {
+  "i": 151,
+  "en": "Don't use prompt magic on negative prompts.",
+  "ctx": "[ht] Prompt Magic"
+ },
+ {
+  "i": 152,
+  "en": "Jinja2 templates are an expressive alternative to the standard syntax. See the Help section below for instructions.",
+  "ctx": "[ht] Jinja2 templates"
+ },
+ {
+  "i": 153,
+  "en": "If this is set, then random prompts are generated, even if the seed is the same.",
+  "ctx": "[t] Advanced options"
+ },
+ {
+  "i": 154,
+  "en": "Check this if you want to generate random prompts, even if your seed is fixed",
+  "ctx": "[ht] Advanced options"
+ },
+ {
+  "i": 155,
+  "en": "Use the same seed for all prompts in this batch",
+  "ctx": "[t] Advanced options"
+ },
+ {
+  "i": 156,
+  "en": "Select this if you want to use the same seed for every generated image.\nThis is useful if you want to test prompt variations while using the same seed.\nIf there are no wildcards then all the images will be identical.",
+  "ctx": "[ht] Advanced options"
+ },
+ {
+  "i": 157,
+  "en": "Write template into image metadata.",
+  "ctx": "[t] Advanced options"
+ },
+ {
+  "i": 158,
+  "en": "Write the prompt template into the image metadata",
+  "ctx": "[ht] Advanced options"
+ },
+ {
+  "i": 159,
+  "en": "Disable image generation. Useful if you only want to generate text prompts. (1 image will still be generated to keep Auto1111 happy.).",
+  "ctx": "[t] Advanced options"
+ },
+ {
+  "i": 160,
+  "en": "Be sure to check the 'Write prompts to file' checkbox if you don't want to lose the generated prompts. Note, one image is still generated.",
+  "ctx": "[ht] Advanced options"
+ },
+ {
+  "i": 161,
+  "en": "Write all generated prompts to a file",
+  "ctx": "[t] Dynamic Prompts"
+ },
+ {
+  "i": 162,
+  "en": "The generated file is a slugified version of the prompt and can be found in the same directory as the generated images.\nE.g. in ./outputs/txt2img-images/.",
+  "ctx": "[ht] Dynamic Prompts"
+ },
+ {
+  "i": 163,
+  "en": "The frames per second that the video will run at",
+  "ctx": "[ht] AnimateDiff"
+ },
+ {
+  "i": 164,
+  "en": "how many times to interpolate the source video. e.g source video fps of 12 and a value of x2 will yield a 24fps interpolated video",
+  "ctx": "[ht] AnimateDiff"
+ },
+ {
+  "i": 165,
+  "en": "Do not do anything special",
+  "ctx": "[ht] component-2004"
+ },
+ {
+  "i": 166,
+  "en": "If false, seed in Replacer tab is used",
+  "ctx": "[t] Replacer"
+ },
+ {
+  "i": 167,
+  "en": "If true, positive prompt from generation will be appended at the beginning of Replacer tab's positive prompt",
+  "ctx": "[t] Replacer"
+ },
+ {
+  "i": 168,
+  "en": "a random seed will be used on each frame of the animation",
+  "ctx": "[ht] component-2242"
+ },
+ {
+  "i": 169,
+  "en": "Send pose to /openpose_editor_index for edit.",
+  "ctx": "[t] component-2350"
+ },
+ {
+  "i": 170,
+  "en": "Close Preview",
+  "ctx": "[t] component-2350"
+ },
+ {
+  "i": 171,
+  "en": "Open new canvas",
+  "ctx": "[t] ControlNet Unit 0"
+ },
+ {
+  "i": 172,
+  "en": "Enable webcam",
+  "ctx": "[t] ControlNet Unit 0"
+ },
+ {
+  "i": 173,
+  "en": "Mirror webcam",
+  "ctx": "[t] ControlNet Unit 0"
+ },
+ {
+  "i": 174,
+  "en": "Send dimensions to stable diffusion",
+  "ctx": "[t] ControlNet Unit 0"
+ },
+ {
+  "i": 175,
+  "en": "Run preprocessor",
+  "ctx": "[t] ControlNet Unit 0"
+ },
+ {
+  "i": 176,
+  "en": "Uniform noise covers the entire frame. It somewhat flattens and sharpens the video over time, but may be good for cartoonish look. This is the old default setting.",
+  "ctx": "[ht] LatentModifier Integrated"
+ },
+ {
+  "i": 177,
+  "en": "Perlin noise is a more natural looking noise. It is heterogeneous and less sharp than uniform noise, this way it is more likely that new details will appear in a more coherent way. This is the new default setting.",
+  "ctx": "[ht] LatentModifier Integrated"
+ },
+ {
+  "i": 178,
+  "en": "Separate values for X axis using commas.",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 179,
+  "en": "Separate values for Y axis using commas.",
+  "ctx": "[ht] component-1732"
+ },
+ {
+  "i": 180,
+  "en": "Use different seeds for images along X axis.",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 181,
+  "en": "Use different seeds for images along Y axis.",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 182,
+  "en": "Use different seeds for images along Z axis.",
+  "ctx": "[t] component-1732"
+ },
+ {
+  "i": 183,
+  "en": "End generation immediately or after completing current batch",
+  "ctx": "[t] component-1732"
+ }
+]

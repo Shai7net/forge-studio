@@ -1,0 +1,7 @@
+.vs-status { padding: 6px 2px; }
+.vs-bar { height: 10px; border-radius: 5px; background: var(--block-border-color, #444); overflow: hidden; margin-bottom: 6px; }
+.vs-bar > div { height: 100%; transition: width 0.4s ease; }
+.vs-status-text { font-size: 0.95em; }
+.vs-error { white-space: pre-wrap; max-height: 260px; overflow: auto; font-size: 0.8em; margin-top: 6px; }
+/* Open dropdown lists drew see-through over the prompt box in this Forge theme. */
+#vs_main ul.options { background: var(--background-fill-primary, #1f2937) !important; z-index: 50; box-shadow: 0 4px 14px rgba(0,0,0,.35); }

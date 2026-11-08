@@ -1,0 +1,98 @@
+/* No global theme, typography, label, or color overrides. Favorites are the original buttons. */
+#tabs > .tab-nav > button.fnb-in-folder,
+#tabs > .tab-nav > button[data-fnb-destination="folder"] { display: none !important; }
+#tabs > .tab-nav > button[data-fnb-item] { max-width: min(300px, 85vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#tabs > .tab-nav > .fnb-controls { display: contents; }
+.fnb-folder-toggle, .fnb-folder-item { max-width: min(300px, 85vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fnb-folder-toggle[aria-expanded="true"], .fnb-current-folder { box-shadow: inset 0 -2px var(--border-color-primary); }
+.fnb-folder-contents[hidden] { display: none !important; }
+#forge-navigation-bookmarks-folder {
+    position: fixed; z-index: 1000; width: min(320px, calc(100vw - 16px));
+    max-height: min(400px, calc(100dvh - 32px)); overflow-y: auto;
+    background: var(--background-fill-primary); border: 1px solid var(--border-color-primary);
+    border-radius: var(--radius-md, 6px); padding: 4px;
+}
+#forge-navigation-bookmarks-folder[hidden] { display: none !important; }
+#forge-navigation-bookmarks-folder .fnb-folder-contents { display: flex; flex-direction: column; align-items: stretch; margin: 0; min-height: 32px; border: none; }
+#forge-navigation-bookmarks-folder .fnb-folder-item { width: 100%; max-width: 100%; text-align: start; }
+.fnb-empty { padding: 8px; font-size: 12px; opacity: .75; }
+.fnb-notice:empty { display: none; }
+#tabs > .fnb-notice {
+    position: fixed; bottom: 16px; inset-inline-end: 16px; z-index: 1100;
+    max-width: min(440px, calc(100vw - 32px)); padding: 8px 12px;
+    background: var(--background-fill-primary); border: 1px solid var(--border-color-primary); border-radius: var(--radius-md, 6px);
+}
+.fnb-notice, .fnb-status { font-size: 12px; padding: 4px 6px; min-height: 20px; }
+.fnb-error { font-weight: 600; }
+.fnb-dragging { opacity: .4; }
+.fnb-drop-before { box-shadow: -3px 0 var(--border-color-primary) !important; }
+.fnb-drop-zone { outline: 2px dashed var(--border-color-primary); outline-offset: -2px; }
+.fnb-controls button:focus-visible, .fnb-folder-contents button:focus-visible, #forge-navigation-bookmarks-manager :is(button, input, select):focus-visible {
+    outline: 2px solid var(--body-text-color); outline-offset: 2px;
+}
+#forge-navigation-bookmarks-manager {
+    color: var(--body-text-color); background: var(--background-fill-primary); font-family: var(--font);
+    width: min(780px, calc(100vw - 24px)); max-width: none;
+    max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow: hidden;
+    border: 1px solid var(--border-color-primary); border-radius: var(--radius-lg, 8px);
+    padding: 16px; margin: auto;
+}
+#forge-navigation-bookmarks-manager::backdrop { background: #0008; }
+#forge-navigation-bookmarks-manager[open] { display: flex; flex-direction: column; gap: 10px; }
+#forge-navigation-bookmarks-manager :is(.fnb-dialog-header, .fnb-dialog-footer, .fnb-create, .fnb-folder-edit, .fnb-group-head) { display: flex; align-items: center; gap: 8px; }
+#forge-navigation-bookmarks-manager .fnb-dialog-header { justify-content: space-between; flex-shrink: 0; }
+#forge-navigation-bookmarks-manager > .fnb-help, #forge-navigation-bookmarks-manager > .fnb-status { flex-shrink: 0; }
+#forge-navigation-bookmarks-manager h2 { font-size: 18px; margin: 0; font-weight: 600; }
+#forge-navigation-bookmarks-manager h3 { font-size: 14px; margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+#forge-navigation-bookmarks-manager p { margin: 0; }
+.fnb-help { font-size: 12px; opacity: .8; }
+#forge-navigation-bookmarks-manager .fnb-groups { overflow-y: auto; max-height: 62vh; padding: 4px; min-height: 0; flex: 1 1 auto; }
+#forge-navigation-bookmarks-manager .fnb-group { border: 1px solid var(--border-color-primary); border-radius: var(--radius-md, 6px); margin-top: 10px; padding: 10px; }
+#forge-navigation-bookmarks-manager .fnb-group-head { justify-content: space-between; margin-bottom: 6px; }
+#forge-navigation-bookmarks-manager .fnb-item-list { min-height: 38px; }
+#forge-navigation-bookmarks-manager .fnb-item-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+#forge-navigation-bookmarks-manager .fnb-item-title { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#forge-navigation-bookmarks-manager .fnb-item-row select { width: 140px; flex-shrink: 0; }
+.fnb-grip { opacity: .6; cursor: grab; }
+.fnb-arrows { display: flex; gap: 4px; flex-shrink: 0; }
+#forge-navigation-bookmarks-manager button {
+    font: inherit; color: var(--button-secondary-text-color); background: var(--button-secondary-background-fill);
+    border: 1px solid var(--button-secondary-border-color); border-radius: var(--button-large-radius, 6px); padding: 6px 10px; cursor: pointer;
+}
+#forge-navigation-bookmarks-manager button:hover { background: var(--button-secondary-background-fill-hover); }
+#forge-navigation-bookmarks-manager button:disabled { opacity: .35; cursor: default; }
+#forge-navigation-bookmarks-manager .fnb-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 12px; flex: 1; }
+#forge-navigation-bookmarks-manager input, #forge-navigation-bookmarks-manager select {
+    width: 100%; min-width: 0; box-sizing: border-box; font: inherit; color: var(--body-text-color);
+    background: var(--input-background-fill); border: 1px solid var(--border-color-primary); border-radius: var(--radius-md, 6px); padding: 7px;
+}
+#forge-navigation-bookmarks-manager .fnb-folder-edit { flex-wrap: wrap; margin: 8px 0; }
+.fnb-missing { display: block; font-size: 10px; opacity: .7; }
+#forge-navigation-bookmarks-manager .fnb-dialog-footer { justify-content: flex-end; border-top: 1px solid var(--border-color-primary); padding-top: 12px; flex-shrink: 0; }
+#forge-navigation-bookmarks-manager .fnb-save { font-weight: 600; min-width: 84px; }
+#forge-navigation-bookmarks-manager .fnb-reset { margin-inline-end: auto; }
+#forge-navigation-bookmarks-move {
+    color: var(--body-text-color); background: var(--background-fill-primary); font-family: var(--font);
+    width: min(360px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 32px); overflow-y: auto;
+    border: 1px solid var(--border-color-primary); border-radius: var(--radius-lg, 8px); padding: 16px; margin: auto;
+}
+#forge-navigation-bookmarks-move::backdrop { background: #0008; }
+#forge-navigation-bookmarks-move[open] { display: flex; flex-direction: column; gap: 12px; }
+#forge-navigation-bookmarks-move h2 { margin: 0; font-size: 16px; font-weight: 600; }
+#forge-navigation-bookmarks-move p { margin: 0; }
+#forge-navigation-bookmarks-move .fnb-move-title { overflow-wrap: anywhere; }
+#forge-navigation-bookmarks-move .fnb-move-destinations { display: flex; flex-direction: column; gap: 6px; }
+#forge-navigation-bookmarks-move button {
+    font: inherit; color: var(--button-secondary-text-color); background: var(--button-secondary-background-fill);
+    border: 1px solid var(--button-secondary-border-color); border-radius: var(--button-large-radius, 6px); padding: 8px 10px; cursor: pointer;
+}
+#forge-navigation-bookmarks-move button:hover { background: var(--button-secondary-background-fill-hover); }
+#forge-navigation-bookmarks-move button:disabled { opacity: .5; cursor: default; }
+#forge-navigation-bookmarks-move button:focus-visible { outline: 2px solid var(--body-text-color); outline-offset: 2px; }
+@media (max-width: 580px) {
+    #forge-navigation-bookmarks-manager { padding: 10px; }
+    #forge-navigation-bookmarks-manager .fnb-item-row { flex-wrap: wrap; }
+    #forge-navigation-bookmarks-manager .fnb-item-title { flex-basis: calc(100% - 30px); }
+    #forge-navigation-bookmarks-manager .fnb-item-row select { flex: 1; }
+    #forge-navigation-bookmarks-manager .fnb-create, #forge-navigation-bookmarks-manager .fnb-dialog-footer { flex-wrap: wrap; }
+}

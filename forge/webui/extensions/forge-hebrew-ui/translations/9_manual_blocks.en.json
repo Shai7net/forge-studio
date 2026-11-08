@@ -1,0 +1,4 @@
+[
+ {"i": 0, "text": "No interpolation will be used. Requires one model; A. Allows for format conversion and VAE baking.", "html": "", "ctx": "Checkpoint Merger description for 'No interpolation' (modules/ui_checkpoint_merger.py)", "tab": "tab_modelmerger"},
+ {"i": 1, "text": "The difference between the last two models will be added to the first. Requires three models; A, B and C. The result is calculated as A + (B - C) * M", "html": "", "ctx": "Checkpoint Merger description for 'Add difference'", "tab": "tab_modelmerger"}
+]

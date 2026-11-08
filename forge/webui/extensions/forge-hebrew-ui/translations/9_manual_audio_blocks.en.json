@@ -1,0 +1,12 @@
+[
+ {
+  "i": 0,
+  "text": "Tick a parameter to open its settings. Function is its own function of x, the loudness 0..1 of its band, like on the website: 1 + x^4 reacts mostly to peaks, x evenly; bass, mids, highs, t (frame) and sec work too. Quiet and Loud stretch it between the value at the quietest and at the loudest moment of the song (leave both empty for the function's own values). Smooth = frames to fall back after a hit, Min / Max = hard limits (empty = none). Switch (camera motions) turns the direction around: 10 every 10 frames, beats on the beats, beats 1.5 on beats at least 1.5 s apart, empty = never. The plot updates when you leave a changed field.",
+  "html": "<p style='margin:0.2em 0'>Tick a parameter to open its settings. <b>Function</b> is its own function of x, the loudness 0..1 of its band, like on the website: <code>1 + x^4</code> reacts mostly to peaks, <code>x</code> evenly; bass, mids, highs, t (frame) and sec work too. <b>Quiet</b> and <b>Loud</b> stretch it between the value at the quietest and at the loudest moment of the song (leave both empty for the function's own values). <b>Smooth</b> = frames to fall back after a hit, <b>Min / Max</b> = hard limits (empty = none). <b>Switch</b> (camera motions) turns the direction around: <code>10</code> every 10 frames, <code>beats</code> on the beats, <code>beats 1.5</code> on beats at least 1.5 s apart, empty = never. The plot updates when you leave a changed field.</p>"
+ },
+ {
+  "i": 1,
+  "text": "Pick a camera mode and press 🎬 Direct the camera: the mode splits the analysed song into parts and fills the camera rows above (which motions move, how fast with which band, and when they switch direction). Then press Apply to Deforum. Save keeps the ticked camera rows and the song-part pattern as a new mode. Learn reads the Motion tab, for example a video whose camera you liked, and saves its style as a mode for other songs.",
+  "html": "<p style='margin:0.2em 0'>Pick a camera mode and press <b>🎬 Direct the camera</b>: the mode splits the analysed song into parts and fills the camera rows above (which motions move, how fast with which band, and when they switch direction). Then press <b>Apply to Deforum</b>. <b>Save</b> keeps the ticked camera rows and the song-part pattern as a new mode. <b>Learn</b> reads the Motion tab, for example a video whose camera you liked, and saves its style as a mode for other songs.</p>"
+ }
+]

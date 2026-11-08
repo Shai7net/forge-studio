@@ -1,0 +1,12 @@
+[
+ {
+  "i": 0,
+  "en": "Tab Presets",
+  "ctx": "[t] Settings section of the forge-tab-presets extension (tab_presets_api.py)"
+ },
+ {
+  "i": 1,
+  "en": "Tabs without the presets bar (tab ids separated by commas, for example: extras, svd)",
+  "ctx": "Settings > Tab Presets (tab_presets_api.py)"
+ }
+]

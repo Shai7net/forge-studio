@@ -1,0 +1,60 @@
+/* Forge Hebrew UI */
+
+#hebrew-ui-toggle {
+    flex: 0 0 auto;
+    align-self: center;
+    margin-left: auto;
+    min-width: 0;
+    padding: 0.35em 1em;
+    border: 1px solid var(--button-secondary-border-color, var(--border-color-primary));
+    border-radius: 999px;
+    background: var(--button-secondary-background-fill, var(--background-fill-secondary));
+    color: var(--button-secondary-text-color, var(--body-text-color));
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+#hebrew-ui-toggle:hover {
+    background: var(--button-secondary-background-fill-hover, var(--background-fill-primary));
+}
+
+#hebrew-ui-toggle.hebrew-ui-floating {
+    position: fixed;
+    top: 8px;
+    right: 12px;
+    z-index: 1000;
+}
+
+.hebrew-ui-hidden {
+    display: none !important;
+}
+
+.hebrew-ui-block {
+    direction: rtl;
+    text-align: right;
+}
+
+/* code, file names and example prompts inside the Hebrew help keep reading left to right */
+.hebrew-ui-block code,
+.hebrew-ui-block pre,
+.hebrew-ui-block bdi {
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+.hebrew-ui-block pre {
+    text-align: left;
+}
+
+/* a translated placeholder reads right to left, while typed prompts keep their own direction */
+html.hebrew-ui-active textarea::placeholder,
+html.hebrew-ui-active input::placeholder {
+    unicode-bidi: plaintext;
+    text-align: start;
+}
+
+/* Hebrew text reads right to left and sits on the right; the layout itself does not move */
+html.hebrew-ui-active [dir="auto"] {
+    unicode-bidi: plaintext;
+}

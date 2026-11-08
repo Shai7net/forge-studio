@@ -1,0 +1,703 @@
+/*
+# Copyright (C) 2023 Deforum LLC
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+Contact the authors: https://deforum.github.io/
+*/
+
+#vid_to_interpolate_chosen_file .w-full, #pics_to_interpolate_chosen_file .w-full,  #vid_to_upscale_chosen_file .w-full, #controlnet_input_video_chosen_file .w-full, #controlnet_input_video_mask_chosen_file .w-full,#vid_to_depth_chosen_file .w-full {
+	display: flex !important;
+	align-items: flex-start !important;
+	justify-content: center !important;
+}
+
+#tab_deforum_interface #hybrid_msg_html {
+	color: Tomato !important;
+	margin-top: 5px !important;
+	text-align: center !important;
+	font-size: 20px !important;
+	font-weight: bold !important;
+}
+
+#tab_deforum_interface #leres_license_msg {
+	color: GoldenRod;
+}
+
+#image_buttons_deforum #img2img_tab,
+#image_buttons_deforum #inpaint_tab,
+#image_buttons_deforum #extras_tab,
+#save_zip_deforum, #save_deforum {
+	display: none !important;
+}
+
+#main_top_info_accord .label-wrap {
+	gap:2px;
+	padding: 0.5rem; 
+}
+#tab_deforum_interface #controlnet_not_found_html_msg, #tab_deforum_interface #depth_warp_msg_html {
+	color: Tomato;
+}
+
+#below_interpolate_butts_msg {
+	text-align: center !important;
+}
+
+#tab_deforum_interface #settings_path_msg {
+	margin: 0.6em;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+}
+
+#tab_deforum_interface .tabs.gradio-tabs.svelte-1g805jl .svelte-vt1mxs.gap {
+	gap:4px !important;
+}
+
+#tab_deforum_interface #main_top_info_accord {
+	padding: 1px; 
+}
+
+#add_soundtrack .svelte-1p9xokt {
+	padding: 2.25px;
+}
+
+#tab_deforum_interface .wrap.svelte-xwlu1w, #custom_setting_file {
+	height: 85px !important;
+	min-height: 85px !important;
+}
+
+#tab_deforum_interface .file-preview-holder {
+  overflow-y: auto;
+  max-height: 60px;
+}
+
+/* Audio Keyframes tab */
+#tab_deforum_interface .audio-kf-row {
+	margin-top: 2px !important;
+}
+
+#tab_deforum_interface .audio-kf-settings {
+	margin-left: 1.6em !important;
+	gap: 6px !important;
+}
+
+#audio_kf_parts table {
+	font-variant-numeric: tabular-nums;
+}
+
+/* Audio Keyframes: Listen and mark frames (javascript/audio-keyframes-player.js) */
+#audio_kf_timeline .akf-timeline {
+	--akf-strip: rgba(127, 127, 127, 0.08);
+	--akf-loudness: rgba(127, 127, 127, 0.55);
+	--akf-grid: rgba(127, 127, 127, 0.65);
+	--akf-playhead: #ef4444;
+	--akf-prompt: #a855f7;
+	--akf-part: #22c55e;
+	border: 1px solid var(--border-color-primary, rgba(127, 127, 127, 0.3));
+	border-radius: 8px;
+	padding: 8px 10px;
+}
+
+#audio_kf_timeline .akf-timeline.akf-armed {
+	border-color: var(--color-accent, #f97316);
+	box-shadow: 0 0 0 1px var(--color-accent, #f97316);
+}
+
+#audio_kf_timeline .akf-readout {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 18px;
+	font-variant-numeric: tabular-nums;
+}
+
+#audio_kf_timeline .akf-clock {
+	font-size: 1.6em;
+	font-weight: 600;
+	direction: ltr;
+	unicode-bidi: isolate;
+}
+
+#audio_kf_timeline .akf-frame {
+	font-size: 1.6em;
+	color: var(--color-accent, #f97316);
+}
+
+#audio_kf_timeline .akf-keys-on {
+	color: var(--color-accent, #f97316);
+}
+
+#audio_kf_timeline .akf-keys-on,
+#audio_kf_timeline .akf-keys-off,
+#audio_kf_timeline .akf-keys {
+	font-size: 0.85em;
+	opacity: 0.8;
+}
+
+#audio_kf_timeline .akf-prompt {
+	margin: 2px 0 6px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	opacity: 0.85;
+}
+
+#audio_kf_timeline .akf-prompt-text {
+	unicode-bidi: plaintext;
+}
+
+#audio_kf_timeline canvas {
+	display: block;
+	width: 100%;
+	height: 158px;
+	cursor: pointer;
+}
+
+#audio_kf_timeline .akf-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 6px;
+}
+
+#audio_kf_timeline .akf-controls button {
+	padding: 3px 10px;
+	border-radius: 6px;
+	border: 1px solid var(--button-secondary-border-color, rgba(127, 127, 127, 0.4));
+	background: var(--button-secondary-background-fill, transparent);
+	color: inherit;
+	cursor: pointer;
+}
+
+#audio_kf_timeline .akf-controls button.akf-mark {
+	font-weight: 700;
+}
+
+#audio_kf_timeline .akf-timeline:not(.akf-armed) .akf-keys-on,
+#audio_kf_timeline .akf-timeline.akf-armed .akf-keys-off,
+#audio_keyframes_tab .akf-he {
+	display: none;
+}
+
+html.hebrew-ui-active #audio_keyframes_tab .akf-he {
+	display: inline;
+}
+
+html.hebrew-ui-active #audio_keyframes_tab .akf-en {
+	display: none;
+}
+
+#audio_kf_camera_about .akf-about-moves {
+	margin-top: 2px;
+	font-size: 0.85em;
+	opacity: 0.75;
+}
+
+/* Motion tab direction tools: ⇄ − ↔N + (camera_directing_ui.py) */
+#tab_deforum_interface [id$="_dir_flip"],
+#tab_deforum_interface [id$="_dir_less"],
+#tab_deforum_interface [id$="_dir_more"],
+#tab_deforum_interface [id$="_dir_every"] {
+	font-weight: 700;
+}
+
+#tab_deforum_interface [id$="_dir_every"] {
+	min-width: 4.4em !important;
+	max-width: 4.4em !important;
+	white-space: nowrap;
+}
+/* DeforumationQT ON/OFF switch above the preview */
+#deforumation_switch_on,
+#deforumation_switch_off {
+    color: #fff !important;
+    font-weight: 700 !important;
+    border: none !important;
+}
+
+#deforumation_switch_on {
+    background: #16a34a !important;
+}
+
+#deforumation_switch_on:hover {
+    background: #15803d !important;
+}
+
+#deforumation_switch_off {
+    background: #dc2626 !important;
+}
+
+#deforumation_switch_off:hover {
+    background: #b91c1c !important;
+}
+
+/* the other half of the bar starts DeforumationQT itself */
+#deforumation_open {
+    background: #334155 !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    max-width: 50% !important;
+}
+
+#deforumation_open:hover {
+    background: #475569 !important;
+}
+
+#deforumation_switch_row > button {
+    flex: 1 1 0 !important;
+}
+
+#deforumation_message:empty {
+    display: none;
+}
+
+#deforumation_message {
+    padding: 2px 4px;
+    font-size: 0.85em;
+    text-align: center;
+}
+
+/* live control: Animation mode and the video init, while a render runs (scripts/deforum_helpers/live_control.py) */
+#live_control_row {
+    align-items: center !important;
+    gap: 6px !important;
+    margin-top: 2px;
+}
+
+#live_control_enabled {
+    flex: 0 0 auto !important;
+    min-width: 5.5em !important;
+}
+
+#live_control_mode {
+    flex: 1 1 auto !important;
+    border: none !important;
+    background: none !important;
+    padding: 0 !important;
+}
+
+#live_control_mode .wrap,
+#live_control_mode fieldset {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 2px !important;
+}
+
+#live_control_mode label {
+    padding: 2px 6px !important;
+    font-size: 0.85em !important;
+}
+
+#live_control_video {
+    flex: 1 1 10em !important;
+    min-width: 9em !important;
+}
+
+#live_control_video label > span {
+    font-size: 0.85em !important;
+}
+
+/* 🗺️ Map Key editor (javascript/map-key.js, scripts/deforum_helpers/map_key_ui.py) */
+#map_key_editor .mk-placeholder {
+	padding: 14px;
+	opacity: 0.8;
+}
+
+#map_key_editor.mk-loaded .mk-placeholder {
+	display: none;
+}
+
+#map_key_editor .mk-app {
+	--mk-bg: rgba(127, 127, 127, 0.07);
+	--mk-grid: rgba(127, 127, 127, 0.28);
+	--mk-plus: #3b82f6;
+	--mk-minus: #ef4444;
+	--mk-minus-bg: rgba(239, 68, 68, 0.13);
+	--mk-music: rgba(127, 127, 127, 0.5);
+	--mk-bass: #f97316;
+	--mk-beat: rgba(234, 179, 8, 0.85);
+	--mk-part: #22c55e;
+	--mk-prompt: #a855f7;
+	--mk-playhead: #ef4444;
+	--mk-select: rgba(59, 130, 246, 0.16);
+	--mk-path: #06b6d4;
+	--mk-driven: rgba(6, 182, 212, 0.12);
+	--mk-strength: #10b981;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px;
+	border: 1px solid var(--border-color-primary, rgba(127, 127, 127, 0.3));
+	border-radius: 8px;
+	font-size: 12px;
+	user-select: none;
+}
+
+#map_key_editor .mk-app.mk-armed {
+	border-color: var(--color-accent, #f97316);
+	box-shadow: 0 0 0 1px var(--color-accent, #f97316);
+}
+
+#map_key_editor .mk-app.mk-fullscreen {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	overflow: auto;
+	border-radius: 0;
+	background: var(--background-fill-primary, #fff);
+}
+
+#map_key_editor .mk-toolbar,
+#map_key_editor .mk-path-bar,
+#map_key_editor .mk-pe-line {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-items: center;
+}
+
+#map_key_editor .mk-group {
+	display: inline-flex;
+	gap: 3px;
+	align-items: center;
+	padding-right: 6px;
+	border-right: 1px solid var(--border-color-primary, rgba(127, 127, 127, 0.3));
+}
+
+#map_key_editor .mk-group:last-child {
+	border-right: none;
+}
+
+#map_key_editor .mk-app button {
+	padding: 2px 8px;
+	border: 1px solid var(--button-secondary-border-color, rgba(127, 127, 127, 0.4));
+	border-radius: 6px;
+	background: var(--button-secondary-background-fill, transparent);
+	color: inherit;
+	font-size: 12px;
+	line-height: 1.5;
+	cursor: pointer;
+}
+
+#map_key_editor .mk-app button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+#map_key_editor .mk-app button.mk-on {
+	border-color: var(--color-accent, #f97316);
+	background: var(--color-accent, #f97316);
+	color: #fff;
+}
+
+#map_key_editor .mk-app button.mk-minus {
+	font-weight: 700;
+}
+
+#map_key_editor .mk-app select,
+#map_key_editor .mk-app input[type="number"],
+#map_key_editor .mk-pe-text {
+	padding: 1px 3px;
+	border: 1px solid var(--border-color-primary, rgba(127, 127, 127, 0.35));
+	border-radius: 4px;
+	background: var(--input-background-fill, transparent);
+	color: inherit;
+	font-size: 11px;
+}
+
+#map_key_editor .mk-app input[type="number"] {
+	width: 4.4em;
+}
+
+#map_key_editor .mk-info {
+	min-height: 1.4em;
+	opacity: 0.85;
+	font-variant-numeric: tabular-nums;
+}
+
+#map_key_editor .mk-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+#map_key_editor .mk-row {
+	display: flex;
+	align-items: stretch;
+	gap: 6px;
+}
+
+#map_key_editor .mk-head {
+	display: flex;
+	flex: 0 0 200px;
+	flex-direction: column;
+	justify-content: center;
+	gap: 1px;
+	width: 200px;
+	overflow: hidden;
+	font-size: 11px;
+	line-height: 1.3;
+}
+
+#map_key_editor .mk-head-small {
+	opacity: 0.7;
+}
+
+#map_key_editor .mk-name,
+#map_key_editor .mk-dir {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+#map_key_editor .mk-name {
+	font-weight: 700;
+}
+
+#map_key_editor .mk-dir {
+	opacity: 0.75;
+}
+
+#map_key_editor .mk-controls,
+#map_key_editor .mk-music,
+#map_key_editor .mk-range,
+#map_key_editor .mk-path-bar label {
+	display: inline-flex;
+	gap: 3px;
+	align-items: center;
+	white-space: nowrap;
+}
+
+#map_key_editor .mk-range button {
+	padding: 0 6px;
+}
+
+#map_key_editor .mk-max {
+	min-width: 2.6em;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+#map_key_editor .mk-driven-tag {
+	display: none;
+	color: var(--mk-path);
+	font-weight: 400;
+}
+
+#map_key_editor .mk-row-lane.mk-driven .mk-driven-tag {
+	display: inline;
+}
+
+#map_key_editor .mk-canvas {
+	display: block;
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 100%;
+	border-radius: 4px;
+	cursor: crosshair;
+	touch-action: none;
+}
+
+#map_key_editor .mk-row-music .mk-canvas,
+#map_key_editor .mk-row-overview .mk-canvas {
+	cursor: pointer;
+}
+
+#map_key_editor .mk-row-prompts .mk-canvas {
+	cursor: ew-resize;
+}
+
+#map_key_editor .mk-row-lane.mk-driven .mk-canvas {
+	cursor: not-allowed;
+}
+
+#map_key_editor .mk-prompt-editor {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-left: 206px;
+	padding: 6px;
+	border: 1px solid var(--mk-prompt);
+	border-radius: 6px;
+}
+
+#map_key_editor .mk-prompt-editor[hidden] {
+	display: none;
+}
+
+#map_key_editor .mk-pe-text {
+	width: 100%;
+	padding: 4px;
+	font-size: 12px;
+	resize: vertical;
+	unicode-bidi: plaintext;
+	user-select: text;
+}
+
+#map_key_editor .mk-path {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding-top: 6px;
+	border-top: 1px dashed var(--border-color-primary, rgba(127, 127, 127, 0.35));
+}
+
+#map_key_editor .mk-strong {
+	font-weight: 700;
+}
+
+#map_key_editor .mk-path-views {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+#map_key_editor .mk-view {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+#map_key_editor .mk-view-map {
+	flex: 0 0 320px;
+}
+
+#map_key_editor .mk-view-3d {
+	flex: 1 1 320px;
+	min-width: 260px;
+}
+
+#map_key_editor .mk-view-title,
+#map_key_editor .mk-keys {
+	font-size: 11px;
+	opacity: 0.75;
+}
+
+#map_key_editor canvas.mk-map,
+#map_key_editor canvas.mk-3d {
+	display: block;
+	width: 100%;
+	height: 320px;
+	border-radius: 4px;
+	touch-action: none;
+}
+
+#map_key_editor canvas.mk-map {
+	cursor: crosshair;
+}
+
+#map_key_editor canvas.mk-3d {
+	cursor: grab;
+}
+
+#map_key_status .mk-status-lines {
+	line-height: 1.5;
+}
+
+#map_key_tab .akf-he {
+	display: none;
+}
+
+html.hebrew-ui-active #map_key_tab .akf-he {
+	display: inline;
+}
+
+html.hebrew-ui-active #map_key_tab .akf-en {
+	display: none;
+}
+
+/* Gradio's base style paints a white tick on a white box in the dark theme; the editor's boxes use the native look */
+#map_key_editor .mk-app input[type="checkbox"] {
+	width: 14px;
+	height: 14px;
+	margin: 0 2px 0 0;
+	appearance: auto;
+	-webkit-appearance: checkbox;
+	background-image: none;
+	accent-color: var(--color-accent, #f97316);
+	cursor: pointer;
+}
+
+#map_key_editor .mk-clock {
+	color: var(--color-accent, #f97316);
+	font-size: 12px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+#map_key_editor .mk-warp-note {
+	font-size: 11px;
+	opacity: 0.7;
+	cursor: help;
+}
+
+#live_control_status:empty {
+    display: none;
+}
+
+#live_control_status {
+    padding: 1px 6px;
+    font-size: 0.85em;
+    opacity: 0.85;
+    text-align: center;
+}
+
+#live_control_fade_frames,
+#live_control_fade_at {
+    flex: 0 0 4.5em !important;
+    min-width: 4.5em !important;
+}
+
+#live_control_fade_frames input,
+#live_control_fade_at input {
+    padding: 2px 4px !important;
+    text-align: center;
+}
+
+#live_control_fade_out,
+#live_control_fade_in {
+    flex: 0 0 2.2em !important;
+    min-width: 2.2em !important;
+    max-width: 2.2em !important;
+    padding: 2px 0 !important;
+    font-size: 1.1em !important;
+}
+
+#live_control_plan_box {
+    margin-top: 2px;
+}
+
+#live_control_plan_box > .label-wrap span {
+    font-size: 0.9em;
+}
+
+#live_control_plan label > span {
+    font-size: 0.8em !important;
+    opacity: 0.8;
+}
+
+#live_control_plan table {
+    font-size: 0.85em;
+}
+
+#live_control_plan_notes:empty {
+    display: none;
+}
+
+#live_control_plan_notes {
+    padding: 2px 4px;
+    font-size: 0.82em;
+    opacity: 0.85;
+}

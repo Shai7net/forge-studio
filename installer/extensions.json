@@ -1,0 +1,118 @@
+{
+  "about": "Third-party extensions, fetched by the installer at these commits (patches carry Forge Studio's changes).",
+  "extensions": [
+    {
+      "name": "--sd-webui-ar-plusplus",
+      "url": "https://github.com/altoiddealer/--sd-webui-ar-plusplus.git",
+      "commit": "8b900cd2748f95bce455db62ba0cb08093a3ca59"
+    },
+    {
+      "name": "StyleSelectorXL",
+      "url": "https://github.com/ahgsql/StyleSelectorXL.git",
+      "commit": "d538b0c47582e18e3e23decae0026e60632c8b7a"
+    },
+    {
+      "name": "Wonder3D",
+      "url": "https://github.com/xxlong0/Wonder3D",
+      "commit": "d894f827aa8c2917761a0dad3ab40df74c7a5b24"
+    },
+    {
+      "name": "asymmetric-tiling-sd-webui",
+      "url": "https://github.com/tjm35/asymmetric-tiling-sd-webui",
+      "commit": "b4470ddc388a94fe4c2384606fa9810eb7aa7529",
+      "patch": "patches/asymmetric-tiling-sd-webui.patch"
+    },
+    {
+      "name": "infinite-zoom-automatic1111-webui",
+      "url": "https://github.com/v8hid/infinite-zoom-automatic1111-webui.git",
+      "commit": "60adae2252db1a494ae1aaa22689545b51e8cb49",
+      "patch": "patches/infinite-zoom-automatic1111-webui.patch"
+    },
+    {
+      "name": "next-view",
+      "url": "https://github.com/NextDiffusion/next-view.git",
+      "commit": "287e21d38ed33c7b6bb050d154f8b9a0395ab45d"
+    },
+    {
+      "name": "sd-dynamic-prompts",
+      "url": "https://github.com/adieyal/sd-dynamic-prompts.git",
+      "commit": "de056ff8d80e4ad120e13a90cf200f3383f427c6"
+    },
+    {
+      "name": "sd-extension-system-info",
+      "url": "https://github.com/vladmandic/sd-extension-system-info.git",
+      "commit": "9942ea11aa7f23e8ad70ab81a4b411aae333081f"
+    },
+    {
+      "name": "sd-forge-animatediff",
+      "url": "https://github.com/continue-revolution/sd-forge-animatediff.git",
+      "commit": "b20f7519a1719e6b7a542cbf5d55e16c984f650b",
+      "patch": "patches/sd-forge-animatediff.patch"
+    },
+    {
+      "name": "sd-webui-ar",
+      "url": "https://github.com/alemelis/sd-webui-ar.git",
+      "commit": "3973c86a7a0f9722b5f61dd1a141ba6821f60245"
+    },
+    {
+      "name": "sd-webui-aspect-ratio-helper",
+      "url": "https://github.com/thomasasfk/sd-webui-aspect-ratio-helper.git",
+      "commit": "09096711a8e5bc43ab8d233bbd6ac4946c94c388"
+    },
+    {
+      "name": "sd-webui-cleaner",
+      "url": "https://github.com/novitalabs/sd-webui-cleaner.git",
+      "commit": "d89d173a011cfab2b27d1085c2b40f82e56f9cfe",
+      "patch": "patches/sd-webui-cleaner.patch"
+    },
+    {
+      "name": "sd-webui-controlnet-evaclip",
+      "url": "https://github.com/huchenlei/sd-webui-controlnet-evaclip",
+      "commit": "39966e79a5291b9fef8b42de69057dd3b19f4c23",
+      "patch": "patches/sd-webui-controlnet-evaclip.patch"
+    },
+    {
+      "name": "sd-webui-live-portrait",
+      "url": "https://github.com/dimitribarbot/sd-webui-live-portrait.git",
+      "commit": "2d990f53828e6de2f6fdbdc5766fe584494879d5",
+      "patch": "patches/sd-webui-live-portrait.patch"
+    },
+    {
+      "name": "sd-webui-panorama-viewer",
+      "url": "https://github.com/GeorgLegato/sd-webui-panorama-viewer",
+      "commit": "aa2a238136f68d8943b17378d8c01b6e00179e68"
+    },
+    {
+      "name": "sd-webui-reactor",
+      "url": "https://github.com/Gourieff/sd-webui-reactor-sfw.git",
+      "commit": "0788c549ded1dc94346caf7da98aead7d4c27da8",
+      "patch": "patches/sd-webui-reactor.patch"
+    },
+    {
+      "name": "sd-webui-replacer",
+      "url": "https://github.com/light-and-ray/sd-webui-replacer.git",
+      "commit": "aa46106a1ddf315d777f2b945bfe28a21a5cc5f4"
+    },
+    {
+      "name": "sd-webui-segment-anything",
+      "url": "https://github.com/continue-revolution/sd-webui-segment-anything.git",
+      "commit": "982138cfb505de61a3cbb257b2fa9d461d9b5493"
+    },
+    {
+      "name": "sd_web_ui_preset_utils",
+      "url": "https://github.com/Gerschel/sd_web_ui_preset_utils.git",
+      "commit": "e301734567f37ac53c6225aec3a5c9858b357e7e"
+    },
+    {
+      "name": "stable-diffusion-webui-images-browser",
+      "url": "https://github.com/AlUlkesh/stable-diffusion-webui-images-browser.git",
+      "commit": "88bfbe39979ddf8819b4d91ac6a14cc7538c993a"
+    },
+    {
+      "name": "stable-diffusion-webui-prompt-travel",
+      "url": "https://github.com/Kahsolt/stable-diffusion-webui-prompt-travel.git",
+      "commit": "9c532f3487c69d533ae6637bae331f92ebb7b69f",
+      "patch": "patches/stable-diffusion-webui-prompt-travel.patch"
+    }
+  ]
+}

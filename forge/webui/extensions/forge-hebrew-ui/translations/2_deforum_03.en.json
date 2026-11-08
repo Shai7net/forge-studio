@@ -1,0 +1,552 @@
+[
+ {
+  "i": 0,
+  "en": "3D operator to move canvas towards/away from view [speed set by FOV]",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 1,
+  "en": "Reset translation Z to static.",
+  "ctx": "[t] component-6282"
+ },
+ {
+  "i": 2,
+  "en": "3D operator to tilt canvas up/down in degrees per frame",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 3,
+  "en": "3D operator to pan canvas left/right in degrees per frame",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 4,
+  "en": "3D operator to roll canvas clockwise/anticlockwise",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 5,
+  "en": "enables 2D mode functions to simulate faux 3D movement",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 6,
+  "en": "the roll effect angle",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 7,
+  "en": "the tilt effect angle",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 8,
+  "en": "the pan effect angle",
+  "ctx": "[ht] component-6282"
+ },
+ {
+  "i": 9,
+  "en": "Selects the type of noise being added to each frame",
+  "ctx": "[ht] component-6336"
+ },
+ {
+  "i": 10,
+  "en": "The number of Perlin noise octaves, that is the count of P-noise iterations. Higher values will make the noise more soft and smoke-like, whereas lower values will make it look more organic and spotty. It is limited by 8 octaves as the resulting gain will run out of bounds.",
+  "ctx": "[ht] component-6336"
+ },
+ {
+  "i": 11,
+  "en": "How much of noise from each octave is added on each iteration. Higher values will make it more straighter and sharper, while lower values will make it rounder and smoother. It is limited by 1.0 as the resulting gain fill the frame completely with noise.",
+  "ctx": "[ht] component-6336"
+ },
+ {
+  "i": 12,
+  "en": "The width of the Perlin sample. Lower values will make larger noise regions. Think of it as inverse brush stroke width. The greater this setting, the smaller details it will affect.",
+  "ctx": "[ht] component-6336"
+ },
+ {
+  "i": 13,
+  "en": "The height of the Perlin sample. Lower values will make larger noise regions. Think of it as inverse brush stroke width. The greater this setting, the smaller details it will affect.",
+  "ctx": "[ht] component-6336"
+ },
+ {
+  "i": 14,
+  "en": "The color coherence will attempt to sample the overall pixel color information, and trend those values analyzed in the first frame to be applied to future frames.",
+  "ctx": "[ht] component-6362"
+ },
+ {
+  "i": 15,
+  "en": "applies the colormatch only before the video noising, resulting in graying the video over time, use it for backwards compatibility",
+  "ctx": "[ht] component-6362"
+ },
+ {
+  "i": 16,
+  "en": "Optional method for optical flow used to blend frames during cadence in 3D animation mode (if cadence more than 1).",
+  "ctx": "[ht] component-6362"
+ },
+ {
+  "i": 17,
+  "en": "adjusts the overall contrast per frame [default neutral at 1.0]",
+  "ctx": "[ht] component-6362"
+ },
+ {
+  "i": 18,
+  "en": "enables instructions to warp an image dynamically in 3D mode only.",
+  "ctx": "[ht] depth_warp_fov_tab"
+ },
+ {
+  "i": 19,
+  "en": "instructs the handling of pixels outside the field of view as they come into the scene.",
+  "ctx": "[ht] depth_warp_fov_tab"
+ },
+ {
+  "i": 20,
+  "en": "reflection will attempt to approximate the image and tile/repeat pixels",
+  "ctx": "[ht] depth_warp_fov_tab"
+ },
+ {
+  "i": 21,
+  "en": "zeros will not add any new pixel information",
+  "ctx": "[ht] depth_warp_fov_tab"
+ },
+ {
+  "i": 22,
+  "en": "adjusts the aspect ratio for the depth calculation (normally 1)",
+  "ctx": "[ht] depth_warp_fov_tab"
+ },
+ {
+  "i": 23,
+  "en": "adjusts the scale at which the canvas is moved in 3D by the translation_z value. [maximum range -180 to +180, with 0 being undefined. Values closer to 180 will make the image have less depth, while values closer to 0 will allow more depth]",
+  "ctx": "[ht] depth_warp_fov_tab"
+ },
+ {
+  "i": 24,
+  "en": "prompts for your animation in a JSON format. Use --neg words to add 'words' as negative prompt",
+  "ctx": "[ht] component-6445"
+ },
+ {
+  "i": 25,
+  "en": "positive prompt to be appended to *all* prompts",
+  "ctx": "[ht] component-6445"
+ },
+ {
+  "i": 26,
+  "en": "negative prompt to be appended to *all* prompts. DON'T use --neg here!",
+  "ctx": "[ht] component-6445"
+ },
+ {
+  "i": 27,
+  "en": "Diffuse the first frame based on an image, similar to img2img.",
+  "ctx": "[ht] component-6471"
+ },
+ {
+  "i": 28,
+  "en": "Set the strength to 0 automatically when no init image is used",
+  "ctx": "[ht] component-6471"
+ },
+ {
+  "i": 29,
+  "en": "Controls the strength of the diffusion on the init image. 0 = disabled",
+  "ctx": "[ht] component-6471"
+ },
+ {
+  "i": 30,
+  "en": "start extracting the input video only from this frame number",
+  "ctx": "[ht] component-6488"
+ },
+ {
+  "i": 31,
+  "en": "stop the extraction of the video at this frame number. -1 for no limits",
+  "ctx": "[ht] component-6488"
+ },
+ {
+  "i": 32,
+  "en": "during the run sequence, only frames specified by this value will be extracted, saved, and diffused upon. A value of 1 indicates that every frame is to be accounted for. Values of 2 will use every other frame for the sequence. Higher values will skip that number of frames respectively.",
+  "ctx": "[ht] component-6488"
+ },
+ {
+  "i": 33,
+  "en": "when enabled, will re-extract video frames each run. When using video_input mode, the run will be instructed to write video frames to the drive. If you’ve already populated the frames needed, uncheck this box to skip past redundant extraction, and immediately start the render. If you have not extracted frames, you must run at least once with this box checked to write the necessary frames.",
+  "ctx": "[ht] component-6488"
+ },
+ {
+  "i": 34,
+  "en": "video_input mode only, enables the extraction and use of a separate video file intended for use as a mask. White areas of the extracted video frames will not be affected by diffusion, while black areas will be fully effected. Lighter/darker areas are affected dynamically.",
+  "ctx": "[ht] component-6488"
+ },
+ {
+  "i": 35,
+  "en": "the directory in which your mask video is located.",
+  "ctx": "[ht] component-6488"
+ },
+ {
+  "i": 36,
+  "en": "Use a grayscale image as a mask on your init image. Whiter areas of the mask are areas that change more.",
+  "ctx": "[ht] component-6503"
+ },
+ {
+  "i": 37,
+  "en": "use the alpha channel of the init image as the mask",
+  "ctx": "[ht] component-6503"
+ },
+ {
+  "i": 38,
+  "en": "Inverts the colors of the mask",
+  "ctx": "[ht] component-6503"
+ },
+ {
+  "i": 39,
+  "en": "the path to your mask image",
+  "ctx": "[ht] component-6503"
+ },
+ {
+  "i": 40,
+  "en": "Blur edges of final overlay mask, if used. Minimum = 0 (no blur)",
+  "ctx": "[ht] component-6503"
+ },
+ {
+  "i": 41,
+  "en": "adjust the brightness of the mask. Should be a positive number, with 1.0 meaning no adjustment.",
+  "ctx": "[ht] component-6503"
+ },
+ {
+  "i": 42,
+  "en": "Engages hybrid compositing of video into animation in various ways with comp alpha as a master mix control.",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 43,
+  "en": "Initiates extraction of video frames from your video_init_path to the inputframes folder. You only need to do this once and then you can change it to False and re-render",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 44,
+  "en": "Use init image instead of video. Doesn't require generation of inputframes.",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 45,
+  "en": "Analyzes video frames for camera motion and applies movement to render.",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 46,
+  "en": "Selects the type of Optical Flow to use if Optical Flow is selected in Hybrid motion.",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 47,
+  "en": "If enabled, changes the behavior or hybrid_motion to captures motion by comparing the current video frame to the previous rendered image, instead of the previous video frame.",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 48,
+  "en": "You don't need a mask to composite video. But, Mask types can control the way that video is composited with the previous image each frame.",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 49,
+  "en": "Equalizes the mask for the composite before or after autocontrast operation (or both)",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 50,
+  "en": "Auto-contrasts the mask for the composite. If enabled, uses the low/high autocontrast cutoff schedules.",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 51,
+  "en": "Inverts the composite mask.",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 52,
+  "en": "If this option is selected, many extra frames will be output for the various processes into the hybridframes folder.",
+  "ctx": "[ht] Hybrid Settings"
+ },
+ {
+  "i": 53,
+  "en": "Schedule controls how much the composite video is mixed in, whether set to mask is None or using a mask. This is the master mix.",
+  "ctx": "[ht] Hybrid Schedules"
+ },
+ {
+  "i": 54,
+  "en": "Affects optical flow hybrid motion. 1 is normal flow. -1 is negative flow. 0.5 is half flow, etc...",
+  "ctx": "[ht] Hybrid Schedules"
+ },
+ {
+  "i": 55,
+  "en": "If using a blend mask, this controls the blend amount of the video and render for the composite mask.",
+  "ctx": "[ht] Hybrid Schedules"
+ },
+ {
+  "i": 56,
+  "en": "Controls the contrast of the composite mask. 0.5 if half, 1 is normal contrast, 2 is double, etc.",
+  "ctx": "[ht] Hybrid Schedules"
+ },
+ {
+  "i": 57,
+  "en": "If using autocontrast option, this is the high cutoff for the operation.",
+  "ctx": "[ht] Hybrid Schedules"
+ },
+ {
+  "i": 58,
+  "en": "If using autocontrast option, this is the low cutoff for the operation.",
+  "ctx": "[ht] Hybrid Schedules"
+ },
+ {
+  "i": 59,
+  "en": "This will generate masks of all the humans in a video. Created at generation of hybrid video. Not yet integrated for auto-masking, but it will create the masks, and you can then use the mask video manually.",
+  "ctx": "[ht] Humans Masking"
+ },
+ {
+  "i": 60,
+  "en": "when this box is checked, and FFMPEG mp4 is selected as the output format, an audio file will be multiplexed with the video.",
+  "ctx": "[ht] Video Output Settings"
+ },
+ {
+  "i": 61,
+  "en": "the path/ URL to an audio file to accompany the video",
+  "ctx": "[ht] Video Output Settings"
+ },
+ {
+  "i": 62,
+  "en": "when checked, do not output a video",
+  "ctx": "[ht] Video Output Settings"
+ },
+ {
+  "i": 63,
+  "en": "if enabled, raw imgs will be deleted after a successful video/ videos (upsacling, interpolation, gif) creation",
+  "ctx": "[ht] Video Output Settings"
+ },
+ {
+  "i": 64,
+  "en": "upscale the images of the next run once it's finished + make a video out of them",
+  "ctx": "[ht] Video Output Settings"
+ },
+ {
+  "i": 65,
+  "en": "model of the upscaler to use. 'realesr-animevideov3' is much faster but yields smoother, less detailed results. the other models only do x4",
+  "ctx": "[ht] Video Output Settings"
+ },
+ {
+  "i": 66,
+  "en": "how many times to upscale, actual options depend on the chosen upscale model",
+  "ctx": "[ht] Video Output Settings"
+ },
+ {
+  "i": 67,
+  "en": "delete or keep raw affected (interpolated/ upscaled depending on the UI section) png imgs",
+  "ctx": "[ht] Video Output Settings"
+ },
+ {
+  "i": 68,
+  "en": "choose the frame interpolation engine and version",
+  "ctx": "[ht] component-6901"
+ },
+ {
+  "i": 69,
+  "en": "how many times to slow-down the video. *Naturally affects output fps as well",
+  "ctx": "[ht] component-6901"
+ },
+ {
+  "i": 70,
+  "en": "uploaded video total frame count",
+  "ctx": "[ht] Interpolate existing Video/ Images"
+ },
+ {
+  "i": 71,
+  "en": "uploaded video FPS",
+  "ctx": "[ht] Interpolate existing Video/ Images"
+ },
+ {
+  "i": 72,
+  "en": "calculated output-interpolated video FPS",
+  "ctx": "[ht] Interpolate existing Video/ Images"
+ },
+ {
+  "i": 73,
+  "en": "uploaded video resolution",
+  "ctx": "[ht] component-6941"
+ },
+ {
+  "i": 74,
+  "en": "output video resolution",
+  "ctx": "[ht] component-6941"
+ },
+ {
+  "i": 75,
+  "en": "the location of images to create the video from, when use_manual_settings is checked",
+  "ctx": "[ht] component-6984"
+ },
+ {
+  "i": 76,
+  "en": "Path to settings file you want to load. Path can be relative to webui folder OR full - absolute",
+  "ctx": "[ht] tab_deforum_interface"
+ },
+ {
+  "i": 77,
+  "en": "D:\\Music\\song.mp3   (quotes are fine)",
+  "ctx": "[p] 1 · Music"
+ },
+ {
+  "i": 78,
+  "en": "translation_z = 0.5 + 3*bass^2\nstrength = 0.8 - 0.14*x^2",
+  "ctx": "[p] Advanced: custom formulas"
+ },
+ {
+  "i": 79,
+  "en": "words in here will be added to the start of all positive prompts",
+  "ctx": "[p] component-6445"
+ },
+ {
+  "i": 80,
+  "en": "words in here will be added to the end of all negative prompts",
+  "ctx": "[p] component-6445"
+ },
+ {
+  "i": 81,
+  "en": "Custom settings file",
+  "ctx": ""
+ },
+ {
+  "i": 82,
+  "en": "the path to a custom settings file",
+  "ctx": "[h] "
+ },
+ {
+  "i": 83,
+  "en": "Highres. fix",
+  "ctx": ""
+ },
+ {
+  "i": 84,
+  "en": "Enable extras",
+  "ctx": ""
+ },
+ {
+  "i": 85,
+  "en": "enable additional seed settings",
+  "ctx": "[h] "
+ },
+ {
+  "i": 86,
+  "en": "Subseed",
+  "ctx": ""
+ },
+ {
+  "i": 87,
+  "en": "Subseed strength",
+  "ctx": ""
+ },
+ {
+  "i": 88,
+  "en": "Filename format",
+  "ctx": ""
+ },
+ {
+  "i": 89,
+  "en": "specify the format of the filename for output images",
+  "ctx": "[h] "
+ },
+ {
+  "i": 90,
+  "en": "Border",
+  "ctx": ""
+ },
+ {
+  "i": 91,
+  "en": "controls handling method of pixels to be generated when the image is smaller than the frame.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 92,
+  "en": "Perspective flip fv",
+  "ctx": ""
+ },
+ {
+  "i": 93,
+  "en": "the 2D vanishing point of perspective (recommended range 30-160)",
+  "ctx": "[h] "
+ },
+ {
+  "i": 94,
+  "en": "HSV",
+  "ctx": "[c] "
+ },
+ {
+  "i": 95,
+  "en": "HSV is a good method for balancing presence of vibrant colors, but may produce unrealistic results - (ie.blue apples)",
+  "ctx": "[h] "
+ },
+ {
+  "i": 96,
+  "en": "LAB",
+  "ctx": "[c] "
+ },
+ {
+  "i": 97,
+  "en": "LAB is a more linear approach to mimic human perception of color space - a good default setting for most users.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 98,
+  "en": "RGB",
+  "ctx": "[c] "
+ },
+ {
+  "i": 99,
+  "en": "RGB is good for enforcing unbiased amounts of color in each red, green and blue channel - some images may yield colorized artifacts if sampling is too low.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 100,
+  "en": "Optical flow redo generation",
+  "ctx": ""
+ },
+ {
+  "i": 101,
+  "en": "This option takes twice as long because it generates twice in order to capture the optical flow from the previous image to the first generation, then warps the previous image and redoes the generation. Works in 2D/3D animation modes.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 102,
+  "en": "Redo",
+  "ctx": ""
+ },
+ {
+  "i": 103,
+  "en": "Diffusion Redo. This option renders N times before the final render. It is suggested to lower your steps if you up your redo. Seed is randomized during redo generations and restored afterwards.",
+  "ctx": "[h] "
+ },
+ {
+  "i": 104,
+  "en": "MiDaS weight",
+  "ctx": ""
+ },
+ {
+  "i": 105,
+  "en": "sets a midpoint at which a depthmap is to be drawn: range [-1 to +1]",
+  "ctx": "[h] "
+ },
+ {
+  "i": 106,
+  "en": "Sampling Mode",
+  "ctx": ""
+ },
+ {
+  "i": 107,
+  "en": "choose from Bicubic, Bilinear or Nearest modes. (Recommended: Bicubic)",
+  "ctx": "[h] "
+ },
+ {
+  "i": 108,
+  "en": "Save depth maps",
+  "ctx": ""
+ },
+ {
+  "i": 109,
+  "en": "will output a greyscale depth map image alongside the output images.",
+  "ctx": "[h] "
+ }
+]

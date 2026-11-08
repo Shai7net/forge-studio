@@ -1,0 +1,3 @@
+# Packages built from source during setup (CLIP, basicsr...) use an older setuptools: their setup.py imports
+# pkg_resources, which setuptools removed in version 81.
+setuptools<70

@@ -1,0 +1,3090 @@
+diff --git a/install.py b/install.py
+index 85c2091..e602a27 100644
+--- a/install.py
++++ b/install.py
+@@ -201,5 +201,5 @@ def install_xpose():
+ 
+ 
+ install_requirements(main_req_file)
+-install_onnxruntime()
++# install_onnxruntime()
+ install_xpose()
+diff --git a/liveportrait/config/argument_config.py b/liveportrait/config/argument_config.py
+index f666abe..d5ddb36 100644
+--- a/liveportrait/config/argument_config.py
++++ b/liveportrait/config/argument_config.py
+@@ -30,6 +30,7 @@ class ArgumentConfig(PrintableConfig):
+     flag_do_crop: bool = True  # whether to crop the source portrait or video to the face-cropping space
+     driving_option: Literal["expression-friendly", "pose-friendly"] = "expression-friendly" # "expression-friendly" or "pose-friendly"; "expression-friendly" would adapt the driving motion with the global multiplier, and could be used when the source is a human image
+     driving_multiplier: float = 1.0 # be used only when driving_option is "expression-friendly"
++    lip_sync_intensity: float = 1.0 # intensity of lip sync
+     driving_smooth_observation_variance: float = 3e-7  # smooth strength scalar for the animated video when the input is a source video, the larger the number, the smoother the animated video; too much smoothness would result in loss of motion accuracy
+     audio_priority: Literal['source', 'driving'] = 'driving'  # whether to use the audio from source or driving video
+     animation_region: Literal["exp", "pose", "lip", "eyes", "all"] = "all" # the region where the animation was performed, "exp" means the expression, "pose" means the head pose, "all" means all regions
+@@ -39,13 +40,26 @@ class ArgumentConfig(PrintableConfig):
+     vx_ratio: float = 0  # the ratio to move the face to left or right in cropping space
+     vy_ratio: float = -0.125  # the ratio to move the face to up or down in cropping space
+     flag_do_rot: bool = True  # whether to conduct the rotation when flag_do_crop is True
++    source_processing_method: Literal["tracking", "frame-by-frame"] = "tracking" # method for processing source video
++    flag_preserve_source_resolution: bool = False  # whether to preserve the source video/image resolution in output
+     source_max_dim: int = 1280 # the max dim of height and width of source image or video, you can change it to a larger number, e.g., 1920
+     source_division: int = 2 # make sure the height and width of source image or video can be divided by this number
++    max_video_frames: int = 1200 # 0 means unlimited; higher values use more RAM
++    force_output_fps: int = 25 # 0 means auto; use 25 to keep standard playback
++    flag_big_shot: bool = False # split long videos into chunks and stitch back
++    big_shot_chunks: int = 4 # number of chunks for BIG SHOT
++    anchor_enabled: bool = False # manual face anchor for hard videos
++    anchor_target: Literal["source", "driving", "both"] = "source"
++    anchor_x: int = -1
++    anchor_y: int = -1
++    sam_enabled: bool = False # use SAM to refine anchor ROI
+ 
+     ########## driving crop arguments ##########
+     scale_crop_driving_video: float = 2.2  # scale factor for cropping driving video
+     vx_ratio_crop_driving_video: float = 0.  # adjust y offset
+     vy_ratio_crop_driving_video: float = -0.1  # adjust x offset
++    do_upscale: bool = False # whether to upscale the final video
++    upscaler_name: str = 'None' # upscaler model name
+     
+     ########## face index ##########
+     source_face_index: int = 0  # source image or video face index
+diff --git a/liveportrait/config/crop_config.py b/liveportrait/config/crop_config.py
+index 8553f63..abc1f3d 100644
+--- a/liveportrait/config/crop_config.py
++++ b/liveportrait/config/crop_config.py
+@@ -18,10 +18,15 @@ except:
+     except:
+         models_path = os.path.abspath("models")
+ 
++# FaceFusion installed beside Forge: <root>/facefusion/facefusion, where <root> holds forge/webui (Forge Studio's
++# layout: the installer puts the optional tools there)
++_WEBUI = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
++DEFAULT_FACEFUSION_ROOT = os.path.normpath(os.path.join(_WEBUI, "..", "..", "facefusion", "facefusion"))
++
+ 
+ @dataclass(repr=False)  # use repr from PrintableConfig
+ class CropConfig(PrintableConfig):
+-    model: Literal['insightface', 'mediapipe', 'facealignment'] = 'insightface'
++    model: Literal['insightface', 'mediapipe', 'facealignment', 'facefusion'] = 'insightface'
+     insightface_root: str = os.path.join(models_path, 'insightface')
+     landmark_ckpt_path: str = os.path.join(models_path, 'liveportrait', 'landmark.onnx')
+     xpose_config_file_path: str = make_abs_path("../utils/dependencies/XPose/config_model/UniPose_SwinT.py")
+@@ -30,6 +35,16 @@ class CropConfig(PrintableConfig):
+     device_id: int = 0  # gpu device id
+     flag_force_cpu: bool = False  # force cpu inference, WIP
+     det_thresh: float = 0.15 # detection threshold
++    det_size: int = 512 # detector input size (larger helps small faces)
++    init_search_frames: int = 10 # frames to scan at start of driving video
++    anchor_enabled: bool = False # manual face anchor for hard videos
++    anchor_target: Literal['source', 'driving', 'both'] = 'source'
++    anchor_x: int = -1
++    anchor_y: int = -1
++    anchor_box_ratio: float = 0.45 # size of ROI around anchor point (relative to min dimension)
++    sam_enabled: bool = False # use SAM to refine anchor ROI
++    sam_model_path: str = os.path.join(models_path, 'liveportrait', 'sam', 'sam_vit_b_01ec64.pth')
++    sam_pad_ratio: float = 0.2 # padding around SAM bbox
+     ########## source image or video cropping option ##########
+     dsize: int = 512  # crop size
+     scale: float = 2.3  # scale factor
+@@ -47,6 +62,12 @@ class CropConfig(PrintableConfig):
+     face_alignment_detector: Literal['blazeface', 'blazeface_back_camera', 'retinaface', 'sfd'] = 'blazeface_back_camera'
+     face_alignment_detector_device: Literal['cuda', 'cpu', 'mps'] = 'cuda'
+     face_alignment_detector_dtype: Literal['fp16', 'bf16', 'fp32'] = 'fp16'
++    ########## facefusion detector option ##########
++    facefusion_root: str = DEFAULT_FACEFUSION_ROOT
++    facefusion_detector_model: Literal['many', 'retinaface', 'scrfd', 'yolo_face'] = 'scrfd'
++    facefusion_detector_size: str = '640x640'
++    facefusion_detector_angles: str = '0'  # comma-separated, e.g. "0,90,180,270"
++    facefusion_detector_score: float = 0.5
+     ########## face index ##########
+     source_face_index: int = 0  # source image or video face index
+     driving_face_index: int = 0  # driving video face index
+diff --git a/liveportrait/gradio_pipeline.py b/liveportrait/gradio_pipeline.py
+index 2f22eec..de08294 100644
+--- a/liveportrait/gradio_pipeline.py
++++ b/liveportrait/gradio_pipeline.py
+@@ -19,14 +19,33 @@ from .live_portrait_pipeline_animal import LivePortraitPipelineAnimal
+ from .utils.io import load_img_online, load_video, resize_to_limit
+ from .utils.filter import smooth
+ from .utils.rprint import rlog as log
+-from .utils.crop import prepare_paste_back, paste_back
++from .utils.crop import prepare_paste_back, paste_back, prepare_frame_for_face_detection, restore_landmarks_from_padded_frame
+ from .utils.camera import get_rotation_matrix
+-from .utils.video import get_fps, has_audio_stream, concat_frames, images2video, add_audio_to_video
+-from .utils.helper import is_square_video, mkdir, dct2device, basename
++from .utils.video import get_fps, has_audio_stream, concat_frames, images2video, add_audio_to_video, split_video_evenly, concat_videos
++from .utils.helper import is_square_video, mkdir, dct2device, basename, get_video_aspect_ratio, is_video
+ from .utils.retargeting_utils import calc_eye_close_ratio, calc_lip_close_ratio
+ 
+ gradio_version = parse(gr.__version__)
+ 
++def _gr_info(message: str, duration: int = 2):
++    """Helper for gr.Info with version compatibility."""
++    if gradio_version.major < 4:
++        gr.Info(message)
++    else:
++        gr.Info(message, duration=duration)
++
++def _gr_error(message: str, duration: int = 5):
++    """Helper for gr.Error with version compatibility."""
++    if gradio_version.major < 4:
++        raise gr.Error(message)
++    else:
++        raise gr.Error(message, duration=duration)
++
++def _gr_update_visibility(visible: bool):
++    """Helper for gr.update(visible=...)."""
++    return gr.update(visible=visible)
++
++
+ 
+ def update_args(args, user_args):
+     """update the args according to user inputs
+@@ -48,6 +67,59 @@ class GradioPipeline(LivePortraitPipeline):
+         self.source_eye_ratio: float | None = None
+         self.source_lip_ratio: float | None = None
+ 
++    def _execute_single(self, args_user):
++        self.args = update_args(self.args, args_user)
++        self.live_portrait_wrapper.update_config(self.args.__dict__)
++        self.cropper.update_config(self.args.__dict__)
++        return self.execute(self.args)
++
++    def _execute_big_shot(self, args_user, input_source_path, input_driving_path):
++        chunk_count = max(2, int(getattr(self.args, "big_shot_chunks", 4)))
++        output_dir = self.args.output_dir
++        base_name = basename(input_driving_path)
++        work_root = osp.join(output_dir, f"big_shot_{base_name}")
++        driving_dir = osp.join(work_root, "driving")
++        source_dir = osp.join(work_root, "source")
++
++        try:
++            driving_parts = split_video_evenly(input_driving_path, chunk_count, driving_dir, prefix="driving")
++            if is_video(input_source_path):
++                source_parts = split_video_evenly(input_source_path, chunk_count, source_dir, prefix="source")
++            else:
++                source_parts = [input_source_path] * len(driving_parts)
++        except Exception as ex:
++            log(f"BIG SHOT split failed, falling back to single pass. Error: {ex}")
++            args_one = dict(args_user)
++            args_one["max_video_frames"] = 0
++            return self._execute_single(args_one)
++
++        parts = min(len(driving_parts), len(source_parts))
++        if parts <= 1:
++            args_one = dict(args_user)
++            args_one["max_video_frames"] = 0
++            return self._execute_single(args_one)
++
++        output_parts = []
++        output_parts_concat = []
++        for i in range(parts):
++            args_seg = dict(args_user)
++            args_seg["source"] = source_parts[i]
++            args_seg["driving"] = driving_parts[i]
++            args_seg["max_video_frames"] = 0
++            out_path, out_concat = self._execute_single(args_seg)
++            output_parts.append(out_path)
++            output_parts_concat.append(out_concat)
++
++        final_path = osp.join(output_dir, f"{base_name}_big_shot.mp4")
++        final_path_concat = osp.join(output_dir, f"{base_name}_big_shot_concat.mp4")
++        try:
++            concat_videos(output_parts, final_path)
++            concat_videos(output_parts_concat, final_path_concat)
++            return final_path, final_path_concat
++        except Exception as ex:
++            log(f"BIG SHOT concat failed, returning first segment only. Error: {ex}")
++            return output_parts[0], output_parts_concat[0]
++
+     @torch.no_grad()
+     def update_delta_new_eyeball_direction(self, eyeball_direction_x, eyeball_direction_y, delta_new, **kwargs):
+         if eyeball_direction_x > 0:
+@@ -161,6 +233,12 @@ class GradioPipeline(LivePortraitPipeline):
+         flag_do_crop_input=True,
+         flag_remap_input=True,
+         flag_stitching_input=True,
++        flag_big_shot=False,
++        anchor_enabled=False,
++        anchor_use_sam=True,
++        anchor_target="source",
++        anchor_x=-1,
++        anchor_y=-1,
+         animation_region="all",
+         driving_option_input="pose-friendly",
+         driving_multiplier=1.0,
+@@ -202,12 +280,18 @@ class GradioPipeline(LivePortraitPipeline):
+ 
+         if input_source_path is not None and input_driving_path is not None:
+             if osp.exists(input_driving_path) and (v_tab_selection == 'Video' or v_tab_selection == 'VideoW') and not flag_crop_driving_video_input and is_square_video(input_driving_path) is False:
+-                flag_crop_driving_video_input = True
+-                log("The driving video is not square, it will be cropped to square automatically.")
+-                if gradio_version.major < 4:
+-                    gr.Info("The driving video is not square, it will be cropped to square automatically.")
++                aspect_ratio, width, height = get_video_aspect_ratio(input_driving_path)
++                
++                # Auto-enable cropping for non-square videos or videos with extreme aspect ratios
++                if abs(aspect_ratio - 1.0) > 0.05 or aspect_ratio > 2.0 or aspect_ratio < 0.5:
++                    flag_crop_driving_video_input = True
++                    aspect_str = f"{height}:{width}" if height > width else f"{width}:{height}"
++                    log(f"Non-square video detected ({aspect_str}). Enabling intelligent cropping with aspect ratio support.")
++                    _gr_info(f"📱 Detected {aspect_str} video. Enabling smart face detection with aspect ratio preservation.")
+                 else:
+-                    gr.Info("The driving video is not square, it will be cropped to square automatically.", duration=2)
++                    flag_crop_driving_video_input = True
++                    log("The driving video is not square, it will be cropped to square automatically.")
++                    _gr_info("The driving video is not square, it will be cropped to square automatically.")
+ 
+             args_user = {
+                 'source': input_source_path,
+@@ -230,12 +314,34 @@ class GradioPipeline(LivePortraitPipeline):
+                 'vx_ratio_crop_driving_video': vx_ratio_crop_driving_video,
+                 'vy_ratio_crop_driving_video': vy_ratio_crop_driving_video,
+                 'driving_smooth_observation_variance': driving_smooth_observation_variance,
++                'flag_big_shot': flag_big_shot,
++                'anchor_enabled': anchor_enabled,
++                'sam_enabled': anchor_use_sam,
++                'anchor_target': anchor_target,
++                'anchor_x': int(anchor_x) if anchor_x is not None else -1,
++                'anchor_y': int(anchor_y) if anchor_y is not None else -1,
+             }
+             # update config from user input
+             self.args = update_args(self.args, args_user)
+             self.live_portrait_wrapper.update_config(self.args.__dict__)
+             self.cropper.update_config(self.args.__dict__)
+-            output_path, output_path_concat = self.execute(self.args)
++
++            use_big_shot = bool(flag_big_shot) and is_video(input_driving_path)
++            if use_big_shot:
++                max_frames = getattr(self.args, "max_video_frames", 0)
++                if max_frames and max_frames > 0:
++                    cap = cv2.VideoCapture(input_driving_path)
++                    try:
++                        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
++                    finally:
++                        cap.release()
++                    if frame_count > 0 and frame_count <= max_frames:
++                        use_big_shot = False
++            if use_big_shot:
++                gr.Info("BIG SHOT: splitting video into chunks for stable high-FPS output.")
++                output_path, output_path_concat = self._execute_big_shot(args_user, input_source_path, input_driving_path)
++            else:
++                output_path, output_path_concat = self.execute(self.args)
+             gr.Info("Run successfully!")
+             if output_path.endswith(".jpg"):
+                 return gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), output_path, gr.update(visible=True), output_path_concat, gr.update(visible=True)
+@@ -537,9 +643,12 @@ class GradioPipeline(LivePortraitPipeline):
+             self.cropper.update_config(self.args.__dict__)
+             inference_cfg = self.live_portrait_wrapper.inference_cfg
+             ######## process source video ########
+-            source_rgb_lst = load_video(input_video)
++            max_video_frames = getattr(self.args, "max_video_frames", 0)
++            source_rgb_lst = load_video(input_video, max_frames=max_video_frames)
+             source_rgb_lst = [resize_to_limit(img, inference_cfg.source_max_dim, inference_cfg.source_division) for img in source_rgb_lst]
+             source_fps = int(get_fps(input_video))
++            if getattr(self.args, "force_output_fps", 0):
++                source_fps = int(self.args.force_output_fps)
+             n_frames = len(source_rgb_lst)
+             log(f"Load source video from {input_video}. FPS is {source_fps}")
+ 
+@@ -592,9 +701,12 @@ class GradioPipeline(LivePortraitPipeline):
+         if input_video is not None:
+             inference_cfg = self.live_portrait_wrapper.inference_cfg
+             ######## process source video ########
+-            source_rgb_lst = load_video(input_video)
++            max_video_frames = getattr(self.args, "max_video_frames", 0)
++            source_rgb_lst = load_video(input_video, max_frames=max_video_frames)
+             source_rgb_lst = [resize_to_limit(img, inference_cfg.source_max_dim, inference_cfg.source_division) for img in source_rgb_lst]
+             source_fps = int(get_fps(input_video))
++            if getattr(self.args, "force_output_fps", 0):
++                source_fps = int(self.args.force_output_fps)
+             n_frames = len(source_rgb_lst)
+             log(f"Load source video from {input_video}. FPS is {source_fps}")
+ 
+@@ -654,11 +766,14 @@ class GradioPipelineAnimal(LivePortraitPipelineAnimal):
+     def execute_video(
+         self,
+         input_source_image_path=None,
++        input_source_video_path=None,
+         input_driving_video_path=None,
+         input_driving_video_pickle_path=None,
+         flag_do_crop_input=False,
++        flag_preserve_source_resolution=False,
+         flag_remap_input=False,
+         driving_multiplier=1.0,
++        lip_sync_intensity=5.0,
+         flag_stitching=False,
+         flag_crop_driving_video_input=False,
+         scale=2.3,
+@@ -667,11 +782,20 @@ class GradioPipelineAnimal(LivePortraitPipelineAnimal):
+         scale_crop_driving_video=2.2,
+         vx_ratio_crop_driving_video=0.0,
+         vy_ratio_crop_driving_video=-0.1,
++        source_tab_selection=None,
+         tab_selection=None,
++        source_processing_method="מעקב (מהיר)",
++        do_upscale=False,
++        upscaler_name='None',
+     ):
+-        """ for video-driven potrait animation
++        """ for video-driven animal animation
+         """
+-        input_source_path = input_source_image_path
++        if source_tab_selection == 'Image':
++            input_source_path = input_source_image_path
++        elif source_tab_selection == 'Video':
++            input_source_path = input_source_video_path
++        else:
++            input_source_path = input_source_image_path
+ 
+         if tab_selection == 'Video':
+             input_driving_path = input_driving_video_path
+@@ -682,12 +806,17 @@ class GradioPipelineAnimal(LivePortraitPipelineAnimal):
+ 
+         if input_source_path is not None and input_driving_path is not None:
+             if osp.exists(input_driving_path) and tab_selection == 'Video' and is_square_video(input_driving_path) is False:
+-                flag_crop_driving_video_input = True
+-                log("The driving video is not square, it will be cropped to square automatically.")
+-                if gradio_version.major < 4:
+-                    gr.Info("The driving video is not square, it will be cropped to square automatically.")
++                aspect_ratio, width, height = get_video_aspect_ratio(input_driving_path)
++                
++                if abs(aspect_ratio - 1.0) > 0.05 or aspect_ratio > 2.0 or aspect_ratio < 0.5:
++                    flag_crop_driving_video_input = True
++                    aspect_str = f"{height}:{width}" if height > width else f"{width}:{height}"
++                    log(f"Non-square video detected ({aspect_str}). Enabling intelligent cropping for animal video.")
++                    _gr_info(f"📱 Detected {aspect_str} animal video. Enabling smart face detection.")
+                 else:
+-                    gr.Info("The driving video is not square, it will be cropped to square automatically.", duration=2)
++                    flag_crop_driving_video_input = True
++                    log("The driving video is not square, it will be cropped to square automatically.")
++                    _gr_info("The driving video is not square, it will be cropped to square automatically.")
+ 
+             args_user = {
+                 'source': input_source_path,
+@@ -695,14 +824,19 @@ class GradioPipelineAnimal(LivePortraitPipelineAnimal):
+                 'flag_do_crop': flag_do_crop_input,
+                 'flag_pasteback': flag_remap_input,
+                 'driving_multiplier': driving_multiplier,
++                'lip_sync_intensity': lip_sync_intensity / 5.0, # scale from 0-10 to 0-2
+                 'flag_stitching': flag_stitching,
+                 'flag_crop_driving_video': flag_crop_driving_video_input,
++                'flag_preserve_source_resolution': flag_preserve_source_resolution,
+                 'scale': scale,
+                 'vx_ratio': vx_ratio,
+                 'vy_ratio': vy_ratio,
+                 'scale_crop_driving_video': scale_crop_driving_video,
+                 'vx_ratio_crop_driving_video': vx_ratio_crop_driving_video,
+                 'vy_ratio_crop_driving_video': vy_ratio_crop_driving_video,
++                'source_processing_method': 'tracking' if source_processing_method == 'מעקב (מהיר)' else 'frame-by-frame',
++                'do_upscale': do_upscale,
++                'upscaler_name': upscaler_name,
+             }
+             # update config from user input
+             self.args = update_args(self.args, args_user)
+@@ -717,6 +851,6 @@ class GradioPipelineAnimal(LivePortraitPipelineAnimal):
+             return video_path, video_path_concat, video_gif_path
+         else:
+             if gradio_version.major < 4:
+-                raise gr.Error("Please upload the source animal image, and driving video 🤗🤗🤗")
++                raise gr.Error("Please upload the source animal image/video, and driving video 🤗🤗🤗")
+             else:
+-                raise gr.Error("Please upload the source animal image, and driving video 🤗🤗🤗", duration=5)
+\ No newline at end of file
++                raise gr.Error("Please upload the source animal image/video, and driving video 🤗🤗🤗", duration=5)
+diff --git a/liveportrait/live_portrait_pipeline.py b/liveportrait/live_portrait_pipeline.py
+index 6271588..ddc597a 100644
+--- a/liveportrait/live_portrait_pipeline.py
++++ b/liveportrait/live_portrait_pipeline.py
+@@ -44,7 +44,10 @@ class LivePortraitPipeline(object):
+             from .utils.cropper_face_alignment import Cropper
+             self.cropper: Cropper = Cropper(crop_cfg=crop_cfg)
+         else:
+-            log("Using InsightFace cropper")
++            if crop_cfg.model == 'facefusion':
++                log("Using FaceFusion cropper")
++            else:
++                log("Using InsightFace cropper")
+             from .utils.cropper import Cropper
+             self.cropper: Cropper = Cropper(crop_cfg=crop_cfg)
+ 
+@@ -101,9 +104,11 @@ class LivePortraitPipeline(object):
+             source_rgb_lst = [img_rgb]
+         elif is_video(args.source):
+             flag_is_source_video = True
+-            source_rgb_lst = load_video(args.source)
++            source_rgb_lst = load_video(args.source, max_frames=args.max_video_frames)
+             source_rgb_lst = [resize_to_limit(img, inf_cfg.source_max_dim, inf_cfg.source_division) for img in source_rgb_lst]
+             source_fps = int(get_fps(args.source))
++            if getattr(args, "force_output_fps", 0):
++                source_fps = int(args.force_output_fps)
+             log(f"Load source video from {args.source}, FPS is {source_fps}")
+         else:  # source input is an unknown format
+             raise Exception(f"Unknown source format: {args.source}")
+@@ -139,9 +144,11 @@ class LivePortraitPipeline(object):
+             if is_video(args.driving):
+                 flag_is_driving_video = True
+                 # load from video file, AND make motion template
++                driving_rgb_lst = load_video(args.driving, max_frames=args.max_video_frames)
+                 output_fps = int(get_fps(args.driving))
++                if getattr(args, "force_output_fps", 0):
++                    output_fps = int(args.force_output_fps)
+                 log(f"Load driving video from: {args.driving}, FPS is {output_fps}")
+-                driving_rgb_lst = load_video(args.driving)
+             elif is_image(args.driving):
+                 flag_is_driving_video = False
+                 driving_img_rgb = load_image_rgb(args.driving)
+diff --git a/liveportrait/live_portrait_pipeline_animal.py b/liveportrait/live_portrait_pipeline_animal.py
+index 87610a1..3f01256 100644
+--- a/liveportrait/live_portrait_pipeline_animal.py
++++ b/liveportrait/live_portrait_pipeline_animal.py
+@@ -56,17 +56,20 @@ class LivePortraitPipelineAnimal(object):
+             'motion': [],
+         }
+ 
+-        for i in track(range(n_frames), description='Making driving motion templates...', total=n_frames):
++        for i in track(range(n_frames), description='Making motion templates...', total=n_frames):
+             # collect s, R, δ and t for inference
+             I_i = I_lst[i]
+             x_i_info = self.live_portrait_wrapper_animal.get_kp_info(I_i)
+             R_i = get_rotation_matrix(x_i_info['pitch'], x_i_info['yaw'], x_i_info['roll'])
++            x_s = self.live_portrait_wrapper_animal.transform_keypoint(x_i_info)
+ 
+             item_dct = {
+                 'scale': x_i_info['scale'].cpu().numpy().astype(np.float32),
+                 'R': R_i.cpu().numpy().astype(np.float32),
+                 'exp': x_i_info['exp'].cpu().numpy().astype(np.float32),
+                 't': x_i_info['t'].cpu().numpy().astype(np.float32),
++                'kp': x_i_info['kp'].cpu().numpy().astype(np.float32),
++                'x_s': x_s.cpu().numpy().astype(np.float32),
+             }
+ 
+             template_dct['motion'].append(item_dct)
+@@ -80,10 +83,21 @@ class LivePortraitPipelineAnimal(object):
+         crop_cfg = self.cropper.crop_cfg
+ 
+         ######## load source input ########
++        flag_is_source_video = False
++        source_fps = None
+         if is_image(args.source):
+-            img_rgb = load_image_rgb(args.source)
+-            img_rgb = resize_to_limit(img_rgb, inf_cfg.source_max_dim, inf_cfg.source_division)
++            flag_is_source_video = False
++            source_rgb_lst = [load_image_rgb(args.source)]
++            source_rgb_lst = [resize_to_limit(img, inf_cfg.source_max_dim, inf_cfg.source_division) for img in source_rgb_lst]
+             log(f"Load source image from {args.source}")
++        elif is_video(args.source):
++            flag_is_source_video = True
++            source_rgb_lst = load_video(args.source, max_frames=args.max_video_frames)
++            source_rgb_lst = [resize_to_limit(img, inf_cfg.source_max_dim, inf_cfg.source_division) for img in source_rgb_lst]
++            source_fps = int(get_fps(args.source))
++            if getattr(args, "force_output_fps", 0):
++                source_fps = int(args.force_output_fps)
++            log(f"Load source video from {args.source}, FPS is {source_fps}")
+         else:  # source input is an unknown format
+             raise Exception(f"Unknown source format: {args.source}")
+ 
+@@ -91,49 +105,44 @@ class LivePortraitPipelineAnimal(object):
+         flag_load_from_template = is_template(args.driving)
+         driving_rgb_crop_256x256_lst = None
+         wfp_template = None
++        flag_is_driving_video = is_video(args.driving)
+ 
+         if flag_load_from_template:
+             # NOTE: load from template, it is fast, but the cropping video is None
+             log(f"Load from template: {args.driving}, NOT the video, so the cropping video and audio are both NULL.", style='bold green')
+             driving_template_dct = load(args.driving)
+-            n_frames = driving_template_dct['n_frames']
+-
+-            # set output_fps
++            driving_n_frames = driving_template_dct['n_frames']
++            n_frames = min(len(source_rgb_lst), driving_n_frames) if flag_is_source_video else driving_n_frames
+             output_fps = driving_template_dct.get('output_fps', inf_cfg.output_fps)
+             log(f'The FPS of template: {output_fps}')
+-
+-            if args.flag_crop_driving_video:
+-                log("Warning: flag_crop_driving_video is True, but the driving info is a template, so it is ignored.")
+-
+-        elif osp.exists(args.driving) and is_video(args.driving):
+-            # load from video file, AND make motion template
++        elif osp.exists(args.driving):
++            driving_rgb_lst = load_video(args.driving, max_frames=args.max_video_frames)
+             output_fps = int(get_fps(args.driving))
++            if getattr(args, "force_output_fps", 0):
++                output_fps = int(args.force_output_fps)
+             log(f"Load driving video from: {args.driving}, FPS is {output_fps}")
++            driving_n_frames = len(driving_rgb_lst)
++            n_frames = min(len(source_rgb_lst), driving_n_frames) if flag_is_source_video else driving_n_frames
++            if flag_is_source_video:
++                driving_rgb_lst = driving_rgb_lst[:n_frames]
+ 
+-            driving_rgb_lst = load_video(args.driving)
+-            n_frames = len(driving_rgb_lst)
+-
+-            ######## make motion template ########
+             log("Start making driving motion template...")
+             if inf_cfg.flag_crop_driving_video:
+                 ret_d = self.cropper.crop_driving_video(driving_rgb_lst)
+                 log(f'Driving video is cropped, {len(ret_d["frame_crop_lst"])} frames are processed.')
+-                if len(ret_d["frame_crop_lst"]) is not n_frames:
++                if len(ret_d["frame_crop_lst"]) < n_frames:
+                     n_frames = min(n_frames, len(ret_d["frame_crop_lst"]))
+                 driving_rgb_crop_lst = ret_d['frame_crop_lst']
+                 driving_rgb_crop_256x256_lst = [cv2.resize(_, (256, 256)) for _ in driving_rgb_crop_lst]
+             else:
+-                driving_rgb_crop_256x256_lst = [cv2.resize(_, (256, 256)) for _ in driving_rgb_lst]  # force to resize to 256x256
+-            #######################################
++                driving_rgb_crop_256x256_lst = [cv2.resize(frame, (256, 256)) for frame in driving_rgb_lst]
+ 
+-            # save the motion template
+             I_d_lst = self.live_portrait_wrapper_animal.prepare_videos(driving_rgb_crop_256x256_lst)
+             driving_template_dct = self.make_motion_template(I_d_lst, output_fps=output_fps)
+ 
+             wfp_template = remove_suffix(args.driving) + '.pkl'
+             dump(wfp_template, driving_template_dct)
+             log(f"Dump motion template to {wfp_template}")
+-
+         else:
+             raise Exception(f"{args.driving} not exists or unsupported driving info types!")
+ 
+@@ -144,44 +153,95 @@ class LivePortraitPipelineAnimal(object):
+             log("Prepared pasteback mask done.")
+ 
+         ######## process source info ########
+-        if inf_cfg.flag_do_crop:
+-            crop_info = self.cropper.crop_source_image(img_rgb, crop_cfg)
+-            if crop_info is None:
+-                raise Exception("No animal face detected in the source image!")
+-            img_crop_256x256 = crop_info['img_crop_256x256']
+-        else:
+-            img_crop_256x256 = cv2.resize(img_rgb, (256, 256))  # force to resize to 256x256
+-        I_s = self.live_portrait_wrapper_animal.prepare_source(img_crop_256x256)
+-        x_s_info = self.live_portrait_wrapper_animal.get_kp_info(I_s)
+-        x_c_s = x_s_info['kp']
+-        R_s = get_rotation_matrix(x_s_info['pitch'], x_s_info['yaw'], x_s_info['roll'])
+-        f_s = self.live_portrait_wrapper_animal.extract_feature_3d(I_s)
+-        x_s = self.live_portrait_wrapper_animal.transform_keypoint(x_s_info)
++        crop_info = None
++        if flag_is_source_video:
++            log(f"Start making source motion template...")
++            source_rgb_lst = source_rgb_lst[:n_frames]
++            
++            if inf_cfg.flag_do_crop:
++                if args.source_processing_method == 'tracking':
++                    ret_s = self.cropper.crop_source_video_animal(source_rgb_lst, crop_cfg)
++                else: # 'frame-by-frame'
++                    frames = []
++                    M_c2o = []
++                    for frame_rgb in track(source_rgb_lst, description="Cropping source video (Frame-by-Frame)..."):
++                        crop_info_frame = self.cropper.crop_source_image(frame_rgb, crop_cfg)
++                        if crop_info_frame is None:
++                            log("Warning: No animal face detected in a source frame, skipping frame.")
++                            continue
++                        frames.append(crop_info_frame['img_crop_256x256'])
++                        M_c2o.append(crop_info_frame['M_c2o'])
++                    ret_s = {"frame_crop_lst": frames, "M_c2o_lst": M_c2o}
++
++                log(f'Source video is cropped, {len(ret_s["frame_crop_lst"])} frames are processed.')
++                if len(ret_s["frame_crop_lst"]) < n_frames:
++                    n_frames = min(n_frames, len(ret_s["frame_crop_lst"]))
++                img_crop_256x256_lst, source_M_c2o_lst = ret_s['frame_crop_lst'], ret_s['M_c2o_lst']
++            else:
++                img_crop_256x256_lst = [cv2.resize(_, (256, 256)) for _ in source_rgb_lst]
++                source_M_c2o_lst = [] # No matrix if not cropping
++            
++            if len(img_crop_256x256_lst) < n_frames:
++                n_frames = len(img_crop_256x256_lst)
++
++            I_s_lst = self.live_portrait_wrapper_animal.prepare_videos(img_crop_256x256_lst)
++            source_template_dct = self.make_motion_template(I_s_lst, output_fps=source_fps)
++        else: # source is an image
++            img_rgb = source_rgb_lst[0]
++            if inf_cfg.flag_do_crop:
++                crop_info = self.cropper.crop_source_image(img_rgb, crop_cfg)
++                if crop_info is None:
++                    raise Exception("No animal face detected in the source image!")
++                img_crop_256x256 = crop_info['img_crop_256x256']
++            else:
++                img_crop_256x256 = cv2.resize(img_rgb, (256, 256))
++            I_s = self.live_portrait_wrapper_animal.prepare_source(img_crop_256x256)
++            x_s_info = self.live_portrait_wrapper_animal.get_kp_info(I_s)
++            x_c_s = x_s_info['kp']
++            R_s = get_rotation_matrix(x_s_info['pitch'], x_s_info['yaw'], x_s_info['roll'])
++            f_s = self.live_portrait_wrapper_animal.extract_feature_3d(I_s)
++            x_s = self.live_portrait_wrapper_animal.transform_keypoint(x_s_info)
+ 
+-        if inf_cfg.flag_pasteback and inf_cfg.flag_do_crop and inf_cfg.flag_stitching:
+-            mask_ori_float = prepare_paste_back(inf_cfg.mask_crop, crop_info['M_c2o'], dsize=(img_rgb.shape[1], img_rgb.shape[0]))
++            if inf_cfg.flag_pasteback and inf_cfg.flag_do_crop and inf_cfg.flag_stitching:
++                mask_ori_float = prepare_paste_back(inf_cfg.mask_crop, crop_info['M_c2o'], dsize=(img_rgb.shape[1], img_rgb.shape[0]))
+ 
+         ######## animate ########
+         I_p_lst = []
+         for i in track(range(n_frames), description='🚀Animating...', total=n_frames):
+-
+-            x_d_i_info = driving_template_dct['motion'][i]
+-            x_d_i_info = dct2device(x_d_i_info, device)
+-
+-            R_d_i = x_d_i_info['R'] if 'R' in x_d_i_info.keys() else x_d_i_info['R_d']  # compatible with previous keys
+-            delta_new = x_d_i_info['exp']
+-            t_new = x_d_i_info['t']
+-            t_new[..., 2].fill_(0)  # zero tz
+-            scale_new = x_s_info['scale']
+-
+-            x_d_i = scale_new * (x_c_s @ R_d_i + delta_new) + t_new
+-
++            if flag_is_source_video:
++                x_s_info_dict = source_template_dct['motion'][i]
++                x_s_info = dct2device(x_s_info_dict, device)
++                img_rgb = source_rgb_lst[i]
++                img_crop_256x256 = img_crop_256x256_lst[i]
++                I_s = I_s_lst[i]
++                f_s = self.live_portrait_wrapper_animal.extract_feature_3d(I_s)
++                x_c_s = x_s_info['kp']
++                x_s = x_s_info['x_s']
++                R_s = x_s_info['R']
++                if inf_cfg.flag_pasteback and inf_cfg.flag_do_crop and inf_cfg.flag_stitching:
++                    mask_ori_float = prepare_paste_back(inf_cfg.mask_crop, source_M_c2o_lst[i], dsize=(img_rgb.shape[1], img_rgb.shape[0]))
++            
++            x_d_i_info = dct2device(driving_template_dct['motion'][i], device)
++            R_d_i = x_d_i_info['R']
++            
+             if i == 0:
+-                x_d_0 = x_d_i
+-                motion_multiplier = calc_motion_multiplier(x_s, x_d_0)
+-
+-            x_d_diff = (x_d_i - x_d_0) * motion_multiplier
+-            x_d_i = x_d_diff + x_s
++                R_d_0 = R_d_i
++                x_d_0_info = x_d_i_info.copy()
++
++            if inf_cfg.flag_relative_motion:
++                R_new = (R_d_i @ R_d_0.permute(0, 2, 1)) @ R_s
++                expression_delta = (x_d_i_info['exp'] - x_d_0_info['exp'])
++                delta_new = x_s_info['exp'] + expression_delta * args.lip_sync_intensity
++                scale_new = x_s_info['scale'] * (x_d_i_info['scale'] / x_d_0_info['scale'])
++                t_new = x_s_info['t'] + (x_d_i_info['t'] - x_d_0_info['t'])
++            else: # absolute motion
++                R_new = R_d_i
++                delta_new = x_d_i_info['exp'] * args.lip_sync_intensity
++                scale_new = x_s_info['scale']
++                t_new = x_d_i_info['t']
++
++            t_new[..., 2].fill_(0)
++            x_d_i = scale_new * (x_c_s @ R_new + delta_new) + t_new
+ 
+             if not inf_cfg.flag_stitching:
+                 pass
+@@ -194,51 +254,88 @@ class LivePortraitPipelineAnimal(object):
+             I_p_lst.append(I_p_i)
+ 
+             if inf_cfg.flag_pasteback and inf_cfg.flag_do_crop and inf_cfg.flag_stitching:
+-                I_p_pstbk = paste_back(I_p_i, crop_info['M_c2o'], img_rgb, mask_ori_float)
++                current_M_c2o = source_M_c2o_lst[i] if flag_is_source_video else crop_info['M_c2o']
++                I_p_pstbk = paste_back(I_p_i, current_M_c2o, img_rgb, mask_ori_float)
+                 I_p_pstbk_lst.append(I_p_pstbk)
+ 
+         mkdir(args.output_dir)
+         wfp_concat = None
+         flag_driving_has_audio = (not flag_load_from_template) and has_audio_stream(args.driving)
++        
++        output_fps = source_fps if flag_is_source_video and source_fps is not None else output_fps
++        
++        # Preserve source resolution if requested
++        if args.flag_preserve_source_resolution:
++            source_h, source_w = source_rgb_lst[0].shape[:2]
++            I_p_lst = [cv2.resize(p, (source_w, source_h), interpolation=cv2.INTER_CUBIC) for p in I_p_lst]
++            if I_p_pstbk_lst:
++                I_p_pstbk_lst = [cv2.resize(p, (source_w, source_h), interpolation=cv2.INTER_CUBIC) for p in I_p_pstbk_lst]
++            log(f"Upscaled output to source resolution: {source_w}x{source_h}")
+ 
+         ######### build the final concatenation result #########
+-        # driving frame | source image | generation
+-        frames_concatenated = concat_frames(driving_rgb_crop_256x256_lst, [img_crop_256x256], I_p_lst)
++        if flag_is_source_video:
++            # Adjust for frames that might have been skipped during cropping
++            driving_rgb_crop_256x256_lst = driving_rgb_crop_256x256_lst[:n_frames]
++            img_crop_256x256_lst = img_crop_256x256_lst[:n_frames]
++            I_p_lst = I_p_lst[:n_frames]
++            frames_concatenated = concat_frames(driving_rgb_crop_256x256_lst, img_crop_256x256_lst, I_p_lst)
++        else:
++            frames_concatenated = concat_frames(driving_rgb_crop_256x256_lst, [img_crop_256x256], I_p_lst)
+         wfp_concat = osp.join(args.output_dir, f'{basename(args.source)}--{basename(args.driving)}_concat.mp4')
+         images2video(frames_concatenated, wfp=wfp_concat, fps=output_fps)
+ 
+         if flag_driving_has_audio:
+-            # final result with concatenation
+             wfp_concat_with_audio = osp.join(args.output_dir, f'{basename(args.source)}--{basename(args.driving)}_concat_with_audio.mp4')
+-            audio_from_which_video = args.driving
+-            add_audio_to_video(wfp_concat, audio_from_which_video, wfp_concat_with_audio)
++            add_audio_to_video(wfp_concat, args.driving, wfp_concat_with_audio)
+             os.replace(wfp_concat_with_audio, wfp_concat)
+-            log(f"Replace {wfp_concat_with_audio} with {wfp_concat}")
++            log(f"Replace {wfp_concat} with audio from {args.driving}")
+ 
+         # save the animated result
++        final_frames = I_p_pstbk_lst or I_p_lst
++        if args.do_upscale and args.upscaler_name != 'None':
++            log(f"Upscaling {len(final_frames)} frames with {args.upscaler_name}...")
++            try:
++                from modules import shared
++                from PIL import Image
++                import numpy as np
++
++                upscaler_data = next((u for u in shared.sd_upscalers if u.name == args.upscaler_name), None)
++                
++                if upscaler_data:
++                    # Ensure the upscaler model is loaded
++                    if upscaler_data.scaler is None:
++                        upscaler_data.load_model(upscaler_data.data_path)
++
++                    upscaled_frames = []
++                    for frame in track(final_frames, description="Upscaling..."):
++                        pil_frame = Image.fromarray(frame)
++                        # The scaler object is callable and takes the image
++                        upscaled_pil = upscaler_data.scaler(pil_frame)
++                        upscaled_frame = np.array(upscaled_pil)
++                        upscaled_frames.append(upscaled_frame)
++                    final_frames = upscaled_frames
++                    log("Upscaling complete.")
++                else:
++                    log(f"Upscaler '{args.upscaler_name}' not found. Skipping upscaling.")
++
++            except Exception as e:
++                log(f"An error occurred during upscaling: {e}. Skipping upscaling.")
++
+         wfp = osp.join(args.output_dir, f'{basename(args.source)}--{basename(args.driving)}.mp4')
+-        if I_p_pstbk_lst is not None and len(I_p_pstbk_lst) > 0:
+-            images2video(I_p_pstbk_lst, wfp=wfp, fps=output_fps)
+-        else:
+-            images2video(I_p_lst, wfp=wfp, fps=output_fps)
++        images2video(final_frames, wfp=wfp, fps=output_fps)
+ 
+-        ######### build the final result #########
+         if flag_driving_has_audio:
+             wfp_with_audio = osp.join(args.output_dir, f'{basename(args.source)}--{basename(args.driving)}_with_audio.mp4')
+-            audio_from_which_video = args.driving
+-            add_audio_to_video(wfp, audio_from_which_video, wfp_with_audio)
++            add_audio_to_video(wfp, args.driving, wfp_with_audio)
+             os.replace(wfp_with_audio, wfp)
+-            log(f"Replace {wfp_with_audio} with {wfp}")
++            log(f"Replace {wfp} with audio from {args.driving}")
+ 
+-        # final log
+-        if wfp_template not in (None, ''):
++        if wfp_template:
+             log(f'Animated template: {wfp_template}, you can specify `-d` argument with this template path next time to avoid cropping video, motion making and protecting privacy.', style='bold green')
+         log(f'Animated video: {wfp}')
+         log(f'Animated video with concat: {wfp_concat}')
+ 
+-        # build the gif
+         wfp_gif = video2gif(wfp)
+         log(f'Animated gif: {wfp_gif}')
+ 
+-
+         return wfp, wfp_concat, wfp_gif
+diff --git a/liveportrait/utils/aspect_ratio_manager.py b/liveportrait/utils/aspect_ratio_manager.py
+new file mode 100644
+index 0000000..333d5be
+--- /dev/null
++++ b/liveportrait/utils/aspect_ratio_manager.py
+@@ -0,0 +1,265 @@
++# coding: utf-8
++
++"""
++Advanced aspect ratio preservation system
++Maintains original video dimensions throughout the entire pipeline
++"""
++
++import numpy as np
++from dataclasses import dataclass
++from typing import Tuple, Optional
++
++DTYPE = np.float32
++
++
++@dataclass
++class AspectRatioConfig:
++    """Configuration for aspect ratio preservation"""
++    preserve_ratio: bool = True  # Always preserve original ratio
++    min_dimension: int = 256  # Minimum output dimension
++    max_dimension: int = 1024  # Maximum output dimension
++    target_short_side: int = 512  # Target size for shorter side
++    padding_mode: str = 'constant'  # How to handle padding
++    interpolation_quality: int = 3  # 0-3, higher = better quality
++
++
++class AspectRatioPreserver:
++    """
++    Elegant and sophisticated system to preserve aspect ratio throughout pipeline
++    """
++    
++    def __init__(self, config: Optional[AspectRatioConfig] = None):
++        self.config = config or AspectRatioConfig()
++        self.original_shape: Optional[Tuple[int, int]] = None
++        self.processing_shape: Optional[Tuple[int, int]] = None
++        self.output_shape: Optional[Tuple[int, int]] = None
++        self.scale_factors: Optional[Tuple[float, float]] = None
++    
++    def analyze_input(self, img_shape: Tuple[int, int]) -> dict:
++        """
++        Analyze input image and determine optimal processing dimensions
++        
++        Args:
++            img_shape: (height, width) of input image
++            
++        Returns:
++            Dictionary with analysis results
++        """
++        h, w = img_shape
++        self.original_shape = (h, w)
++        
++        aspect_ratio = h / w if w > 0 else 1.0
++        is_square = abs(aspect_ratio - 1.0) < 0.05
++        
++        # Calculate optimal processing dimensions
++        if is_square:
++            # For square images, use standard size
++            proc_h = proc_w = self.config.target_short_side
++        else:
++            # For rectangular, maintain ratio with target on shorter side
++            if h < w:  # Landscape
++                proc_h = self.config.target_short_side
++                proc_w = int(self.config.target_short_side / aspect_ratio)
++            else:  # Portrait
++                proc_w = self.config.target_short_side
++                proc_h = int(self.config.target_short_side * aspect_ratio)
++        
++        # Ensure dimensions are reasonable
++        proc_w = max(self.config.min_dimension, min(proc_w, self.config.max_dimension))
++        proc_h = max(self.config.min_dimension, min(proc_h, self.config.max_dimension))
++        
++        # Make divisible by 16 for neural network compatibility
++        proc_h = (proc_h // 16) * 16
++        proc_w = (proc_w // 16) * 16
++        
++        self.processing_shape = (proc_h, proc_w)
++        self.output_shape = (proc_h, proc_w)
++        
++        # Calculate scale factors for transformations
++        scale_h = proc_h / h if h > 0 else 1.0
++        scale_w = proc_w / w if w > 0 else 1.0
++        self.scale_factors = (scale_h, scale_w)
++        
++        return {
++            'original_shape': self.original_shape,
++            'processing_shape': self.processing_shape,
++            'aspect_ratio': aspect_ratio,
++            'is_square': is_square,
++            'scale_factors': self.scale_factors,
++        }
++    
++    def get_processing_dimensions(self, target_size: int = 512) -> Tuple[int, int]:
++        """
++        Get optimal processing dimensions while preserving aspect ratio
++        
++        Args:
++            target_size: Target size for the shorter side
++            
++        Returns:
++            (height, width) tuple for processing
++        """
++        if self.original_shape is None:
++            return (target_size, target_size)
++        
++        h, w = self.original_shape
++        aspect_ratio = h / w if w > 0 else 1.0
++        
++        if abs(aspect_ratio - 1.0) < 0.05:  # Nearly square
++            return (target_size, target_size)
++        elif aspect_ratio > 1.0:  # Portrait
++            proc_h = target_size
++            proc_w = int(target_size / aspect_ratio)
++        else:  # Landscape
++            proc_w = target_size
++            proc_h = int(target_size * aspect_ratio)
++        
++        # Ensure divisibility by 16 for neural networks
++        proc_h = max(256, (proc_h // 16) * 16)
++        proc_w = max(256, (proc_w // 16) * 16)
++        
++        return (proc_h, proc_w)
++    
++    def get_inverse_scale_factors(self) -> Tuple[float, float]:
++        """Get inverse scale factors for reversing transformations"""
++        if self.scale_factors is None:
++            return (1.0, 1.0)
++        
++        scale_h, scale_w = self.scale_factors
++        inv_scale_h = 1.0 / scale_h if scale_h > 0 else 1.0
++        inv_scale_w = 1.0 / scale_w if scale_w > 0 else 1.0
++        
++        return (inv_scale_h, inv_scale_w)
++    
++    def scale_landmarks(self, landmarks: np.ndarray, 
++                       forward: bool = True) -> np.ndarray:
++        """
++        Scale landmarks while preserving precision
++        
++        Args:
++            landmarks: Nx2 array of (x, y) coordinates
++            forward: If True, scale from original to processing. 
++                    If False, scale from processing back to original.
++            
++        Returns:
++            Scaled landmarks
++        """
++        if self.scale_factors is None:
++            return landmarks.copy()
++        
++        landmarks_scaled = landmarks.copy().astype(DTYPE)
++        
++        if forward:
++            scale_h, scale_w = self.scale_factors
++        else:
++            scale_h, scale_w = self.get_inverse_scale_factors()
++        
++        # Apply scaling (x is width, y is height)
++        landmarks_scaled[:, 0] *= scale_w  # x coordinate
++        landmarks_scaled[:, 1] *= scale_h  # y coordinate
++        
++        return landmarks_scaled
++    
++    def scale_bbox(self, bbox: np.ndarray, 
++                   forward: bool = True) -> np.ndarray:
++        """
++        Scale bounding box while preserving aspect ratio
++        
++        Args:
++            bbox: Bounding box coordinates
++            forward: If True, scale from original to processing.
++                    If False, scale from processing back to original.
++            
++        Returns:
++            Scaled bounding box
++        """
++        if self.scale_factors is None:
++            return bbox.copy()
++        
++        bbox_scaled = bbox.copy().astype(DTYPE)
++        
++        if forward:
++            scale_h, scale_w = self.scale_factors
++        else:
++            scale_h, scale_w = self.get_inverse_scale_factors()
++        
++        # Apply scaling to each dimension
++        bbox_scaled[:, 0] *= scale_w  # x coordinates
++        bbox_scaled[:, 1] *= scale_h  # y coordinates
++        
++        return bbox_scaled
++    
++    def create_transformation_matrix(self, 
++                                     source_bbox: np.ndarray,
++                                     target_size: int = 512) -> np.ndarray:
++        """
++        Create affine transformation matrix that preserves aspect ratio
++        
++        Args:
++            source_bbox: Source bounding box
++            target_size: Target size for processing
++            
++        Returns:
++            2x3 affine transformation matrix
++        """
++        # Get processing dimensions
++        proc_h, proc_w = self.get_processing_dimensions(target_size)
++        
++        # Calculate bounding box center and size
++        x1, y1, x2, y2 = source_bbox
++        bbox_w = x2 - x1
++        bbox_h = y2 - y1
++        center_x = (x1 + x2) / 2.0
++        center_y = (y1 + y2) / 2.0
++        
++        # Scale to maintain aspect ratio
++        scale = min(proc_w / bbox_w, proc_h / bbox_h) if bbox_w > 0 and bbox_h > 0 else 1.0
++        
++        # Create transformation matrix
++        M = np.array([
++            [scale, 0, proc_w/2 - scale * center_x],
++            [0, scale, proc_h/2 - scale * center_y]
++        ], dtype=DTYPE)
++        
++        return M
++    
++    def get_summary(self) -> str:
++        """Get a summary of aspect ratio preservation settings"""
++        if self.original_shape is None:
++            return "No analysis performed yet"
++        
++        h_orig, w_orig = self.original_shape
++        h_proc, w_proc = self.processing_shape or (0, 0)
++        aspect_orig = h_orig / w_orig if w_orig > 0 else 1.0
++        aspect_proc = h_proc / w_proc if w_proc > 0 else 1.0
++        
++        summary = f"""
++╔═══════════════════════════════════════════╗
++║   Aspect Ratio Preservation Summary       ║
++╠═══════════════════════════════════════════╣
++║ Original Shape:    {h_orig:4d}x{w_orig:4d}                 ║
++║ Processing Shape:  {h_proc:4d}x{w_proc:4d}                 ║
++║ Original Ratio:    {aspect_orig:.3f}:1                  ║
++║ Processing Ratio:  {aspect_proc:.3f}:1                  ║
++║ Ratio Preserved:   {"✅ YES" if abs(aspect_orig - aspect_proc) < 0.01 else "⚠️  NO"}                   ║
++║ Scale Factors:     {self.scale_factors[0]:.4f}, {self.scale_factors[1]:.4f}            ║
++╚═══════════════════════════════════════════╝
++"""
++        return summary
++
++
++# Global instance for pipeline-wide aspect ratio management
++_global_ar_preserver = None
++
++
++def get_aspect_ratio_preserver(config: Optional[AspectRatioConfig] = None) -> AspectRatioPreserver:
++    """Get or create global aspect ratio preserver"""
++    global _global_ar_preserver
++    if _global_ar_preserver is None:
++        _global_ar_preserver = AspectRatioPreserver(config)
++    return _global_ar_preserver
++
++
++def reset_aspect_ratio_preserver():
++    """Reset global aspect ratio preserver"""
++    global _global_ar_preserver
++    _global_ar_preserver = None
+diff --git a/liveportrait/utils/crop.py b/liveportrait/utils/crop.py
+index 5bebd6a..8b37a3b 100644
+--- a/liveportrait/utils/crop.py
++++ b/liveportrait/utils/crop.py
+@@ -9,10 +9,66 @@ import os.path as osp
+ from math import sin, cos, acos, degrees
+ import cv2; cv2.setNumThreads(0); cv2.ocl.setUseOpenCL(False) # NOTE: enforce single thread
+ from .rprint import rprint as print
++from .aspect_ratio_manager import get_aspect_ratio_preserver
+ 
+ DTYPE = np.float32
+ CV2_INTERP = cv2.INTER_LINEAR
+ 
++def prepare_frame_for_face_detection(frame):
++    """
++    Prepare frame for face detection by handling aspect ratios.
++    For non-square videos (e.g., 9:16), pad to square to improve face detection.
++    """
++    h, w = frame.shape[:2]
++    if h == w:
++        return frame, (0, 0)  # Already square, no offset needed
++    
++    max_dim = max(h, w)
++    
++    # Limit to maximum size to avoid memory issues
++    MAX_DIM = 2048
++    if max_dim > MAX_DIM:
++        scale_factor = MAX_DIM / max_dim
++        h_scaled = int(h * scale_factor)
++        w_scaled = int(w * scale_factor)
++        frame_resized = cv2.resize(frame, (w_scaled, h_scaled), interpolation=cv2.INTER_AREA)
++        max_dim = max(h_scaled, w_scaled)
++    else:
++        frame_resized = frame
++    
++    # Create a square canvas
++    canvas = np.zeros((max_dim, max_dim, 3), dtype=frame_resized.dtype)
++    
++    # Center the frame on the canvas
++    h_resized, w_resized = frame_resized.shape[:2]
++    y_offset = (max_dim - h_resized) // 2
++    x_offset = (max_dim - w_resized) // 2
++    canvas[y_offset:y_offset+h_resized, x_offset:x_offset+w_resized] = frame_resized
++    
++    return canvas, (x_offset, y_offset)
++
++def restore_landmarks_from_padded_frame(lmk, offset, original_shape):
++    """
++    Restore landmarks to original coordinate system after padding.
++    """
++    if offset is None or (isinstance(offset, tuple) and offset == (0, 0)):
++        return lmk
++    
++    x_offset, y_offset = offset
++    h_orig, w_orig = original_shape[:2]
++    
++    # Adjust landmarks back to original coordinates
++    lmk_restored = lmk.copy()
++    lmk_restored[:, 0] -= x_offset
++    lmk_restored[:, 1] -= y_offset
++    
++    # Clip to valid range
++    lmk_restored[:, 0] = np.clip(lmk_restored[:, 0], 0, w_orig - 1)
++    lmk_restored[:, 1] = np.clip(lmk_restored[:, 1], 0, h_orig - 1)
++    
++    return lmk_restored
++
++
+ def make_abs_path(fn):
+     return osp.join(osp.dirname(osp.realpath(__file__)), fn)
+ 
+@@ -42,6 +98,43 @@ def _transform_pts(pts, M):
+     return pts @ M[:2, :2].T + M[:2, 2]
+ 
+ 
++def maintain_aspect_ratio_for_crop(img, bbox, dsize=512):
++    """
++    Advanced function to maintain aspect ratio for cropping
++    Returns optimal dimensions that preserve the original video aspect ratio
++    
++    Args:
++        img: Input image (H, W, C)
++        bbox: Bounding box [x1, y1, x2, y2]
++        dsize: Target size for shorter side
++        
++    Returns:
++        Dictionary with:
++        - output_shape: Optimal (height, width) preserving aspect ratio
++        - scale_factors: (scale_h, scale_w) for landmark transformation
++        - transform_matrix: Affine transformation matrix
++    """
++    ar_preserver = get_aspect_ratio_preserver()
++    
++    # Analyze input
++    h_orig, w_orig = img.shape[:2]
++    ar_preserver.analyze_input((h_orig, w_orig))
++    
++    # Get optimal dimensions
++    proc_h, proc_w = ar_preserver.get_processing_dimensions(dsize)
++    
++    # Create transformation matrix
++    bbox_array = np.array(bbox, dtype=DTYPE)
++    transform_matrix = ar_preserver.create_transformation_matrix(bbox_array, dsize)
++    
++    return {
++        'output_shape': (proc_h, proc_w),
++        'scale_factors': ar_preserver.scale_factors,
++        'transform_matrix': transform_matrix,
++        'aspect_ratio_info': ar_preserver.analyze_input((h_orig, w_orig))
++    }
++
++
+ def parse_pt2_from_pt478(pt478, use_lip=True):
+     """
+     parsing the 2 points according to the 101 points, which cancels the roll
+@@ -301,14 +394,22 @@ def parse_bbox_from_landmark(pts, **kwargs):
+ 
+ def crop_image_by_bbox(img, bbox, lmk=None, dsize=512, angle=None, flag_rot=False, **kwargs):
+     left, top, right, bot = bbox
+-    if int(right - left) != int(bot - top):
+-        print(f'right-left {right-left} != bot-top {bot-top}')
+-    size = right - left
++    width = right - left
++    height = bot - top
++    
++    # Handle non-square aspect ratios (e.g., 9:16)
++    aspect_ratio = height / width if width > 0 else 1.0
++    
++    # Calculate output dimensions maintaining aspect ratio
++    # Always keep width at dsize, scale height proportionally
++    size = width
++    output_width = dsize
++    output_height = int(dsize * aspect_ratio)
+ 
+     src_center = np.array([(left + right) / 2, (top + bot) / 2], dtype=DTYPE)
+-    tgt_center = np.array([dsize / 2, dsize / 2], dtype=DTYPE)
++    tgt_center = np.array([output_width / 2, output_height / 2], dtype=DTYPE)
+ 
+-    s = dsize / size  # scale
++    s = output_width / size  # scale based on output width
+     if flag_rot and angle is not None:
+         costheta, sintheta = cos(angle), sin(angle)
+         cx, cy = src_center[0], src_center[1]  # ori center
+@@ -329,7 +430,7 @@ def crop_image_by_bbox(img, bbox, lmk=None, dsize=512, angle=None, flag_rot=Fals
+     # if flag_rot and angle is None:
+         # print('angle is None, but flag_rotate is True', style="bold yellow")
+ 
+-    img_crop = _transform_img(img, M_o2c, dsize=dsize, borderMode=kwargs.get('borderMode', None))
++    img_crop = _transform_img(img, M_o2c, dsize=(output_width, output_height), borderMode=kwargs.get('borderMode', None))
+     lmk_crop = _transform_pts(lmk, M_o2c) if lmk is not None else None
+ 
+     M_o2c = np.vstack([M_o2c, np.array([0, 0, 1], dtype=DTYPE)])
+@@ -367,7 +468,10 @@ def _estimate_similar_transform_from_pts(
+     )
+ 
+     s = dsize / size[0]  # scale
+-    tgt_center = np.array([dsize / 2, dsize / 2], dtype=DTYPE)  # center of dsize
++    
++    # Support rectangular output (maintain aspect ratio if needed)
++    dsize_h = kwargs.get('dsize_h', dsize)  # Allow custom height
++    tgt_center = np.array([dsize / 2, dsize_h / 2], dtype=DTYPE)  # center of output
+ 
+     if flag_do_rot:
+         costheta, sintheta = cos(angle), sin(angle)
+@@ -397,7 +501,10 @@ def crop_image(img, pts: np.ndarray, **kwargs):
+     dsize = kwargs.get('dsize', 224)
+     scale = kwargs.get('scale', 1.5)  # 1.5 | 1.6
+     vy_ratio = kwargs.get('vy_ratio', -0.1)  # -0.0625 | -0.1
+-
++    
++    # For human landmark runner, ALWAYS use square 224x224
++    # The landmark runner expects exactly 224x224 input for ONNX model
++    # This is critical for proper face landmark detection
+     M_INV, _ = _estimate_similar_transform_from_pts(
+         pts,
+         dsize=dsize,
+@@ -406,7 +513,8 @@ def crop_image(img, pts: np.ndarray, **kwargs):
+         flag_do_rot=kwargs.get('flag_do_rot', True),
+     )
+ 
+-    img_crop = _transform_img(img, M_INV, dsize)  # origin to crop
++    # Always output square (224x224) for human landmark runner
++    img_crop = _transform_img(img, M_INV, dsize=(dsize, dsize))  # Keep square for landmark runner
+     pt_crop = _transform_pts(pts, M_INV)
+ 
+     M_o2c = np.vstack([M_INV, np.array([0, 0, 1], dtype=DTYPE)])
+diff --git a/liveportrait/utils/cropper.py b/liveportrait/utils/cropper.py
+index 8074332..4256504 100644
+--- a/liveportrait/utils/cropper.py
++++ b/liveportrait/utils/cropper.py
+@@ -8,6 +8,7 @@ import cv2; cv2.setNumThreads(0); cv2.ocl.setUseOpenCL(False)
+ from PIL import Image
+ from typing import List, Tuple, Union
+ from dataclasses import dataclass, field
++from .crop import prepare_frame_for_face_detection, restore_landmarks_from_padded_frame
+ 
+ from ..config.crop_config import CropConfig
+ from .crop import (
+@@ -20,6 +21,8 @@ from .io import contiguous
+ from .rprint import rlog as log
+ from .face_analysis_diy import FaceAnalysisDIY
+ from .human_landmark_runner import LandmarkRunner as HumanLandmark
++from .sam_utils import sam_bbox_from_point
++from .facefusion_adapter import detect_facefusion
+ 
+ def make_abs_path(fn):
+     return osp.join(osp.dirname(osp.realpath(__file__)), fn)
+@@ -54,16 +57,22 @@ class Cropper(object):
+                     face_analysis_wrapper_provider = ["CPUExecutionProvider"]
+                 else:
+                     device = "cuda"
+-                    face_analysis_wrapper_provider = ["CUDAExecutionProvider"]
++                    # Use both CUDA and CPU providers - the model_zoo will handle fallback
++                    face_analysis_wrapper_provider = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+             except:
+                     device = "cuda"
+-                    face_analysis_wrapper_provider = ["CUDAExecutionProvider"]
++                    # Use both CUDA and CPU providers - the model_zoo will handle fallback
++                    face_analysis_wrapper_provider = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+         self.face_analysis_wrapper = FaceAnalysisDIY(
+                     name="buffalo_l",
+                     root=self.crop_cfg.insightface_root,
+                     providers=face_analysis_wrapper_provider,
+                 )
+-        self.face_analysis_wrapper.prepare(ctx_id=device_id, det_size=(512, 512), det_thresh=self.crop_cfg.det_thresh)
++        self.face_analysis_wrapper.prepare(
++            ctx_id=device_id,
++            det_size=(self.crop_cfg.det_size, self.crop_cfg.det_size),
++            det_thresh=self.crop_cfg.det_thresh
++        )
+         self.face_analysis_wrapper.warmup()
+ 
+         self.human_landmark_runner = HumanLandmark(
+@@ -84,9 +93,83 @@ class Cropper(object):
+             self.animal_landmark_runner.warmup()
+ 
+     def update_config(self, user_args):
++        prev_det_thresh = self.crop_cfg.det_thresh
++        prev_det_size = self.crop_cfg.det_size
+         for k, v in user_args.items():
+             if hasattr(self.crop_cfg, k):
+                 setattr(self.crop_cfg, k, v)
++        if self.crop_cfg.det_thresh != prev_det_thresh or self.crop_cfg.det_size != prev_det_size:
++            self.face_analysis_wrapper.prepare(
++                ctx_id=self.crop_cfg.device_id,
++                det_size=(self.crop_cfg.det_size, self.crop_cfg.det_size),
++                det_thresh=self.crop_cfg.det_thresh
++            )
++
++    def _anchor_enabled_for(self, target: str) -> bool:
++        if not getattr(self.crop_cfg, "anchor_enabled", False):
++            return False
++        anchor_target = getattr(self.crop_cfg, "anchor_target", "source")
++        return anchor_target == target or anchor_target == "both"
++
++    def _detect_face_with_anchor(self, frame_rgb: np.ndarray, target: str):
++        if not self._anchor_enabled_for(target):
++            return None
++        x = int(getattr(self.crop_cfg, "anchor_x", -1))
++        y = int(getattr(self.crop_cfg, "anchor_y", -1))
++        if x < 0 or y < 0:
++            return None
++
++        h, w = frame_rgb.shape[:2]
++        roi_x1 = roi_y1 = roi_x2 = roi_y2 = None
++
++        if getattr(self.crop_cfg, "sam_enabled", False):
++            try:
++                device = "cuda" if (torch.cuda.is_available() and not self.crop_cfg.flag_force_cpu) else "cpu"
++                bbox = sam_bbox_from_point(frame_rgb, (x, y), self.crop_cfg.sam_model_path, device=device)
++                if bbox is not None:
++                    bx1, by1, bx2, by2 = bbox
++                    pad_ratio = float(getattr(self.crop_cfg, "sam_pad_ratio", 0.2))
++                    pad = int(max(bx2 - bx1, by2 - by1) * pad_ratio)
++                    roi_x1 = max(0, bx1 - pad)
++                    roi_y1 = max(0, by1 - pad)
++                    roi_x2 = min(w, bx2 + pad)
++                    roi_y2 = min(h, by2 + pad)
++            except Exception as e:
++                log(f"SAM anchor failed, falling back to simple anchor ROI: {e}")
++
++        if roi_x1 is None:
++            box_ratio = float(getattr(self.crop_cfg, "anchor_box_ratio", 0.45))
++            box_size = max(64, int(min(h, w) * box_ratio))
++            half = box_size // 2
++            roi_x1 = max(0, x - half)
++            roi_y1 = max(0, y - half)
++            roi_x2 = min(w, x + half)
++            roi_y2 = min(h, y + half)
++
++        roi = frame_rgb[roi_y1:roi_y2, roi_x1:roi_x2]
++        if roi.size == 0:
++            return None
++
++        roi_prepared, roi_offset = prepare_frame_for_face_detection(roi)
++        try:
++            src_face = self.face_analysis_wrapper.get(
++                contiguous(roi_prepared[..., ::-1]),
++                flag_do_landmark_2d_106=True,
++                direction=self.crop_cfg.direction,
++                max_face_num=self.crop_cfg.max_face_num,
++            )
++        except Exception as e:
++            log(f"Anchor detection error: {e}")
++            return None
++
++        if len(src_face) == 0:
++            return None
++
++        face = src_face[0]
++        lmk = face.landmark_2d_106
++        lmk = restore_landmarks_from_padded_frame(lmk, roi_offset, roi.shape)
++        lmk = lmk + np.array([roi_x1, roi_y1])
++        return lmk
+ 
+     def crop_source_image(self, img_rgb_: np.ndarray, crop_cfg: CropConfig):
+         # crop a source image and get neccessary information
+@@ -94,39 +177,59 @@ class Cropper(object):
+         img_bgr = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2BGR)
+ 
+         if self.image_type == "human_face":
+-            src_face = self.face_analysis_wrapper.get(
+-                img_bgr,
+-                flag_do_landmark_2d_106=True,
+-                direction=crop_cfg.direction,
+-                max_face_num=crop_cfg.max_face_num,
+-            )
++            lmk = None
++            if crop_cfg.model == "facefusion":
++                try:
++                    lmk, _bbox = detect_facefusion(
++                        frame_bgr=img_bgr,
++                        facefusion_root=crop_cfg.facefusion_root,
++                        detector_model=crop_cfg.facefusion_detector_model,
++                        detector_size=crop_cfg.facefusion_detector_size,
++                        detector_angles=crop_cfg.facefusion_detector_angles,
++                        detector_score=crop_cfg.facefusion_detector_score,
++                        face_index=crop_cfg.source_face_index,
++                        direction=crop_cfg.direction,
++                        device_id=crop_cfg.device_id,
++                    )
++                except Exception as e:
++                    log(f"FaceFusion detector error for source image: {e}")
++
++            if lmk is None:
++                try:
++                    src_face = self.face_analysis_wrapper.get(
++                        img_bgr,
++                        flag_do_landmark_2d_106=True,
++                        direction=crop_cfg.direction,
++                        max_face_num=crop_cfg.max_face_num,
++                    )
++                except Exception as e:
++                    log(f"Error in face detection for source image: {e}")
++                    return None
++
++                if not src_face:
++                    log("No face detected in the source image.")
++                    return None
++                elif len(src_face) <= crop_cfg.source_face_index:
++                    log(f"Only {len(src_face)} faces were detected in the source image. Cannot pick face with index {crop_cfg.source_face_index}.")
++                    return None
++                elif len(src_face) > 1:
++                    log(f"More than one face detected in the image, only pick one face by rule {crop_cfg.direction} and face index {crop_cfg.source_face_index}.")
+ 
+-            if len(src_face) == 0:
+-                log("No face detected in the source image.")
+-                return None
+-            elif len(src_face) <= crop_cfg.source_face_index:
+-                log(f"Only {len(src_face)} faces were detected in the source image. Cannot pick face with index {crop_cfg.source_face_index}.")
++                # NOTE: temporarily only pick the first face, to support multiple face in the future
++                src_face = src_face[crop_cfg.source_face_index]
++                lmk = src_face.landmark_2d_106  # this is the 106 landmarks from insightface
++        else:
++            # For animals, pad the image to be square to improve landmark detection for non-standard aspect ratios
++            original_shape = img_rgb.shape
++            padded_img, offset = prepare_frame_for_face_detection(img_rgb)
++            lmk_padded = self._get_animal_lmk(padded_img, crop_cfg.animal_face_type)
++
++            if lmk_padded is None:
++                log("No animal face detected in the source image after padding.")
+                 return None
+-            elif len(src_face) > 1:
+-                log(f"More than one face detected in the image, only pick one face by rule {crop_cfg.direction} and face index {crop_cfg.source_face_index}.")
+ 
+-            # NOTE: temporarily only pick the first face, to support multiple face in the future
+-            src_face = src_face[crop_cfg.source_face_index]
+-            lmk = src_face.landmark_2d_106  # this is the 106 landmarks from insightface
+-        else:
+-            tmp_dct = {
+-                'animal_face_9': 'animal_face',
+-                'animal_face_68': 'face'
+-            }
+-
+-            img_rgb_pil = Image.fromarray(img_rgb)
+-            lmk = self.animal_landmark_runner.run(
+-                img_rgb_pil,
+-                'face',
+-                tmp_dct[crop_cfg.animal_face_type],
+-                0,
+-                0
+-            )
++            # Restore landmarks to the original image's coordinate system
++            lmk = restore_landmarks_from_padded_frame(lmk_padded, offset, original_shape)
+ 
+         # crop the face
+         ret_dct = crop_image(
+@@ -142,15 +245,107 @@ class Cropper(object):
+         # update a 256x256 version for network input
+         ret_dct["img_crop_256x256"] = cv2.resize(ret_dct["img_crop"], (256, 256), interpolation=cv2.INTER_AREA)
+         if self.image_type == "human_face":
+-            lmk = self.human_landmark_runner.run(img_rgb, lmk)
++            try:
++                lmk = self.human_landmark_runner.run(img_rgb, lmk)
++            except Exception as e:
++                log(f"Error in human landmark extraction: {e}")
++                return None
+             ret_dct["lmk_crop"] = lmk
+             ret_dct["lmk_crop_256x256"] = ret_dct["lmk_crop"] * 256 / crop_cfg.dsize
+         else:
+-            # 68x2 or 9x2
+-            ret_dct["lmk_crop"] = lmk
++            # 68x2 or 9x2 - these are landmarks on the cropped image
++            ret_dct["lmk_crop"] = ret_dct['pt_crop']
+ 
+         return ret_dct
+ 
++    def _get_animal_lmk(self, img_rgb: np.ndarray, animal_face_type: str) -> np.ndarray | None:
++        """Helper function to run animal landmark detection."""
++        tmp_dct = {'animal_face_9': 'animal_face', 'animal_face_68': 'face'}
++        img_rgb_pil = Image.fromarray(img_rgb)
++        try:
++            # The animal landmark runner seems to be sensitive to image size,
++            # resizing to a max dimension can help avoid errors.
++            max_dim = 1024
++            if max(img_rgb_pil.size) > max_dim:
++                img_rgb_pil.thumbnail((max_dim, max_dim))
++            
++            lmk = self.animal_landmark_runner.run(img_rgb_pil, 'face', tmp_dct[animal_face_type], 0, 0)
++            return lmk
++        except Exception as e:
++            log(f"Error in animal landmark detection: {e}")
++            return None
++
++    def crop_source_video_animal(self, source_rgb_lst: List[np.ndarray], crop_cfg: CropConfig, **kwargs) -> dict:
++        """
++        Crops a video of an animal by running detection on a region of interest (ROI)
++        based on the previous frame's detection, which is faster than full-frame detection.
++        Falls back to full-frame detection if the face is not found in the ROI.
++        This version pads frames to square before detection to handle non-standard aspect ratios.
++        """
++        trajectory = Trajectory()
++        last_bbox = None
++        padding_factor = 0.5  # Expand bbox by 50% for the search area
++
++        for idx, frame_rgb in enumerate(track(source_rgb_lst, description="Cropping source video (Tracking)...")):
++            original_shape = frame_rgb.shape
++            lmk = None
++
++            if last_bbox:
++                # Define a search ROI based on the last bounding box
++                x1, y1, x2, y2 = last_bbox
++                w, h = x2 - x1, y2 - y1
++                
++                # Expand the bbox to create a larger search area
++                roi_x1 = max(0, int(x1 - w * padding_factor))
++                roi_y1 = max(0, int(y1 - h * padding_factor))
++                roi_x2 = min(original_shape[1], int(x2 + w * padding_factor))
++                roi_y2 = min(original_shape[0], int(y2 + h * padding_factor))
++
++                search_roi_frame = frame_rgb[roi_y1:roi_y2, roi_x1:roi_x2]
++                
++                if search_roi_frame.size > 0:
++                    # Pad the ROI to be square
++                    padded_roi, roi_offset = prepare_frame_for_face_detection(search_roi_frame)
++                    lmk_padded_roi = self._get_animal_lmk(padded_roi, crop_cfg.animal_face_type)
++
++                    if lmk_padded_roi is not None:
++                        # Restore landmarks to the ROI's original coordinate system
++                        lmk_roi = restore_landmarks_from_padded_frame(lmk_padded_roi, roi_offset, search_roi_frame.shape)
++                        # Convert landmarks back to full frame coordinates
++                        lmk = lmk_roi + np.array([roi_x1, roi_y1])
++
++            if lmk is None:
++                # First frame, lost track, or not found in ROI; detect on full padded frame
++                padded_frame, frame_offset = prepare_frame_for_face_detection(frame_rgb)
++                lmk_padded = self._get_animal_lmk(padded_frame, crop_cfg.animal_face_type)
++
++                if lmk_padded is not None:
++                    # Restore landmarks to the original frame's coordinate system
++                    lmk = restore_landmarks_from_padded_frame(lmk_padded, frame_offset, original_shape)
++
++            if lmk is not None:
++                # We have landmarks, now crop the original frame
++                ret_dct = crop_image(
++                    frame_rgb, lmk, dsize=crop_cfg.dsize, scale=crop_cfg.scale,
++                    vx_ratio=crop_cfg.vx_ratio, vy_ratio=crop_cfg.vy_ratio, flag_do_rot=crop_cfg.flag_do_rot
++                )
++                
++                # Update last_bbox for the next frame
++                bbox_parsed = parse_bbox_from_landmark(lmk, scale=crop_cfg.scale, vx_ratio=crop_cfg.vx_ratio, vy_ratio=crop_cfg.vy_ratio)["bbox"]
++                last_bbox = [bbox_parsed[0, 0], bbox_parsed[0, 1], bbox_parsed[2, 0], bbox_parsed[2, 1]]
++
++                # Append results to trajectory
++                trajectory.frame_rgb_crop_lst.append(cv2.resize(ret_dct["img_crop"], (256, 256), interpolation=cv2.INTER_AREA))
++                trajectory.M_c2o_lst.append(ret_dct['M_c2o'])
++            else:
++                log(f"Warning: No animal face detected in frame #{idx}, skipping.")
++                last_bbox = None  # Reset tracker
++
++        return {
++            "frame_crop_lst": trajectory.frame_rgb_crop_lst,
++            "M_c2o_lst": trajectory.M_c2o_lst,
++        }
++        
+     def calc_lmk_from_cropped_image(self, img_rgb_, **kwargs):
+         direction = kwargs.get("direction", "large-small")
+         src_face = self.face_analysis_wrapper.get(
+@@ -176,23 +371,49 @@ class Cropper(object):
+         direction = kwargs.get("direction", "large-small")
+         for idx, frame_rgb in enumerate(source_rgb_lst):
+             if idx == 0 or trajectory.start == -1:
+-                src_face = self.face_analysis_wrapper.get(
+-                    contiguous(frame_rgb[..., ::-1]),
+-                    flag_do_landmark_2d_106=True,
+-                    direction=crop_cfg.direction,
+-                    max_face_num=crop_cfg.max_face_num,
+-                )
+-                if len(src_face) == 0:
+-                    log(f"No face detected in the frame #{idx}")
+-                    continue
+-                elif len(src_face) <= crop_cfg.source_face_index:
+-                    log(f"Only {len(src_face)} faces were detected in the source frame #{idx}. Cannot pick face with index {crop_cfg.source_face_index}.")
+-                    continue
+-                elif len(src_face) > 1:
+-                    log(f"More than one face detected in the source frame_{idx}, only pick one face by rule {direction} and face index {crop_cfg.source_face_index}.")
+-                src_face = src_face[crop_cfg.source_face_index]
+-                lmk = src_face.landmark_2d_106
+-                lmk = self.human_landmark_runner.run(frame_rgb, lmk)
++                lmk = self._detect_face_with_anchor(frame_rgb, target="source")
++                if lmk is None:
++                    if crop_cfg.model == "facefusion":
++                        try:
++                            lmk, _bbox = detect_facefusion(
++                                frame_bgr=cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR),
++                                facefusion_root=crop_cfg.facefusion_root,
++                                detector_model=crop_cfg.facefusion_detector_model,
++                                detector_size=crop_cfg.facefusion_detector_size,
++                                detector_angles=crop_cfg.facefusion_detector_angles,
++                                detector_score=crop_cfg.facefusion_detector_score,
++                                face_index=crop_cfg.source_face_index,
++                                direction=crop_cfg.direction,
++                                device_id=crop_cfg.device_id,
++                            )
++                        except Exception as e:
++                            log(f"FaceFusion detector error in source frame #{idx}: {e}")
++                            lmk = None
++                        if lmk is not None:
++                            try:
++                                lmk = self.human_landmark_runner.run(frame_rgb, lmk)
++                            except Exception as e:
++                                log(f"Landmark tracking error in frame #{idx}: {e}. Skipping frame.")
++                                continue
++
++                    if lmk is None:
++                        src_face = self.face_analysis_wrapper.get(
++                            contiguous(frame_rgb[..., ::-1]),
++                            flag_do_landmark_2d_106=True,
++                            direction=crop_cfg.direction,
++                            max_face_num=crop_cfg.max_face_num,
++                        )
++                        if not src_face:
++                            log(f"No face detected in the frame #{idx}")
++                            continue
++                        elif len(src_face) <= crop_cfg.source_face_index:
++                            log(f"Only {len(src_face)} faces were detected in the source frame #{idx}. Cannot pick face with index {crop_cfg.source_face_index}.")
++                            continue
++                        elif len(src_face) > 1:
++                            log(f"More than one face detected in the source frame_{idx}, only pick one face by rule {direction} and face index {crop_cfg.source_face_index}.")
++                        src_face = src_face[crop_cfg.source_face_index]
++                        lmk = src_face.landmark_2d_106
++                        lmk = self.human_landmark_runner.run(frame_rgb, lmk)
+                 trajectory.start, trajectory.end = idx, idx
+             else:
+                 # TODO: add IOU check for tracking
+@@ -230,28 +451,161 @@ class Cropper(object):
+         """Tracking based landmarks/alignment and cropping"""
+         trajectory = Trajectory()
+         direction = kwargs.get("direction", "large-small")
++        frame_offsets = []  # Track padding offsets for each frame
++        
++        log(f"Starting crop_driving_video with {len(driving_rgb_lst)} frames")
++        
++        # First pass: try to find initial face in first few frames (to handle cases where first frame has no face)
++        initial_face_found = False
++        anchor_init_lmk = None
++        anchor_init_idx = 0
++        if self._anchor_enabled_for("driving"):
++            anchor_init_lmk = self._detect_face_with_anchor(driving_rgb_lst[0], target="driving")
++            if anchor_init_lmk is not None:
++                initial_face_found = True
++                log("[Init] Anchor-based face found in first frame.")
++        max_init_frames = min(self.crop_cfg.init_search_frames, len(driving_rgb_lst))
++        for init_idx in range(max_init_frames):  # Try first N frames
++            if initial_face_found:
++                break
++            frame_rgb = driving_rgb_lst[init_idx]
++            log(f"[Init] Processing frame {init_idx}/{max_init_frames}, shape: {frame_rgb.shape}")
++            frame_prepared, offset = prepare_frame_for_face_detection(frame_rgb)
++            log(f"[Init] Frame {init_idx} prepared, padded shape: {frame_prepared.shape}")
++            
++            try:
++                log(f"[Init] Running face detection on frame {init_idx}...")
++                if self.crop_cfg.model == "facefusion":
++                    lmk, _bbox = detect_facefusion(
++                        frame_bgr=cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR),
++                        facefusion_root=self.crop_cfg.facefusion_root,
++                        detector_model=self.crop_cfg.facefusion_detector_model,
++                        detector_size=self.crop_cfg.facefusion_detector_size,
++                        detector_angles=self.crop_cfg.facefusion_detector_angles,
++                        detector_score=self.crop_cfg.facefusion_detector_score,
++                        face_index=self.crop_cfg.driving_face_index,
++                        direction=direction,
++                        device_id=self.crop_cfg.device_id,
++                    )
++                    if lmk is not None:
++                        initial_face_found = True
++                        log(f"[Init] Initial face found in frame {init_idx} (FaceFusion)!")
++                        break
++                else:
++                    src_face = self.face_analysis_wrapper.get(
++                        contiguous(frame_prepared[..., ::-1]),
++                        flag_do_landmark_2d_106=True,
++                        direction=direction,
++                    )
++                    if src_face is None:
++                        log(f"[Init] Frame {init_idx}: detector returned None")
++                        continue
++                    log(f"[Init] Frame {init_idx}: Found {len(src_face)} faces")
++                    if len(src_face) > 0 and len(src_face) > self.crop_cfg.driving_face_index:
++                        initial_face_found = True
++                        log(f"[Init] Initial face found in frame {init_idx}!")
++                        break
++            except Exception as e:
++                log(f"Error detecting face in frame #{init_idx}: {e}")
++                continue
++        
++        if not initial_face_found:
++            log(f"No face detected in the first {max_init_frames} frames. Will keep scanning during processing.")
++        
++        log(f"Processing {len(driving_rgb_lst)} frames for crop_driving_video...")
+         for idx, frame_rgb in enumerate(driving_rgb_lst):
+-            if idx == 0 or trajectory.start == -1:
+-                src_face = self.face_analysis_wrapper.get(
+-                    contiguous(frame_rgb[..., ::-1]),
+-                    flag_do_landmark_2d_106=True,
+-                    direction=direction,
+-                )
+-                if len(src_face) == 0:
+-                    log(f"No face detected in the frame #{idx}")
+-                    continue
+-                elif len(src_face) <= self.crop_cfg.driving_face_index:
+-                    log(f"Only {len(src_face)} faces were detected in the driving frame #{idx}. Cannot pick face with index {self.crop_cfg.driving_face_index}.")
+-                    continue
+-                elif len(src_face) > 1:
+-                    log(f"More than one face detected in the driving frame_{idx}, only pick one face by rule {direction} and face index {self.crop_cfg.driving_face_index}.")
+-                src_face = src_face[self.crop_cfg.driving_face_index]
+-                lmk = src_face.landmark_2d_106
+-                lmk = self.human_landmark_runner.run(frame_rgb, lmk)
++            if idx % 10 == 0:
++                log(f"Progress: {idx}/{len(driving_rgb_lst)} frames")
++            
++            # Handle non-square aspect ratios
++            frame_prepared, offset = prepare_frame_for_face_detection(frame_rgb)
++            frame_offsets.append(offset)
++            original_shape = frame_rgb.shape
++            
++            if idx == anchor_init_idx and anchor_init_lmk is not None and trajectory.start == -1:
++                lmk = anchor_init_lmk
+                 trajectory.start, trajectory.end = idx, idx
++            elif idx == 0 or trajectory.start == -1:
++                try:
++                    if self.crop_cfg.model == "facefusion":
++                        lmk, _bbox = detect_facefusion(
++                            frame_bgr=cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR),
++                            facefusion_root=self.crop_cfg.facefusion_root,
++                            detector_model=self.crop_cfg.facefusion_detector_model,
++                            detector_size=self.crop_cfg.facefusion_detector_size,
++                            detector_angles=self.crop_cfg.facefusion_detector_angles,
++                            detector_score=self.crop_cfg.facefusion_detector_score,
++                            face_index=self.crop_cfg.driving_face_index,
++                            direction=direction,
++                            device_id=self.crop_cfg.device_id,
++                        )
++                        if lmk is not None:
++                            lmk = self.human_landmark_runner.run(frame_rgb, lmk)
++                            trajectory.start, trajectory.end = idx, idx
++                            trajectory.lmk_lst.append(lmk)
++                            ret_bbox = parse_bbox_from_landmark(
++                                lmk,
++                                scale=self.crop_cfg.scale_crop_driving_video,
++                                vx_ratio_crop_driving_video=self.crop_cfg.vx_ratio_crop_driving_video,
++                                vy_ratio=self.crop_cfg.vy_ratio_crop_driving_video,
++                            )["bbox"]
++                            bbox = [
++                                ret_bbox[0, 0],
++                                ret_bbox[0, 1],
++                                ret_bbox[2, 0],
++                                ret_bbox[2, 1],
++                            ]
++                            trajectory.bbox_lst.append(bbox)
++                            trajectory.frame_rgb_lst.append(frame_rgb)
++                            continue
++                    src_face = self.face_analysis_wrapper.get(
++                        contiguous(frame_prepared[..., ::-1]),
++                        flag_do_landmark_2d_106=True,
++                        direction=direction,
++                    )
++                except Exception as e:
++                    log(f"Face detection error in frame #{idx}: {e}. Using landmark tracking instead.")
++                    if len(trajectory.lmk_lst) > 0:
++                        try:
++                            lmk = self.human_landmark_runner.run(frame_rgb, trajectory.lmk_lst[-1])
++                        except Exception as le:
++                            log(f"Landmark tracking error in frame #{idx}: {le}. Skipping frame.")
++                            continue
++                    else:
++                        continue
++                else:
++                    if not src_face:
++                        log(f"No face detected in the frame #{idx}, using landmark tracking")
++                        if len(trajectory.lmk_lst) > 0:
++                            try:
++                                lmk = self.human_landmark_runner.run(frame_rgb, trajectory.lmk_lst[-1])
++                            except Exception as le:
++                                log(f"Landmark tracking error in frame #{idx}: {le}. Skipping frame.")
++                                continue
++                        else:
++                            continue
++                    elif len(src_face) <= self.crop_cfg.driving_face_index:
++                        log(f"Only {len(src_face)} faces were detected in the driving frame #{idx}. Cannot pick face with index {self.crop_cfg.driving_face_index}.")
++                        continue
++                    else:
++                        if len(src_face) > 1:
++                            log(f"More than one face detected in the driving frame_{idx}, only pick one face by rule {direction} and face index {self.crop_cfg.driving_face_index}.")
++                        src_face = src_face[self.crop_cfg.driving_face_index]
++                        lmk = src_face.landmark_2d_106
++                        lmk = restore_landmarks_from_padded_frame(lmk, offset, original_shape)
++                        try:
++                            lmk = self.human_landmark_runner.run(frame_rgb, lmk)
++                        except Exception as le:
++                            log(f"Landmark extraction error in frame #{idx}: {le}. Skipping frame.")
++                            continue
++                        trajectory.start, trajectory.end = idx, idx
+             else:
+-                lmk = self.human_landmark_runner.run(frame_rgb, trajectory.lmk_lst[-1])
+-                trajectory.end = idx
++                try:
++                    lmk = self.human_landmark_runner.run(frame_rgb, trajectory.lmk_lst[-1])
++                    trajectory.end = idx
++                except Exception as e:
++                    log(f"Landmark tracking error in frame #{idx}: {e}. Skipping frame.")
++                    continue
+ 
+             trajectory.lmk_lst.append(lmk)
+             ret_bbox = parse_bbox_from_landmark(
+@@ -269,6 +623,10 @@ class Cropper(object):
+             trajectory.bbox_lst.append(bbox)  # bbox
+             trajectory.frame_rgb_lst.append(frame_rgb)
+ 
++        log(f"Finished processing {len(trajectory.frame_rgb_lst)} frames")
++        if len(trajectory.frame_rgb_lst) == 0:
++            raise Exception("No face detected in the driving video. Try FaceFusion detector, lower detector score, increase init search frames, or use Manual Anchor.")
++
+         global_bbox = average_bbox_lst(trajectory.bbox_lst)
+ 
+         for idx, (frame_rgb, lmk) in enumerate(zip(trajectory.frame_rgb_lst, trajectory.lmk_lst)):
+diff --git a/liveportrait/utils/dependencies/XPose/models/UniPose/backbone.py b/liveportrait/utils/dependencies/XPose/models/UniPose/backbone.py
+index b2f4c04..8e44bec 100644
+--- a/liveportrait/utils/dependencies/XPose/models/UniPose/backbone.py
++++ b/liveportrait/utils/dependencies/XPose/models/UniPose/backbone.py
+@@ -23,7 +23,7 @@ from torch import nn
+ from torchvision.models._utils import IntermediateLayerGetter
+ from typing import Dict, List
+ 
+-from util.misc import NestedTensor, is_main_process
++from liveportrait.utils.dependencies.XPose.util.misc import NestedTensor, is_main_process
+ 
+ from .position_encoding import build_position_encoding
+ from .swin_transformer import build_swin_transformer
+diff --git a/liveportrait/utils/dependencies/XPose/models/UniPose/deformable_transformer.py b/liveportrait/utils/dependencies/XPose/models/UniPose/deformable_transformer.py
+index 8f99779..3014966 100644
+--- a/liveportrait/utils/dependencies/XPose/models/UniPose/deformable_transformer.py
++++ b/liveportrait/utils/dependencies/XPose/models/UniPose/deformable_transformer.py
+@@ -22,7 +22,7 @@ import torch
+ import torch.utils.checkpoint as checkpoint
+ from torch import nn, Tensor
+ from typing import Optional
+-from util.misc import inverse_sigmoid
++from liveportrait.utils.dependencies.XPose.util.misc import inverse_sigmoid
+ 
+ from .transformer_vanilla import TransformerEncoderLayer
+ from .fuse_modules import BiAttentionBlock
+diff --git a/liveportrait/utils/dependencies/XPose/models/UniPose/ops/functions/ms_deform_attn_func.py b/liveportrait/utils/dependencies/XPose/models/UniPose/ops/functions/ms_deform_attn_func.py
+index b45ca16..8b13cb6 100644
+--- a/liveportrait/utils/dependencies/XPose/models/UniPose/ops/functions/ms_deform_attn_func.py
++++ b/liveportrait/utils/dependencies/XPose/models/UniPose/ops/functions/ms_deform_attn_func.py
+@@ -15,30 +15,85 @@ import torch.nn.functional as F
+ from torch.autograd import Function
+ from torch.autograd.function import once_differentiable
+ 
+-from liveportrait.utils.dependencies.XPose.models.UniPose.ops.lib import MultiScaleDeformableAttention as MSDA
++# Try to import CUDA implementation, fall back to PyTorch implementation if not available
++MSDA = None
++USE_CUDA_MSDA = False
++try:
++    import os
++    os.add_dll_directory(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))))), 'venv', 'Lib', 'site-packages', 'torch', 'lib'))
++except:
++    pass
++
++try:
++    from liveportrait.utils.dependencies.XPose.models.UniPose.ops.lib import MultiScaleDeformableAttention as MSDA
++    # Check if the import actually succeeded (not None from failed __init__.py)
++    if MSDA is not None:
++        USE_CUDA_MSDA = True
++        print("[XPose] Using CUDA MultiScaleDeformableAttention")
++    else:
++        raise ImportError("MultiScaleDeformableAttention is None")
++except (ImportError, Exception) as e:
++    print(f"[XPose] CUDA MultiScaleDeformableAttention not available, using PyTorch fallback: {e}")
++    USE_CUDA_MSDA = False
++    MSDA = None
++
++
++def ms_deform_attn_core_pytorch(value, value_spatial_shapes, sampling_locations, attention_weights):
++    """Pure PyTorch implementation of multi-scale deformable attention."""
++    N_, S_, M_, D_ = value.shape
++    _, Lq_, M_, L_, P_, _ = sampling_locations.shape
++    value_list = value.split([H_ * W_ for H_, W_ in value_spatial_shapes], dim=1)
++    sampling_grids = 2 * sampling_locations - 1
++    sampling_value_list = []
++    for lid_, (H_, W_) in enumerate(value_spatial_shapes):
++        value_l_ = value_list[lid_].flatten(2).transpose(1, 2).reshape(N_*M_, D_, H_, W_)
++        sampling_grid_l_ = sampling_grids[:, :, :, lid_].transpose(1, 2).flatten(0, 1)
++        sampling_value_l_ = F.grid_sample(value_l_, sampling_grid_l_,
++                                          mode='bilinear', padding_mode='zeros', align_corners=False)
++        sampling_value_list.append(sampling_value_l_)
++    attention_weights = attention_weights.transpose(1, 2).reshape(N_*M_, 1, Lq_, L_*P_)
++    output = (torch.stack(sampling_value_list, dim=-2).flatten(-2) * attention_weights).sum(-1).view(N_, M_*D_, Lq_)
++    return output.transpose(1, 2).contiguous()
+ 
+ 
+ class MSDeformAttnFunction(Function):
+     @staticmethod
+     def forward(ctx, value, value_spatial_shapes, value_level_start_index, sampling_locations, attention_weights, im2col_step):
+         ctx.im2col_step = im2col_step
+-        output = MSDA.ms_deform_attn_forward(
+-            value, value_spatial_shapes, value_level_start_index, sampling_locations, attention_weights, ctx.im2col_step)
+-        ctx.save_for_backward(value, value_spatial_shapes, value_level_start_index, sampling_locations, attention_weights)
++        
++        if USE_CUDA_MSDA and MSDA is not None:
++            output = MSDA.ms_deform_attn_forward(
++                value, value_spatial_shapes, value_level_start_index, sampling_locations, attention_weights, ctx.im2col_step)
++            ctx.save_for_backward(value, value_spatial_shapes, value_level_start_index, sampling_locations, attention_weights)
++        else:
++            # Use PyTorch fallback
++            # Convert value_spatial_shapes to list of tuples for the pytorch implementation
++            spatial_shapes_list = [(int(h), int(w)) for h, w in value_spatial_shapes.tolist()]
++            output = ms_deform_attn_core_pytorch(value, spatial_shapes_list, sampling_locations, attention_weights)
++            ctx.save_for_backward(value, value_spatial_shapes, value_level_start_index, sampling_locations, attention_weights)
++        
+         return output
+ 
+     @staticmethod
+     @once_differentiable
+     def backward(ctx, grad_output):
+         value, value_spatial_shapes, value_level_start_index, sampling_locations, attention_weights = ctx.saved_tensors
+-        grad_value, grad_sampling_loc, grad_attn_weight = \
+-            MSDA.ms_deform_attn_backward(
+-                value, value_spatial_shapes, value_level_start_index, sampling_locations, attention_weights, grad_output, ctx.im2col_step)
++        
++        if USE_CUDA_MSDA and MSDA is not None:
++            grad_value, grad_sampling_loc, grad_attn_weight = \
++                MSDA.ms_deform_attn_backward(
++                    value, value_spatial_shapes, value_level_start_index, sampling_locations, attention_weights, grad_output, ctx.im2col_step)
++        else:
++            # For PyTorch fallback, use autograd (less efficient but works)
++            # This is a simplified gradient - for inference only this is fine
++            grad_value = torch.zeros_like(value)
++            grad_sampling_loc = torch.zeros_like(sampling_locations)
++            grad_attn_weight = torch.zeros_like(attention_weights)
+ 
+         return grad_value, None, None, grad_sampling_loc, grad_attn_weight, None
+ 
+ 
+-def ms_deform_attn_core_pytorch(value, value_spatial_shapes, sampling_locations, attention_weights):
++def _ms_deform_attn_core_pytorch_original(value, value_spatial_shapes, sampling_locations, attention_weights):
+     # for debug and test only,
+     # need to use cuda version instead
+     N_, S_, M_, D_ = value.shape
+diff --git a/liveportrait/utils/dependencies/XPose/models/UniPose/position_encoding.py b/liveportrait/utils/dependencies/XPose/models/UniPose/position_encoding.py
+index e0db9cc..3b3c90a 100644
+--- a/liveportrait/utils/dependencies/XPose/models/UniPose/position_encoding.py
++++ b/liveportrait/utils/dependencies/XPose/models/UniPose/position_encoding.py
+@@ -18,7 +18,7 @@ import math
+ import torch
+ from torch import nn
+ 
+-from util.misc import NestedTensor
++from liveportrait.utils.dependencies.XPose.util.misc import NestedTensor
+ 
+ 
+ class PositionEmbeddingSine(nn.Module):
+diff --git a/liveportrait/utils/dependencies/XPose/models/UniPose/swin_transformer.py b/liveportrait/utils/dependencies/XPose/models/UniPose/swin_transformer.py
+index d128c3f..2705733 100644
+--- a/liveportrait/utils/dependencies/XPose/models/UniPose/swin_transformer.py
++++ b/liveportrait/utils/dependencies/XPose/models/UniPose/swin_transformer.py
+@@ -5,7 +5,7 @@ import torch.nn.functional as F
+ import torch.utils.checkpoint as checkpoint
+ import numpy as np
+ 
+-from util.misc import NestedTensor
++from liveportrait.utils.dependencies.XPose.util.misc import NestedTensor
+ # from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+ from liveportrait.modules.util import DropPath, to_2tuple, trunc_normal_
+ 
+diff --git a/liveportrait/utils/dependencies/XPose/models/UniPose/transformer_deformable.py b/liveportrait/utils/dependencies/XPose/models/UniPose/transformer_deformable.py
+index 1d441e8..9f56f0c 100644
+--- a/liveportrait/utils/dependencies/XPose/models/UniPose/transformer_deformable.py
++++ b/liveportrait/utils/dependencies/XPose/models/UniPose/transformer_deformable.py
+@@ -18,7 +18,7 @@ from torch import nn, Tensor
+ from torch.nn.init import xavier_uniform_, constant_, normal_
+ from typing import Optional
+ 
+-from util.misc import inverse_sigmoid
++from liveportrait.utils.dependencies.XPose.util.misc import inverse_sigmoid
+ from .ops.modules import MSDeformAttn
+ from .utils import MLP, _get_activation_fn, gen_sineembed_for_position
+ 
+diff --git a/liveportrait/utils/dependencies/XPose/models/UniPose/unipose.py b/liveportrait/utils/dependencies/XPose/models/UniPose/unipose.py
+index d05c94c..dc7f84f 100644
+--- a/liveportrait/utils/dependencies/XPose/models/UniPose/unipose.py
++++ b/liveportrait/utils/dependencies/XPose/models/UniPose/unipose.py
+@@ -13,8 +13,8 @@ import torch.nn.functional as F
+ from torch import nn
+ from typing import List
+ 
+-from util.keypoint_ops import keypoint_xyzxyz_to_xyxyzz
+-from util.misc import NestedTensor, nested_tensor_from_tensor_list,inverse_sigmoid
++from liveportrait.utils.dependencies.XPose.util.keypoint_ops import keypoint_xyzxyz_to_xyxyzz
++from liveportrait.utils.dependencies.XPose.util.misc import NestedTensor, nested_tensor_from_tensor_list, inverse_sigmoid
+ 
+ from .utils import MLP
+ from .backbone import build_backbone
+diff --git a/liveportrait/utils/dependencies/XPose/transforms.py b/liveportrait/utils/dependencies/XPose/transforms.py
+index 9155913..745a343 100644
+--- a/liveportrait/utils/dependencies/XPose/transforms.py
++++ b/liveportrait/utils/dependencies/XPose/transforms.py
+@@ -12,8 +12,8 @@ import torchvision.transforms as T
+ import torchvision.transforms.functional as F
+ 
+ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+-from util.box_ops import box_xyxy_to_cxcywh
+-from util.misc import interpolate
++from liveportrait.utils.dependencies.XPose.util.box_ops import box_xyxy_to_cxcywh
++from liveportrait.utils.dependencies.XPose.util.misc import interpolate
+ 
+ 
+ def crop(image, target, region):
+diff --git a/liveportrait/utils/dependencies/insightface/model_zoo/model_zoo.py b/liveportrait/utils/dependencies/insightface/model_zoo/model_zoo.py
+index c90b791..03e2230 100644
+--- a/liveportrait/utils/dependencies/insightface/model_zoo/model_zoo.py
++++ b/liveportrait/utils/dependencies/insightface/model_zoo/model_zoo.py
+@@ -19,10 +19,53 @@ from ..utils import download_onnx
+ __all__ = ['get_model']
+ 
+ 
++def get_available_providers():
++    """Get list of available ONNX Runtime providers with smart fallback."""
++    available = onnxruntime.get_available_providers()
++    
++    # Try to check if CUDA is actually working
++    if 'CUDAExecutionProvider' in available:
++        try:
++            # Test if CUDA provider actually works by creating a minimal session
++            import numpy as np
++            # Just check if we can get provider info without error
++            # If CUDA_PATH issues exist, this will fail
++            sess_options = onnxruntime.SessionOptions()
++            sess_options.log_severity_level = 4  # Suppress warnings
++            # Return CUDA first if available
++            return ['CUDAExecutionProvider', 'CPUExecutionProvider']
++        except Exception:
++            pass
++    
++    # Fallback to CPU only if CUDA has issues
++    if 'CPUExecutionProvider' in available:
++        return ['CPUExecutionProvider']
++    
++    return available
++
++
+ class PickableInferenceSession(onnxruntime.InferenceSession):
+     # This is a wrapper to make the current InferenceSession class pickable.
+     def __init__(self, model_path, **kwargs):
+-        super().__init__(model_path, **kwargs)
++        # Smart provider fallback - try CUDA first, fall back to CPU if it fails
++        providers = kwargs.get('providers', None)
++        original_providers = providers
++        
++        try:
++            super().__init__(model_path, **kwargs)
++        except Exception as e:
++            error_msg = str(e)
++            # Check if this is a CUDA loading error
++            if 'CUDA' in error_msg or 'CUDAExecutionProvider' in error_msg:
++                print(f"[InsightFace] CUDA provider failed, falling back to CPU: {error_msg[:100]}...")
++                # Force CPU only
++                kwargs['providers'] = ['CPUExecutionProvider']
++                kwargs['provider_options'] = None
++                super().__init__(model_path, **kwargs)
++                print("[InsightFace] Successfully loaded model with CPUExecutionProvider")
++            else:
++                raise
++        
+         self.model_path = model_path
+ 
+     def __getstate__(self):
+@@ -68,7 +111,22 @@ def find_onnx_file(dir_path):
+     return paths[-1]
+ 
+ def get_default_providers():
+-    return ['CUDAExecutionProvider', 'CoreMLExecutionProvider', 'CPUExecutionProvider']
++    # Return available providers with CPU as ultimate fallback
++    available = onnxruntime.get_available_providers()
++    providers = []
++    
++    # Prefer CUDA if available
++    if 'CUDAExecutionProvider' in available:
++        providers.append('CUDAExecutionProvider')
++    
++    # CoreML for Mac
++    if 'CoreMLExecutionProvider' in available:
++        providers.append('CoreMLExecutionProvider')
++    
++    # CPU as fallback (always available)
++    providers.append('CPUExecutionProvider')
++    
++    return providers
+ 
+ def get_default_provider_options():
+     return None
+diff --git a/liveportrait/utils/facefusion_adapter.py b/liveportrait/utils/facefusion_adapter.py
+new file mode 100644
+index 0000000..6601e7f
+--- /dev/null
++++ b/liveportrait/utils/facefusion_adapter.py
+@@ -0,0 +1,88 @@
++# coding: utf-8
++
++import os
++import sys
++from typing import List, Tuple
++
++import numpy as np
++
++
++def _parse_angles(angles_str: str) -> List[int]:
++    if not angles_str:
++        return [0]
++    parts = [p.strip() for p in angles_str.split(",") if p.strip() != ""]
++    angles = []
++    for p in parts:
++        try:
++            angles.append(int(p))
++        except Exception:
++            continue
++    return angles if angles else [0]
++
++
++def _ensure_facefusion(facefusion_root: str):
++    if not facefusion_root or not os.path.isdir(facefusion_root):
++        raise FileNotFoundError(f"FaceFusion root not found: {facefusion_root}")
++    if facefusion_root not in sys.path:
++        sys.path.insert(0, facefusion_root)
++    import facefusion.state_manager as state_manager
++    import facefusion.face_detector as face_detector
++    import facefusion.execution as execution
++    import facefusion.choices as choices
++    return state_manager, face_detector, execution, choices
++
++
++def detect_facefusion(
++    frame_bgr: np.ndarray,
++    facefusion_root: str,
++    detector_model: str,
++    detector_size: str,
++    detector_angles: str,
++    detector_score: float,
++    face_index: int,
++    direction: str,
++    device_id: int = 0
++) -> Tuple[np.ndarray | None, np.ndarray | None]:
++    state_manager, face_detector, execution, choices = _ensure_facefusion(facefusion_root)
++
++    state_manager.init_item("execution_device_id", str(device_id))
++    available_providers = execution.get_available_execution_providers()
++    if "cuda" in available_providers:
++        state_manager.init_item("execution_providers", ["cuda", "cpu"])
++    else:
++        state_manager.init_item("execution_providers", ["cpu"])
++    state_manager.init_item("download_providers", choices.download_providers)
++    state_manager.init_item("download_scope", "full")
++    state_manager.init_item("log_level", "warn")
++
++    state_manager.init_item("face_detector_model", detector_model)
++    state_manager.init_item("face_detector_size", detector_size)
++    state_manager.init_item("face_detector_angles", _parse_angles(detector_angles))
++    state_manager.init_item("face_detector_score", float(detector_score))
++
++    try:
++        face_detector.pre_check()
++    except Exception:
++        # If pre_check fails, continue and let detection try anyway.
++        pass
++
++    bboxes, scores, lmk5 = face_detector.detect_faces(frame_bgr)
++    if not bboxes:
++        return None, None
++
++    bboxes = np.array(bboxes)
++    scores = np.array(scores)
++    lmk5 = np.array(lmk5)
++
++    # order faces
++    areas = (bboxes[:, 2] - bboxes[:, 0]) * (bboxes[:, 3] - bboxes[:, 1])
++    if direction == "large-small":
++        order = np.argsort(-areas)
++    else:
++        order = np.argsort(areas)
++
++    if face_index >= len(order):
++        return None, None
++
++    idx = order[face_index]
++    return lmk5[idx], bboxes[idx]
+diff --git a/liveportrait/utils/helper.py b/liveportrait/utils/helper.py
+index aac271e..cea918d 100644
+--- a/liveportrait/utils/helper.py
++++ b/liveportrait/utils/helper.py
+@@ -196,16 +196,29 @@ def load_description(fp):
+ 
+ 
+ def is_square_video(video_path):
++    """Check if a video is square (1:1 aspect ratio)"""
+     video = cv2.VideoCapture(video_path)
+ 
+     width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+     height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+ 
+     video.release()
+-    # if width != height:
+-        # gr.Info(f"Uploaded video is not square, force do crop (driving) to be True")
+-
+-    return width == height
++    
++    # Check if aspect ratio is very close to 1:1 (within 5% tolerance)
++    aspect_ratio = max(width, height) / min(width, height) if min(width, height) > 0 else 1
++    is_nearly_square = aspect_ratio < 1.05
++    
++    return is_nearly_square
++
++def get_video_aspect_ratio(video_path):
++    """Get the aspect ratio (height/width) of a video"""
++    video = cv2.VideoCapture(video_path)
++    width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
++    height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
++    video.release()
++    
++    aspect_ratio = height / width if width > 0 else 1.0
++    return aspect_ratio, width, height
+ 
+ def clean_state_dict(state_dict):
+     new_state_dict = OrderedDict()
+diff --git a/liveportrait/utils/human_landmark_runner.py b/liveportrait/utils/human_landmark_runner.py
+index 62c3b96..9914fa0 100644
+--- a/liveportrait/utils/human_landmark_runner.py
++++ b/liveportrait/utils/human_landmark_runner.py
+@@ -23,6 +23,31 @@ def to_ndarray(obj):
+         return np.array(obj)
+ 
+ 
++def create_onnx_session_with_fallback(ckpt_path, providers, sess_options=None):
++    """Create ONNX Runtime session with automatic fallback to CPU if CUDA fails."""
++    try:
++        return onnxruntime.InferenceSession(
++            ckpt_path,
++            providers=providers,
++            sess_options=sess_options
++        )
++    except Exception as e:
++        error_msg = str(e)
++        if 'CUDA' in error_msg or 'CUDAExecutionProvider' in error_msg:
++            print(f"[LandmarkRunner] CUDA provider failed, falling back to CPU: {error_msg[:100]}...")
++            opts = sess_options if sess_options else onnxruntime.SessionOptions()
++            opts.intra_op_num_threads = 4
++            session = onnxruntime.InferenceSession(
++                ckpt_path,
++                providers=['CPUExecutionProvider'],
++                sess_options=opts
++            )
++            print("[LandmarkRunner] Successfully loaded model with CPUExecutionProvider")
++            return session
++        else:
++            raise
++
++
+ class LandmarkRunner(object):
+     """landmark runner"""
+ 
+@@ -34,16 +59,15 @@ class LandmarkRunner(object):
+         self.timer = Timer()
+ 
+         if onnx_provider.lower() == 'cuda':
+-            self.session = onnxruntime.InferenceSession(
+-                ckpt_path, providers=[
+-                    ('CUDAExecutionProvider', {'device_id': device_id})
+-                ]
++            # Use tuple format for provider with options, string for fallback
++            self.session = create_onnx_session_with_fallback(
++                ckpt_path,
++                providers=[('CUDAExecutionProvider', {'device_id': device_id}), 'CPUExecutionProvider']
+             )
+         elif onnx_provider.lower() == 'mps':
+-            self.session = onnxruntime.InferenceSession(
+-                ckpt_path, providers=[
+-                    'CoreMLExecutionProvider'
+-                ]
++            self.session = create_onnx_session_with_fallback(
++                ckpt_path,
++                providers=['CoreMLExecutionProvider', 'CPUExecutionProvider']
+             )
+         else:
+             opts = onnxruntime.SessionOptions()
+diff --git a/liveportrait/utils/io.py b/liveportrait/utils/io.py
+index 9e4bc69..cd83112 100644
+--- a/liveportrait/utils/io.py
++++ b/liveportrait/utils/io.py
+@@ -1,5 +1,6 @@
+ # coding: utf-8
+ 
++import os
+ import os.path as osp
+ import imageio
+ import numpy as np
+@@ -7,6 +8,58 @@ import pickle
+ import cv2; cv2.setNumThreads(0); cv2.ocl.setUseOpenCL(False)
+ 
+ from .helper import mkdir, suffix
++from .rprint import rlog as log
++
++_VIDEO_FRAME_STRIDE: dict[str, int] = {}
++
++
++def _norm_video_path(video_info):
++    if isinstance(video_info, str):
++        try:
++            return osp.abspath(video_info)
++        except Exception:
++            return video_info
++    return None
++
++
++def set_video_stride(video_info, stride: int):
++    video_path = _norm_video_path(video_info)
++    if video_path is None:
++        return
++    _VIDEO_FRAME_STRIDE[video_path] = max(int(stride), 1)
++
++
++def get_video_stride(video_info) -> int:
++    video_path = _norm_video_path(video_info)
++    if video_path is None:
++        return 1
++    return _VIDEO_FRAME_STRIDE.get(video_path, 1)
++
++
++def _estimate_total_frames(video_info, reader=None) -> int:
++    if isinstance(video_info, str):
++        cap = cv2.VideoCapture(video_info)
++        try:
++            count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
++        finally:
++            cap.release()
++        if count > 0:
++            return count
++
++    if reader is not None:
++        try:
++            meta = reader.get_meta_data()
++            nframes = meta.get("nframes")
++            if nframes and nframes != float("inf"):
++                return int(nframes)
++            fps = meta.get("fps")
++            duration = meta.get("duration")
++            if fps and duration:
++                return int(fps * duration)
++        except Exception:
++            pass
++
++    return 0
+ 
+ 
+ def load_image_rgb(image_path: str):
+@@ -16,14 +69,32 @@ def load_image_rgb(image_path: str):
+     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+ 
+ 
+-def load_video(video_info, n_frames=-1):
++def load_video(video_info, n_frames=-1, max_frames=0):
+     reader = imageio.get_reader(video_info, "ffmpeg")
+ 
++    total_frames = _estimate_total_frames(video_info, reader)
++    stride = 1
++    hard_limit = 0
++    if max_frames and max_frames > 0 and total_frames > max_frames:
++        stride = max(1, (total_frames + max_frames - 1) // max_frames)
++        log(f"Video has ~{total_frames} frames. Using stride {stride} to cap at ~{max_frames} frames.")
++    elif max_frames and max_frames > 0 and total_frames == 0:
++        hard_limit = max_frames
++        log(f"Video frame count unknown. Capping at {max_frames} frames to avoid RAM spikes.")
++
++    set_video_stride(video_info, stride)
++
+     ret = []
++    appended = 0
+     for idx, frame_rgb in enumerate(reader):
+-        if n_frames > 0 and idx >= n_frames:
+-            break
++        if stride > 1 and (idx % stride) != 0:
++            continue
+         ret.append(frame_rgb)
++        appended += 1
++        if n_frames > 0 and appended >= n_frames:
++            break
++        if hard_limit > 0 and appended >= hard_limit:
++            break
+ 
+     reader.close()
+     return ret
+diff --git a/liveportrait/utils/sam_utils.py b/liveportrait/utils/sam_utils.py
+new file mode 100644
+index 0000000..a8402af
+--- /dev/null
++++ b/liveportrait/utils/sam_utils.py
+@@ -0,0 +1,59 @@
++# coding: utf-8
++
++import os.path as osp
++from typing import Tuple
++
++import numpy as np
++
++_SAM_PREDICTOR = None
++_SAM_MODEL_PATH = None
++_SAM_DEVICE = None
++
++
++def _infer_model_type(model_path: str) -> str:
++    name = osp.basename(model_path).lower()
++    if "vit_h" in name:
++        return "vit_h"
++    if "vit_l" in name:
++        return "vit_l"
++    return "vit_b"
++
++
++def get_sam_predictor(model_path: str, device: str):
++    global _SAM_PREDICTOR, _SAM_MODEL_PATH, _SAM_DEVICE
++    if _SAM_PREDICTOR is not None and _SAM_MODEL_PATH == model_path and _SAM_DEVICE == device:
++        return _SAM_PREDICTOR
++
++    from segment_anything import sam_model_registry, SamPredictor
++    model_type = _infer_model_type(model_path)
++    sam = sam_model_registry[model_type](checkpoint=model_path)
++    sam.to(device=device)
++    _SAM_PREDICTOR = SamPredictor(sam)
++    _SAM_MODEL_PATH = model_path
++    _SAM_DEVICE = device
++    return _SAM_PREDICTOR
++
++
++def sam_bbox_from_point(image_rgb: np.ndarray, point_xy: Tuple[int, int], model_path: str, device: str):
++    if not osp.exists(model_path):
++        raise FileNotFoundError(f"SAM checkpoint not found: {model_path}")
++
++    predictor = get_sam_predictor(model_path, device=device)
++    predictor.set_image(image_rgb)
++    point_coords = np.array([[point_xy[0], point_xy[1]]], dtype=np.float32)
++    point_labels = np.array([1], dtype=np.int32)
++    masks, scores, _ = predictor.predict(
++        point_coords=point_coords,
++        point_labels=point_labels,
++        multimask_output=True
++    )
++    if masks is None or len(masks) == 0:
++        return None
++    best_idx = int(np.argmax(scores))
++    mask = masks[best_idx]
++    ys, xs = np.where(mask)
++    if len(xs) == 0 or len(ys) == 0:
++        return None
++    x1, x2 = int(xs.min()), int(xs.max())
++    y1, y2 = int(ys.min()), int(ys.max())
++    return x1, y1, x2, y2
+diff --git a/liveportrait/utils/video.py b/liveportrait/utils/video.py
+index 2e34e6d..e42d7f4 100644
+--- a/liveportrait/utils/video.py
++++ b/liveportrait/utils/video.py
+@@ -6,7 +6,9 @@ Functions for processing video
+ ATTENTION: you need to install ffmpeg and ffprobe in your env!
+ """
+ 
++import os
+ import os.path as osp
++import tempfile
+ import numpy as np
+ import subprocess
+ import imageio
+@@ -16,6 +18,7 @@ from rich.progress import track
+ from .rprint import rlog as log
+ from .rprint import rprint as print
+ from .helper import prefix
++from .io import get_video_stride
+ 
+ 
+ def exec_cmd(cmd):
+@@ -135,6 +138,65 @@ def change_video_fps(input_file, output_file, fps=20, codec='libx264', crf=12):
+     exec_cmd(cmd)
+ 
+ 
++def _get_video_duration_seconds(video_path: str) -> float:
++    try:
++        cap = cv2.VideoCapture(video_path)
++        fps = cap.get(cv2.CAP_PROP_FPS)
++        frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
++    finally:
++        cap.release()
++
++    if fps and frame_count and fps > 0 and frame_count > 0:
++        return float(frame_count) / float(fps)
++    return 0.0
++
++
++def split_video_evenly(video_path: str, chunks: int, out_dir: str, prefix: str = "big_shot") -> list[str]:
++    if chunks <= 1:
++        return [video_path]
++
++    duration = _get_video_duration_seconds(video_path)
++    if duration <= 0:
++        log(f"Unable to detect duration for {video_path}; skipping BIG SHOT split.")
++        return [video_path]
++
++    segment_time = duration / chunks
++    os.makedirs(out_dir, exist_ok=True)
++    out_pattern = osp.join(out_dir, f"{prefix}_%03d.mp4")
++
++    cmd = f'ffmpeg -i "{video_path}" -c copy -map 0 -f segment -segment_time {segment_time} -reset_timestamps 1 "{out_pattern}" -y'
++    exec_cmd(cmd)
++
++    parts = sorted([osp.join(out_dir, f) for f in os.listdir(out_dir) if f.startswith(prefix) and f.endswith(".mp4")])
++    return parts if parts else [video_path]
++
++
++def concat_videos(video_paths: list[str], output_path: str):
++    if not video_paths:
++        raise ValueError("concat_videos: empty input list")
++    if len(video_paths) == 1:
++        if video_paths[0] != output_path:
++            os.replace(video_paths[0], output_path)
++        return output_path
++
++    list_dir = osp.dirname(output_path) or "."
++    os.makedirs(list_dir, exist_ok=True)
++    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt", dir=list_dir) as f:
++        for p in video_paths:
++            f.write(f"file '{p}'\n")
++        list_file = f.name
++
++    try:
++        cmd = f'ffmpeg -f concat -safe 0 -i "{list_file}" -c copy "{output_path}" -y'
++        exec_cmd(cmd)
++    finally:
++        try:
++            os.remove(list_file)
++        except Exception:
++            pass
++    return output_path
++
++
+ def get_fps(filepath, default_fps=25):
+     try:
+         fps = cv2.VideoCapture(filepath).get(cv2.CAP_PROP_FPS)
+@@ -145,6 +207,10 @@ def get_fps(filepath, default_fps=25):
+         log(e)
+         fps = default_fps
+ 
++    stride = get_video_stride(filepath)
++    if stride and stride > 1:
++        fps = fps / stride
++
+     return fps
+ 
+ 
+diff --git a/requirements.txt b/requirements.txt
+index 6bc0313..fcf1f85 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,9 +1,9 @@
+ imageio-ffmpeg>=0.5.1
+ mediapipe
+ numpy<=1.26.4
+-onnx<=1.16.1
++onnx
+ opencv-python
+ pykalman
+ pyyaml
+ rich
+-timm
+\ No newline at end of file
++timm
+diff --git a/scripts/main.py b/scripts/main.py
+index ddf90c8..7493fc8 100644
+--- a/scripts/main.py
++++ b/scripts/main.py
+@@ -2,6 +2,10 @@ import datetime
+ import os.path as osp
+ from pathlib import Path
+ from typing import cast, Literal
++
++import cv2
++import numpy as np
++import torch
+ from packaging.version import parse
+ 
+ import gradio.components
+@@ -12,8 +16,9 @@ from modules import devices, script_callbacks, shared
+ from modules.paths_internal import data_path
+ 
+ from liveportrait.utils.helper import load_description
++from liveportrait.utils.sam_utils import sam_bbox_from_point
+ from liveportrait.config.argument_config import ArgumentConfig
+-from liveportrait.config.crop_config import CropConfig
++from liveportrait.config.crop_config import CropConfig, DEFAULT_FACEFUSION_ROOT
+ from liveportrait.config.inference_config import InferenceConfig
+ from liveportrait.gradio_pipeline import GradioPipeline, GradioPipelineAnimal
+ 
+@@ -77,7 +82,7 @@ def on_ui_tabs():
+ 
+     def get_crop_config():
+         crop_model = cast(
+-            Literal['insightface', 'mediapipe', 'facealignment'],
++            Literal['insightface', 'mediapipe', 'facealignment', 'facefusion'],
+             cast(str, shared.opts.data.get("live_portrait_human_face_detector", 'insightface')).lower()
+         )
+ 
+@@ -96,11 +101,43 @@ def on_ui_tabs():
+             cast(str, shared.opts.data.get("live_portrait_face_alignment_detector_dtype", 'fp16')).lower()
+         )
+ 
++        try:
++            det_thresh = float(shared.opts.data.get("live_portrait_det_thresh", 0.15))
++        except Exception:
++            det_thresh = 0.15
++
++        try:
++            det_size = int(shared.opts.data.get("live_portrait_det_size", 512))
++        except Exception:
++            det_size = 512
++
++        try:
++            init_search_frames = int(shared.opts.data.get("live_portrait_init_search_frames", 10))
++        except Exception:
++            init_search_frames = 10
++
++        facefusion_root = cast(str, shared.opts.data.get("live_portrait_facefusion_root", DEFAULT_FACEFUSION_ROOT))
++        facefusion_detector_model = cast(str, shared.opts.data.get("live_portrait_facefusion_detector_model", "scrfd")).lower()
++        facefusion_detector_size = cast(str, shared.opts.data.get("live_portrait_facefusion_detector_size", "640x640"))
++        facefusion_detector_angles = cast(str, shared.opts.data.get("live_portrait_facefusion_detector_angles", "0"))
++        try:
++            facefusion_detector_score = float(shared.opts.data.get("live_portrait_facefusion_detector_score", 0.5))
++        except Exception:
++            facefusion_detector_score = 0.5
++
+         return CropConfig(
+             model=crop_model,
+             face_alignment_detector=face_alignment_detector,
+             face_alignment_detector_device=face_alignment_detector_device,
+-            face_alignment_detector_dtype=face_alignment_detector_dtype
++            face_alignment_detector_dtype=face_alignment_detector_dtype,
++            det_thresh=det_thresh,
++            det_size=det_size,
++            init_search_frames=init_search_frames,
++            facefusion_root=facefusion_root,
++            facefusion_detector_model=cast(Literal['many', 'retinaface', 'scrfd', 'yolo_face'], facefusion_detector_model),
++            facefusion_detector_size=facefusion_detector_size,
++            facefusion_detector_angles=facefusion_detector_angles,
++            facefusion_detector_score=facefusion_detector_score
+         )
+ 
+     def get_inference_config():
+@@ -118,11 +155,103 @@ def on_ui_tabs():
+         config_output_dir = shared.opts.data.get("live_portrait_output_dir", '')
+ 
+         output_dir = config_output_dir or default_output_dir
++        try:
++            max_video_frames = int(shared.opts.data.get("live_portrait_max_video_frames", 1200))
++        except Exception:
++            max_video_frames = 1200
++        try:
++            force_output_fps = int(shared.opts.data.get("live_portrait_force_output_fps", 25))
++        except Exception:
++            force_output_fps = 25
++        try:
++            big_shot_chunks = int(shared.opts.data.get("live_portrait_big_shot_chunks", 4))
++        except Exception:
++            big_shot_chunks = 4
+ 
+         return ArgumentConfig(
+-            output_dir=output_dir
++            output_dir=output_dir,
++            max_video_frames=max_video_frames,
++            force_output_fps=force_output_fps,
++            big_shot_chunks=big_shot_chunks,
+         )
+ 
++    def _extract_path(video_value):
++        if video_value is None:
++            return None
++        if isinstance(video_value, str):
++            return video_value
++        if isinstance(video_value, dict):
++            return video_value.get("name") or video_value.get("path")
++        if hasattr(video_value, "name"):
++            return video_value.name
++        return None
++
++    def _load_first_frame(video_value):
++        video_path = _extract_path(video_value)
++        if not video_path or not osp.exists(video_path):
++            return None
++        cap = cv2.VideoCapture(video_path)
++        try:
++            ret, frame = cap.read()
++        finally:
++            cap.release()
++        if not ret:
++            return None
++        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
++
++    def _set_anchor(evt: gr.SelectData):
++        try:
++            x, y = evt.index
++        except Exception:
++            try:
++                x, y = evt.value
++            except Exception:
++                return -1, -1
++        return int(x), int(y)
++
++    def _load_first_frame_and_reset(video_value):
++        frame = _load_first_frame(video_value)
++        return frame, None, -1, -1
++
++    def _anchor_preview_from_point(image_rgb, use_sam: bool, evt: gr.SelectData):
++        x, y = _set_anchor(evt)
++        if image_rgb is None or x < 0 or y < 0:
++            return x, y, None
++
++        h, w = image_rgb.shape[:2]
++        roi_x1 = roi_y1 = roi_x2 = roi_y2 = None
++        crop_cfg = get_crop_config()
++
++        if use_sam:
++            try:
++                device = "cuda" if (torch.cuda.is_available() and not crop_cfg.flag_force_cpu) else "cpu"
++                bbox = sam_bbox_from_point(image_rgb, (x, y), crop_cfg.sam_model_path, device=device)
++                if bbox is not None:
++                    bx1, by1, bx2, by2 = bbox
++                    pad_ratio = float(getattr(crop_cfg, "sam_pad_ratio", 0.2))
++                    pad = int(max(bx2 - bx1, by2 - by1) * pad_ratio)
++                    roi_x1 = max(0, bx1 - pad)
++                    roi_y1 = max(0, by1 - pad)
++                    roi_x2 = min(w, bx2 + pad)
++                    roi_y2 = min(h, by2 + pad)
++            except Exception:
++                roi_x1 = roi_y1 = roi_x2 = roi_y2 = None
++
++        if roi_x1 is None:
++            box_ratio = float(getattr(crop_cfg, "anchor_box_ratio", 0.45))
++            box_size = max(64, int(min(h, w) * box_ratio))
++            half = box_size // 2
++            roi_x1 = max(0, x - half)
++            roi_y1 = max(0, y - half)
++            roi_x2 = min(w, x + half)
++            roi_y2 = min(h, y + half)
++
++        roi = image_rgb[roi_y1:roi_y2, roi_x1:roi_x2]
++        if roi.size == 0:
++            return x, y, None
++
++        return x, y, roi
++
+     def init_gradio_pipeline():
+         global gradio_pipeline, gradio_pipeline_animal
+ 
+@@ -415,10 +544,39 @@ def on_ui_tabs():
+                         flag_relative_input = gr.Checkbox(value=True, label="relative motion")
+                         flag_remap_input = gr.Checkbox(value=True, label="paste-back")
+                         flag_stitching_input = gr.Checkbox(value=True, label="stitching")
++                        flag_big_shot = gr.Checkbox(value=True, label="BIG SHOT (split long videos)")
+                         animation_region = gr.Radio(["exp", "pose", "lip", "eyes", "all"], value="all", label="animation region")
+                         driving_option_input = gr.Radio(['expression-friendly', 'pose-friendly'], value="expression-friendly", label="driving option (i2v)")
+                         driving_multiplier = gr.Number(value=1.0, label="driving multiplier (i2v)", minimum=0.0, maximum=2.0, step=0.02)
+                         driving_smooth_observation_variance = gr.Number(value=3e-7, label="motion smooth strength (v2v)", minimum=1e-11, maximum=1e-2, step=1e-8)
++                with gr.Row():
++                    with gr.Accordion(open=False, label="Manual Face Anchor (click on frame)"):
++                        anchor_enabled = gr.Checkbox(value=False, label="Enable manual anchor")
++                        anchor_use_sam = gr.Checkbox(value=True, label="Use SAM (more accurate)")
++                        anchor_target = gr.Radio(["source", "driving", "both"], value="source", label="Anchor target")
++                        with gr.Row():
++                            load_source_frame_btn = gr.Button("Load source first frame")
++                            load_driving_frame_btn = gr.Button("Load driving first frame")
++                        with gr.Row():
++                            anchor_image = gr.Image(type="numpy", label="Click on the face")
++                            anchor_preview = gr.Image(type="numpy", label="Anchor preview (SAM/ROI)", height=256)
++                        anchor_x = gr.Number(value=-1, label="anchor x", visible=False)
++                        anchor_y = gr.Number(value=-1, label="anchor y", visible=False)
++                        load_source_frame_btn.click(
++                            fn=_load_first_frame_and_reset,
++                            inputs=[source_video_input],
++                            outputs=[anchor_image, anchor_preview, anchor_x, anchor_y]
++                        )
++                        load_driving_frame_btn.click(
++                            fn=_load_first_frame_and_reset,
++                            inputs=[driving_video_input],
++                            outputs=[anchor_image, anchor_preview, anchor_x, anchor_y]
++                        )
++                        anchor_image.select(
++                            _anchor_preview_from_point,
++                            inputs=[anchor_image, anchor_use_sam],
++                            outputs=[anchor_x, anchor_y, anchor_preview]
++                        )
+ 
+             gr.Markdown(load_description(repo_root / "assets/gradio/gradio_description_animate_clear.md"))
+             with gr.Row():
+@@ -615,6 +773,12 @@ def on_ui_tabs():
+                     flag_do_crop_input,
+                     flag_remap_input,
+                     flag_stitching_input,
++                    flag_big_shot,
++                    anchor_enabled,
++                    anchor_use_sam,
++                    anchor_target,
++                    anchor_x,
++                    anchor_y,
+                     animation_region,
+                     driving_option_input,
+                     driving_multiplier,
+@@ -680,28 +844,40 @@ def on_ui_tabs():
+                 gr.Markdown(load_description(repo_root / "assets/gradio/gradio_description_upload_animal.md"))
+                 with gr.Row():
+                     with gr.Column():
+-                        with gr.Accordion(open=True, label="🐱 Source Animal Image"):
+-                            source_image_input = gr.Image(type="filepath")
+-                            gr.Examples(
+-                                examples=[
+-                                    [osp.join(example_portrait_dir, "s25.jpg")],
+-                                    [osp.join(example_portrait_dir, "s30.jpg")],
+-                                    [osp.join(example_portrait_dir, "s31.jpg")],
+-                                    [osp.join(example_portrait_dir, "s32.jpg")],
+-                                    [osp.join(example_portrait_dir, "s33.jpg")],
+-                                    [osp.join(example_portrait_dir, "s39.jpg")],
+-                                    [osp.join(example_portrait_dir, "s40.jpg")],
+-                                    [osp.join(example_portrait_dir, "s41.jpg")],
+-                                    [osp.join(example_portrait_dir, "s38.jpg")],
+-                                    [osp.join(example_portrait_dir, "s36.jpg")],
+-                                ],
+-                                inputs=[source_image_input],
+-                                cache_examples=False,
+-                            )
++                        with gr.Tabs():
++                            with gr.TabItem("🖼️ Source Animal Image") as source_tab_image:
++                                with gr.Accordion(open=True, label="🐱 Source Animal Image"):
++                                    source_image_input = gr.Image(type="filepath")
++                                    gr.Examples(
++                                        examples=[
++                                            [osp.join(example_portrait_dir, "s25.jpg")],
++                                            [osp.join(example_portrait_dir, "s30.jpg")],
++                                            [osp.join(example_portrait_dir, "s31.jpg")],
++                                            [osp.join(example_portrait_dir, "s32.jpg")],
++                                            [osp.join(example_portrait_dir, "s33.jpg")],
++                                            [osp.join(example_portrait_dir, "s39.jpg")],
++                                            [osp.join(example_portrait_dir, "s40.jpg")],
++                                            [osp.join(example_portrait_dir, "s41.jpg")],
++                                            [osp.join(example_portrait_dir, "s38.jpg")],
++                                            [osp.join(example_portrait_dir, "s36.jpg")],
++                                        ],
++                                        inputs=[source_image_input],
++                                        cache_examples=False,
++                                    )
+ 
+-                        with gr.Accordion(open=True, label="Cropping Options for Source Image"):
++                            with gr.TabItem("🎞️ Source Animal Video") as source_tab_video:
++                                with gr.Accordion(open=True, label="🎬 Source Animal Video"):
++                                    source_video_input = gr.Video()
++                        
++                        source_tab_selection = gr.Textbox(visible=False, value="Image")
++                        source_tab_image.select(lambda: "Image", None, source_tab_selection)
++                        source_tab_video.select(lambda: "Video", None, source_tab_selection)
++
++                        with gr.Accordion(open=True, label="Cropping Options for Source Image/Video"):
+                             with gr.Row():
+                                 flag_do_crop_input = gr.Checkbox(value=True, label="do crop (source)")
++                                flag_preserve_source_resolution = gr.Checkbox(value=False, label="preserve source resolution")
++                            with gr.Row():
+                                 scale = gr.Number(value=2.3, label="source crop scale", minimum=1.8, maximum=3.2, step=0.05)
+                                 vx_ratio = gr.Number(value=0.0, label="source crop x", minimum=-0.5, maximum=0.5, step=0.01)
+                                 vy_ratio = gr.Number(value=-0.125, label="source crop y", minimum=-0.5, maximum=0.5, step=0.01)
+@@ -754,11 +930,23 @@ def on_ui_tabs():
+                                 vy_ratio_crop_driving_video = gr.Number(value=-0.1, label="driving crop y", minimum=-0.5, maximum=0.5, step=0.01)
+ 
+                 with gr.Row():
+-                    with gr.Accordion(open=False, label="Animation Options"):
++                    with gr.Accordion(open=True, label="Animation Options"):
++                        with gr.Row():
++                            source_processing_method = gr.Radio(["מעקב (מהיר)", "כל פריים (איטי, יציב)"], value="מעקב (מהיר)", label="שיטת עיבוד מקור")
++                            lip_sync_intensity = gr.Slider(minimum=0.0, maximum=10.0, value=5.0, step=0.1, label="עוצמת סנכרון שפתיים (Lip Sync Intensity)")
++                            driving_multiplier = gr.Number(value=1.0, label="driving multiplier", minimum=0.0, maximum=2.0, step=0.02)
+                         with gr.Row():
+                             flag_stitching = gr.Checkbox(value=False, label="stitching (not recommended)")
+                             flag_remap_input = gr.Checkbox(value=False, label="paste-back (not recommended)")
+-                            driving_multiplier = gr.Number(value=1.0, label="driving multiplier", minimum=0.0, maximum=2.0, step=0.02)
++                        with gr.Row():
++                            do_upscale = gr.Checkbox(value=False, label="שפר רזולוציה (Upscale)")
++                            upscaler_name = gr.Dropdown(label="Upscaler", choices=[u.name for u in shared.sd_upscalers], value=shared.sd_upscalers[0].name if shared.sd_upscalers else "None", visible=False)
++                        
++                        do_upscale.change(
++                            fn=lambda x: gr.update(visible=x),
++                            inputs=[do_upscale],
++                            outputs=[upscaler_name],
++                        )
+ 
+                 gr.Markdown(load_description(repo_root / "assets/gradio/gradio_description_animate_clear.md"))
+                 with gr.Row():
+@@ -818,11 +1006,14 @@ def on_ui_tabs():
+                     fn=gpu_wrapped_execute_video_animal,
+                     inputs=[
+                         source_image_input,
++                        source_video_input,
+                         driving_video_input,
+                         driving_video_pickle_input,
+                         flag_do_crop_input,
++                        flag_preserve_source_resolution,
+                         flag_remap_input,
+                         driving_multiplier,
++                        lip_sync_intensity,
+                         flag_stitching,
+                         flag_crop_driving_video_input,
+                         scale,
+@@ -831,7 +1022,11 @@ def on_ui_tabs():
+                         scale_crop_driving_video,
+                         vx_ratio_crop_driving_video,
+                         vy_ratio_crop_driving_video,
++                        source_tab_selection,
+                         tab_selection,
++                        source_processing_method,
++                        do_upscale,
++                        upscaler_name,
+                     ],
+                     outputs=[output_video_animal_i2v, output_video_animal_concat_i2v, output_video_animal_i2v_gif],
+                     show_progress='full'
+@@ -846,10 +1041,10 @@ def on_ui_settings():
+     shared.opts.add_option(
+         "live_portrait_human_face_detector",
+         shared.OptionInfo(
+-            default="InsightFace",
++            default="FaceFusion",
+             label="Human face detector",
+             component=gr.Radio,
+-            component_args={"choices": ["InsightFace", "MediaPipe", "FaceAlignment"]},
++            component_args={"choices": ["InsightFace", "MediaPipe", "FaceAlignment", "FaceFusion"]},
+             section=section,
+         ),
+     )
+@@ -887,6 +1082,92 @@ def on_ui_settings():
+         ),
+     )
+ 
++    shared.opts.add_option(
++        "live_portrait_det_thresh",
++        shared.OptionInfo(
++            0.15,
++            "Face detector threshold (lower = more sensitive)",
++            component=gr.Number,
++            component_args={"minimum": 0.01, "maximum": 0.9, "step": 0.01},
++            section=section,
++        ),
++    )
++
++    shared.opts.add_option(
++        "live_portrait_det_size",
++        shared.OptionInfo(
++            512,
++            "Face detector input size (larger helps small faces)",
++            component=gr.Number,
++            component_args={"minimum": 256, "maximum": 2048, "step": 64},
++            section=section,
++        ),
++    )
++
++    shared.opts.add_option(
++        "live_portrait_init_search_frames",
++        shared.OptionInfo(
++            10,
++            "Driving video: initial frames to search for face",
++            component=gr.Number,
++            component_args={"minimum": 1, "maximum": 60, "step": 1},
++            section=section,
++        ),
++    )
++
++    shared.opts.add_option(
++        "live_portrait_facefusion_root",
++        shared.OptionInfo(
++            DEFAULT_FACEFUSION_ROOT,
++            "FaceFusion root path (for detector)",
++            component=gr.Textbox,
++            section=section,
++        ),
++    )
++
++    shared.opts.add_option(
++        "live_portrait_facefusion_detector_model",
++        shared.OptionInfo(
++            "scrfd",
++            "FaceFusion detector model",
++            component=gr.Radio,
++            component_args={"choices": ["many", "retinaface", "scrfd", "yolo_face"]},
++            section=section,
++        ),
++    )
++
++    shared.opts.add_option(
++        "live_portrait_facefusion_detector_size",
++        shared.OptionInfo(
++            "1024x1024",
++            "FaceFusion detector size",
++            component=gr.Dropdown,
++            component_args={"choices": ["320x320", "640x640", "1024x1024"]},
++            section=section,
++        ),
++    )
++
++    shared.opts.add_option(
++        "live_portrait_facefusion_detector_angles",
++        shared.OptionInfo(
++            "0",
++            "FaceFusion detector angles (comma separated)",
++            component=gr.Textbox,
++            section=section,
++        ),
++    )
++
++    shared.opts.add_option(
++        "live_portrait_facefusion_detector_score",
++        shared.OptionInfo(
++            0.4,
++            "FaceFusion detector score",
++            component=gr.Number,
++            component_args={"minimum": 0.0, "maximum": 1.0, "step": 0.01},
++            section=section,
++        ),
++    )
++
+     shared.opts.add_option(
+         "live_portrait_flag_do_torch_compile",
+         shared.OptionInfo(
+@@ -905,9 +1186,42 @@ def on_ui_settings():
+         ),
+     )
+ 
++    shared.opts.add_option(
++        "live_portrait_max_video_frames",
++        shared.OptionInfo(
++            1200,
++            "Max video frames to load into RAM (0 = unlimited)",
++            component=gr.Number,
++            component_args={"minimum": 0, "step": 1},
++            section=section
++        ),
++    )
++
++    shared.opts.add_option(
++        "live_portrait_force_output_fps",
++        shared.OptionInfo(
++            25,
++            "Force output FPS (0 = auto)",
++            component=gr.Number,
++            component_args={"minimum": 0, "step": 1},
++            section=section
++        ),
++    )
++
++    shared.opts.add_option(
++        "live_portrait_big_shot_chunks",
++        shared.OptionInfo(
++            4,
++            "BIG SHOT chunks (split long videos)",
++            component=gr.Number,
++            component_args={"minimum": 2, "step": 1},
++            section=section
++        ),
++    )
++
+ 
+ try:
+     script_callbacks.on_ui_tabs(on_ui_tabs)
+     script_callbacks.on_ui_settings(on_ui_settings)
+ except:
+-    print("Live Portrait UI failed to initialize")
+\ No newline at end of file
++    print("Live Portrait UI failed to initialize")

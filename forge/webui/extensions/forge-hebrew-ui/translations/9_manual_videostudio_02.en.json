@@ -1,0 +1,122 @@
+[
+ {
+  "i": 0,
+  "en": "➕ Last frame",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 1,
+  "en": "➕ Another picture (a longer video)",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 2,
+  "en": "✕ Remove the last picture",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 3,
+  "en": "⇄ Reverse the order",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 4,
+  "en": "Length of each part (seconds)",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 5,
+  "en": "What happens in this part (empty: the prompt below)",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 6,
+  "en": "Send the picture to Video Studio: Image to Video",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 7,
+  "en": "One picture: the video starts from it. ➕ Last frame makes it end on a picture of yours too.",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 8,
+  "en": "The video goes from the first picture to the last. More pictures make a longer video: one part for each pair, joined into one.",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 9,
+  "en": "Picture 1",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 10,
+  "en": "Picture 2",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 11,
+  "en": "Picture 3",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 12,
+  "en": "Picture 4",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 13,
+  "en": "Picture 5",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 14,
+  "en": "Picture 6",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 15,
+  "en": "Part 1: from picture 1 to picture 2",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 16,
+  "en": "Part 2: from picture 2 to picture 3",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 17,
+  "en": "Part 3: from picture 3 to picture 4",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 18,
+  "en": "Part 4: from picture 4 to picture 5",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 19,
+  "en": "Part 5: from picture 5 to picture 6",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 20,
+  "en": "3 pictures: 2 parts, one for each pair, joined into one video. The length below is per part; each part can have its own description.",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 21,
+  "en": "4 pictures: 3 parts, one for each pair, joined into one video. The length below is per part; each part can have its own description.",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 22,
+  "en": "5 pictures: 4 parts, one for each pair, joined into one video. The length below is per part; each part can have its own description.",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 23,
+  "en": "6 pictures: 5 parts, one for each pair, joined into one video. The length below is per part; each part can have its own description.",
+  "ctx": "[t] Video Studio, Image to Video pictures (sd-forge-video-studio, videostudio/ui.py)"
+ }
+]

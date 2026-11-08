@@ -1,0 +1,1302 @@
+[
+ {
+  "i": 0,
+  "en": "Batch from Directory",
+  "ctx": "tab_extras"
+ },
+ {
+  "i": 1,
+  "en": "Source",
+  "ctx": "extras_single_tab"
+ },
+ {
+  "i": 2,
+  "en": "Show result images",
+  "ctx": "extras_batch_directory_tab"
+ },
+ {
+  "i": 3,
+  "en": "Scale to",
+  "ctx": "tab_extras"
+ },
+ {
+  "i": 4,
+  "en": "Resize",
+  "ctx": "extras_scale_by_tab"
+ },
+ {
+  "i": 5,
+  "en": "Crop to fit",
+  "ctx": "extras_scale_to_tab"
+ },
+ {
+  "i": 6,
+  "en": "Upscaler 1",
+  "ctx": "tab_extras"
+ },
+ {
+  "i": 7,
+  "en": "Upscaler 2",
+  "ctx": "tab_extras"
+ },
+ {
+  "i": 8,
+  "en": "Upscaler 2 visibility",
+  "ctx": "tab_extras"
+ },
+ {
+  "i": 9,
+  "en": "Visibility",
+  "ctx": "GFPGAN"
+ },
+ {
+  "i": 10,
+  "en": "Weight (0 = maximum effect, 1 = minimum effect)",
+  "ctx": "CodeFormer"
+ },
+ {
+  "i": 11,
+  "en": "Split oversized images",
+  "ctx": "[c] tab_extras"
+ },
+ {
+  "i": 12,
+  "en": "Overlap ratio",
+  "ctx": "Split oversized images"
+ },
+ {
+  "i": 13,
+  "en": "Auto focal point crop",
+  "ctx": "[c] tab_extras"
+ },
+ {
+  "i": 14,
+  "en": "Focal point face weight",
+  "ctx": "Auto focal point crop"
+ },
+ {
+  "i": 15,
+  "en": "Focal point entropy weight",
+  "ctx": "Auto focal point crop"
+ },
+ {
+  "i": 16,
+  "en": "Focal point edges weight",
+  "ctx": "Auto focal point crop"
+ },
+ {
+  "i": 17,
+  "en": "Create debug image",
+  "ctx": "Auto focal point crop"
+ },
+ {
+  "i": 18,
+  "en": "Auto-sized crop",
+  "ctx": "[c] tab_extras"
+ },
+ {
+  "i": 19,
+  "en": "Each image is center-cropped with an automatically chosen width and height.",
+  "ctx": "Auto-sized crop"
+ },
+ {
+  "i": 20,
+  "en": "Dimension lower bound",
+  "ctx": "Auto-sized crop"
+ },
+ {
+  "i": 21,
+  "en": "Dimension upper bound",
+  "ctx": "Auto-sized crop"
+ },
+ {
+  "i": 22,
+  "en": "Area lower bound",
+  "ctx": "Auto-sized crop"
+ },
+ {
+  "i": 23,
+  "en": "Area upper bound",
+  "ctx": "Auto-sized crop"
+ },
+ {
+  "i": 24,
+  "en": "Resizing objective",
+  "ctx": "Auto-sized crop"
+ },
+ {
+  "i": 25,
+  "en": "Maximize area",
+  "ctx": "[c] Auto-sized crop"
+ },
+ {
+  "i": 26,
+  "en": "Minimize error",
+  "ctx": "[c] Auto-sized crop"
+ },
+ {
+  "i": 27,
+  "en": "Error threshold",
+  "ctx": "Auto-sized crop"
+ },
+ {
+  "i": 28,
+  "en": "Create flipped copies",
+  "ctx": "[c] tab_extras"
+ },
+ {
+  "i": 29,
+  "en": "Checkbox Group",
+  "ctx": "Create flipped copies"
+ },
+ {
+  "i": 30,
+  "en": "Horizontal",
+  "ctx": "[c] Create flipped copies"
+ },
+ {
+  "i": 31,
+  "en": "Vertical",
+  "ctx": "[c] Create flipped copies"
+ },
+ {
+  "i": 32,
+  "en": "Caption",
+  "ctx": "[c] tab_extras"
+ },
+ {
+  "i": 33,
+  "en": "Deepbooru",
+  "ctx": "[c] Caption"
+ },
+ {
+  "i": 34,
+  "en": "BLIP",
+  "ctx": "[c] Caption"
+ },
+ {
+  "i": 35,
+  "en": "Multiple Source Images | Сomparison grid as a result",
+  "ctx": "component-4690"
+ },
+ {
+  "i": 36,
+  "en": "Source Folder | Сomparison grid as a result",
+  "ctx": "component-4690"
+ },
+ {
+  "i": 37,
+  "en": "Send to txt2img",
+  "ctx": "tab_pnginfo"
+ },
+ {
+  "i": 38,
+  "en": "Send to img2img",
+  "ctx": "tab_pnginfo"
+ },
+ {
+  "i": 39,
+  "en": "Send to inpaint",
+  "ctx": "tab_pnginfo"
+ },
+ {
+  "i": 40,
+  "en": "Send to extras",
+  "ctx": "tab_pnginfo"
+ },
+ {
+  "i": 41,
+  "en": "Primary model (A)",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 42,
+  "en": "Secondary model (B)",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 43,
+  "en": "Tertiary model (C)",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 44,
+  "en": "Custom Name (Optional)",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 45,
+  "en": "Multiplier (M) - set to 0 to get model A",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 46,
+  "en": "Interpolation Method",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 47,
+  "en": "No interpolation",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 48,
+  "en": "Weighted sum",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 49,
+  "en": "Add difference",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 50,
+  "en": "Checkpoint format",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 51,
+  "en": "ckpt",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 52,
+  "en": "safetensors",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 53,
+  "en": "Save as float16",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 54,
+  "en": "Copy config from",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 55,
+  "en": "A, B or C",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 56,
+  "en": "B",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 57,
+  "en": "Don't",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 58,
+  "en": "Bake in VAE",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 59,
+  "en": "Discard weights with matching name",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 60,
+  "en": "Metadata",
+  "ctx": "Metadata"
+ },
+ {
+  "i": 61,
+  "en": "Save metadata",
+  "ctx": "Metadata"
+ },
+ {
+  "i": 62,
+  "en": "Add merge recipe metadata",
+  "ctx": "Metadata"
+ },
+ {
+  "i": 63,
+  "en": "Copy metadata from merged models",
+  "ctx": "Metadata"
+ },
+ {
+  "i": 64,
+  "en": "Metadata in JSON format",
+  "ctx": "Metadata"
+ },
+ {
+  "i": 65,
+  "en": "Read metadata from selected checkpoints",
+  "ctx": "Metadata"
+ },
+ {
+  "i": 66,
+  "en": "Merge",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 67,
+  "en": "See",
+  "ctx": "tab_train"
+ },
+ {
+  "i": 68,
+  "en": "wiki",
+  "ctx": "tab_train"
+ },
+ {
+  "i": 69,
+  "en": "for detailed explanation.",
+  "ctx": "tab_train"
+ },
+ {
+  "i": 70,
+  "en": "Create embedding",
+  "ctx": "tab_train"
+ },
+ {
+  "i": 71,
+  "en": "Create hypernetwork",
+  "ctx": "tab_train"
+ },
+ {
+  "i": 72,
+  "en": "Name",
+  "ctx": "[c] component-4899"
+ },
+ {
+  "i": 73,
+  "en": "Initialization text",
+  "ctx": "component-4899"
+ },
+ {
+  "i": 74,
+  "en": "Number of vectors per token",
+  "ctx": "component-4899"
+ },
+ {
+  "i": 75,
+  "en": "Overwrite Old Embedding",
+  "ctx": "component-4899"
+ },
+ {
+  "i": 76,
+  "en": "Modules",
+  "ctx": "component-4910"
+ },
+ {
+  "i": 77,
+  "en": "Enter hypernetwork layer structure",
+  "ctx": "component-4910"
+ },
+ {
+  "i": 78,
+  "en": "Select activation function of hypernetwork. Recommended : Swish / Linear(none)",
+  "ctx": "component-4910"
+ },
+ {
+  "i": 79,
+  "en": "Select Layer weights initialization. Recommended: Kaiming for relu-like, Xavier for sigmoid-like, Normal otherwise",
+  "ctx": "component-4910"
+ },
+ {
+  "i": 80,
+  "en": "Add layer normalization",
+  "ctx": "component-4910"
+ },
+ {
+  "i": 81,
+  "en": "Use dropout",
+  "ctx": "component-4910"
+ },
+ {
+  "i": 82,
+  "en": "Enter hypernetwork Dropout structure (or empty). Recommended : 0~0.35 incrementing sequence: 0, 0.05, 0.15",
+  "ctx": "component-4910"
+ },
+ {
+  "i": 83,
+  "en": "Overwrite Old Hypernetwork",
+  "ctx": "component-4910"
+ },
+ {
+  "i": 84,
+  "en": "Embedding",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 85,
+  "en": "Hypernetwork",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 86,
+  "en": "Embedding Learning rate",
+  "ctx": "[p] component-4926"
+ },
+ {
+  "i": 87,
+  "en": "Hypernetwork Learning rate",
+  "ctx": "[p] component-4926"
+ },
+ {
+  "i": 88,
+  "en": "Gradient Clipping",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 89,
+  "en": "Gradient accumulation steps",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 90,
+  "en": "Dataset directory",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 91,
+  "en": "Log directory",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 92,
+  "en": "Prompt template",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 93,
+  "en": "Do not resize images",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 94,
+  "en": "Max steps",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 95,
+  "en": "Save an image to log directory every N steps, 0 to disable",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 96,
+  "en": "Save a copy of embedding to log directory every N steps, 0 to disable",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 97,
+  "en": "Use PNG alpha channel as loss weight",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 98,
+  "en": "Save images with embedding in PNG chunks",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 99,
+  "en": "Read parameters (prompt, etc...) from txt2img tab when making previews",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 100,
+  "en": "Shuffle tags by ',' when creating prompts.",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 101,
+  "en": "Drop out tags when creating prompts.",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 102,
+  "en": "Choose latent sampling method",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 103,
+  "en": "once",
+  "ctx": "[c] component-4926"
+ },
+ {
+  "i": 104,
+  "en": "deterministic",
+  "ctx": "[c] component-4926"
+ },
+ {
+  "i": 105,
+  "en": "Train Embedding",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 106,
+  "en": "Train Hypernetwork",
+  "ctx": "component-4926"
+ },
+ {
+  "i": 107,
+  "en": "Input Image",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 108,
+  "en": "SVD Checkpoint Filename",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 109,
+  "en": "Video Frames",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 110,
+  "en": "Motion Bucket Id",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 111,
+  "en": "Fps",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 112,
+  "en": "Augmentation Level",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 113,
+  "en": "Sampling Steps",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 114,
+  "en": "Sampling Denoise",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 115,
+  "en": "Guidance Min Cfg",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 116,
+  "en": "Sampler Name",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 117,
+  "en": "euler",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 118,
+  "en": "heun",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 119,
+  "en": "heunpp2",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 120,
+  "en": "lms",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 121,
+  "en": "ddpm",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 122,
+  "en": "lcm",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 123,
+  "en": "ddim",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 124,
+  "en": "Scheduler",
+  "ctx": "tab_svd"
+ },
+ {
+  "i": 125,
+  "en": "normal",
+  "ctx": "[c] tab_svd"
+ },
+ {
+  "i": 126,
+  "en": "karras",
+  "ctx": "[c] tab_svd"
+ },
+ {
+  "i": 127,
+  "en": "exponential",
+  "ctx": "[c] tab_svd"
+ },
+ {
+  "i": 128,
+  "en": "simple",
+  "ctx": "[c] tab_svd"
+ },
+ {
+  "i": 129,
+  "en": "Zero123 Checkpoint Filename",
+  "ctx": "tab_z123"
+ },
+ {
+  "i": 130,
+  "en": "Batch Size",
+  "ctx": "tab_z123"
+ },
+ {
+  "i": 131,
+  "en": "Elevation",
+  "ctx": "tab_z123"
+ },
+ {
+  "i": 132,
+  "en": "Azimuth",
+  "ctx": "tab_z123"
+ },
+ {
+  "i": 133,
+  "en": "Sampling Scheduler",
+  "ctx": "tab_z123"
+ },
+ {
+  "i": 134,
+  "en": "Video 2 Image Sequence 👇",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 135,
+  "en": "Upload Video",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 136,
+  "en": "Clear",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 137,
+  "en": "Generate Image Sequence",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 138,
+  "en": "Image Sequence Location (if blank, default location)",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 139,
+  "en": "Result Information",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 140,
+  "en": "Image Sequence 2 Video 👇",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 141,
+  "en": "Image Sequence Location",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 142,
+  "en": "Video Out Location (if blank, default location)",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 143,
+  "en": "Generated Video",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 144,
+  "en": "Frames Per Second (FPS)",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 145,
+  "en": "Choose your FPS",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 146,
+  "en": "Image sequence settings",
+  "ctx": "Image sequence settings"
+ },
+ {
+  "i": 147,
+  "en": "Images pattern",
+  "ctx": "Image sequence settings"
+ },
+ {
+  "i": 148,
+  "en": "The pattern used to get the images",
+  "ctx": "Image sequence settings"
+ },
+ {
+  "i": 149,
+  "en": "Images regex",
+  "ctx": "Image sequence settings"
+ },
+ {
+  "i": 150,
+  "en": "Define the regex used to order the images, note that the first group (wrapped by parenthesis) is used to determine the order. (the regex must be compatible with the pattern defined above)",
+  "ctx": "Image sequence settings"
+ },
+ {
+  "i": 151,
+  "en": "Generate Video",
+  "ctx": "tab_NextView"
+ },
+ {
+  "i": 152,
+  "en": "Benchmark",
+  "ctx": "tab_system_info"
+ },
+ {
+  "i": 153,
+  "en": "Models & Networks",
+  "ctx": "tab_system_info"
+ },
+ {
+  "i": 154,
+  "en": "Refresh state",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 155,
+  "en": "Refresh data",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 156,
+  "en": "Send interrupt",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 157,
+  "en": "Server start time",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 158,
+  "en": "Version",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 159,
+  "en": "State",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 160,
+  "en": "Memory",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 161,
+  "en": "Platform",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 162,
+  "en": "Backend",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 163,
+  "en": "Pipeline",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 164,
+  "en": "Torch",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 165,
+  "en": "GPU",
+  "ctx": "[c] component-5781"
+ },
+ {
+  "i": 166,
+  "en": "Memory optimization",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 167,
+  "en": "Cross-attention",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 168,
+  "en": "Libs",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 169,
+  "en": "Repos",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 170,
+  "en": "Device Info",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 171,
+  "en": "Model Info",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 172,
+  "en": "Load",
+  "ctx": "component-5781"
+ },
+ {
+  "i": 173,
+  "en": "Info object",
+  "ctx": "Info object"
+ },
+ {
+  "i": 174,
+  "en": "Benchmark Data",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 175,
+  "en": "timestamp",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 176,
+  "en": "it/s",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 177,
+  "en": "version",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 178,
+  "en": "system",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 179,
+  "en": "libraries",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 180,
+  "en": "gpu",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 181,
+  "en": "flags",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 182,
+  "en": "settings",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 183,
+  "en": "username",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 184,
+  "en": "note",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 185,
+  "en": "hash",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 186,
+  "en": "Username",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 187,
+  "en": "Note",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 188,
+  "en": "Perform warmup",
+  "ctx": "Settings"
+ },
+ {
+  "i": 189,
+  "en": "Benchmark steps",
+  "ctx": "Settings"
+ },
+ {
+  "i": 190,
+  "en": "Benchmark level",
+  "ctx": "Settings"
+ },
+ {
+  "i": 191,
+  "en": "Image width",
+  "ctx": "Settings"
+ },
+ {
+  "i": 192,
+  "en": "Image height",
+  "ctx": "Settings"
+ },
+ {
+  "i": 193,
+  "en": "Run benchmark",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 194,
+  "en": "Submit results",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 195,
+  "en": "Link to online results",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 196,
+  "en": "Refresh bench",
+  "ctx": "component-5825"
+ },
+ {
+  "i": 197,
+  "en": "Models",
+  "ctx": "component-5855"
+ },
+ {
+  "i": 198,
+  "en": "Available LORA",
+  "ctx": "component-5855"
+ },
+ {
+  "i": 199,
+  "en": "Load first image",
+  "ctx": "tab_cleaner_tab"
+ },
+ {
+  "i": 200,
+  "en": "Draw mask",
+  "ctx": "[c] tab_cleaner_tab"
+ },
+ {
+  "i": 201,
+  "en": "Run batch cleanup",
+  "ctx": "tab_cleaner_tab"
+ },
+ {
+  "i": 202,
+  "en": "Status",
+  "ctx": "tab_cleaner_tab"
+ },
+ {
+  "i": 203,
+  "en": "Clean up",
+  "ctx": "tab_cleaner_tab"
+ },
+ {
+  "i": 204,
+  "en": "Clean up upload",
+  "ctx": "tab_cleaner_tab"
+ },
+ {
+  "i": 205,
+  "en": "Image for clean up with mask",
+  "ctx": "component-7065"
+ },
+ {
+  "i": 206,
+  "en": "Clean Up",
+  "ctx": "component-7065"
+ },
+ {
+  "i": 207,
+  "en": "Send back To clean up",
+  "ctx": "component-7065"
+ },
+ {
+  "i": 208,
+  "en": "Image for cleanup",
+  "ctx": "component-7078"
+ },
+ {
+  "i": 209,
+  "en": "Upload movie...",
+  "ctx": "tab_panorama-3dviewer"
+ },
+ {
+  "i": 210,
+  "en": "Detection prompt",
+  "ctx": "tab_Replacer"
+ },
+ {
+  "i": 211,
+  "en": "Positive prompt",
+  "ctx": "tab_Replacer"
+ },
+ {
+  "i": 212,
+  "en": "Inpainting",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 213,
+  "en": "Others",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 214,
+  "en": "Avoidance",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 215,
+  "en": "Custom mask",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 216,
+  "en": "Correct aspect ratio",
+  "ctx": "component-42"
+ },
+ {
+  "i": 217,
+  "en": "width",
+  "ctx": "component-42"
+ },
+ {
+  "i": 218,
+  "en": "height",
+  "ctx": "component-42"
+ },
+ {
+  "i": 219,
+  "en": "batch count",
+  "ctx": "component-42"
+ },
+ {
+  "i": 220,
+  "en": "batch size",
+  "ctx": "component-42"
+ },
+ {
+  "i": 221,
+  "en": "Upscaler for img2Img",
+  "ctx": "component-42"
+ },
+ {
+  "i": 222,
+  "en": "Box Threshold",
+  "ctx": "component-100"
+ },
+ {
+  "i": 223,
+  "en": "Mask Expand",
+  "ctx": "component-100"
+ },
+ {
+  "i": 224,
+  "en": "Unload detection models",
+  "ctx": "component-100"
+ },
+ {
+  "i": 225,
+  "en": "Max resolution on detection",
+  "ctx": "component-100"
+ },
+ {
+  "i": 226,
+  "en": "GroundingDINO Model",
+  "ctx": "component-100"
+ },
+ {
+  "i": 227,
+  "en": "Mask num",
+  "ctx": "component-100"
+ },
+ {
+  "i": 228,
+  "en": "Random",
+  "ctx": "[c] component-100"
+ },
+ {
+  "i": 229,
+  "en": "Extra include in gallery",
+  "ctx": "component-100"
+ },
+ {
+  "i": 230,
+  "en": "mask",
+  "ctx": "[c] component-100"
+ },
+ {
+  "i": 231,
+  "en": "box",
+  "ctx": "[c] component-100"
+ },
+ {
+  "i": 232,
+  "en": "cut",
+  "ctx": "[c] component-100"
+ },
+ {
+  "i": 233,
+  "en": "preview",
+  "ctx": "[c] component-100"
+ },
+ {
+  "i": 234,
+  "en": "script",
+  "ctx": "[c] component-100"
+ },
+ {
+  "i": 235,
+  "en": "Padding",
+  "ctx": "component-121"
+ },
+ {
+  "i": 236,
+  "en": "Forbid too small crop region",
+  "ctx": "component-121"
+ },
+ {
+  "i": 237,
+  "en": "Rotation fix",
+  "ctx": "component-162"
+ },
+ {
+  "i": 238,
+  "en": "Correct padding to have integer upscaling to better image fit",
+  "ctx": "component-162"
+ },
+ {
+  "i": 239,
+  "en": "Do exactly the amount of steps the slider specifies",
+  "ctx": "component-162"
+ },
+ {
+  "i": 240,
+  "en": "Override stable diffusion model",
+  "ctx": "component-162"
+ },
+ {
+  "i": 241,
+  "en": "Avoidance prompt",
+  "ctx": "component-184"
+ },
+ {
+  "i": 242,
+  "en": "Create canvas",
+  "ctx": "component-184"
+ },
+ {
+  "i": 243,
+  "en": "Limit avoidance mask canvas resolution on creating",
+  "ctx": "component-184"
+ },
+ {
+  "i": 244,
+  "en": "Canvas mask source",
+  "ctx": "component-184"
+ },
+ {
+  "i": 245,
+  "en": "Upload mask",
+  "ctx": "[c] component-184"
+ },
+ {
+  "i": 246,
+  "en": "Avoidance mask",
+  "ctx": "component-184"
+ },
+ {
+  "i": 247,
+  "en": "If image isn't fit, use fullscreen hotkey or resize column",
+  "ctx": "component-184"
+ },
+ {
+  "i": 248,
+  "en": "Brush color",
+  "ctx": "component-184"
+ },
+ {
+  "i": 249,
+  "en": "visual only, use when brush color is hard to see",
+  "ctx": "component-184"
+ },
+ {
+  "i": 250,
+  "en": "Do not use detection prompt if use custom mask",
+  "ctx": "component-200"
+ },
+ {
+  "i": 251,
+  "en": "Limit custom mask canvas resolution on creating",
+  "ctx": "component-200"
+ },
+ {
+  "i": 252,
+  "en": "Ignore any masks, equivalent of img2img",
+  "ctx": "component-200"
+ },
+ {
+  "i": 253,
+  "en": "Do not use mask",
+  "ctx": "component-200"
+ },
+ {
+  "i": 254,
+  "en": "Create",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 255,
+  "en": "Use inpaint difference",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 256,
+  "en": "Non altered image",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 257,
+  "en": "Difference mask",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 258,
+  "en": "Mask dilation",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 259,
+  "en": "Mask erosion",
+  "ctx": "Advanced options"
+ }
+]

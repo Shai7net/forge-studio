@@ -1,0 +1,7 @@
+[
+ {
+  "i": 0,
+  "text": "Upload up to three things, write the prompt in the usual place and press Generate: Dance video: real people dancing. Only their movement is taken, not how they look. The dancers: pictures of what the dancers are made of (a water drop, glass, spaghetti). Close-ups of the material work best. In the prompt, describe them as the material: two figures made entirely of spaghetti, rather than two dancers. The background (optional): pictures of the place behind the dancers (a jungle, a beach, a stage). They give the background its atmosphere and colors; the picture itself is not copied. Without them the background comes only from the prompt. Pick a picture taken from the same angle as the dance video (a stage filmed from the side needs a side view; a picture from above turns the whole scene into a top view). A picture of the place without the dancers' material works best (a bowl with sauce on a table, not a bowl full of spaghetti), so the dancers stand out. When the dancers are small in the frame, keep the picture plain (an empty table and wall): objects in it get repeated around the empty space. Length, music, size and ControlNet are set automatically; the checkpoint is the usual one. Your own ControlNet units are switched off while this is on.",
+  "html": ""
+ }
+]

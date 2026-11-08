@@ -1,0 +1,173 @@
+diff --git a/scripts/api.py b/scripts/api.py
+index 00dd3f5..3a18c71 100644
+--- a/scripts/api.py
++++ b/scripts/api.py
+@@ -1,36 +1,142 @@
+-from fastapi import FastAPI, Body
+-
+-from modules.api.models import *
+-from modules.api import api
+ import gradio as gr
++from modules import script_callbacks
++from pathlib import Path
++from PIL import Image
++import cv2
++import numpy as np
++import random
++import string
++from scripts.lama import clean_object
+ 
+-from scripts import lama
+-from modules.shared import opts,OptionInfo
++# פונקציה ליצירת שם תיקייה רנדומלי
++def generate_random_dir(base_path):
++    random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
++    return Path(base_path) / f"output_{random_str}"
+ 
++# פונקציה לחילוץ פריימים מווידאו
++def extract_frames(video_path, output_dir):
++    vidcap = cv2.VideoCapture(video_path)
++    success, image = vidcap.read()
++    count = 0
++    frames = []
++    while success:
++        frame_path = output_dir / f"frame_{count:04d}.png"
++        cv2.imwrite(str(frame_path), image)
++        frames.append(frame_path)
++        success, image = vidcap.read()
++        count += 1
++    vidcap.release()
++    return frames
+ 
++# פונקציה ליצירת סרטון מפריימים
++def create_video_from_frames(frames_dir, output_video_path, fps):
++    frames = sorted(Path(frames_dir).glob("*.png"))
++    if not frames:
++        return None
++    img = cv2.imread(str(frames[0]))
++    height, width, layers = img.shape
++    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
++    video = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
++    for frame in frames:
++        video.write(cv2.imread(str(frame)))
++    video.release()
++    return output_video_path
+ 
+-def cleanup_api(_: gr.Blocks, app: FastAPI):
++# פונקציה לעיבוד וידאו
++def process_video(video_path, mask_input, use_mask):
++    video_path = Path(video_path)
++    output_dir = generate_random_dir(video_path.parent)
++    output_dir.mkdir(parents=True, exist_ok=True)
++    
++    # יצירת תיקיית Input וחילוץ פריימים
++    input_dir = output_dir / "Input"
++    input_dir.mkdir()
++    frames = extract_frames(str(video_path), input_dir)
++    
++    if not frames:
++        return "לא ניתן לחלץ פריימים מהווידאו."
++    
++    # עיבוד המסיכה
++    mask = mask_input["mask"] if isinstance(mask_input, dict) else mask_input
++    if use_mask and mask:
++        mask = mask.convert("L")
++    else:
++        mask = Image.new("L", Image.open(frames[0]).size)
++    
++    # עיבוד כל הפריימים ושמירה ב-Output
++    processed_dir = output_dir / "Output"
++    processed_dir.mkdir()
++    for frame_path in frames:
++        img = Image.open(frame_path).convert("RGB")
++        cleaned = clean_object(img, mask)
++        if cleaned:
++            cleaned[0].save(processed_dir / frame_path.name)
++        else:
++            return f"שגיאה בעיבוד הפריימ {frame_path.name}"
++    
++    # יצירת סרטון חדש
++    vidcap = cv2.VideoCapture(str(video_path))
++    fps = vidcap.get(cv2.CAP_PROP_FPS)
++    vidcap.release()
++    output_video_path = output_dir / "output_video.mp4"
++    create_video_from_frames(processed_dir, str(output_video_path), fps)
++    
++    return f"הווידאו עובד ונשמר ב-{output_video_path}"
+ 
+-    @app.post("/cleanup")
+-    def clean_up(
+-        input_image: str = Body("", title='cleanup input image'),
+-        mask: str = Body("", title='clean up mask')
+-    ):
++# פונקציה לטעינת הפריימ הראשון
++def load_first_frame(video_path):
++    if video_path:
++        temp_dir = Path(video_path).parent / "temp_frames"
++        temp_dir.mkdir(exist_ok=True)
++        frames = extract_frames(video_path, temp_dir)
++        if frames:
++            return Image.open(frames[0]).convert("RGB")
++    return None
+ 
+-        _image = api.decode_base64_to_image(input_image)
+-        _mask = api.decode_base64_to_image(mask)
++# ממשק הכרטיסייה לווידאו
++def create_video_tab():
++    with gr.Blocks() as demo:
++        gr.Markdown("## וידאו")
++        video_input = gr.Video(label="העלה וידאו")
++        img = gr.Image(type="pil", tool="sketch", label="סמן מסיכה על הפריימ הראשון")
++        use_mask = gr.Checkbox(label="השתמש במסיכה", value=True)
++        btn_process = gr.Button("הסר אובייקט")
++        status = gr.Textbox(label="סטטוס")
+         
+-        _output = lama.clean_object(_image,_mask)
+-        
+-        if len(_output) > 0:
+-            return {"code": 0, "message":"ok", "image":  api.encode_pil_to_base64(_output[0]).decode("utf-8")}
+-        else:
+-            return {"code": -1, "message":"Image generation failed"}
++        video_input.change(load_first_frame, video_input, img)
++        btn_process.click(process_video, [video_input, img, use_mask], status)
++    return demo, "וידאו", "video_tab"
+ 
++# ממשק הכרטיסייה לתמונות (ללא שינוי מהקוד הקודם)
++def create_batch_tab(tab_name, tab_id, is_hebrew=False):
++    with gr.Blocks() as demo:
++        gr.Markdown(f"## {tab_name}")
++        with gr.Row():
++            inp_label = "תיקיית קלט" if is_hebrew else "Input directory"
++            inp = gr.Textbox(label=inp_label)
++            btn1_label = "טען תמונה ראשונה" if is_hebrew else "Load first image"
++            btn1 = gr.Button(btn1_label)
++        img_label = "צויר מסיכה" if is_hebrew else "Draw mask"
++        img = gr.Image(type="pil", tool="sketch", label=img_label)
++        use_mask_label = "השתמש במסיכה" if is_hebrew else "Use mask"
++        use_mask = gr.Checkbox(label=use_mask_label, value=True)
++        outp_label = "תיקיית פלט" if is_hebrew else "Output directory"
++        outp = gr.Textbox(label=outp_label)
++        btn2_label = "הפעל ניקוי אצווה" if is_hebrew else "Run batch cleanup"
++        btn2 = gr.Button(btn2_label)
++        status_label = "סטטוס" if is_hebrew else "Status"
++        status = gr.Textbox(label=status_label)
++        btn1.click(lambda x: Image.open(sorted(Path(x).glob("*.*"))[0]).convert("RGB") if sorted(Path(x).glob("*.*")) else None, inp, img)
++        btn2.click(lambda i, o, m, u: "\n".join([f"{f.name}: ok" if clean_object(Image.open(f).convert("RGB"), m["mask"].convert("L") if u else Image.new("L", Image.open(f).size))[0].save(Path(o) / f.name) else f"{f.name}: failed" for f in sorted(Path(i).glob("*.*"))]), [inp, outp, img, use_mask], status)
++    return demo, tab_name, tab_id
+ 
+-try:
+-    import modules.script_callbacks as script_callbacks
++# הגדרת הכרטיסיות
++def on_ui_tabs():
++    tabs = [
++        create_batch_tab("Batch Cleaner", "cleaner_tab", is_hebrew=False),
++        create_batch_tab("ביצ'", "batch_tab", is_hebrew=True),
++        create_video_tab()
++    ]
++    return tabs
+ 
+-    script_callbacks.on_app_started(cleanup_api)
+-except:
+-    pass
++script_callbacks.on_ui_tabs(on_ui_tabs)
+\ No newline at end of file

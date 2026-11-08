@@ -1,0 +1,1302 @@
+[
+ {
+  "i": 0,
+  "en": "C",
+  "ctx": "tab_modelmerger"
+ },
+ {
+  "i": 1,
+  "en": "Video",
+  "ctx": "[c] tab_svd"
+ },
+ {
+  "i": 2,
+  "en": "New row",
+  "ctx": "component-5635"
+ },
+ {
+  "i": 3,
+  "en": "Keyframes",
+  "ctx": "Keyframes (zoom pace)"
+ },
+ {
+  "i": 4,
+  "en": "Function",
+  "ctx": "Generate keyframes from the soundtrack"
+ },
+ {
+  "i": 5,
+  "en": "Info, Links and Help",
+  "ctx": "Info, Links and Help"
+ },
+ {
+  "i": 6,
+  "en": "Show more info",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 7,
+  "en": "Prompts",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 8,
+  "en": "Init",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 9,
+  "en": "FreeU",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 10,
+  "en": "Kohya HR Fix",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 11,
+  "en": "Hybrid Video",
+  "ctx": "tab_deforum_interface"
+ },
+ {
+  "i": 12,
+  "en": "Preview motion only. Uses a static picture for init, and draw motion reference rectangle.",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 13,
+  "en": "Motion preview mode (dry run).",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 14,
+  "en": "Starting seed for the animation. -1 for random",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 15,
+  "en": "Batch name",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 16,
+  "en": "output images will be placed in a folder with this name ({timestring} token will be replaced) inside the img2img output folder. Supports params placeholders. e.g {seed}, {w}, {h}, {prompts}",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 17,
+  "en": "enable to trigger webui's face restoration on each frame during the generation",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 18,
+  "en": "enable for seamless-tiling of each generated image. Experimental",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 19,
+  "en": "Tiling",
+  "ctx": "[c] component-5871"
+ },
+ {
+  "i": 20,
+  "en": "noise multiplier; higher = more unpredictable results",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 21,
+  "en": "Enable DDIM ETA scheduling",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 22,
+  "en": "noise multiplier; applies to Euler A and other samplers that have the letter 'a' in them",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 23,
+  "en": "Enable Ancestral ETA scheduling",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 24,
+  "en": "DDIM ETA Schedule",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 25,
+  "en": "Ancestral ETA Schedule",
+  "ctx": "component-5871"
+ },
+ {
+  "i": 26,
+  "en": "Batch Mode, Resume and more",
+  "ctx": "Batch Mode, Resume and more"
+ },
+ {
+  "i": 27,
+  "en": "Batch Mode/ run from setting files",
+  "ctx": "Batch Mode, Resume and more"
+ },
+ {
+  "i": 28,
+  "en": "Resume Animation",
+  "ctx": "Batch Mode, Resume and more"
+ },
+ {
+  "i": 29,
+  "en": "Enable batch mode",
+  "ctx": "component-5897"
+ },
+ {
+  "i": 30,
+  "en": "Setting files",
+  "ctx": "component-5897"
+ },
+ {
+  "i": 31,
+  "en": "Resume from timestring",
+  "ctx": "component-5902"
+ },
+ {
+  "i": 32,
+  "en": "Resume timestring",
+  "ctx": "component-5902"
+ },
+ {
+  "i": 33,
+  "en": "Pix2Pix img CFG schedule",
+  "ctx": "Batch Mode, Resume and more"
+ },
+ {
+  "i": 34,
+  "en": "ONLY in use when working with a P2P ckpt!",
+  "ctx": "Batch Mode, Resume and more"
+ },
+ {
+  "i": 35,
+  "en": "Animation mode",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 36,
+  "en": "control animation mode, will hide non relevant params upon change",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 37,
+  "en": "2D",
+  "ctx": "[c] component-5912"
+ },
+ {
+  "i": 38,
+  "en": "3D",
+  "ctx": "[c] component-5912"
+ },
+ {
+  "i": 39,
+  "en": "Video Input",
+  "ctx": "[c] component-5912"
+ },
+ {
+  "i": 40,
+  "en": "Interpolation",
+  "ctx": "[c] component-5912"
+ },
+ {
+  "i": 41,
+  "en": "Border mode",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 42,
+  "en": "controls pixel generation method for images smaller than the frame. hover on the options to see more info",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 43,
+  "en": "replicate",
+  "ctx": "[c] component-5912"
+ },
+ {
+  "i": 44,
+  "en": "wrap",
+  "ctx": "[c] component-5912"
+ },
+ {
+  "i": 45,
+  "en": "Cadence",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 46,
+  "en": "# of in-between frames that will not be directly diffused",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 47,
+  "en": "Max frames",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 48,
+  "en": "end the animation at this frame number",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 49,
+  "en": "Guided Images",
+  "ctx": "Guided Images"
+ },
+ {
+  "i": 50,
+  "en": "*READ ME before you use this mode!*",
+  "ctx": "*READ ME before you use this mode!*"
+ },
+ {
+  "i": 51,
+  "en": "Enable guided images mode",
+  "ctx": "Guided Images"
+ },
+ {
+  "i": 52,
+  "en": "Images to use for keyframe guidance",
+  "ctx": "Guided Images"
+ },
+ {
+  "i": 53,
+  "en": "Guided images schedules",
+  "ctx": "Guided images schedules"
+ },
+ {
+  "i": 54,
+  "en": "Image strength schedule",
+  "ctx": "Guided images schedules"
+ },
+ {
+  "i": 55,
+  "en": "Blend factor max",
+  "ctx": "Guided images schedules"
+ },
+ {
+  "i": 56,
+  "en": "Blend factor slope",
+  "ctx": "Guided images schedules"
+ },
+ {
+  "i": 57,
+  "en": "Tweening frames schedule",
+  "ctx": "Guided images schedules"
+ },
+ {
+  "i": 58,
+  "en": "Color correction factor",
+  "ctx": "Guided images schedules"
+ },
+ {
+  "i": 59,
+  "en": "Strength",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 60,
+  "en": "CFG",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 61,
+  "en": "SubSeed",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 62,
+  "en": "Step",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 63,
+  "en": "Audio Keyframes",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 64,
+  "en": "Strength schedule",
+  "ctx": "component-5953"
+ },
+ {
+  "i": 65,
+  "en": "amount of presence of previous frame to influence next frame, also controls steps in the following formula [steps - (strength_schedule * steps)]",
+  "ctx": "[ht] component-5953"
+ },
+ {
+  "i": 66,
+  "en": "CFG scale schedule",
+  "ctx": "component-5958"
+ },
+ {
+  "i": 67,
+  "en": "how closely the image should conform to the prompt. Lower values produce more creative results. (recommended range 5-15)`",
+  "ctx": "component-5958"
+ },
+ {
+  "i": 68,
+  "en": "Enable CLIP skip scheduling",
+  "ctx": "component-5958"
+ },
+ {
+  "i": 69,
+  "en": "CLIP skip schedule",
+  "ctx": "component-5958"
+ },
+ {
+  "i": 70,
+  "en": "Seed behavior",
+  "ctx": "component-5969"
+ },
+ {
+  "i": 71,
+  "en": "controls the seed behavior that is used for animation. Hover on the options to see more info",
+  "ctx": "component-5969"
+ },
+ {
+  "i": 72,
+  "en": "iter",
+  "ctx": "[c] component-5969"
+ },
+ {
+  "i": 73,
+  "en": "ladder",
+  "ctx": "[c] component-5969"
+ },
+ {
+  "i": 74,
+  "en": "alternate",
+  "ctx": "[c] component-5969"
+ },
+ {
+  "i": 75,
+  "en": "schedule",
+  "ctx": "[c] component-5969"
+ },
+ {
+  "i": 76,
+  "en": "Seed iter N",
+  "ctx": "component-5969"
+ },
+ {
+  "i": 77,
+  "en": "for how many frames the same seed should stick before iterating to the next one",
+  "ctx": "component-5969"
+ },
+ {
+  "i": 78,
+  "en": "Seed schedule",
+  "ctx": "component-5969"
+ },
+ {
+  "i": 79,
+  "en": "Enable Subseed scheduling",
+  "ctx": "component-5980"
+ },
+ {
+  "i": 80,
+  "en": "Subseed schedule",
+  "ctx": "component-5980"
+ },
+ {
+  "i": 81,
+  "en": "Subseed strength schedule",
+  "ctx": "component-5980"
+ },
+ {
+  "i": 82,
+  "en": "Enable steps scheduling",
+  "ctx": "component-5991"
+ },
+ {
+  "i": 83,
+  "en": "Steps schedule",
+  "ctx": "component-5991"
+ },
+ {
+  "i": 84,
+  "en": "mainly allows using more than 200 steps. Otherwise, it's a mirror-like param of 'strength schedule'",
+  "ctx": "component-5991"
+ },
+ {
+  "i": 85,
+  "en": "Enable sampler scheduling",
+  "ctx": "component-5999"
+ },
+ {
+  "i": 86,
+  "en": "Sampler schedule",
+  "ctx": "component-5999"
+ },
+ {
+  "i": 87,
+  "en": "allows keyframing of samplers. Use names as they appear in ui dropdown in 'run' tab",
+  "ctx": "component-5999"
+ },
+ {
+  "i": 88,
+  "en": "Enable checkpoint scheduling",
+  "ctx": "component-6007"
+ },
+ {
+  "i": 89,
+  "en": "allows keyframing different sd models. Use *full* name as appears in ui dropdown",
+  "ctx": "component-6007"
+ },
+ {
+  "i": 90,
+  "en": "FPS:",
+  "ctx": "📖 מדריך קצר (עברית)"
+ },
+ {
+  "i": 91,
+  "en": "Quiet",
+  "ctx": "📖 מדריך קצר (עברית)"
+ },
+ {
+  "i": 92,
+  "en": "Loud",
+  "ctx": "📖 מדריך קצר (עברית)"
+ },
+ {
+  "i": 93,
+  "en": "Min / Max",
+  "ctx": "📖 מדריך קצר (עברית)"
+ },
+ {
+  "i": 94,
+  "en": "Curve",
+  "ctx": "📖 מדריך קצר (עברית)"
+ },
+ {
+  "i": 95,
+  "en": "Smooth",
+  "ctx": "📖 מדריך קצר (עברית)"
+ },
+ {
+  "i": 96,
+  "en": "Apply to Deforum",
+  "ctx": "📖 מדריך קצר (עברית)"
+ },
+ {
+  "i": 97,
+  "en": "Key-prompts:",
+  "ctx": "📖 מדריך קצר (עברית)"
+ },
+ {
+  "i": 98,
+  "en": "DeforumationQT:",
+  "ctx": "📖 מדריך קצר (עברית)"
+ },
+ {
+  "i": 99,
+  "en": "1 · Music",
+  "ctx": "1 · Music"
+ },
+ {
+  "i": 100,
+  "en": "Upload music (audio, or a video with sound)",
+  "ctx": "1 · Music"
+ },
+ {
+  "i": 101,
+  "en": "Music path or URL",
+  "ctx": "1 · Music"
+ },
+ {
+  "i": 102,
+  "en": "Keyframes FPS",
+  "ctx": "1 · Music"
+ },
+ {
+  "i": 103,
+  "en": "Loudness 1.0 is the",
+  "ctx": "1 · Music"
+ },
+ {
+  "i": 104,
+  "en": "Peak (like the website)",
+  "ctx": "[c] 1 · Music"
+ },
+ {
+  "i": 105,
+  "en": "Robust (98th percentile)",
+  "ctx": "[c] 1 · Music"
+ },
+ {
+  "i": 106,
+  "en": "Ignore sound quieter than",
+  "ctx": "1 · Music"
+ },
+ {
+  "i": 107,
+  "en": "Analyze music",
+  "ctx": "1 · Music"
+ },
+ {
+  "i": 108,
+  "en": "Upload a song or paste its path, then press",
+  "ctx": "1 · Music"
+ },
+ {
+  "i": 109,
+  "en": "Loudness and schedules",
+  "ctx": "1 · Music"
+ },
+ {
+  "i": 110,
+  "en": "Raw keyframes, like the website",
+  "ctx": "Raw keyframes, like the website"
+ },
+ {
+  "i": 111,
+  "en": "x = loudness 0..1, y = frame number, ^ = power, e.g. 1 + x^4",
+  "ctx": "Raw keyframes, like the website"
+ },
+ {
+  "i": 112,
+  "en": "Band",
+  "ctx": "Raw keyframes, like the website"
+ },
+ {
+  "i": 113,
+  "en": "Generate raw keyframes",
+  "ctx": "Raw keyframes, like the website"
+ },
+ {
+  "i": 114,
+  "en": "Raw keyframes",
+  "ctx": "Raw keyframes, like the website"
+ },
+ {
+  "i": 115,
+  "en": "2 · Song parts and directions (+ / -)",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 116,
+  "en": "Parts",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 117,
+  "en": "Split into equal parts",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 118,
+  "en": "Seconds per part",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 119,
+  "en": "Split every X seconds",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 120,
+  "en": "Shortest auto part (s)",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 121,
+  "en": "Auto: split where the song changes",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 122,
+  "en": "+ Add part",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 123,
+  "en": "Reset",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 124,
+  "en": "Song parts",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 125,
+  "en": "Start",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 126,
+  "en": "Zoom",
+  "ctx": "[c] 2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 127,
+  "en": "Angle",
+  "ctx": "[c] 2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 128,
+  "en": "X",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 129,
+  "en": "Y",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 130,
+  "en": "Z",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 131,
+  "en": "Rot X",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 132,
+  "en": "Rot Y",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 133,
+  "en": "Rot Z",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 134,
+  "en": "Flip theta",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 135,
+  "en": "Flip phi",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 136,
+  "en": "Flip gamma",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 137,
+  "en": "Crossfade between parts (frames)",
+  "ctx": "2 · Song parts and directions (+ / -)"
+ },
+ {
+  "i": 138,
+  "en": "3 · Parameters the music drives",
+  "ctx": "3 · Parameters the music drives"
+ },
+ {
+  "i": 139,
+  "en": "Image change",
+  "ctx": "Image change"
+ },
+ {
+  "i": 140,
+  "en": "Min",
+  "ctx": "Image change"
+ },
+ {
+  "i": 141,
+  "en": "Max",
+  "ctx": "Image change"
+ },
+ {
+  "i": 142,
+  "en": "Noise schedule",
+  "ctx": "Image change"
+ },
+ {
+  "i": 143,
+  "en": "Camera motion",
+  "ctx": "Camera motion"
+ },
+ {
+  "i": 144,
+  "en": "Zoom · 2D only · direction column Zoom",
+  "ctx": "Camera motion"
+ },
+ {
+  "i": 145,
+  "en": "Angle · 2D only · direction column Angle",
+  "ctx": "Camera motion"
+ },
+ {
+  "i": 146,
+  "en": "Translation X · direction column X",
+  "ctx": "Camera motion"
+ },
+ {
+  "i": 147,
+  "en": "Translation Y · direction column Y",
+  "ctx": "Camera motion"
+ },
+ {
+  "i": 148,
+  "en": "Translation Z · 3D only · direction column Z",
+  "ctx": "Camera motion"
+ },
+ {
+  "i": 149,
+  "en": "Rotation 3D X · 3D only · direction column Rot X",
+  "ctx": "Camera motion"
+ },
+ {
+  "i": 150,
+  "en": "Rotation 3D Y · 3D only · direction column Rot Y",
+  "ctx": "Camera motion"
+ },
+ {
+  "i": 151,
+  "en": "Rotation 3D Z · 3D only · direction column Rot Z",
+  "ctx": "Camera motion"
+ },
+ {
+  "i": 152,
+  "en": "More",
+  "ctx": "More"
+ },
+ {
+  "i": 153,
+  "en": "FOV schedule · 3D only",
+  "ctx": "More"
+ },
+ {
+  "i": 154,
+  "en": "Transform Center X · 2D only",
+  "ctx": "More"
+ },
+ {
+  "i": 155,
+  "en": "Transform Center Y · 2D only",
+  "ctx": "More"
+ },
+ {
+  "i": 156,
+  "en": "Perspective flip theta · direction column Flip theta",
+  "ctx": "More"
+ },
+ {
+  "i": 157,
+  "en": "Perspective flip phi · direction column Flip phi",
+  "ctx": "More"
+ },
+ {
+  "i": 158,
+  "en": "Perspective flip gamma · direction column Flip gamma",
+  "ctx": "More"
+ },
+ {
+  "i": 159,
+  "en": "Perspective flip tv",
+  "ctx": "More"
+ },
+ {
+  "i": 160,
+  "en": "Advanced: custom formulas",
+  "ctx": "Advanced: custom formulas"
+ },
+ {
+  "i": 161,
+  "en": "Custom formulas, one per line",
+  "ctx": "Advanced: custom formulas"
+ },
+ {
+  "i": 162,
+  "en": "Replaces Quiet/Loud/Curve of that ticked row. Variables: x (the row's band after Smooth), t or y (frame), sec, full, bass, mids, highs. Min/Max and the song-part directions still apply.",
+  "ctx": "Advanced: custom formulas"
+ },
+ {
+  "i": 163,
+  "en": "4 · Send to Deforum",
+  "ctx": "4 · Send to Deforum"
+ },
+ {
+  "i": 164,
+  "en": "Set Output FPS",
+  "ctx": "4 · Send to Deforum"
+ },
+ {
+  "i": 165,
+  "en": "Set the soundtrack (Output tab)",
+  "ctx": "4 · Send to Deforum"
+ },
+ {
+  "i": 166,
+  "en": "Set Max frames to the song length",
+  "ctx": "4 · Send to Deforum"
+ },
+ {
+  "i": 167,
+  "en": "5 · Key-prompts: new prompts at musical moments",
+  "ctx": "5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 168,
+  "en": "Place new prompts at",
+  "ctx": "5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 169,
+  "en": "Max prompts (incl. frame 0)",
+  "ctx": "5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 170,
+  "en": "Min gap (s)",
+  "ctx": "5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 171,
+  "en": "Text for new prompts",
+  "ctx": "5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 172,
+  "en": "{time}, {frame} and {prev} (the prompt before it) are filled in",
+  "ctx": "5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 173,
+  "en": "Keep a prompt at frame 0",
+  "ctx": "5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 174,
+  "en": "Prompts tab",
+  "ctx": "5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 175,
+  "en": "Add to existing prompts",
+  "ctx": "[c] 5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 176,
+  "en": "Replace all prompts",
+  "ctx": "[c] 5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 177,
+  "en": "Create key-prompts",
+  "ctx": "5 · Key-prompts: new prompts at musica"
+ },
+ {
+  "i": 178,
+  "en": "6 · Save / load these settings",
+  "ctx": "6 · Save / load these settings"
+ },
+ {
+  "i": 179,
+  "en": "Settings file",
+  "ctx": "6 · Save / load these settings"
+ },
+ {
+  "i": 180,
+  "en": "relative to the webui folder, or a full path",
+  "ctx": "6 · Save / load these settings"
+ },
+ {
+  "i": 181,
+  "en": "Save settings",
+  "ctx": "6 · Save / load these settings"
+ },
+ {
+  "i": 182,
+  "en": "Load settings",
+  "ctx": "6 · Save / load these settings"
+ },
+ {
+  "i": 183,
+  "en": "Restore the last Apply",
+  "ctx": "6 · Save / load these settings"
+ },
+ {
+  "i": 184,
+  "en": "Motion",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 185,
+  "en": "Noise",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 186,
+  "en": "Coherence",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 187,
+  "en": "Anti Blur",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 188,
+  "en": "Depth Warping & FOV",
+  "ctx": "component-5912"
+ },
+ {
+  "i": 189,
+  "en": "scale the canvas size, multiplicatively. [static = 1.0]",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 190,
+  "en": "rotate canvas clockwise/anticlockwise in degrees per frame",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 191,
+  "en": "Transform Center X",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 192,
+  "en": "X center axis for 2D angle/zoom",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 193,
+  "en": "Transform Center Y",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 194,
+  "en": "Y center axis for 2D angle/zoom",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 195,
+  "en": "Translation X",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 196,
+  "en": "move canvas left/right in pixels per frame",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 197,
+  "en": "Translation Y",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 198,
+  "en": "move canvas up/down in pixels per frame",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 199,
+  "en": "Translation Z",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 200,
+  "en": "move canvas towards/away from view [speed set by FOV]",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 201,
+  "en": "Rotation 3D X",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 202,
+  "en": "tilt canvas up/down in degrees per frame",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 203,
+  "en": "Rotation 3D Y",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 204,
+  "en": "pan canvas left/right in degrees per frame",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 205,
+  "en": "Rotation 3D Z",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 206,
+  "en": "roll canvas clockwise/anticlockwise",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 207,
+  "en": "Enable perspective flip",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 208,
+  "en": "Perspective flip theta",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 209,
+  "en": "Perspective flip phi",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 210,
+  "en": "Perspective flip gamma",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 211,
+  "en": "the 2D vanishing point of perspective (rec. range 30-160)",
+  "ctx": "component-6282"
+ },
+ {
+  "i": 212,
+  "en": "Noise type",
+  "ctx": "component-6336"
+ },
+ {
+  "i": 213,
+  "en": "Perlin octaves",
+  "ctx": "component-6336"
+ },
+ {
+  "i": 214,
+  "en": "Perlin persistence",
+  "ctx": "component-6336"
+ },
+ {
+  "i": 215,
+  "en": "Perlin W",
+  "ctx": "component-6336"
+ },
+ {
+  "i": 216,
+  "en": "Perlin H",
+  "ctx": "component-6336"
+ },
+ {
+  "i": 217,
+  "en": "Enable noise multiplier scheduling",
+  "ctx": "component-6336"
+ },
+ {
+  "i": 218,
+  "en": "Noise multiplier schedule",
+  "ctx": "component-6336"
+ },
+ {
+  "i": 219,
+  "en": "Color coherence",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 220,
+  "en": "choose an algorithm/ method for keeping color coherence across the animation",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 221,
+  "en": "force all frames to be in grayscale",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 222,
+  "en": "Color force Grayscale",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 223,
+  "en": "apply colormatch before adding noise (use with CN's Tile)",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 224,
+  "en": "Legacy colormatch",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 225,
+  "en": "Color coherence image path",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 226,
+  "en": "Color coherence video every N frames",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 227,
+  "en": "Optical flow cadence",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 228,
+  "en": "use optical flow estimation for your in-between (cadence) frames",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 229,
+  "en": "Cadence flow factor schedule",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 230,
+  "en": "Optical flow generation",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 231,
+  "en": "this option takes twice as long because it generates twice in order to capture the optical flow from the previous image to the first generation, then warps the previous image and redoes the generation",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 232,
+  "en": "Generation flow factor schedule",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 233,
+  "en": "Contrast schedule",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 234,
+  "en": "adjusts the overall contrast per frame [neutral at 1.0, recommended to *not* play with this param]",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 235,
+  "en": "Redo generation",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 236,
+  "en": "this option renders N times before the final render. it is suggested to lower your steps if you up your redo. seed is randomized during redo generations and restored afterwards",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 237,
+  "en": "Reroll blank frames",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 238,
+  "en": "reroll",
+  "ctx": "[c] component-6362"
+ },
+ {
+  "i": 239,
+  "en": "interrupt",
+  "ctx": "[c] component-6362"
+ },
+ {
+  "i": 240,
+  "en": "ignore",
+  "ctx": "[c] component-6362"
+ },
+ {
+  "i": 241,
+  "en": "Reroll patience",
+  "ctx": "component-6362"
+ },
+ {
+  "i": 242,
+  "en": "Amount schedule",
+  "ctx": "anti_blur_accord"
+ },
+ {
+  "i": 243,
+  "en": "Kernel schedule",
+  "ctx": "anti_blur_accord"
+ },
+ {
+  "i": 244,
+  "en": "Sigma schedule",
+  "ctx": "anti_blur_accord"
+ },
+ {
+  "i": 245,
+  "en": "Threshold schedule",
+  "ctx": "anti_blur_accord"
+ },
+ {
+  "i": 246,
+  "en": "Please switch to 3D animation mode to view this section.",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 247,
+  "en": "Use depth warping",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 248,
+  "en": "Note that LeReS has a Non-Commercial",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 249,
+  "en": "license",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 250,
+  "en": ". Use it only for fun/personal use.",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 251,
+  "en": "Depth Algorithm",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 252,
+  "en": "MiDaS/Zoe weight",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 253,
+  "en": "sets a midpoint at which a depth-map is to be drawn: range [-1 to +1]",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 254,
+  "en": "Padding mode",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 255,
+  "en": "controls the handling of pixels outside the field of view as they come into the scene",
+  "ctx": "depth_warp_fov_tab"
+ },
+ {
+  "i": 256,
+  "en": "border",
+  "ctx": "[c] depth_warp_fov_tab"
+ },
+ {
+  "i": 257,
+  "en": "reflection",
+  "ctx": "[c] depth_warp_fov_tab"
+ },
+ {
+  "i": 258,
+  "en": "zeros",
+  "ctx": "[c] depth_warp_fov_tab"
+ },
+ {
+  "i": 259,
+  "en": "nearest",
+  "ctx": "[c] depth_warp_fov_tab"
+ }
+]

@@ -1,0 +1,1057 @@
+[
+ {
+  "i": 0,
+  "en": "Save textual inversion and hypernet settings to a text file whenever training starts.",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 1,
+  "en": "Filename word regex",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 2,
+  "en": "Filename join string",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 3,
+  "en": "Number of repeats for a single input image per epoch; used only for displaying epoch number",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 4,
+  "en": "Save an csv containing the loss to log directory every N steps, 0 to disable",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 5,
+  "en": "Use cross attention optimizations while training",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 6,
+  "en": "Enable tensorboard logging.",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 7,
+  "en": "Save generated images within tensorboard.",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 8,
+  "en": "How often, in seconds, to flush the pending tensorboard events and summaries to disk.",
+  "ctx": "settings_training"
+ },
+ {
+  "i": 9,
+  "en": "Disable ControlNet wrapper for AnimateDiff (this requires a large VRAM)",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 10,
+  "en": "ControlNet batch size for AnimateDiff with a T2I-Adapter (ControlNet itself runs per context window; default: 2 * context_batch_size)",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 11,
+  "en": "Path to save AnimateDiff motion modules",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 12,
+  "en": "Default Save Formats",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 13,
+  "en": "(requires restart)",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 14,
+  "en": "Save frames to stable-diffusion-webui/outputs/{ txt|img }2img-images/AnimateDiff/{gif filename}/{date} instead of stable-diffusion-webui/outputs/{ txt|img }2img-images/{date}/.",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 15,
+  "en": "Path to save extracted frames",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 16,
+  "en": "Always remove extracted frames after processing",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 17,
+  "en": "Default frame extraction method",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 18,
+  "en": "ffmpeg",
+  "ctx": "[c] settings_animatediff"
+ },
+ {
+  "i": 19,
+  "en": "opencv",
+  "ctx": "[c] settings_animatediff"
+ },
+ {
+  "i": 20,
+  "en": "Calculate the optimal GIF palette, improves quality significantly, removes banding",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 21,
+  "en": "Optimize GIFs with gifsicle, reduces file size",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 22,
+  "en": "docs",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 23,
+  "en": "MP4 Quality (CRF)",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 24,
+  "en": "(17 for best quality, up to 28 for smaller size)",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 25,
+  "en": "MP4 Encoding Preset",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 26,
+  "en": "(encoding speed, use the slowest you can tolerate)",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 27,
+  "en": "MP4 Tune encoding for content type",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 28,
+  "en": "(optimize for specific content types)",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 29,
+  "en": "WebP Quality (if lossless=True, increases compression and CPU usage)",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 30,
+  "en": "Save WebP in lossless format (highest quality, largest file size)",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 31,
+  "en": "Enable to Store file in object storage that supports the s3 protocol",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 32,
+  "en": "S3 protocol host",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 33,
+  "en": "S3 protocol port",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 34,
+  "en": "S3 protocol access_key",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 35,
+  "en": "S3 protocol secret_key",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 36,
+  "en": "Bucket for file storage",
+  "ctx": "settings_animatediff"
+ },
+ {
+  "i": 37,
+  "en": "Enable JavaScript aspect ratio controls",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 38,
+  "en": "JavaScript aspect ratio buttons (1:1, 4:3, 16:9, 9:16, 21:9)",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 39,
+  "en": "JavaScript selection method",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 40,
+  "en": "Hide accordion by default",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 41,
+  "en": "Expand accordion by default",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 42,
+  "en": "UI Component order",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 43,
+  "en": "Show maximum dimension button",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 44,
+  "en": "Maximum dimension default",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 45,
+  "en": "Show minimum dimension button",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 46,
+  "en": "Minimum dimension default",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 47,
+  "en": "Show pre-defined aspect ratio buttons",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 48,
+  "en": "Use \"Maximum dimension\" for aspect ratio buttons (by default we use the max width or height)",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 49,
+  "en": "Pre-defined aspect ratio buttons (1:1, 4:3, 16:9, 9:16, 21:9)",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 50,
+  "en": "Show pre-defined percentage buttons",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 51,
+  "en": "Pre-defined percentage buttons (75, 125, 150)",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 52,
+  "en": "Pre-defined percentage display format",
+  "ctx": "settings_aspect_ratio_helper"
+ },
+ {
+  "i": 53,
+  "en": "Zoom canvas",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 54,
+  "en": "(If you choose 'Shift' you cannot scroll horizontally, 'Alt' can cause a little trouble in firefox)",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 55,
+  "en": "Shift",
+  "ctx": "[c] settings_canvas_hotkey"
+ },
+ {
+  "i": 56,
+  "en": "Ctrl",
+  "ctx": "[c] settings_canvas_hotkey"
+ },
+ {
+  "i": 57,
+  "en": "Alt",
+  "ctx": "[c] settings_canvas_hotkey"
+ },
+ {
+  "i": 58,
+  "en": "Adjust brush size",
+  "ctx": "[c] settings_canvas_hotkey"
+ },
+ {
+  "i": 59,
+  "en": "Shrink the brush size",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 60,
+  "en": "Enlarge the brush size",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 61,
+  "en": "Moving the canvas",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 62,
+  "en": "(To work correctly in firefox, turn off 'Automatically search the page text when typing' in the browser settings)",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 63,
+  "en": "Fullscreen Mode, maximizes the picture so that it fits into the screen and stretches it to its full width",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 64,
+  "en": "Reset zoom and canvas positon",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 65,
+  "en": "Toggle overlap",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 66,
+  "en": "(Technical button, neededs for testing)",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 67,
+  "en": "Enable tooltip on the canvas",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 68,
+  "en": "Automatically expands an image that does not fit completely in the canvas area, similar to manually pressing the S and R buttons",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 69,
+  "en": "Take the focus off the prompt when working with a canvas",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 70,
+  "en": "Disable function that you don't use",
+  "ctx": "settings_canvas_hotkey"
+ },
+ {
+  "i": 71,
+  "en": "Hotkey enlarge brush",
+  "ctx": "[c] settings_canvas_hotkey"
+ },
+ {
+  "i": 72,
+  "en": "Hotkey shrink brush",
+  "ctx": "[c] settings_canvas_hotkey"
+ },
+ {
+  "i": 73,
+  "en": "Moving canvas",
+  "ctx": "[c] settings_canvas_hotkey"
+ },
+ {
+  "i": 74,
+  "en": "Fullscreen",
+  "ctx": "[c] settings_canvas_hotkey"
+ },
+ {
+  "i": 75,
+  "en": "Reset Zoom",
+  "ctx": "[c] settings_canvas_hotkey"
+ },
+ {
+  "i": 76,
+  "en": "Is Use GPU",
+  "ctx": "settings_cleaner"
+ },
+ {
+  "i": 77,
+  "en": "Directory for detected maps auto saving",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 78,
+  "en": "Extra path to scan for ControlNet models (e.g. training output directory)",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 79,
+  "en": "Path to directory containing annotator model directories (requires restart, overrides corresponding command line flag)",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 80,
+  "en": "Multi-ControlNet: ControlNet unit number (requires restart)",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 81,
+  "en": "Model cache size (requires restart)",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 82,
+  "en": "Do not append detectmap to output",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 83,
+  "en": "Allow detectmap auto saving",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 84,
+  "en": "Allow other script to control this extension",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 85,
+  "en": "Paste ControlNet parameters in infotext",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 86,
+  "en": "Show batch images in gradio gallery output",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 87,
+  "en": "Increment seed after each controlnet batch iteration",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 88,
+  "en": "Disable openpose edit",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 89,
+  "en": "Disable photopea edit",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 90,
+  "en": "Photopea popup warning",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 91,
+  "en": "Input image thumbnail on unit header",
+  "ctx": "settings_control_net"
+ },
+ {
+  "i": 92,
+  "en": "Keep 3D models in VRAM between runs",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 93,
+  "en": "Keep settings persistent upon relaunch of webui",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 94,
+  "en": "Path for saving your persistent settings file:",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 95,
+  "en": "FFmpeg path/ location",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 96,
+  "en": "FFmpeg CRF value",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 97,
+  "en": "FFmpeg Preset",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 98,
+  "en": "Enable Dev mode - adds extra reporting in console",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 99,
+  "en": "Save an .srt (subtitles) file with the generation info along with each animation",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 100,
+  "en": "If .srt file is saved, soft-embed the subtitles into the rendered video file",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 101,
+  "en": "Choose which animation params are to be saved to the .srt file (Frame # and Seed will always be saved):",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 102,
+  "en": "Noise Schedule",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 103,
+  "en": "Generate preview video during generation? (Preview does not include frame interpolation or upscaling.)",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 104,
+  "en": "Generate preview every N frames",
+  "ctx": "settings_deforum"
+ },
+ {
+  "i": 105,
+  "en": "Ignore whitespace in prompts: All newlines, tabs, and multiple spaces are replaced by a single space",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 106,
+  "en": "Save template to metadata: Write prompt template into the PNG metadata",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 107,
+  "en": "String to use as left bracket for parser variants, .e.g {variant1|variant2|variant3}",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 108,
+  "en": "String to use as right bracket for parser variants, .e.g {variant1|variant2|variant3}",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 109,
+  "en": "String to use as wrap for parser wildcard, .e.g __wildcard__",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 110,
+  "en": "Limit Jinja prompts: Limit the number of prompts to batch_count * batch_size. The default is to generate batch_count * batch_size * number of prompts generated by Jinja",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 111,
+  "en": "Automatically purge wildcard cache on every generation.",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 112,
+  "en": "Disable de-duplication of wildcards before processing.",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 113,
+  "en": "Disable sorting of wildcards before processing.",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 114,
+  "en": "Shuffle wildcards before use for more random outputs",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 115,
+  "en": "Default magic prompt model",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 116,
+  "en": "Magic Prompt batch size (higher is faster but uses more memory)",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 117,
+  "en": "List of active tabs (separated by commas). Available options are txt2img, img2img, txt2img-grids, img2img-grids, Extras, Favorites, Others, All, Maintenance. Custom folders are also supported by specifying their path.",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 118,
+  "en": "Select components to hide",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 119,
+  "en": "Include images in sub directories",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 120,
+  "en": "Preload images at startup for first tab",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 121,
+  "en": "Move buttons copy instead of move",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 122,
+  "en": "Print image deletion messages to the console",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 123,
+  "en": "Debug level",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 124,
+  "en": "Use recycle bin when deleting images",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 125,
+  "en": "Change CTRL keybindings to SHIFT",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 126,
+  "en": "or to CTRL+SHIFT",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 127,
+  "en": "Swipe left/right navigates to the next image",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 128,
+  "en": "Save ranking in image's pnginfo",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 129,
+  "en": "Number of columns on the page",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 130,
+  "en": "Number of rows on the page",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 131,
+  "en": "Minimum number of pages per load",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 132,
+  "en": "Use automatic height for gallery (requires Gradio >= 3.36.0)",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 133,
+  "en": "Use optimized images in the thumbnail interface (significantly reduces the amount of data transferred)",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 134,
+  "en": "Size of the thumbnails (px)",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 135,
+  "en": "Crop thumbnail to square",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 136,
+  "en": "Enable thumbnail tooltips",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 137,
+  "en": "Show progress indicator",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 138,
+  "en": "Initially display Generation Info as formatted",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 139,
+  "en": "Display order for Generation Info as formatted",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 140,
+  "en": "Show Additional Generation Info",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 141,
+  "en": "Video above or below gallery",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 142,
+  "en": "Video player width (px)",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 143,
+  "en": "Video player height (px)",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 144,
+  "en": "Path where to store your infinite video. Default is Outputs",
+  "ctx": "settings_infinite-zoom"
+ },
+ {
+  "i": 145,
+  "en": "Which subfolder name to be created in the outpath. Default is 'infinite-zooms'",
+  "ctx": "settings_infinite-zoom"
+ },
+ {
+  "i": 146,
+  "en": "Default width of your video",
+  "ctx": "settings_infinite-zoom"
+ },
+ {
+  "i": 147,
+  "en": "Default height your video",
+  "ctx": "settings_infinite-zoom"
+ },
+ {
+  "i": 148,
+  "en": "Name of your desired model to render keyframes (txt2img)",
+  "ctx": "settings_infinite-zoom"
+ },
+ {
+  "i": 149,
+  "en": "Default prompt-setup to start with'",
+  "ctx": "settings_infinite-zoom"
+ },
+ {
+  "i": 150,
+  "en": "!!! Store all images (txt2img, init_image,exit_image, inpainting, interpolation) into one folder in your OUTPUT Path. Very slow, a lot of data. Dont do this on long runs !!!",
+  "ctx": "settings_infinite-zoom"
+ },
+ {
+  "i": 151,
+  "en": "Keep models in VRAM",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 152,
+  "en": "Include ranks of model tags matches in results.",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 153,
+  "en": "(booru only)",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 154,
+  "en": "BLIP: num_beams",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 155,
+  "en": "BLIP: minimum description length",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 156,
+  "en": "BLIP: maximum description length",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 157,
+  "en": "CLIP: maximum number of lines in text file",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 158,
+  "en": "(0 = No limit)",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 159,
+  "en": "CLIP: skip inquire categories",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 160,
+  "en": "flavors",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 161,
+  "en": "mediums",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 162,
+  "en": "movements",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 163,
+  "en": "deepbooru: score threshold",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 164,
+  "en": "deepbooru: sort tags alphabetically",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 165,
+  "en": "(if not: sort by score)",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 166,
+  "en": "deepbooru: use spaces in tags",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 167,
+  "en": "(if not: use underscores)",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 168,
+  "en": "deepbooru: escape (\\) brackets",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 169,
+  "en": "(so they are used as literal brackets and not for emphasis)",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 170,
+  "en": "deepbooru: filter out those tags",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 171,
+  "en": "(separate by comma)",
+  "ctx": "settings_interrogate"
+ },
+ {
+  "i": 172,
+  "en": "Defaults for Extra include in gallery",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 173,
+  "en": "Use first positive prompt form examples, if field is empty",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 174,
+  "en": "Use first negative prompt form examples, if field is empty",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 175,
+  "en": "Hide Segment Anything accordions in txt2img and img2img tabs. Useful if you installed it only for Replacer",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 176,
+  "en": "Hide AnimateDiff accordions in txt2img and img2img tabs. Useful if you installed it only for Replacer",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 177,
+  "en": "Hide Replacer accordions in txt2img and img2img tabs",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 178,
+  "en": "Always unload detection models after generation",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 179,
+  "en": "(Significantly increases detection time but reduces vram usage. Automatic means enable only for --lowvram and --medvram mode. )",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 180,
+  "en": "Automatic",
+  "ctx": "[c] settings_replacer"
+ },
+ {
+  "i": 181,
+  "en": "Only SDXL",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 182,
+  "en": "Disabled",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 183,
+  "en": "Use CPU for detection (SAM + Dino). For AMD Radeon and Intel ARC or if you don't have enough vram",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 184,
+  "en": "Use fast mask dilation (Squarer)",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 185,
+  "en": "Color for mask in preview (fast dilation) and default for Custom mask and Avoidance mask",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 186,
+  "en": "Override Detection prompt examples",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 187,
+  "en": "Override Avoidance prompt examples",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 188,
+  "en": "Override Positive prompt examples",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 189,
+  "en": "Override Negative prompt examples",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 190,
+  "en": "Override HiresFix suffix for positive prompt examples",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 191,
+  "en": "Override number of examples per pages for detection prompt",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 192,
+  "en": "(Set 0 to hide)",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 193,
+  "en": "Override number of examples per pages for avoidance prompt",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 194,
+  "en": "Override number of examples per pages for positive prompt",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 195,
+  "en": "Override number of examples per pages for negative prompt",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 196,
+  "en": "Replacer save directory",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 197,
+  "en": "Limit resolution in all mask editors",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 198,
+  "en": "Color for editing mask in video masking tab",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 199,
+  "en": "Hide video tab in main ui",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 200,
+  "en": "(Show only in dedicated tab)",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 201,
+  "en": "Add extras tab into dedicated page",
+  "ctx": "settings_replacer"
+ },
+ {
+  "i": 202,
+  "en": "Use local groundingdino to bypass C++ problem",
+  "ctx": "settings_segment_anything"
+ },
+ {
+  "i": 203,
+  "en": "How should Style Names Rendered on UI",
+  "ctx": "settings_styleselector"
+ },
+ {
+  "i": 204,
+  "en": "radio-buttons",
+  "ctx": "settings_styleselector"
+ },
+ {
+  "i": 205,
+  "en": "select-list",
+  "ctx": "settings_styleselector"
+ },
+ {
+  "i": 206,
+  "en": "enable Style Selector by default",
+  "ctx": "settings_styleselector"
+ },
+ {
+  "i": 207,
+  "en": "View changes",
+  "ctx": "settings_tab_defaults"
+ },
+ {
+  "i": 208,
+  "en": "Download system info",
+  "ctx": "settings_tab_sysinfo"
+ },
+ {
+  "i": 209,
+  "en": "(or open as text in a new page)",
+  "ctx": "settings_tab_sysinfo"
+ },
+ {
+  "i": 210,
+  "en": "Check system info for validity",
+  "ctx": "settings_tab_sysinfo"
+ }
+]

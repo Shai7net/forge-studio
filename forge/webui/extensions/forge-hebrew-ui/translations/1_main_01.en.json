@@ -1,0 +1,1302 @@
+[
+ {
+  "i": 0,
+  "en": "Stable Diffusion checkpoint",
+  "ctx": ""
+ },
+ {
+  "i": 1,
+  "en": "SD VAE",
+  "ctx": ""
+ },
+ {
+  "i": 2,
+  "en": "Clip skip",
+  "ctx": "[c] "
+ },
+ {
+  "i": 3,
+  "en": "Restore faces",
+  "ctx": ""
+ },
+ {
+  "i": 4,
+  "en": "Face restoration model",
+  "ctx": ""
+ },
+ {
+  "i": 5,
+  "en": "CodeFormer",
+  "ctx": "[c] "
+ },
+ {
+  "i": 6,
+  "en": "GFPGAN",
+  "ctx": "[c] "
+ },
+ {
+  "i": 7,
+  "en": "txt2img",
+  "ctx": "[c] "
+ },
+ {
+  "i": 8,
+  "en": "img2img",
+  "ctx": "[c] "
+ },
+ {
+  "i": 9,
+  "en": "Extras",
+  "ctx": "[c] "
+ },
+ {
+  "i": 10,
+  "en": "PNG Info",
+  "ctx": "[c] "
+ },
+ {
+  "i": 11,
+  "en": "Checkpoint Merger",
+  "ctx": "[c] "
+ },
+ {
+  "i": 12,
+  "en": "Train",
+  "ctx": "[c] "
+ },
+ {
+  "i": 13,
+  "en": "SVD",
+  "ctx": "[c] "
+ },
+ {
+  "i": 14,
+  "en": "Z123",
+  "ctx": "[c] "
+ },
+ {
+  "i": 15,
+  "en": "Infinite Zoom",
+  "ctx": "[c] "
+ },
+ {
+  "i": 16,
+  "en": "NextView",
+  "ctx": "[c] "
+ },
+ {
+  "i": 17,
+  "en": "System Info",
+  "ctx": "[c] "
+ },
+ {
+  "i": 18,
+  "en": "Deforum",
+  "ctx": "[c] "
+ },
+ {
+  "i": 19,
+  "en": "Batch Cleaner",
+  "ctx": "[c] "
+ },
+ {
+  "i": 20,
+  "en": "Cleaner",
+  "ctx": "[c] "
+ },
+ {
+  "i": 21,
+  "en": "Panorama Viewer",
+  "ctx": "[c] "
+ },
+ {
+  "i": 22,
+  "en": "Replacer",
+  "ctx": "[c] "
+ },
+ {
+  "i": 23,
+  "en": "Replacer - video",
+  "ctx": "[c] "
+ },
+ {
+  "i": 24,
+  "en": "Image Browser",
+  "ctx": "[c] "
+ },
+ {
+  "i": 25,
+  "en": "Wildcards Manager",
+  "ctx": "[c] "
+ },
+ {
+  "i": 26,
+  "en": "Settings",
+  "ctx": "[c] "
+ },
+ {
+  "i": 27,
+  "en": "Extensions",
+  "ctx": "[c] "
+ },
+ {
+  "i": 28,
+  "en": "Prompt",
+  "ctx": "[c] tab_txt2img"
+ },
+ {
+  "i": 29,
+  "en": "File",
+  "ctx": "[c] tab_txt2img"
+ },
+ {
+  "i": 30,
+  "en": "Negative prompt",
+  "ctx": "[c] tab_txt2img"
+ },
+ {
+  "i": 31,
+  "en": "Run",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 32,
+  "en": "Styles",
+  "ctx": "[ct] tab_txt2img"
+ },
+ {
+  "i": 33,
+  "en": "Styles allow you to add custom text to prompt. Use the {prompt} token in style text, and it will be replaced with user's prompt when applying style. Otherwise, style's text will be added to the end of the prompt.",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 34,
+  "en": "Save",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 35,
+  "en": "Delete",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 36,
+  "en": "Close",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 37,
+  "en": "Label",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 38,
+  "en": "Generation",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 39,
+  "en": "Textual Inversion",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 40,
+  "en": "Hypernetworks",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 41,
+  "en": "Checkpoints",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 42,
+  "en": "Lora",
+  "ctx": "tab_txt2img"
+ },
+ {
+  "i": 43,
+  "en": "Sampling method",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 44,
+  "en": "Sampling steps",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 45,
+  "en": "Hires. fix",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 46,
+  "en": "Upscaler",
+  "ctx": "Hires. fix"
+ },
+ {
+  "i": 47,
+  "en": "Hires steps",
+  "ctx": "[c] Hires. fix"
+ },
+ {
+  "i": 48,
+  "en": "Denoising strength",
+  "ctx": "[c] Hires. fix"
+ },
+ {
+  "i": 49,
+  "en": "Upscale by",
+  "ctx": "Hires. fix"
+ },
+ {
+  "i": 50,
+  "en": "Resize width to",
+  "ctx": "Hires. fix"
+ },
+ {
+  "i": 51,
+  "en": "Resize height to",
+  "ctx": "Hires. fix"
+ },
+ {
+  "i": 52,
+  "en": "Hires checkpoint",
+  "ctx": "[c] Hires. fix"
+ },
+ {
+  "i": 53,
+  "en": "Hires sampling method",
+  "ctx": "Hires. fix"
+ },
+ {
+  "i": 54,
+  "en": "Hires prompt",
+  "ctx": "[c] Hires. fix"
+ },
+ {
+  "i": 55,
+  "en": "Hires negative prompt",
+  "ctx": "[c] Hires. fix"
+ },
+ {
+  "i": 56,
+  "en": "Refiner",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 57,
+  "en": "Checkpoint",
+  "ctx": "Refiner"
+ },
+ {
+  "i": 58,
+  "en": "Switch at",
+  "ctx": "Refiner"
+ },
+ {
+  "i": 59,
+  "en": "Width",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 60,
+  "en": "Height",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 61,
+  "en": "Off",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 62,
+  "en": "Batch count",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 63,
+  "en": "Batch size",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 64,
+  "en": "CFG Scale",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 65,
+  "en": "Seed",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 66,
+  "en": "Extra",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 67,
+  "en": "Variation seed",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 68,
+  "en": "Variation strength",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 69,
+  "en": "Resize seed from width",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 70,
+  "en": "Resize seed from height",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 71,
+  "en": "Override settings",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 72,
+  "en": "Aspect Ratio and Resolution Buttons",
+  "ctx": "Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 73,
+  "en": "Current W/H Avg.",
+  "ctx": "Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 74,
+  "en": "Precision (px)",
+  "ctx": "Aspect Ratio and Resolution Buttons"
+ },
+ {
+  "i": 75,
+  "en": "SDXL Styles",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 76,
+  "en": "Enable Or Disable Style Selector",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 77,
+  "en": "Enable Style Selector",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 78,
+  "en": "This Will Override Selected Style",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 79,
+  "en": "Randomize Style",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 80,
+  "en": "Every prompt in Batch Will Have Random Style",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 81,
+  "en": "Randomize For Each Iteration",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 82,
+  "en": "To Generate Your Prompt in All Available Styles, Its Better to set batch count to 77 ( Style Count)",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 83,
+  "en": "Generate All Styles In Order",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 84,
+  "en": "Style",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 85,
+  "en": "3D Model",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 86,
+  "en": "Abstract",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 87,
+  "en": "Advertising",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 88,
+  "en": "Alien",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 89,
+  "en": "Analog Film",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 90,
+  "en": "Anime",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 91,
+  "en": "Architectural",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 92,
+  "en": "Cinematic",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 93,
+  "en": "Collage",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 94,
+  "en": "Comic Book",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 95,
+  "en": "Craft Clay",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 96,
+  "en": "Cubist",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 97,
+  "en": "Digital Art",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 98,
+  "en": "Disco",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 99,
+  "en": "Dreamscape",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 100,
+  "en": "Dystopian",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 101,
+  "en": "Enhance",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 102,
+  "en": "Fairy Tale",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 103,
+  "en": "Fantasy Art",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 104,
+  "en": "Fighting Game",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 105,
+  "en": "Film Noir",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 106,
+  "en": "Flat Papercut",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 107,
+  "en": "Food Photography",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 108,
+  "en": "GTA",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 109,
+  "en": "Gothic",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 110,
+  "en": "Graffiti",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 111,
+  "en": "Grunge",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 112,
+  "en": "HDR",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 113,
+  "en": "Horror",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 114,
+  "en": "Hyperrealism",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 115,
+  "en": "Impressionist",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 116,
+  "en": "Isometric Style",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 117,
+  "en": "Kirigami",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 118,
+  "en": "Legend of Zelda",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 119,
+  "en": "Line Art",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 120,
+  "en": "Long Exposure",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 121,
+  "en": "Lowpoly",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 122,
+  "en": "Minecraft",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 123,
+  "en": "Minimalist",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 124,
+  "en": "Monochrome",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 125,
+  "en": "Nautical",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 126,
+  "en": "Neon Noir",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 127,
+  "en": "Neon Punk",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 128,
+  "en": "Origami",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 129,
+  "en": "Paper Mache",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 130,
+  "en": "Paper Quilling",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 131,
+  "en": "Papercut Collage",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 132,
+  "en": "Papercut Shadow Box",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 133,
+  "en": "Photographic",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 134,
+  "en": "Pixel Art",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 135,
+  "en": "Pointillism",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 136,
+  "en": "Pokémon",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 137,
+  "en": "Pop Art",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 138,
+  "en": "Psychedelic",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 139,
+  "en": "RPG Fantasy Game",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 140,
+  "en": "Real Estate",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 141,
+  "en": "Renaissance",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 142,
+  "en": "Retro Arcade",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 143,
+  "en": "Retro Game",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 144,
+  "en": "Silhouette",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 145,
+  "en": "Space",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 146,
+  "en": "Stacked Papercut",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 147,
+  "en": "Stained Glass",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 148,
+  "en": "Steampunk",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 149,
+  "en": "Strategy Game",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 150,
+  "en": "Street Fighter",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 151,
+  "en": "Super Mario",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 152,
+  "en": "Surrealist",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 153,
+  "en": "Techwear Fashion",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 154,
+  "en": "Texture",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 155,
+  "en": "Thick Layered Papercut",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 156,
+  "en": "Tilt-Shift",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 157,
+  "en": "Tribal",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 158,
+  "en": "Typography",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 159,
+  "en": "Watercolor",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 160,
+  "en": "Zentangle",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 161,
+  "en": "base",
+  "ctx": "SDXL Styles"
+ },
+ {
+  "i": 162,
+  "en": "Asymmetric tiling",
+  "ctx": "Asymmetric tiling"
+ },
+ {
+  "i": 163,
+  "en": "Active",
+  "ctx": "Asymmetric tiling"
+ },
+ {
+  "i": 164,
+  "en": "Tile X",
+  "ctx": "Asymmetric tiling"
+ },
+ {
+  "i": 165,
+  "en": "Tile Y",
+  "ctx": "Asymmetric tiling"
+ },
+ {
+  "i": 166,
+  "en": "Start tiling from step N",
+  "ctx": "Asymmetric tiling"
+ },
+ {
+  "i": 167,
+  "en": "Stop tiling after step N (-1: Don't stop)",
+  "ctx": "Asymmetric tiling"
+ },
+ {
+  "i": 168,
+  "en": "Dynamic Prompts",
+  "ctx": "Dynamic Prompts"
+ },
+ {
+  "i": 169,
+  "en": "Dynamic Prompts enabled",
+  "ctx": "Dynamic Prompts"
+ },
+ {
+  "i": 170,
+  "en": "Combinatorial generation",
+  "ctx": "Dynamic Prompts"
+ },
+ {
+  "i": 171,
+  "en": "Max generations (0 = all combinations - the batch count value is ignored)",
+  "ctx": "Dynamic Prompts"
+ },
+ {
+  "i": 172,
+  "en": "Combinatorial batches",
+  "ctx": "Dynamic Prompts"
+ },
+ {
+  "i": 173,
+  "en": "Prompt Magic",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 174,
+  "en": "Magic prompt",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 175,
+  "en": "Max magic prompt length",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 176,
+  "en": "Magic prompt creativity",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 177,
+  "en": "Magic prompt model",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 178,
+  "en": "Magic prompt blocklist regex",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 179,
+  "en": "I'm feeling lucky",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 180,
+  "en": "Attention grabber",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 181,
+  "en": "Minimum attention",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 182,
+  "en": "Maximum attention",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 183,
+  "en": "Don't apply to negative prompts",
+  "ctx": "Prompt Magic"
+ },
+ {
+  "i": 184,
+  "en": "Need help?",
+  "ctx": "Need help?"
+ },
+ {
+  "i": 185,
+  "en": "Jinja2 templates",
+  "ctx": "Jinja2 templates"
+ },
+ {
+  "i": 186,
+  "en": "Enable Jinja2 templates",
+  "ctx": "Jinja2 templates"
+ },
+ {
+  "i": 187,
+  "en": "Help for Jinja2 templates",
+  "ctx": "Help for Jinja2 templates"
+ },
+ {
+  "i": 188,
+  "en": "Advanced options",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 189,
+  "en": "Some settings have been moved to the settings tab. Find them in the Dynamic Prompts section.",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 190,
+  "en": "Unlink seed from prompt",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 191,
+  "en": "Fixed seed",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 192,
+  "en": "Write raw prompt to image",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 193,
+  "en": "Don't generate images",
+  "ctx": "Advanced options"
+ },
+ {
+  "i": 194,
+  "en": "Write prompts to file",
+  "ctx": "Dynamic Prompts"
+ },
+ {
+  "i": 195,
+  "en": "AnimateDiff",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 196,
+  "en": "Please click",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 197,
+  "en": "this link",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 198,
+  "en": "to read the documentation of each parameter.",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 199,
+  "en": "Motion module",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 200,
+  "en": "Save format",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 201,
+  "en": "GIF",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 202,
+  "en": "MP4",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 203,
+  "en": "WEBP",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 204,
+  "en": "WEBM",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 205,
+  "en": "PNG",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 206,
+  "en": "TXT",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 207,
+  "en": "Enable AnimateDiff",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 208,
+  "en": "Number of frames",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 209,
+  "en": "FPS",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 210,
+  "en": "Display loop number",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 211,
+  "en": "Closed loop",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 212,
+  "en": "N",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 213,
+  "en": "R-P",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 214,
+  "en": "R+P",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 215,
+  "en": "A",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 216,
+  "en": "Context batch size",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 217,
+  "en": "Stride",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 218,
+  "en": "Overlap",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 219,
+  "en": "Frame Interpolation",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 220,
+  "en": "FILM",
+  "ctx": "[c] AnimateDiff"
+ },
+ {
+  "i": 221,
+  "en": "Interp X",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 222,
+  "en": "Video source",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 223,
+  "en": "Video path",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 224,
+  "en": "Mask path",
+  "ctx": "AnimateDiff"
+ },
+ {
+  "i": 225,
+  "en": "Calc",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 226,
+  "en": "Textbox",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 227,
+  "en": "Aspect Ratio Calculator",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 228,
+  "en": "Width 1",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 229,
+  "en": "Height 1",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 230,
+  "en": "Width 2",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 231,
+  "en": "Height 2",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 232,
+  "en": "Aspect Ratio:",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 233,
+  "en": "Calculate Height",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 234,
+  "en": "Calculate Width",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 235,
+  "en": "Apply",
+  "ctx": "component-1732"
+ },
+ {
+  "i": 236,
+  "en": "ReActor",
+  "ctx": "[c] component-1732"
+ },
+ {
+  "i": 237,
+  "en": "The Fast and Simple FaceSwap Extension - v0.7.0-b7",
+  "ctx": "ReActor"
+ },
+ {
+  "i": 238,
+  "en": "Main",
+  "ctx": "ReActor"
+ },
+ {
+  "i": 239,
+  "en": "Detection",
+  "ctx": "ReActor"
+ },
+ {
+  "i": 240,
+  "en": "Upscale",
+  "ctx": "[c] ReActor"
+ },
+ {
+  "i": 241,
+  "en": "Tools",
+  "ctx": "ReActor"
+ },
+ {
+  "i": 242,
+  "en": "Select Source",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 243,
+  "en": "Image(s)",
+  "ctx": "[c] component-2004"
+ },
+ {
+  "i": 244,
+  "en": "Face Model",
+  "ctx": "[c] component-2004"
+ },
+ {
+  "i": 245,
+  "en": "Folder",
+  "ctx": "[c] component-2004"
+ },
+ {
+  "i": 246,
+  "en": "Choose Face Model",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 247,
+  "en": "Clear Source Images Hash",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 248,
+  "en": "🔽🔽🔽 Single Image has priority when both Areas in use 🔽🔽🔽",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 249,
+  "en": "Single Source Image",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 250,
+  "en": "Multiple Source Images",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 251,
+  "en": "Clear Hash if you see the previous face was swapped instead of the new one",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 252,
+  "en": "Source Folder",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 253,
+  "en": "Randomly select an image from the path",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 254,
+  "en": "Random Image",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 255,
+  "en": "Save the original image(s) made before swapping",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 256,
+  "en": "Save Original",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 257,
+  "en": "Apply this option if you see some pixelation around face contours",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 258,
+  "en": "Face Mask Correction",
+  "ctx": "component-2004"
+ },
+ {
+  "i": 259,
+  "en": "Source Image (above):",
+  "ctx": "component-2004"
+ }
+]

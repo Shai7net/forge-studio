@@ -1,0 +1,23 @@
+[
+ {
+  "i": 0,
+  "text": "Zoom through your own images instead of prompts. Image 1 is the center of the zoom and the last image is the outermost frame. Render settings (Main tab), Video, Music & Keyframes, Mask Blur (Outpaint tab) and Post process apply here too.",
+  "html": "<span class=\"md svelte-9tftx4\"><p>Zoom through your own images instead of prompts. Image 1 is the center of the zoom and the last image is the outermost frame. Render settings (Main tab), Video, Music &amp; Keyframes, Mask Blur (Outpaint tab) and Post process apply here too.</p>\n</span>",
+  "ctx": "tab: tab_iz_interface > tab: component-5665",
+  "tab": "tab_iz_interface"
+ },
+ {
+  "i": 1,
+  "text": "Paste or upload keyframes from the audio keyframe generator (Disco, PyTTI or CSV) or from Deforum. With keyframes the zoom follows their pace and the video lasts as long as the keyframes; leave empty for the classic steady zoom.",
+  "html": "<p>Paste or upload keyframes from the <a href=\"https://www.chigozie.co.uk/audio-keyframe-generator/\" target=\"_blank\" rel=\"noopener noreferrer\">audio keyframe generator</a> (Disco, PyTTI or CSV) or from Deforum. With keyframes the zoom follows their pace and the video lasts as long as the keyframes; leave empty for the classic steady zoom.</p>",
+  "ctx": "tab: tab_iz_interface > tab: component-5690 > accordion: Keyframes (zoom pace)",
+  "tab": "tab_iz_interface"
+ },
+ {
+  "i": 2,
+  "text": "Performance critical Depending on amount of frames and which upscaler you choose it might took a long time to render.Our best experience and trade-off is the R-ERSGAn4x upscaler.",
+  "html": "<span class=\"md svelte-9tftx4\"><h1>Performance critical</h1>\n<p>Depending on amount of frames and which upscaler you choose it might took a long time to render.<br>Our best experience and trade-off is the R-ERSGAn4x upscaler.</p>\n</span>",
+  "ctx": "tab: tab_iz_interface > tab: component-5717 > accordion: Help",
+  "tab": "tab_iz_interface"
+ }
+]

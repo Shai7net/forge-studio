@@ -1,0 +1,1232 @@
+[
+ {
+  "i": 0,
+  "en": "Request browser notifications",
+  "ctx": "settings_tab_actions"
+ },
+ {
+  "i": 1,
+  "en": "Download localization template",
+  "ctx": "settings_tab_actions"
+ },
+ {
+  "i": 2,
+  "en": "Reload custom script bodies (No ui updates, No restart)",
+  "ctx": "settings_tab_actions"
+ },
+ {
+  "i": 3,
+  "en": "Unload SD checkpoint to RAM",
+  "ctx": "settings_tab_actions"
+ },
+ {
+  "i": 4,
+  "en": "Load SD checkpoint to VRAM from RAM",
+  "ctx": "settings_tab_actions"
+ },
+ {
+  "i": 5,
+  "en": "Calculate hash for all checkpoint",
+  "ctx": "settings_tab_actions"
+ },
+ {
+  "i": 6,
+  "en": "Number of parallel calculations",
+  "ctx": "settings_tab_actions"
+ },
+ {
+  "i": 7,
+  "en": "Show only one page",
+  "ctx": "tab_settings"
+ },
+ {
+  "i": 8,
+  "en": "Add hypernetwork to prompt: refresh",
+  "ctx": "[t] settings_extra_networks"
+ },
+ {
+  "i": 9,
+  "en": "Add network to prompt: refresh",
+  "ctx": "[t] settings_extra_networks"
+ },
+ {
+  "i": 10,
+  "en": "Ignores step count - uses a number of steps determined by the CFG and resolution",
+  "ctx": "[ht] settings_sampler-params"
+ },
+ {
+  "i": 11,
+  "en": "Denoising Diffusion Implicit Models - best at inpainting",
+  "ctx": "[ht] settings_sampler-params"
+ },
+ {
+  "i": 12,
+  "en": "Unified Predictor-Corrector Framework for Fast Sampling of Diffusion Models",
+  "ctx": "[ht] settings_sampler-params"
+ },
+ {
+  "i": 13,
+  "en": "SD Unet: refresh",
+  "ctx": "[t] settings_sd"
+ },
+ {
+  "i": 14,
+  "en": "Variational autoencoder",
+  "ctx": "[t] settings_vae"
+ },
+ {
+  "i": 15,
+  "en": "red/green/blue",
+  "ctx": "[t] settings_vae"
+ },
+ {
+  "i": 16,
+  "en": "Only applies to inpainting models. Determines how strongly to mask off the original image for inpainting and img2img. 1.0 means fully masked, which is the default behaviour. 0.0 means a fully unmasked conditioning. Lower values will help preserve the overall composition of the image, but will struggle with large changes.",
+  "ctx": "[ht] settings_img2img"
+ },
+ {
+  "i": 17,
+  "en": "Cheap neural network approximation. Very fast compared to VAE, but produces pictures with 4 times smaller horizontal/vertical resolution and lower quality.",
+  "ctx": "[ht] settings_ui"
+ },
+ {
+  "i": 18,
+  "en": "Very cheap approximation. Very fast compared to VAE, but produces pictures with 8 times smaller horizontal/vertical resolution and extremely low quality.",
+  "ctx": "[ht] settings_ui"
+ },
+ {
+  "i": 19,
+  "en": "Localization: refresh",
+  "ctx": "[t] settings_ui"
+ },
+ {
+  "i": 20,
+  "en": "Remove sd_model_checkpoint",
+  "ctx": "[t] settings_ui"
+ },
+ {
+  "i": 21,
+  "en": "Remove sd_vae",
+  "ctx": "[t] settings_ui"
+ },
+ {
+  "i": 22,
+  "en": "Remove CLIP_stop_at_last_layers",
+  "ctx": "[t] settings_ui"
+ },
+ {
+  "i": 23,
+  "en": "Remove face_restoration",
+  "ctx": "[t] settings_ui"
+ },
+ {
+  "i": 24,
+  "en": "Remove face_restoration_model",
+  "ctx": "[t] settings_ui"
+ },
+ {
+  "i": 25,
+  "en": "This regular expression will be used extract words from filename, and they will be joined using the option below into label text used for training. Leave empty to keep filename text as it is.",
+  "ctx": "[ht] settings_training"
+ },
+ {
+  "i": 26,
+  "en": "This string will be used to join split words into a single line if the option above is enabled.",
+  "ctx": "[ht] settings_training"
+ },
+ {
+  "i": 27,
+  "en": "Remove Noise Schedule",
+  "ctx": "[t] settings_deforum"
+ },
+ {
+  "i": 28,
+  "en": "CLIP: skip inquire categories: refresh",
+  "ctx": "[t] settings_interrogate"
+ },
+ {
+  "i": 29,
+  "en": "Search...",
+  "ctx": "[p] tab_settings"
+ },
+ {
+  "i": 30,
+  "en": "Leave empty to use default path: extensions/sd-webui-animatediff/model",
+  "ctx": "[p] settings_animatediff"
+ },
+ {
+  "i": 31,
+  "en": "Leave empty to use default path: tmp/animatediff-frames",
+  "ctx": "[p] settings_animatediff"
+ },
+ {
+  "i": 32,
+  "en": "background\nhairstyle\nt-shirt",
+  "ctx": "[p] settings_replacer"
+ },
+ {
+  "i": 33,
+  "en": "face\nhairstyle\nclothes",
+  "ctx": "[p] settings_replacer"
+ },
+ {
+  "i": 34,
+  "en": "waterfall\nphoto of blonde girl\nphoto of girl with red t-shirt",
+  "ctx": "[p] settings_replacer"
+ },
+ {
+  "i": 35,
+  "en": "cartoon, painting, illustration, (worst quality, low quality, normal quality:2)\npoor quality, low quality,  low res",
+  "ctx": "[p] settings_replacer"
+ },
+ {
+  "i": 36,
+  "en": "<lora:lcm-lora-sdv1-5:1>\n<lora:sdxl_lightning_2step_lora:1>",
+  "ctx": "[p] settings_replacer"
+ },
+ {
+  "i": 37,
+  "en": "Path",
+  "ctx": "[c] settings_extra_networks"
+ },
+ {
+  "i": 38,
+  "en": "Date Created",
+  "ctx": "[c] settings_extra_networks"
+ },
+ {
+  "i": 39,
+  "en": "Date Modified",
+  "ctx": "[c] settings_extra_networks"
+ },
+ {
+  "i": 40,
+  "en": "Ascending",
+  "ctx": "[c] settings_extra_networks"
+ },
+ {
+  "i": 41,
+  "en": "Descending",
+  "ctx": "[c] settings_extra_networks"
+ },
+ {
+  "i": 42,
+  "en": "Doggettx",
+  "ctx": "[c] settings_optimizations"
+ },
+ {
+  "i": 43,
+  "en": "sdp-no-mem - scaled dot product without memory efficient attention",
+  "ctx": "[c] settings_optimizations"
+ },
+ {
+  "i": 44,
+  "en": "sdp - scaled dot product",
+  "ctx": "[c] settings_optimizations"
+ },
+ {
+  "i": 45,
+  "en": "sub-quadratic",
+  "ctx": "[c] settings_optimizations"
+ },
+ {
+  "i": 46,
+  "en": "V1 - original v1",
+  "ctx": "[c] settings_optimizations"
+ },
+ {
+  "i": 47,
+  "en": "InvokeAI",
+  "ctx": "[c] settings_optimizations"
+ },
+ {
+  "i": 48,
+  "en": "polyexponential",
+  "ctx": "[c] settings_sampler-params"
+ },
+ {
+  "i": 49,
+  "en": "Old prompt editing timelines",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 50,
+  "en": "Downcast alphas_cumprod",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 51,
+  "en": "Token merging ratio hr",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 52,
+  "en": "Pad conds",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 53,
+  "en": "Pad conds v0",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 54,
+  "en": "Eta DDIM",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 55,
+  "en": "Sigma churn",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 56,
+  "en": "Sigma tmin",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 57,
+  "en": "Sigma tmax",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 58,
+  "en": "ENSD",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 59,
+  "en": "Discard penultimate sigma",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 60,
+  "en": "SGM noise multplier",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 61,
+  "en": "Emphasis",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 62,
+  "en": "RNG",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 63,
+  "en": "Hires refiner",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 64,
+  "en": "VAE Encoder",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 65,
+  "en": "VAE Decoder",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 66,
+  "en": "Conditional mask weight",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 67,
+  "en": "Noise multiplier",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 68,
+  "en": "Size-1",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 69,
+  "en": "Size-2",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 70,
+  "en": "Hires upscale",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 71,
+  "en": "Hires resize-1",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 72,
+  "en": "Hires resize-2",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 73,
+  "en": "Variation seed strength",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 74,
+  "en": "Seed resize from-1",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 75,
+  "en": "Seed resize from-2",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 76,
+  "en": "AnimateDiff model",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 77,
+  "en": "AnimateDiff enable",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 78,
+  "en": "AnimateDiff video_length",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 79,
+  "en": "AnimateDiff fps",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 80,
+  "en": "AnimateDiff loop_number",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 81,
+  "en": "AnimateDiff closed_loop",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 82,
+  "en": "AnimateDiff batch_size",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 83,
+  "en": "AnimateDiff stride",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 84,
+  "en": "AnimateDiff overlap",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 85,
+  "en": "AnimateDiff format",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 86,
+  "en": "AnimateDiff interp",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 87,
+  "en": "AnimateDiff interp_x",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 88,
+  "en": "ControlNet 0 module",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 89,
+  "en": "ControlNet 0 model",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 90,
+  "en": "ControlNet 0 weight",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 91,
+  "en": "ControlNet 0 resize_mode",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 92,
+  "en": "ControlNet 0 processor_res",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 93,
+  "en": "ControlNet 0 threshold_a",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 94,
+  "en": "ControlNet 0 threshold_b",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 95,
+  "en": "ControlNet 0 guidance_start",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 96,
+  "en": "ControlNet 0 guidance_end",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 97,
+  "en": "ControlNet 0 pixel_perfect",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 98,
+  "en": "ControlNet 0 control_mode",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 99,
+  "en": "ControlNet 0 hr_option",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 100,
+  "en": "ControlNet 1 module",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 101,
+  "en": "ControlNet 1 model",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 102,
+  "en": "ControlNet 1 weight",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 103,
+  "en": "ControlNet 1 resize_mode",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 104,
+  "en": "ControlNet 1 processor_res",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 105,
+  "en": "ControlNet 1 threshold_a",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 106,
+  "en": "ControlNet 1 threshold_b",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 107,
+  "en": "ControlNet 1 guidance_start",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 108,
+  "en": "ControlNet 1 guidance_end",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 109,
+  "en": "ControlNet 1 pixel_perfect",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 110,
+  "en": "ControlNet 1 control_mode",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 111,
+  "en": "ControlNet 1 hr_option",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 112,
+  "en": "ControlNet 2 module",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 113,
+  "en": "ControlNet 2 model",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 114,
+  "en": "ControlNet 2 weight",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 115,
+  "en": "ControlNet 2 resize_mode",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 116,
+  "en": "ControlNet 2 processor_res",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 117,
+  "en": "ControlNet 2 threshold_a",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 118,
+  "en": "ControlNet 2 threshold_b",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 119,
+  "en": "ControlNet 2 guidance_start",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 120,
+  "en": "ControlNet 2 guidance_end",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 121,
+  "en": "ControlNet 2 pixel_perfect",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 122,
+  "en": "ControlNet 2 control_mode",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 123,
+  "en": "ControlNet 2 hr_option",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 124,
+  "en": "X Type",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 125,
+  "en": "X Values",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 126,
+  "en": "Y Type",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 127,
+  "en": "Y Values",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 128,
+  "en": "Z Type",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 129,
+  "en": "Z Values",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 130,
+  "en": "Image CFG scale",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 131,
+  "en": "Masked area padding",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 132,
+  "en": "Soft inpainting enabled",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 133,
+  "en": "Soft inpainting schedule bias",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 134,
+  "en": "Soft inpainting preservation strength",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 135,
+  "en": "Soft inpainting transition contrast boost",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 136,
+  "en": "Soft inpainting mask influence",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 137,
+  "en": "Soft inpainting difference threshold",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 138,
+  "en": "Soft inpainting difference contrast",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 139,
+  "en": "AnimateDiff latent_power",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 140,
+  "en": "AnimateDiff latent_power_last",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 141,
+  "en": "AnimateDiff latent_scale",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 142,
+  "en": "AnimateDiff latent_scale_last",
+  "ctx": "[c] settings_infotext"
+ },
+ {
+  "i": 143,
+  "en": "font",
+  "ctx": "[c] settings_settings_in_ui"
+ },
+ {
+  "i": 144,
+  "en": "emphasis",
+  "ctx": "[c] settings_settings_in_ui"
+ },
+ {
+  "i": 145,
+  "en": "tiling",
+  "ctx": "[c] settings_settings_in_ui"
+ },
+ {
+  "i": 146,
+  "en": "prompt",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 147,
+  "en": "image",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 148,
+  "en": "accordions",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 149,
+  "en": "checkboxes",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 150,
+  "en": "dimensions",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 151,
+  "en": "cfg",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 152,
+  "en": "denoising",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 153,
+  "en": "batch",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 154,
+  "en": "scripts",
+  "ctx": "[c] settings_ui"
+ },
+ {
+  "i": 155,
+  "en": "film",
+  "ctx": "[c] settings_animatediff"
+ },
+ {
+  "i": 156,
+  "en": "animation",
+  "ctx": "[c] settings_animatediff"
+ },
+ {
+  "i": 157,
+  "en": "grain",
+  "ctx": "[c] settings_animatediff"
+ },
+ {
+  "i": 158,
+  "en": "Aspect Ratios Dropdown",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 159,
+  "en": "Default Options Button",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 160,
+  "en": "MaxDimensionScaler, MinDimensionScaler, PredefinedAspectRatioButtons, PredefinedPercentageButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 161,
+  "en": "MaxDimensionScaler, MinDimensionScaler, PredefinedPercentageButtons, PredefinedAspectRatioButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 162,
+  "en": "MaxDimensionScaler, PredefinedAspectRatioButtons, MinDimensionScaler, PredefinedPercentageButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 163,
+  "en": "MaxDimensionScaler, PredefinedAspectRatioButtons, PredefinedPercentageButtons, MinDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 164,
+  "en": "MaxDimensionScaler, PredefinedPercentageButtons, MinDimensionScaler, PredefinedAspectRatioButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 165,
+  "en": "MaxDimensionScaler, PredefinedPercentageButtons, PredefinedAspectRatioButtons, MinDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 166,
+  "en": "MinDimensionScaler, MaxDimensionScaler, PredefinedAspectRatioButtons, PredefinedPercentageButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 167,
+  "en": "MinDimensionScaler, MaxDimensionScaler, PredefinedPercentageButtons, PredefinedAspectRatioButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 168,
+  "en": "MinDimensionScaler, PredefinedAspectRatioButtons, MaxDimensionScaler, PredefinedPercentageButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 169,
+  "en": "MinDimensionScaler, PredefinedAspectRatioButtons, PredefinedPercentageButtons, MaxDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 170,
+  "en": "MinDimensionScaler, PredefinedPercentageButtons, MaxDimensionScaler, PredefinedAspectRatioButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 171,
+  "en": "MinDimensionScaler, PredefinedPercentageButtons, PredefinedAspectRatioButtons, MaxDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 172,
+  "en": "PredefinedAspectRatioButtons, MaxDimensionScaler, MinDimensionScaler, PredefinedPercentageButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 173,
+  "en": "PredefinedAspectRatioButtons, MaxDimensionScaler, PredefinedPercentageButtons, MinDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 174,
+  "en": "PredefinedAspectRatioButtons, MinDimensionScaler, MaxDimensionScaler, PredefinedPercentageButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 175,
+  "en": "PredefinedAspectRatioButtons, MinDimensionScaler, PredefinedPercentageButtons, MaxDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 176,
+  "en": "PredefinedAspectRatioButtons, PredefinedPercentageButtons, MaxDimensionScaler, MinDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 177,
+  "en": "PredefinedAspectRatioButtons, PredefinedPercentageButtons, MinDimensionScaler, MaxDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 178,
+  "en": "PredefinedPercentageButtons, MaxDimensionScaler, MinDimensionScaler, PredefinedAspectRatioButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 179,
+  "en": "PredefinedPercentageButtons, MaxDimensionScaler, PredefinedAspectRatioButtons, MinDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 180,
+  "en": "PredefinedPercentageButtons, MinDimensionScaler, MaxDimensionScaler, PredefinedAspectRatioButtons",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 181,
+  "en": "PredefinedPercentageButtons, MinDimensionScaler, PredefinedAspectRatioButtons, MaxDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 182,
+  "en": "PredefinedPercentageButtons, PredefinedAspectRatioButtons, MaxDimensionScaler, MinDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 183,
+  "en": "PredefinedPercentageButtons, PredefinedAspectRatioButtons, MinDimensionScaler, MaxDimensionScaler",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 184,
+  "en": "Raw percentage (50%, 150%)",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 185,
+  "en": "Multiplication (x0.5, x1.5)",
+  "ctx": "[c] settings_aspect_ratio_helper"
+ },
+ {
+  "i": 186,
+  "en": "Trans Center X",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 187,
+  "en": "Trans Center Y",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 188,
+  "en": "Trans X",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 189,
+  "en": "Trans Y",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 190,
+  "en": "Trans Z",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 191,
+  "en": "Rot 3D X",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 192,
+  "en": "Rot 3D Y",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 193,
+  "en": "Rot 3D Z",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 194,
+  "en": "Per Fl Theta",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 195,
+  "en": "Per Fl Phi",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 196,
+  "en": "Per Fl Gamma",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 197,
+  "en": "Per Fl FV",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 198,
+  "en": "Noise Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 199,
+  "en": "Str Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 200,
+  "en": "Contrast Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 201,
+  "en": "CFG Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 202,
+  "en": "P2P Img CFG Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 203,
+  "en": "Subseed Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 204,
+  "en": "Subseed Str Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 205,
+  "en": "Ckpt Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 206,
+  "en": "Steps Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 207,
+  "en": "Seed Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 208,
+  "en": "Sampler Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 209,
+  "en": "Clipskip Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 210,
+  "en": "Noise Multp Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 211,
+  "en": "Mask Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 212,
+  "en": "Noise Mask Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 213,
+  "en": "Ant.Blr Amount Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 214,
+  "en": "Ant.Blr Kernel Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 215,
+  "en": "Ant.Blr Sigma Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 216,
+  "en": "Ant.Blr Threshold Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 217,
+  "en": "Aspect Ratio Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 218,
+  "en": "FOV Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 219,
+  "en": "Near Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 220,
+  "en": "Cadence Flow Factor Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 221,
+  "en": "Redo Flow Factor Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 222,
+  "en": "Far Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 223,
+  "en": "Hyb Comp Alpha Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 224,
+  "en": "Hyb Comp Mask Blend Alpha Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 225,
+  "en": "Hyb Comp Mask Ctrst Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 226,
+  "en": "Hyb Comp Mask Auto Contrast Cutoff High Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 227,
+  "en": "Hyb Comp Mask Auto Ctrst Cut Low Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 228,
+  "en": "Hybrid Flow Factor Sch",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 229,
+  "en": "On, concurrent (don't pause generation)",
+  "ctx": "[c] settings_deforum"
+ },
+ {
+  "i": 230,
+  "en": "Ranking Filter",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 231,
+  "en": "Aesthestic Score",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 232,
+  "en": "File Time",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 233,
+  "en": "Open Folder",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 234,
+  "en": "Send to buttons",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 235,
+  "en": "Copy to directory",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 236,
+  "en": "Gallery Controls Bar",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 237,
+  "en": "Ranking Bar",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 238,
+  "en": "Delete Bar",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 239,
+  "en": "0 - none",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 240,
+  "en": "1 - warning log",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 241,
+  "en": "2 - debug log",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 242,
+  "en": "3 - javascript log",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 243,
+  "en": "4 - capture logs to file",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 244,
+  "en": "Above",
+  "ctx": "[c] settings_image-browser"
+ },
+ {
+  "i": 245,
+  "en": "Below",
+  "ctx": "[c] settings_image-browser"
+ }
+]

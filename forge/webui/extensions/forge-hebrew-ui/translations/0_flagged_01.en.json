@@ -1,0 +1,62 @@
+[
+ {
+  "i": 0,
+  "en": "run from a list of setting .txt files. Upload them to the box on the right (visible when enabled)",
+  "ctx": "component-5897"
+ },
+ {
+  "i": 1,
+  "en": "(models in subdirectories like photo/sd15.ckpt will be listed as just sd15.ckpt)",
+  "ctx": "settings_ui_alternatives"
+ },
+ {
+  "i": 2,
+  "en": "Allow http:// and https:// URLs for input images in API",
+  "ctx": "settings_API"
+ },
+ {
+  "i": 3,
+  "en": "Disable memmapping for loading .safetensors files.",
+  "ctx": "settings_system"
+ },
+ {
+  "i": 4,
+  "en": "Write prompts to file: Create a new .txt file for every batch containing the prompt template as well as the generated prompts.",
+  "ctx": "settings_dynamicprompts"
+ },
+ {
+  "i": 5,
+  "en": "Move/Copy/Delete matching .txt files",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 6,
+  "en": "Scan Exif-/.txt-data (initially slower, but required for many features to work)",
+  "ctx": "settings_image-browser"
+ },
+ {
+  "i": 7,
+  "en": "Writing videos has  dependency to an existing FFPROBE executable on your machine. D/L here (https://github.com/BtbN/FFmpeg-Builds/releases) your OS variant and point to your installation path",
+  "ctx": "settings_infinite-zoom"
+ },
+ {
+  "i": 8,
+  "en": "Name of your desired inpaint model (img2img-inpaint). Default is vanilla sd-v1-5-inpainting.ckpt",
+  "ctx": "settings_infinite-zoom"
+ },
+ {
+  "i": 9,
+  "en": "Complete documentation is available at https://github.com/adieyal/sd-dynamic-prompts. Please report any issues on GitHub.",
+  "ctx": "[t] Dynamic Prompts"
+ },
+ {
+  "i": 10,
+  "en": "Keyframe values such as 0: (1.00), 1: (1.53). Leave empty for the classic steady zoom",
+  "ctx": "[t] Keyframes (zoom pace)"
+ },
+ {
+  "i": 11,
+  "en": "the required timestamp to reference when resuming. Currently only available in 2D & 3D mode, the timestamp is saved as the settings .txt file name as well as images produced during your previous run. The format follows: yyyymmddhhmmss - a timestamp of when the run was started to diffuse.",
+  "ctx": "[ht] component-5902"
+ }
+]
