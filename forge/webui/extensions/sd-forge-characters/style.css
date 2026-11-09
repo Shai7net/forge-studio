@@ -1,0 +1,8 @@
+.ch-status { padding: 6px 10px; margin: 2px 0; font-size: 0.95em; background: var(--block-background-fill, transparent);
+             border-radius: 4px; }
+/* Open dropdown lists drew see-through over the boxes below in this Forge theme. */
+#ch_main ul.options { background: var(--background-fill-primary, #1f2937) !important; z-index: 50;
+                      box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+#ch_library .thumbnail-item, #ch_results .thumbnail-item { background: #d9d9d9; }
+#ch_refresh { align-self: flex-end; max-width: 48px; }
+.ch-hidden { display: none !important; }

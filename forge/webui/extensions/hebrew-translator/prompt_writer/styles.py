@@ -17,11 +17,14 @@ TARGETS = {
     "fibo": "FIBO 2.0 (structured JSON)",
     "fibo_edit": "FIBO 2.0 edit",
     "negative": "Negative prompt",
+    "character": "Character for a reference sheet (JSON)",
+    "wan_ingredients": "Wan video from ingredient pictures",
 }
 
 # targets that write alike: a liked example of one teaches the others in its family a little
 FAMILY = {"sd15": "tags", "sdxl": "mixed", "pony": "booru", "booru": "booru", "flux": "prose",
-          "wan_t2v": "video", "wan_i2v": "video", "fibo": "json", "fibo_edit": "edit", "negative": "negative"}
+          "wan_t2v": "video", "wan_i2v": "video", "fibo": "json", "fibo_edit": "edit", "negative": "negative",
+          "character": "character", "wan_ingredients": "video"}
 
 CREATIVITY = {
     "Faithful": "Add as little as possible: translate the idea into clear prompt English and add only the words "
@@ -68,6 +71,14 @@ GUIDES = {
 "style_medium": photograph, oil painting, 3D render...;
 "artistic_style": a few words.
 Only when the user asks for written words in the picture, add "text_render": a list of {"text" (exactly as asked, in its own language), "location", "color", "font"}. No other keys.""",
+    # Characters (sd-forge-characters): the character itself; the sheet prompt around it is assembled by the tab
+    "character": """A character design for a professional character reference sheet (front, side and back views, facial rotations, a close-up), drawn by FLUX 3 from the description. After "Prompt:" write ONE valid JSON object (double quotes, no comments, no markdown) with exactly these keys:
+"name": a short first name that fits (keep the name if the user gave one);
+"summary": one short English line: who the character is;
+"appearance": 3 to 5 sentences that start with "a" or "an": age, gender, build, skin, face, eyes, hair and its style, the usual expression, then EVERY piece of clothing and accessory with its exact color and material, and how the personality shows in the face and posture. Concrete, visual words only; everything must be drawable from the front, the side and the back;
+"style": the rendering style: keep the user's (anime, realistic photo, Pixar, clay...); if they name none, "Premium stylized 3D animation, polished cinematic rendering";
+"avoid": comma-separated things that must not appear, always including: different faces, inconsistent clothing, extra limbs, distorted anatomy, skeleton overlays, text, cropped body.""",
+    "wan_ingredients": """Wan 2.2 makes a 5 second video of characters and things the user gives as pictures: FLUX 3 first draws the opening frame from those pictures, then Wan animates it. Write one paragraph of 60 to 110 words in the present tense describing ONE continuous shot. Name each pictured character or thing as "the <2-6 word look> from picture N" (picture 1 when there is one; the user may say "the character", "him", "her" or a name), then the setting, exactly what they do in order with clear motion verbs, their expressions, what the camera does (tracking shot, slow push-in, orbit, low angle...), the light and the time of day, and the style (keep the pictures' style; if a style is given below, end with it). Describe motion over time, not a still picture. No cuts, no lists, no quality tags.""",
     "fibo_edit": """FIBO 2.0 Edit changes the user's own picture. Write ONE direct English instruction in the imperative, 1 to 3 sentences: exactly what to change, how it should look after, and what must stay as it is ("keep the face, the pose and the background unchanged"). Do not describe the whole picture. When several reference pictures are used, call them <image_1>, <image_2>... in the user's order.""",
 }
 
@@ -114,6 +125,21 @@ EXAMPLES = {
              '"carefree, warm, nostalgic"}, "photographic_characteristics": {"camera_angle": "eye level", '
              '"focus": "sharp on the girl, the far field softly blurred"}, "style_medium": "photograph", '
              '"artistic_style": "cinematic, warm saturated colors, soft lens flare"}'),
+    "character": ("בחור צעיר וחייכן עם כובע מצחייה אדום הפוך, חולצה לבנה וג'ינס קרוע, סגנון אנימציה תלת ממדית",
+                  '{"name": "Marcus", "summary": "A friendly, street-smart young man with an easy smile.", '
+                  '"appearance": "A friendly young man, about 25, with an athletic build, warm brown skin, an '
+                  'expressive face with big dark eyes and short black textured curly hair, wearing a confident '
+                  'playful smile. He wears a red baseball cap backward, an oversized plain white t-shirt, a thin gold '
+                  'chain, ripped light-blue jeans and clean white sneakers. He stands relaxed and open, shoulders '
+                  'loose, every bit the charming street-smart guy.", "style": "Premium stylized 3D animation, polished '
+                  'cinematic rendering", "avoid": "different faces, inconsistent clothing, aggressive expression, '
+                  'weapons, extra limbs, distorted anatomy, skeleton overlays, text, cropped body"}'),
+    "wan_ingredients": ("הדמות מכדררת כדורסל במגרש רחוב, קולעת ומחייכת למצלמה",
+                        "The young man in the backward red cap from picture 1 dribbles a basketball between his legs "
+                        "on an outdoor street court on a sunny afternoon, spins past an invisible defender, jumps and "
+                        "sinks a shot, then turns to the camera with a big grin. The camera tracks beside him at hip "
+                        "height and slowly pushes in on the smile. Warm late-afternoon sun, long soft shadows, the "
+                        "same premium stylized 3D animation look as the picture, smooth natural motion."),
     "fibo_edit": ("תצבע את המכונית בצהוב",
                   "Paint the car bright yellow. Keep the road, the mountains, the lighting, the camera angle and "
                   "every other detail unchanged."),
@@ -128,6 +154,10 @@ MEANINGS = {
         "The girl turns to the camera and smiles; the wind moves her hair.",
     "ידיים מעוותות, מטושטש, טקסט, סימן מים": "Deformed hands, blurry, text, watermark.",
     "תצבע את המכונית בצהוב": "Paint the car yellow.",
+    "בחור צעיר וחייכן עם כובע מצחייה אדום הפוך, חולצה לבנה וג'ינס קרוע, סגנון אנימציה תלת ממדית":
+        "A young smiling guy with a backward red cap, a white shirt and ripped jeans, 3D animation style.",
+    "הדמות מכדררת כדורסל במגרש רחוב, קולעת ומחייכת למצלמה":
+        "The character dribbles a basketball on a street court, scores and smiles at the camera.",
 }
 
 def answer(meaning, prompt):
@@ -187,8 +217,12 @@ def target_for(field, architecture="", checkpoint="", video_mode=""):
     field = field or ""
     if field.startswith("vs_part"):
         return "wan_i2v"  # a part runs between two of the user's pictures
+    if field == "ch_character":
+        return "character"  # sd-forge-characters: the character for a reference sheet
+    if field == "ch_video":
+        return "wan_ingredients"  # sd-forge-characters: what the character does in a video
     if field.startswith("vs_"):
-        return "wan_i2v" if video_mode == "i2v" else "wan_t2v"
+        return {"i2v": "wan_i2v", "ingredients": "wan_ingredients"}.get(video_mode, "wan_t2v")
     if "neg" in field:
         return "negative"
     if architecture == "fibo":
@@ -232,12 +266,32 @@ def tidy_json(text):
     return json.dumps(value, ensure_ascii=False, indent=1)
 
 
+CHARACTER_KEYS = ("name", "summary", "appearance", "style", "avoid")
+
+
+def tidy_character(text):
+    """The character as JSON with its five keys, laid out to be read and edited; ValueError when the answer has
+    no usable character (no appearance)."""
+    import json
+    text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip())
+    start, end = text.find("{"), text.rfind("}")
+    if start < 0 or end < start:
+        raise ValueError(f"the writer gave no character: {text[:120]!r}")
+    value = json.loads(text[start:end + 1])
+    if not isinstance(value, dict) or not str(value.get("appearance") or "").strip():
+        raise ValueError("the writer's character has no appearance")
+    tidy_value = {k: str(value.get(k) or "").strip() for k in CHARACTER_KEYS}
+    return json.dumps(tidy_value, ensure_ascii=False, indent=1)
+
+
 def tidy(text, target, tags=()):
     """The prompt part of the model's answer, clean: no quotes, labels or line breaks, the user's LoRA tags at the
     end."""
     text = parse(text)[1]
     if target == "fibo":
         return tidy_json(text)
+    if target == "character":
+        return tidy_character(text)
     if len(text) > 1 and text[0] == text[-1] and text[0] in "\"'`":
         text = text[1:-1].strip()
     tag_like = FAMILY[target] in ("tags", "mixed", "booru", "negative")

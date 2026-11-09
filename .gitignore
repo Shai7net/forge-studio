@@ -42,6 +42,9 @@
 /forge/webui/video-studio/
 /forge/webui/fibo2/
 /forge/webui/extensions/hebrew-translator/data/
+/forge/webui/extensions/sd-forge-characters/data/
+/forge/webui/extensions/forge-hebrew-ui/languages/*
+!/forge/webui/extensions/forge-hebrew-ui/languages/README.md
 /forge/webui/extensions/sd-forge-flux3/cache/
 /forge/webui/extensions/sd-forge-deforum/deforumation_switch.json
 /forge/webui/extensions/sd-forge-deforum/live_control*.json
@@ -54,6 +57,7 @@
 !/forge/webui/extensions/forge-rtx-video-super-resolution/
 !/forge/webui/extensions/forge-tab-presets/
 !/forge/webui/extensions/hebrew-translator/
+!/forge/webui/extensions/sd-forge-characters/
 !/forge/webui/extensions/sd-forge-deforum/
 !/forge/webui/extensions/sd-forge-fibo2/
 !/forge/webui/extensions/sd-forge-flux3/

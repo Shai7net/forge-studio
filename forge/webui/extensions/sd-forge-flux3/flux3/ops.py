@@ -301,6 +301,7 @@ class PinnedArena:
             view.copy_(t)
             w.cpu = view
             off += -(-n // self.ALIGN) * self.ALIGN
+        self.owners = uniq
         self.registered = False
         try:
             err = torch.cuda.cudart().cudaHostRegister(self.buf.data_ptr(), self.buf.numel(), 0)
@@ -316,4 +317,9 @@ class PinnedArena:
             except Exception:  # noqa: BLE001
                 pass
             self.registered = False
+        # the weights hold views into the block: while anything still holds a weight (an old model object kept
+        # somewhere), the whole block stayed in memory - 14 GB of Forge's after an "unload" (2026-11-09)
+        for w in getattr(self, "owners", ()):
+            w.cpu = None
+        self.owners = []
         self.buf = None

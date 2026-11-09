@@ -565,6 +565,27 @@ def img2img_init(self, all_prompts, all_seeds, all_subseeds):
             self.extra_generation_params["Masked content"] = "latent noise"
     self.image_conditioning = None
     self.mask = self.nmask = None
+    # Other extensions may give their own reference pictures (`p.flux3_references`, PIL images): each keeps its own
+    # shape (see the sizes below) instead of being stretched to the output like the init picture.
+    # Video Studio's Ingredients draws a character from a reference sheet this way (2026-11-09).
+    refs = getattr(self, "flux3_references", None)
+    self.flux3_ref_latents = None
+    if refs:
+        latents = []
+        for k, im in enumerate(refs):
+            # the first reference leads (the pose sheet of a character sheet, the main character of a scene) and
+            # keeps its detail; the others share about half as many tokens again. With both at 1024²/2 a pose
+            # sheet's small heads came out as broken figures (2026-11-09).
+            area = REF_AREA if k == 0 else max(512 * 512, REF_AREA / 2 / (len(refs) - 1))
+            im = images.flatten(im, opts.img2img_background_color)
+            scale = (area / (im.width * im.height)) ** 0.5
+            w, h = (max(16, round(v * scale / 16) * 16) for v in im.size)
+            with torch.autocast("cuda", enabled=False):
+                latents.append(eng.encode_image(_from_pil(im, w, h)))
+        self.flux3_ref_latents = latents
+
+
+REF_AREA = 1024 * 1024
 
 
 def img2img_sample(self, conditioning, unconditional_conditioning, seeds, subseeds, subseed_strength, prompts):
@@ -594,7 +615,8 @@ def img2img_sample(self, conditioning, unconditional_conditioning, seeds, subsee
                 # so the change sits in a coherent scene. With a mask, Forge then pastes only the masked area (soft,
                 # with "Mask blur") over the original; forcing the known area during sampling at 16 px per latent
                 # cell left a visible edge (2026-10-26)
-                lat = _run(eng, self, noise[b:b + 1], emb, self.steps, refs=[self.init_latent[b:b + 1]])
+                refs = getattr(self, "flux3_ref_latents", None) or [self.init_latent[b:b + 1]]
+                lat = _run(eng, self, noise[b:b + 1], emb, self.steps, refs=refs)
             else:
                 lat = _run(eng, self, noise[b:b + 1], emb, self.steps, denoise=float(self.denoising_strength),
                            init=init, mask=mask)

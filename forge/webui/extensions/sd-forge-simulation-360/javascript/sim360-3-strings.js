@@ -8,9 +8,12 @@
 
     S.hebrew = () => document.documentElement.classList.contains('hebrew-ui-active');
 
+    /* a language made with the translation kit (forge-hebrew-ui's languages/): its text, or undefined */
+    S.other = (text) => (window.hebrewUi && window.hebrewUi.text ? window.hebrewUi.text(text) : undefined);
+
     /* T('Leads to {0}', name): the text in the page's language, with the values put in */
     S.T = function (text) {
-        let out = S.hebrew() && Object.prototype.hasOwnProperty.call(S.he, text) ? S.he[text] : text;
+        let out = S.hebrew() && Object.prototype.hasOwnProperty.call(S.he, text) ? S.he[text] : (S.other(text) ?? text);
         for (let i = 1; i < arguments.length; i++) out = out.split(`{${i - 1}}`).join(arguments[i]);
         return out;
     };
@@ -915,5 +918,5 @@
             'Mark a place (a door, a gate, a window) with the marking tools or the automatic selection, and make it a portal into another world. The next world is seen through it in its own depth, and you walk into it with no jump. A portal can also be the way on (the far part of a street): then the two worlds are one place.',
             'Add characters and objects: place an OpenPose figure or mark an area, write a prompt, and the drawing becomes part of the world. An object can become a real 3D model (Hunyuan3D-2) that stands in the world, walks and is seen from every side; such a model can also be made out of words, or uploaded as a .glb file. In the Dialogue tab give a character a line and a voice, and it talks.',
             'Draw a camera route or record your own flight, then render a video at the resolution, frame rate and format you choose.',
-        ];
+        ].map((text) => S.other(text) ?? text);
 })();

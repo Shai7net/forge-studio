@@ -8,7 +8,8 @@ function videoStudioOpenTab() {
 }
 
 function videoStudioMode() {
-    return {vs_tab_t2v: "t2v", vs_tab_i2v: "i2v", vs_tab_replace: "replace"}[videoStudioOpenTab()] || "t2v";
+    return {vs_tab_t2v: "t2v", vs_tab_i2v: "i2v", vs_tab_ingredients: "ingredients",
+            vs_tab_replace: "replace"}[videoStudioOpenTab()] || "t2v";
 }
 
 function videoStudioSubmit(...args) {
@@ -118,6 +119,20 @@ document.addEventListener("click", (e) => {
     if (!(e.target.closest && e.target.closest("#vs_mode_tabs .tab-nav button"))) return;
     // Gradio marks the new tab selected only after its own re-render
     for (const ms of [50, 300, 1000]) setTimeout(videoStudioSyncControls, ms);
+});
+
+// Shape and the picture sampler serve every sub-tab, so they live in the sub-tab bar itself, after the buttons: on
+// the same line when there is room, on a line of their own when not (the bar wraps).
+function videoStudioPlaceSharedRow() {
+    const row = gradioApp().querySelector("#vs_shared_row");
+    const nav = gradioApp().querySelector("#vs_mode_tabs > .tab-nav");
+    if (!row || !nav) return false;
+    if (row.parentElement !== nav) nav.appendChild(row);
+    return true;
+}
+
+onUiLoaded(() => {
+    if (!videoStudioPlaceSharedRow()) setTimeout(videoStudioPlaceSharedRow, 1500);
 });
 
 // The 🎬 button's own tooltip still names the SVD tab.

@@ -1,0 +1,87 @@
+[
+ {
+  "i": 0,
+  "en": "FIBO 2.0 · native controls",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 1,
+  "en": "Task (Auto edits when references are supplied)",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 2,
+  "en": "Local Qwen3-VL prompt writer · any language → VGL",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 3,
+  "en": "Single-image edit: keep source size (rounded to /16)",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 4,
+  "en": "Reference 1",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 5,
+  "en": "Reference 2",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 6,
+  "en": "Reference 3",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 7,
+  "en": "Reference 4",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 8,
+  "en": "Optional exact mask · white edits, black pixels are preserved",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 9,
+  "en": "Text rendering, FIBO LoRA and setup",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 10,
+  "en": "FIBO LoRAs from models/Lora",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 11,
+  "en": "LoRA strength",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 12,
+  "en": "Install/verify isolated FIBO runtime",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 13,
+  "en": "Download selected FIBO model with aria2c",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 14,
+  "en": "Refresh FIBO status",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 15,
+  "en": "FIBO status",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ },
+ {
+  "i": 16,
+  "en": "Choose a FIBO 2.0 checkpoint first",
+  "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
+ }
+]

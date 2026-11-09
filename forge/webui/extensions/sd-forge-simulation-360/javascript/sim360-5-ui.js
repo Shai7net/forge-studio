@@ -148,8 +148,10 @@
 
     function language() {
         const hebrew = S.hebrew();
-        if (UI.root.classList.contains('s360-he') === hebrew && UI.languageDone) return;
+        const code = window.hebrewUi && window.hebrewUi.language ? window.hebrewUi.language() : (hebrew ? 'he' : 'en');
+        if (UI.languageCode === code && UI.languageDone) return;
         UI.languageDone = true;
+        UI.languageCode = code;
         UI.root.classList.toggle('s360-he', hebrew);
         relabel(UI.root);
         renderAll();

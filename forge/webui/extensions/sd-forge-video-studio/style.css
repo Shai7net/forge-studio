@@ -5,3 +5,16 @@
 .vs-error { white-space: pre-wrap; max-height: 260px; overflow: auto; font-size: 0.8em; margin-top: 6px; }
 /* Open dropdown lists drew see-through over the prompt box in this Forge theme. */
 #vs_main ul.options { background: var(--background-fill-primary, #1f2937) !important; z-index: 50; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+
+/* Shape and the picture sampler serve every sub-tab: video-studio.js moves them into the sub-tab bar, after the
+   buttons (the far end of the bar, in either direction); the bar wraps when the window is narrow. */
+#vs_mode_tabs > .tab-nav { flex-wrap: wrap; align-items: flex-end; row-gap: 4px; }
+#vs_shared_row { margin-inline-start: auto; width: auto !important; flex: 0 0 auto; flex-wrap: nowrap; gap: 8px;
+                 padding-bottom: 3px; border: none; background: none; }
+/* Gradio groups the two dropdowns in one .form, a column by default: side by side here */
+#vs_shared_row > .form { flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px; border: none;
+                         background: none; box-shadow: none; }
+#vs_shared_row > div { flex: 0 0 auto !important; min-width: 0 !important; }
+#vs_shared_row #vs_shape { width: 124px; min-width: 124px !important; }
+#vs_shared_row #vs_picture_sampler { width: 152px; min-width: 152px !important; }
+#vs_shared_row label > span { margin-bottom: 1px; font-size: 0.8em; }

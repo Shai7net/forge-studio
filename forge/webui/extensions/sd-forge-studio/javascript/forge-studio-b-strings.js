@@ -8,15 +8,29 @@
 
     FS.hebrew = () => document.documentElement.classList.contains('hebrew-ui-active');
 
+    /* a language made with the translation kit (forge-hebrew-ui's languages/): its text, or undefined */
+    FS.other = (text) => (window.hebrewUi && window.hebrewUi.text ? window.hebrewUi.text(text) : undefined);
+
     /* T('Adding {0}…', name): the text in the page's language, with the values put in */
     FS.T = function (text) {
         text = String(text);
-        let out = FS.hebrew() && Object.prototype.hasOwnProperty.call(FS.he, text) ? FS.he[text] : text;
+        let out = FS.hebrew() && Object.prototype.hasOwnProperty.call(FS.he, text) ? FS.he[text] : (FS.other(text) ?? text);
         for (let i = 1; i < arguments.length; i++) out = out.split(`{${i - 1}}`).join(arguments[i]);
         return out;
     };
 
     FS.he = {
+        // the sample words of new titles (forge-studio-j-text.js)
+        "Title": "כותרת",
+        "Short description": "תיאור קצר",
+        "A caption line": "שורת כתובית",
+        "Chapter one": "פרק ראשון",
+        "Film title": "שם הסרט",
+        "A film by": "סרט מאת",
+        "Chapter name": "שם הפרק",
+        "“One line that stays”": "״משפט אחד שנשאר״",
+        "— Name": "— שם",
+        "Thanks for watching": "תודה שצפיתם",
         "s": "ש'",
         "Left: slower and longer · right: faster and shorter": "שמאלה: איטי וארוך יותר · ימינה: מהיר וקצר יותר",
         "Sound back on": "החזר את הסאונד",

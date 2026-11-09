@@ -179,5 +179,18 @@ class Animate(unittest.TestCase):
         self.assertEqual(int(animate_draw.aug_mask(m, 10, 10)[22, 20]), 0)  # a finer grid keeps the gap
 
 
+class Ingredients(unittest.TestCase):
+    def test_reference_is_whole_and_centred_on_white(self):
+        import tempfile
+        from PIL import Image
+        path = os.path.join(tempfile.mkdtemp(), "tall.png")
+        Image.new("RGB", (100, 400), (255, 0, 0)).save(path)   # a tall red subject in a wide frame
+        a = pipeline.load_reference(path, 320, 160)
+        self.assertEqual(tuple(a.shape), (3, 160, 320))
+        self.assertAlmostEqual(float(a[0, 80, 160]), 1.0, places=2)    # the subject, whole, in the middle
+        self.assertAlmostEqual(float(a[1, 80, 160]), -1.0, places=2)
+        self.assertAlmostEqual(float(a[1, 80, 5]), 1.0, places=2)      # white on both sides, nothing cut off
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,22 @@
+[
+ {
+  "i": 0,
+  "en": "Source processing",
+  "ctx": "[t] Live Portrait tab, Forge Studio's patch (sd-webui-live-portrait/scripts/main.py)"
+ },
+ {
+  "i": 1,
+  "en": "Tracking (fast)",
+  "ctx": "[t] Live Portrait tab, Forge Studio's patch (sd-webui-live-portrait/scripts/main.py)"
+ },
+ {
+  "i": 2,
+  "en": "Every frame (slow, steady)",
+  "ctx": "[t] Live Portrait tab, Forge Studio's patch (sd-webui-live-portrait/scripts/main.py)"
+ },
+ {
+  "i": 3,
+  "en": "Lip sync intensity",
+  "ctx": "[t] Live Portrait tab, Forge Studio's patch (sd-webui-live-portrait/scripts/main.py)"
+ }
+]

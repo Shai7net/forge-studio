@@ -2,7 +2,8 @@
 
 **An all-in-one AI image and video studio for Windows PCs with 8 GB graphics cards.**
 Built on Stable Diffusion WebUI Forge (A1111), with FLUX 3, FIBO 2.0, SDXL and SD 1.5, Wan 2.2 video, a video
-editor, Deforum and AnimateDiff upgrades, world-building tabs and a Hebrew-aware prompt writer, all under one roof.
+editor, consistent characters, Deforum and AnimateDiff upgrades, world-building tabs and a prompt writer that takes
+any language, all under one roof.
 
 > **First version.** Forge Studio is still experimental, but it is a working machine: everything here is used
 > every day on an RTX 3070 Laptop (8 GB VRAM). Expect rough edges and please report them.
@@ -23,15 +24,16 @@ the same window.
 | | |
 |---|---|
 | **Newest image models** | FLUX 3 Image Klein and FIBO 2.0, picked from the normal checkpoint list next to SDXL and SD 1.5; the sampler, steps and CFG follow the model you choose |
-| **Video generation** | **Video Studio**: Wan 2.2 14B text/image/first-and-last-frame video, longer videos from up to six pictures, and *Replace a character* (Wan 2.2 Animate) |
+| **Video generation** | **Video Studio**: Wan 2.2 14B text/image/first-and-last-frame video, longer videos from up to six pictures, *Ingredients to Video* (your characters and objects together in one video) and *Replace a character* (Wan 2.2 Animate) |
+| **Characters** | Describe a character in any language, or give a reference picture, and FLUX 3 Klein draws a consistent character sheet over a pose template. Keep them in projects, send one to Ingredients to Video, make a 3D model of it, or stand it in a Simulation 360 world |
 | **Video editor** | **Forge Studio** tab: a timeline editor in the spirit of CapCut, where generating, extending and repainting shots is part of the edit; captions, narration, music and effects; exports in high quality |
 | **Animation** | Deforum with music-driven keyframes, a drawn timeline + 3D camera path editor and DeforumationQT live control; AnimateDiff with music, dance transfer and per-frame inpainting masks |
 | **World building** | **Simulation 360**: 360° worlds with portals, 3D objects, a recorded route and talking characters. **Time Strata**: turn a video into a sculpture of time |
 | **Upscaling** | Extras for video with a before/after viewer, Hires. fix in Extras, Real-ESRGAN, and NVIDIA RTX Video Super Resolution as an upscaler |
 | **Faces** | Face swap (ReActor, the author's SFW edition with its NSFW filter), LivePortrait, and face swap in Video Studio's character replacement |
-| **Prompt writer** | 🌐 in every prompt box: write your idea in Hebrew (or any language) and get an English prompt written for the model you are on; 👍 / 👎 teach it |
+| **Prompt writer** | 🌐 in every prompt box: write your idea in any language and get an English prompt written for the model you are on; 👍 / 👎 teach it |
 | **Sessions** | Tab Presets: save, load and reset a whole tab (ControlNet units and pictures, AnimateDiff, every option), with a list of recent ones |
-| **Hebrew interface** | One click switches the whole interface to Hebrew and back |
+| **Interface language** | English, and a full Hebrew translation one click away. Any other language: give the translation kit to your AI (ChatGPT, Claude, Gemini...) and load what it returns |
 | **8 GB first** | Every new piece was written and measured on an 8 GB card: int8 engines, streaming of model blocks, tiled decoding |
 
 ## Requirements
@@ -124,19 +126,19 @@ an ordinary checkpoint, your own values return (they are kept even across a page
 
 ### The tabs
 
-`txt2img` · `img2img` · `Video Studio` · `Forge Studio` · `Deforum` · `Simulation 360` · `Infinite Zoom` ·
+`txt2img` · `img2img` · `Video Studio` · `Characters` · `Forge Studio` · `Deforum` · `Simulation 360` · `Infinite Zoom` ·
 `Time Strata` · `Live Portrait` · `PNG Info` · `Extras` · `Settings` · `Extensions`, and an **Other** folder with
 the rest. Drag tabs between the bar and folders with **Organize…** (Navigation Bookmarks).
 
 ## Features
 
-### 🌐 Prompt writer (Hebrew → English, per model)
-A 🌐 button in each prompt box (txt2img, img2img, negative prompts, Video Studio). Write the idea in Hebrew or any
-language; it writes the prompt the way the model behind that box reads best: comma phrases with quality words for
+### 🌐 Prompt writer (any language → English, per model)
+A 🌐 button in each prompt box (txt2img, img2img, negative prompts, Video Studio, Characters). Write the idea in any
+language (it was tuned on Hebrew); it writes the prompt the way the model behind that box reads best: comma phrases with quality words for
 SD 1.5, a sentence plus details for SDXL, flowing prose for FLUX, FIBO's structured JSON caption, or one continuous
 shot with motion and camera for Wan video. Under the box it shows what it understood, and:
 - **👍** keeps the prompt (with your corrections) as an example to write like;
-- **👎** writes another version and asks what was wrong; a note like `קיפוד = hedgehog` teaches it a word for good.
+- **👎** writes another version and asks what was wrong; a note like `erizo = hedgehog` teaches it a word for good.
 
 It runs Gemma 4 E4B (Google) locally through llama.cpp, about 1.5 s per prompt, and leaves the graphics card
 before any generation starts.
@@ -158,7 +160,20 @@ environment (installed by the installer or the panel's button), so Forge's own p
 - Continue from the last frame, Refine (a video "Hires. fix"), FILM smoothing and Real-ESRGAN enlargement.
 - Styles from the style list, `<lora:...>` tags for Wan LoRAs, and the 🎬 button under txt2img/img2img results
   that sends the picture to Video Studio.
+- *Ingredients to Video*: up to four pictures (people, animals, objects, or a character sheet from the Characters
+  tab) in one video, with what they do written by the 🌐 writer. The default way draws the first frame from them with
+  FLUX 3 Klein and animates it with Wan 2.2, so **FLUX 3 Klein must be the selected checkpoint**. The other way,
+  Phantom-Wan 14B, puts them straight into the video; its model (7.2 GB) is downloaded with the button in the tab.
 - Sound for the video: AI sound effects and speech (optional tools, see below).
+
+### Characters
+Describe a character in any language, or upload a reference picture, and FLUX 3 Klein (selected at the top) draws a
+consistent character sheet over a pose template: front, side, back, faces and a close-up. The template is an
+OpenPose sheet that comes with the tab; use your own and make it the default if you like. Characters are kept in
+projects (show all, search, rename, move, delete to a bin), and each one can go:
+- to **Ingredients to Video**, with a Wan prompt written for what it should do;
+- to a **3D model** (🧊, through Hunyuan3D-2: the same optional tool Simulation 360 uses for its 3D objects);
+- into a **Simulation 360** world (🌍), where the model stands, walks and is lit by the world.
 
 ### Forge Studio (video editor)
 A timeline editor inside Forge: media panel, layers, keyframes and ready-made moves, speed changes, fades and
@@ -201,8 +216,17 @@ button next to the styles) or in any text editor (columns: name, prompt, negativ
 styles (for example the LCM LoRA ones) are there to start from, and Forge's integrated styles in
 `styles_integrated.csv`. Styles also work in Video Studio.
 
-### Hebrew interface
-The **עברית / English** button at the top right switches the whole interface; the choice is remembered.
+### Interface language
+The language button at the top right switches the whole interface between English and the last language you chose,
+with one click; the ▾ next to it lists every language. Forge Studio comes with a full Hebrew translation.
+
+**Any other language, with your own AI:** ▾ → **Add a language…** gives you the *translation kit*: about 5,000
+interface texts and the help texts, in English, in 17 small files with the rules inside. Give the files to any AI
+(ChatGPT, Claude, Gemini... a few at a time) with the request shown there, then load the files it returns in the
+same window. Your language appears in the menu at once; whatever it does not translate stays in English, so it can
+be done in parts. An AI coding agent can translate the whole kit in one go (see [AGENTS.md](AGENTS.md)). The kit is
+also in the folder `forge/webui/extensions/forge-hebrew-ui/translation-kit/`, and the languages you add are kept in
+`languages/` next to it.
 
 ## Optional tools
 
@@ -215,7 +239,7 @@ the `forge` folder** (in the Forge Studio folder) and the tab that uses it finds
 | [MMAudio](https://github.com/hkchengrex/MMAudio) | `MMAudio-main` (with its own `venv`) | AI sound effects in Video Studio and Forge Studio |
 | [ACE-Step 1.5](https://github.com/ace-step/ACE-Step) | `ACE-Step-1.5` (with `.venv`) | Music in Forge Studio |
 | [Whisper](https://github.com/openai/whisper) (auto-subtitle) | `auto-subtitle-main` (with `venv`) | Captions in Forge Studio |
-| [Hunyuan3D-2](https://github.com/Tencent/Hunyuan3D-2) (e.g. through Pinokio) | | 3D objects in Simulation 360 |
+| [Hunyuan3D-2](https://github.com/Tencent/Hunyuan3D-2) (e.g. through Pinokio) | | 3D objects in Simulation 360, the 🧊 3D model of a character |
 | [CUDA Toolkit 12.6](https://developer.nvidia.com/cuda-12-6-0-download-archive) | installed in Windows | LivePortrait's animal mode (XPose is built at the next start); people work without it |
 
 Each tab says when a tool is missing and what it would add.

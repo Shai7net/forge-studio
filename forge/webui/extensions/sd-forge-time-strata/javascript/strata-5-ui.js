@@ -122,6 +122,7 @@
         const mount = host.querySelector('.strata-mount') || host;
         mount.innerHTML = '';
         const root = UI.root = h('div', { class: 'ts-app hebrew-ui-skip', dir: S.hebrew() ? 'rtl' : 'ltr' });
+        UI.languageCode = window.hebrewUi && window.hebrewUi.language ? window.hebrewUi.language() : (S.hebrew() ? 'he' : 'en');
         mount.append(root);
         root.append(topBar(), h('div', { class: 'ts-main' }, h('div', { class: 'ts-panel' }), stage()), h('div', { class: 'ts-message' }));
         renderPanel();
@@ -1123,7 +1124,9 @@
         new ResizeObserver(() => fit()).observe(UI.view);
         new MutationObserver(() => {
             const dir = S.hebrew() ? 'rtl' : 'ltr';
-            if (UI.root && UI.root.dir !== dir) {
+            const code = window.hebrewUi && window.hebrewUi.language ? window.hebrewUi.language() : (S.hebrew() ? 'he' : 'en');
+            if (UI.root && (UI.root.dir !== dir || UI.languageCode !== code)) {
+                UI.languageCode = code;
                 UI.root.dir = dir; renderPanel();
                 const bar = UI.root.querySelector('.ts-bar'); if (bar) bar.replaceWith(topBar());
                 for (const [el, words, title] of UI.stageWords || []) { if (words) el.textContent = T(words); if (title) el.title = T(title); }

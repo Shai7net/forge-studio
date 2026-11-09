@@ -27,6 +27,10 @@ FILES = {
                         url=LIGHTX2V + "high_noise_260412/wan2.2_i2v_A14b_high_noise_lightx2v_4step_720p_260412-Q4_K_M.gguf"),
     "i2v_low_q4": dict(path="diffusion/wan2.2_i2v_A14b_low_noise_lightx2v_4step_260412-Q4_K_M.gguf", size=9661569699,
                        url=LIGHTX2V + "low_noise_260412/wan2.2_i2v_A14b_low_noise_lightx2v_4step_720p_260412-Q4_K_M.gguf"),
+    # Ingredients to video (Phantom, a Wan 2.1 14B text-to-video model trained on reference pictures; FusionX: the
+    # speed-up and look LoRAs merged in, 8 steps at CFG 1)
+    "phantom_q3": dict(path="phantom/Phantom_Wan_14B_FusionX-Q3_K_M.gguf", size=7174478336,
+                       url=HF + "QuantStack/Phantom_Wan_14B_FusionX-GGUF/resolve/main/Phantom_Wan_14B_FusionX-Q3_K_M.gguf"),
     # Character replacement (Wan 2.2 Animate 14B) and what prepares its inputs
     "animate_q3": dict(path="animate/Wan2.2-Animate-14B-Q3_K_S.gguf", size=7969675072,
                        url=HF + "QuantStack/Wan2.2-Animate-14B-GGUF/resolve/main/Wan2.2-Animate-14B-Q3_K_S.gguf"),
@@ -54,6 +58,13 @@ FILES = {
     "dw_pose": dict(path="../ControlNetPreprocessor/openpose/dw-ll_ucoco_384.onnx", size=134399116,
                     url=HF + "yzd-v/DWPose/resolve/main/dw-ll_ucoco_384.onnx"),
 }
+INGREDIENT_FILES = ["phantom_q3", "umt5", "vae21"]
+
+
+def ingredients_missing():
+    return [k for k in INGREDIENT_FILES if not present(k)]
+
+
 REPLACE_FILES = ["animate_q3", "animate_relight", "lightx2v_i2v", "sam2", "sam2_config", "sam2_pre", "sam2_proc",
                  "sam2_video", "clip_h", "dw_det", "dw_pose", "umt5", "vae21"]
 

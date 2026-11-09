@@ -14,7 +14,9 @@ import os
 import re
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+import ui_kit  # tools/ui_kit.py, next to this file
+
+ROOT =os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TRANSLATIONS = os.path.join(ROOT, "translations")
 OUTPUT = os.path.join(ROOT, "javascript", "hebrew-ui-dictionary.js")
 HEBREW = re.compile(r"[֐-׿]")
@@ -153,6 +155,9 @@ def main():
     for line in problems:
         print("ERROR:", line)
     print(f"wrote {OUTPUT}: {len(texts)} texts, {len(blocks)} blocks, {sum(len(v) for v in contextual.values())} contextual")
+    # the kit other languages are translated from (tools/ui_kit.py): the same English, cut into parts for an AI
+    parts, kit_texts, kit_blocks = ui_kit.write_kit()
+    print(f"wrote {ui_kit.KIT}: {parts} parts, {kit_texts} texts, {kit_blocks} help blocks")
     return 1 if problems else 0
 
 

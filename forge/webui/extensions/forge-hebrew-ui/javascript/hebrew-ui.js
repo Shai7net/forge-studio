@@ -1,13 +1,17 @@
-// Forge Hebrew UI: Optimized, non-blocking one-click language switcher.
-// Completely hardened against MutationObserver infinite loops and Gradio model dropdown desynchronization.
+// Forge interface languages: English, the built-in Hebrew, and any language made with the translation kit
+// (translation-kit/, served with the languages people add by scripts/ui_languages.py).
+// Hardened against MutationObserver loops and Gradio model dropdown desynchronization.
 
 (function() {
-    const STORAGE_KEY = 'forge-hebrew-ui';
+    const STORAGE_KEY = 'forge-hebrew-ui';       // the language shown: 'en', 'he' or a code from languages/
+    const LAST_KEY = 'forge-hebrew-ui-last';     // the one the main button switches to from English
+    const BUILT_IN = [{code: 'en', name: 'English', direction: 'ltr'}, {code: 'he', name: 'עברית', direction: 'rtl'}];
+    const EMPTY = {texts: {}, blocks: {}, contextual: {}};
 
     // Elements that must NEVER have their text or attributes modified
     const SKIP_ALWAYS = 'script, style, pre, code, svg, .extra-network-cards, .card, .gallery, .thumbnails, ' +
         '.json-holder, .cm-editor, #licenses, #hebrew-ui-toggle, .hebrew-ui-block, .hebrew-ui-hidden, ' +
-        '.hebrew-ui-skip, #forge-desktop-bar, #forge-desktop-floating-toggle, #forge-desktop-toast, ' +
+        '.hebrew-ui-skip, #ui-lang-dialog, #forge-desktop-bar, #forge-desktop-floating-toggle, #forge-desktop-toast, ' +
         '.progress-bar, .progressbar, .token-counter, #live_preview, #progress_bar, .performance';
 
     // Elements whose internal values must NEVER be translated (inputs, prompts, dropdown options)
@@ -22,7 +26,12 @@
     const ATTRIBUTES = ['title', 'placeholder'];
     const has = Object.prototype.hasOwnProperty;
 
-    let active = false;
+    let language = 'en';
+    let active = false;                          // a language other than English is shown
+    let languages = BUILT_IN.slice();            // + the ones in languages/ (refreshLanguages)
+    let kit = null;                              // {parts, texts, blocks, prompt} of translation-kit/
+    const loaded = {};                           // code -> dictionary of a language from languages/
+    let switching = 0;
     let observer = null;
     let isProcessing = false;
     let scheduleTimer = null;
@@ -34,7 +43,31 @@
     const pendingNodes = new Set();
 
     function dictionary() {
-        return window.hebrewUiDictionary || {texts: {}, blocks: {}, contextual: {}};
+        if (language === 'he') return window.hebrewUiDictionary || EMPTY;
+        return loaded[language] || EMPTY;
+    }
+
+    function info(code) {
+        return languages.find((l) => l.code === code) || {code: code, name: code, direction: 'ltr'};
+    }
+
+    function direction() {
+        if (language === 'he') return 'rtl';
+        return (loaded[language] && loaded[language].direction) || info(language).direction || 'ltr';
+    }
+
+    // help blocks of a language from languages/ come from somebody's AI: no scripts, frames or event handlers
+    function cleanHtml(html) {
+        const template = document.createElement('template');   // inert: nothing in it loads or runs
+        template.innerHTML = html;
+        template.content.querySelectorAll('script, iframe, object, embed, style, link, meta, base, form')
+            .forEach((element) => element.remove());
+        template.content.querySelectorAll('*').forEach((element) => {
+            for (const attribute of Array.from(element.attributes)) {
+                if (/^on/i.test(attribute.name) || /^\s*javascript:/i.test(attribute.value)) element.removeAttribute(attribute.name);
+            }
+        });
+        return template.innerHTML;
     }
 
     function root() {
@@ -148,8 +181,8 @@
         const replacement = document.createElement('div');
         replacement.className = prose.className + ' hebrew-ui-block';
         replacement.dataset.key = key;
-        replacement.setAttribute('dir', 'rtl');
-        replacement.innerHTML = blocks[key];
+        replacement.setAttribute('dir', direction());
+        replacement.innerHTML = language === 'he' ? blocks[key] : cleanHtml(blocks[key]);
         prose.classList.add('hebrew-ui-hidden');
         prose.insertAdjacentElement('afterend', replacement);
         blockOverlays.set(prose, replacement);
@@ -285,19 +318,75 @@
         }
     }
 
-    function updateToggle() {
-        const button = document.getElementById('hebrew-ui-toggle');
-        if (!button) return;
-        button.textContent = active ? 'English' : 'עברית';
-        button.title = active ? 'Switch the interface back to English (Ctrl+Alt+E)' : 'להעביר את הממשק לעברית';
-        button.setAttribute('aria-pressed', String(active));
+    function storage(key, value) {
+        try {
+            if (value === undefined) return localStorage.getItem(key);
+            localStorage.setItem(key, value);
+        } catch (e) {
+            // storage can be unavailable
+        }
+        return null;
     }
 
-    function setActive(value, remember) {
-        value = Boolean(value);
-        if (value !== active) {
-            active = value;
-            document.documentElement.classList.toggle('hebrew-ui-active', active);
+    // the language's own words for the menu and the window below (they are in every dictionary, the kit has them)
+    function tr(text) {
+        if (!active) return text;
+        const translated = lookup(text);
+        return translated === undefined ? text : translated;
+    }
+
+    function format(text) {
+        const values = Array.prototype.slice.call(arguments, 1);
+        return text.replace(/\{(\d+)\}/g, (all, i) => (values[i] === undefined ? all : String(values[i])));
+    }
+
+    function lastLanguage() {
+        let last = storage(LAST_KEY);
+        if (!last) {
+            const shown = storage(STORAGE_KEY);
+            if (shown && shown !== 'en') last = shown;
+        }
+        return last && last !== 'en' && (last === 'he' || languages.some((l) => l.code === last)) ? last : null;
+    }
+
+    // other extensions follow the language through <html>'s classes: hebrew-ui-active (Hebrew, they draw it
+    // themselves), ui-lang-active / ui-lang-rtl / ui-lang-<code> (any language), in one change of the attribute
+    function applyClasses() {
+        const html = document.documentElement;
+        const classes = Array.from(html.classList).filter((c) => c !== 'hebrew-ui-active' && !c.startsWith('ui-lang-'));
+        if (language === 'he') classes.push('hebrew-ui-active');
+        if (active) {
+            classes.push('ui-lang-active', 'ui-lang-' + language);
+            if (direction() === 'rtl') classes.push('ui-lang-rtl');
+        }
+        html.setAttribute('data-ui-language', language);
+        html.className = classes.join(' ');
+    }
+
+    async function setLanguage(code, remember) {
+        code = code || 'en';
+        const ticket = ++switching;
+        if (code !== 'en' && code !== 'he' && !loaded[code]) {
+            try {
+                const response = await fetch('/forge-ui/languages/' + encodeURIComponent(code));
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                loaded[code] = await response.json();
+            } catch (e) {
+                console.error('[Hebrew UI] could not load the language', code, e);
+                code = 'en';
+            }
+            if (ticket !== switching) return;
+        }
+        if (code !== language) {
+            if (active) {
+                if (observer) observer.disconnect();
+                observer = null;
+                pendingNodes.clear();
+                restoreEverything();
+            }
+            language = code;
+            active = code !== 'en';
+            applyClasses();
             if (active) {
                 isProcessing = true;
                 try {
@@ -306,37 +395,250 @@
                     isProcessing = false;
                 }
                 startObserving();
-            } else {
-                if (observer) observer.disconnect();
-                observer = null;
-                pendingNodes.clear();
-                restoreEverything();
             }
         }
         if (remember) {
-            try {
-                localStorage.setItem(STORAGE_KEY, active ? 'he' : 'en');
-            } catch (e) {
-                // storage can be unavailable
-            }
+            storage(STORAGE_KEY, language);
+            if (language !== 'en') storage(LAST_KEY, language);
         }
         updateToggle();
     }
 
+    function setActive(value, remember) {
+        return setLanguage(value ? (lastLanguage() || 'he') : 'en', remember);
+    }
+
+    async function refreshLanguages() {
+        try {
+            const response = await fetch('/forge-ui/languages');
+            if (!response.ok) return;
+            const data = await response.json();
+            languages = BUILT_IN.concat((data.languages || []).filter((l) => l.code !== 'en' && l.code !== 'he'));
+            kit = data.kit || null;
+        } catch (e) {
+            // an older Forge without scripts/ui_languages.py: English and Hebrew only
+        }
+        updateToggle();
+    }
+
+    // ------------------------------------------------------------------ the button, the menu and the window
+
+    function makeButton(text, className, onClick) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = className;
+        button.textContent = text;
+        button.addEventListener('click', onClick);
+        return button;
+    }
+
+    function updateToggle() {
+        const box = document.getElementById('hebrew-ui-toggle');
+        if (!box) return;
+        const main = box.querySelector('.ui-lang-main');
+        const more = box.querySelector('.ui-lang-more');
+        const last = lastLanguage();
+        if (active) {
+            main.textContent = 'English';
+            main.title = tr('Back to English (Ctrl+Alt+E)');
+        } else if (last) {
+            main.textContent = info(last).name;
+            main.title = info(last).name;
+        } else {
+            main.textContent = '🌐 Language';
+            main.title = tr('Languages');
+        }
+        main.setAttribute('aria-pressed', String(active));
+        main.dir = 'auto';
+        more.hidden = !active && !last;
+        more.title = tr('Languages');
+    }
+
+    function closeMenu() {
+        const menu = document.querySelector('#hebrew-ui-toggle .ui-lang-menu');
+        if (menu) menu.remove();
+        document.removeEventListener('click', clickOutside, true);
+    }
+
+    function clickOutside(e) {
+        if (!e.target.closest || !e.target.closest('#hebrew-ui-toggle')) closeMenu();
+    }
+
+    function openMenu() {
+        const box = document.getElementById('hebrew-ui-toggle');
+        if (!box) return;
+        if (box.querySelector('.ui-lang-menu')) {
+            closeMenu();
+            return;
+        }
+        const menu = document.createElement('div');
+        menu.className = 'ui-lang-menu';
+        menu.setAttribute('role', 'menu');
+        for (const item of languages) {
+            const button = makeButton('', 'ui-lang-item' + (item.code === language ? ' ui-lang-current' : ''), () => {
+                closeMenu();
+                setLanguage(item.code, true);
+            });
+            const name = document.createElement('bdi');   // its own direction, lined up with the others
+            name.textContent = item.name;
+            button.appendChild(name);
+            button.setAttribute('role', 'menuitemradio');
+            button.setAttribute('aria-checked', String(item.code === language));
+            menu.appendChild(button);
+        }
+        menu.appendChild(document.createElement('hr'));
+        menu.appendChild(makeButton(tr('Add a language…'), 'ui-lang-item', () => {
+            closeMenu();
+            openWindow();
+        }));
+        menu.dir = direction();
+        box.appendChild(menu);
+        setTimeout(() => document.addEventListener('click', clickOutside, true), 0);
+    }
+
+    // a sentence with folder paths in it: each path is its own left-to-right island, so it reads the same in a
+    // right-to-left language
+    function withPaths(node, text) {
+        const paths = Array.prototype.slice.call(arguments, 2);
+        text.split(/(\{\d+\})/).forEach((piece) => {
+            const match = /^\{(\d+)\}$/.exec(piece);
+            if (match && paths[match[1]] !== undefined) {
+                const code = document.createElement('code');
+                code.dir = 'ltr';
+                code.textContent = paths[match[1]];
+                node.append(code);
+            } else if (piece) {
+                node.append(piece);
+            }
+        });
+        return node;
+    }
+
+    function closeWindow() {
+        const old = document.getElementById('ui-lang-dialog');
+        if (old) old.remove();
+    }
+
+    function openWindow(message) {
+        closeWindow();
+        const element = (tag, props, children) => {
+            const node = document.createElement(tag);
+            Object.assign(node, props || {});
+            for (const child of children || []) node.append(child);
+            return node;
+        };
+        const status = element('div', {className: 'ui-lang-status'});
+        status.setAttribute('aria-live', 'polite');
+        if (message) status.textContent = message;
+
+        const promptOf = (name) => (kit && kit.prompt ? kit.prompt : 'Translate this Forge Studio interface file into {language}.')
+            .replace('{language}', name || '<your language>');
+        const prompt = element('textarea', {className: 'ui-lang-prompt', readOnly: true, rows: 4, value: promptOf('')});
+        prompt.dir = 'ltr';
+        const name = element('input', {className: 'ui-lang-name', type: 'text', placeholder: tr('Your language')});
+        name.addEventListener('input', () => {
+            prompt.value = promptOf(name.value.trim());
+        });
+        const copy = makeButton(tr('Copy'), 'ui-lang-button', () => {
+            prompt.select();
+            const done = () => {
+                copy.textContent = tr('Copied');
+                setTimeout(() => (copy.textContent = tr('Copy')), 1500);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(prompt.value).then(done, () => {
+                    document.execCommand('copy');
+                    done();
+                });
+            } else {
+                document.execCommand('copy');
+                done();
+            }
+        });
+
+        const files = element('input', {type: 'file', multiple: true, accept: '.json,.txt,application/json,text/plain', hidden: true});
+        const load = makeButton(tr('Load the translated files'), 'ui-lang-button ui-lang-primary', () => files.click());
+        files.addEventListener('change', async () => {
+            if (!files.files.length) return;
+            status.textContent = tr('Loading…');
+            load.disabled = true;
+            try {
+                const items = [];
+                for (const file of files.files) items.push({name: file.name, text: await file.text()});
+                const response = await fetch('/forge-ui/languages', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({files: items, name: name.value.trim()}),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.detail || data.error || ('HTTP ' + response.status));
+                delete loaded[data.code];
+                await refreshLanguages();
+                if (language === data.code) await setLanguage('en', false);
+                await setLanguage(data.code, true);
+                let text = format(tr('{0}: {1} of {2} texts are translated. Whatever is missing stays in English.'),
+                    data.name, data.covered, data.total);
+                if (data.problems && data.problems.length) {
+                    text += '\n' + format(tr('Some files could not be read: {0}'), data.problems.join('; '));
+                }
+                openWindow(text);
+            } catch (e) {
+                status.textContent = format(tr('Could not load: {0}'), e.message || e);
+                load.disabled = false;
+            }
+        });
+
+        const download = element('a', {className: 'ui-lang-button', href: '/forge-ui/translation-kit.zip',
+            download: 'forge-studio-translation-kit.zip', textContent: 'forge-studio-translation-kit.zip'});
+        download.dir = 'ltr';
+        const count = kit ? format(tr('{0} files, {1} texts'), kit.parts, kit.texts + kit.blocks) : '';
+
+        const box = element('div', {className: 'ui-lang-box'}, [
+            element('h3', {textContent: tr('Forge Studio in your language')}),
+            element('p', {textContent: tr('Forge Studio comes in English and Hebrew. Any AI chat (ChatGPT, Claude, Gemini…) or AI coding agent can translate it into another language from the translation kit; what it returns is loaded here.')}),
+            element('h4', {textContent: tr('1. Download the translation kit')}),
+            element('div', {className: 'ui-lang-row'}, [download, element('span', {className: 'ui-lang-note', textContent: count})]),
+            element('h4', {textContent: tr('2. Give your AI one or more of the files at a time, with this request:')}),
+            element('div', {className: 'ui-lang-row'}, [name, copy]),
+            prompt,
+            element('h4', {textContent: tr('3. Load the files it returned')}),
+            element('div', {className: 'ui-lang-row'}, [load, files]),
+            status,
+            withPaths(element('p', {className: 'ui-lang-note'}), tr('Or copy the files into {0} (for example {1}) and reload the page.'),
+                'extensions/forge-hebrew-ui/languages/<code>/', 'languages/es/'),
+            element('div', {className: 'ui-lang-row ui-lang-end'}, [makeButton(tr('Close'), 'ui-lang-button', closeWindow)]),
+        ]);
+        box.setAttribute('role', 'dialog');
+        box.setAttribute('aria-modal', 'true');
+        const back = element('div', {id: 'ui-lang-dialog', className: 'ui-lang-back'}, [box]);
+        back.dir = direction();
+        back.addEventListener('click', (e) => {
+            if (e.target === back) closeWindow();
+        });
+        back.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeWindow();
+        });
+        document.body.appendChild(back);
+        name.focus();
+    }
+
     function createToggle() {
         if (document.getElementById('hebrew-ui-toggle')) return;
-        const button = document.createElement('button');
-        button.id = 'hebrew-ui-toggle';
-        button.type = 'button';
-        button.addEventListener('click', function() {
-            setActive(!active, true);
-        });
+        const box = document.createElement('div');
+        box.id = 'hebrew-ui-toggle';
+        box.className = 'ui-lang-switch';
+        box.appendChild(makeButton('', 'ui-lang-main', () => {
+            if (active) setLanguage('en', true);
+            else if (lastLanguage()) setLanguage(lastLanguage(), true);
+            else openMenu();
+        }));
+        box.appendChild(makeButton('▾', 'ui-lang-more', openMenu));
         const quicksettings = root().querySelector('#quicksettings');
         if (quicksettings) {
-            quicksettings.appendChild(button);
+            quicksettings.appendChild(box);
         } else {
-            button.classList.add('hebrew-ui-floating');
-            document.body.appendChild(button);
+            box.classList.add('hebrew-ui-floating');
+            document.body.appendChild(box);
         }
         updateToggle();
     }
@@ -346,7 +648,7 @@
         try {
             localStorage.removeItem(STORAGE_KEY);
         } catch (e) {}
-        setActive(false, false);
+        setLanguage('en', false);
         console.log('[Hebrew UI] Emergency reset executed. Language returned to English.');
     };
 
@@ -366,8 +668,23 @@
             schedule();
         },
         setActive: setActive,
+        setLanguage: setLanguage,
         isActive: function() {
             return active;
+        },
+        language: function() {
+            return language;
+        },
+        direction: direction,
+        languages: function() {
+            return languages.slice();
+        },
+        // For pages that draw their own words and keep their own Hebrew: the text in a language from languages/
+        // (undefined in English and Hebrew, or when that language has no translation for it)
+        text: function(english) {
+            if (language === 'en' || language === 'he') return undefined;
+            const texts = loaded[language] && loaded[language].texts;
+            return texts && has.call(texts, english) ? texts[english] : undefined;
         },
         lookup: lookup,
         reset: window.resetHebrewUi
@@ -375,22 +692,17 @@
 
     onUiLoaded(function() {
         createToggle();
-        let saved = null;
-        try {
-            saved = localStorage.getItem(STORAGE_KEY);
-        } catch (e) {
-            saved = null;
-        }
+        const saved = storage(STORAGE_KEY);
+        const languagesReady = refreshLanguages();
 
-        // Wait safely until Gradio finishes initializing checkpoint models before applying Hebrew
-        if (saved === 'he') {
+        // Wait safely until Gradio finishes initializing checkpoint models before applying a language
+        if (saved && saved !== 'en') {
             setTimeout(function() {
-                try {
-                    setActive(true, false);
-                } catch (e) {
+                // a language picked in the meantime wins over the remembered one
+                languagesReady.then(() => (switching === 0 ? setLanguage(saved, false) : null)).catch(function(e) {
                     console.error('[Hebrew UI] Safe startup error:', e);
                     window.resetHebrewUi();
-                }
+                });
             }, 1200);
         }
     });

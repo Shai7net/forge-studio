@@ -25,6 +25,9 @@
         [/^not enough graphics memory \((.+)\): cutting with (.+) instead$/, 'אין מספיק זיכרון בכרטיס המסך ($1): חותך עם $2 במקום'],
     ];
 
+    /* a language made with the translation kit (forge-hebrew-ui's languages/): its text, or undefined */
+    S.other = (text) => (window.hebrewUi && window.hebrewUi.text ? window.hebrewUi.text(text) : undefined);
+
     /* T('Leads to {0}', name): the text in the page's language, with the values put in */
     S.T = function (text) {
         text = String(text);
@@ -32,6 +35,8 @@
         if (S.hebrew()) {
             if (Object.prototype.hasOwnProperty.call(S.he, text)) out = S.he[text];
             else for (const [pattern, hebrew] of PATTERNS) if (pattern.test(text)) { out = text.replace(pattern, hebrew); break; }
+        } else {
+            out = S.other(text) ?? text;
         }
         for (let i = 1; i < arguments.length; i++) out = out.split(`{${i - 1}}`).join(arguments[i]);
         return out;

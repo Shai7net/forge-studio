@@ -1,0 +1,22 @@
+[
+ {
+  "i": 0,
+  "en": "Video Cleaner",
+  "ctx": "[t] Cleaner's video tab (sd-webui-cleaner/scripts/api.py, Forge Studio's patch)"
+ },
+ {
+  "i": 1,
+  "en": "Upload a video",
+  "ctx": "[t] Cleaner's video tab (sd-webui-cleaner/scripts/api.py, Forge Studio's patch)"
+ },
+ {
+  "i": 2,
+  "en": "Mark a mask on the first frame",
+  "ctx": "[t] Cleaner's video tab (sd-webui-cleaner/scripts/api.py, Forge Studio's patch)"
+ },
+ {
+  "i": 3,
+  "en": "Remove the object",
+  "ctx": "[t] Cleaner's video tab (sd-webui-cleaner/scripts/api.py, Forge Studio's patch)"
+ }
+]

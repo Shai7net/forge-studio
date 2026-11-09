@@ -11,6 +11,7 @@ Three sub-tabs, one **Generate video** button:
 | **Image to Video** | one picture and a prompt | a clip that starts on the picture |
 | | **➕ Last frame**: a second picture | a clip that starts on the first picture and ends on the last, doing what the prompt says in between |
 | | **➕ Another picture**: up to six | one part per pair of pictures (1→2, 2→3, …), all made in one run and joined into one video; each part can have its own description, and Length is per part |
+| **Ingredients to Video** | up to four pictures (people, a pet, an object, a place) and a prompt | a video with them in it, keeping their looks, doing what the prompt says (like Flow's Ingredients) |
 | **Replace a character** | a video and a picture of a character | the person in the video becomes the character: motion, expressions, camera and background stay |
 
 The 🎬 button under the txt2img and img2img results sends the picture to Image to Video (it used to go to the SVD
@@ -51,6 +52,37 @@ ends. **Show the last video** brings back the newest result (or the progress of 
 Measured on the RTX 3070 Laptop: a 7 s Hebrew line takes about 1 minute (Chatterbox), effects for a 7 s clip about
 1.5 minutes, lips about 1.5 minutes. Faces need to be reasonably large for lip sync: make a medium close-up (Image to
 Video from a crop) for a character who talks.
+
+## Ingredients to Video
+
+Two ways, chosen in the tab:
+
+**First frame by FLUX 3 Klein, then Wan 2.2** (the default). FLUX 3 Klein (the checkpoint selected at the top of
+the page) draws one frame of the scene with the ingredient pictures as its references - its own editing, each
+picture at its own shape (`p.flux3_references`, added to sd-forge-flux3 for this) - and Wan 2.2 Image to Video
+animates it with the tab's model, steps and quality. Klein reads a whole character sheet and keeps the face, the
+clothes and the drawn style; Image to Video keeps what the first frame shows. Measured on Shai's 3D character sheet
+(2026-11-09): this kept him; Phantom kept his clothes but drew a different, real person, even told "3D cartoon".
+About 70 s for the frame, then the usual Image to Video time.
+
+**Phantom: the pictures go into the video.** Phantom-Wan 14B (ByteDance's subject-to-video model on Wan 2.1 14B; the FusionX merge, so 8 steps at CFG 1 are
+enough; Q3_K_M GGUF, 7.2 GB in `models/VideoStudio/phantom`). Each picture is encoded by the VAE into one latent frame
+of its own, and they go along after the video's frames, clean at every step (ComfyUI's `WanPhantomSubjectToVideo` /
+`time_dim_concat`); the model's answer for them is dropped. The pictures are fitted whole on white, as Phantom was
+trained (a crop would cut a head off). Name each ingredient in the prompt ("the white dog from picture 1..."). The
+shape is the Shape at the top of the tab (shared by every sub-tab, with the picture sampler). Wan 2.2 high/low LoRAs
+are left out (another model); Wan 2.1 14B LoRAs fit.
+Measured on the RTX 3070 Laptop: 832 x 480, 5 s, two ingredients in 8.5 min.
+
+**Character sheets** (`videostudio/sheets.py`). A reference sheet - front, side and back, rows of heads, a close-up,
+on a studio backdrop - shows one person many times and small; given whole, Phantom reads a crowd and the person in
+the video comes out a stranger. So a sheet is split before it goes in: Time Strata's BiRefNet-lite cuts the figures
+out (on the card in under a second when it has room, ~6-20 s on the processor), the tallest are the full-body views,
+the front is the first of the widest (arms out; the side view is narrow, the back comes after the front), and a big
+figure cut by the bottom edge is the close-up. The front and the close-up go in as two ingredients of the same
+person. It runs only for pictures on a smooth backdrop, and only when the full-body figures share their colours
+(same clothes, same skin), so a photo of several different people is used whole. The details under the video say
+when a sheet was split.
 
 ## Replace a character (video to video)
 
@@ -180,6 +212,7 @@ The worker prints progress as `@@VS {json}` lines and ends with `{"stage": "done
 
 Model code follows ComfyUI (`comfy/ldm/wan`) and Forge Neo, after Wan-Video/Wan2.1 (Apache-2.0). GGUF dequantisation
 follows llama.cpp's formats via gguf-py. Weights: Wan-AI (Apache-2.0), lightx2v distillation, GGUF by Abiray.
+Ingredients: Phantom (Phantom-video, Apache-2.0), the FusionX merge by vrgamedevgirl84, GGUF by QuantStack.
 Replacement follows Wan-Video/Wan2.2 `wan/animate.py` and its preprocessing (Apache-2.0; the skeleton drawing is
 copied from it) and ComfyUI's `model_animate.py` / `WanAnimateToVideo`; Animate GGUF by QuantStack, relight and
 lightx2v LoRAs from Kijai's WanVideo_comfy; DWPose (Apache-2.0) as in Forge's ControlNet; SAM 2.1 (Meta, Apache-2.0)

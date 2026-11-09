@@ -116,6 +116,34 @@ def load_image(path, width, height):
     return a.permute(2, 0, 1)
 
 
+def load_reference(path, width, height, background=255):
+    """A reference picture (an "ingredient") whole inside (width, height), centred on white, [3, H, W] in [-1, 1]:
+    Phantom was trained on subjects padded this way, and cropping would cut a head or a hand off."""
+    im = Image.open(path)
+    if im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info):
+        im = im.convert("RGBA")
+        im = Image.alpha_composite(Image.new("RGBA", im.size, (background,) * 3 + (255,)), im)
+    im = im.convert("RGB")
+    scale = min(width / im.width, height / im.height)
+    nw, nh = max(1, round(im.width * scale)), max(1, round(im.height * scale))
+    canvas = Image.new("RGB", (width, height), (background,) * 3)
+    canvas.paste(im.resize((nw, nh), Image.LANCZOS), ((width - nw) // 2, (height - nh) // 2))
+    a = torch.from_numpy(np.asarray(canvas).astype(np.float32) / 127.5 - 1.0)
+    return a.permute(2, 0, 1)
+
+
+def encode_references(job, vae, width, height, device, dtype, report):
+    """Phantom's references: each picture its own latent frame, side by side in time -> [1, 16, R, H/8, W/8].
+    The model sees them after the video's frames, clean at every step, and takes from them who and what is in the
+    video (ComfyUI's WanPhantomSubjectToVideo / time_dim_concat)."""
+    latents = []
+    for i, path in enumerate(job["references"]):
+        report("condition", 0.2 + 0.6 * i / len(job["references"]), note=f"reading ingredient {i + 1}")
+        pic = load_reference(path, width, height)[None, :, None].to(device, dtype)
+        latents.append(vae.encode(pic).float())
+    return torch.cat(latents, dim=2)
+
+
 def load_video(path, width, height, frames, every=1):
     """The first `frames` frames of a video (every `every`-th: 2 skips FILM's in-between frames), scaled to cover
     (width, height) and centre-cropped, in [-1, 1]."""
@@ -315,8 +343,12 @@ def generate(job, emit):
     vae = WanVAE.load(job["vae"], device, dtype)
     # The I2V experts always take the 20 condition channels; with no picture they get an all-grey video and an
     # empty mask, as ComfyUI gives them.
-    conds = []
-    for j, part in enumerate(parts):
+    conds, refs = [], None
+    if job.get("references"):
+        # Ingredients (Phantom, a text-to-video model): no picture channels, the references go along in time
+        refs = encode_references(job, vae, width, height, device, dtype, report).cpu()
+        conds = [None] * count
+    for j, part in enumerate(parts if refs is None else []):
         report("condition", j / count, note=f"encoding the pictures{of_parts(j)}")
         conds.append(build_condition(job, vae, width, height, frames, device, dtype, report,
                                      part.get("start_image"), part.get("end_image")).cpu())
@@ -350,7 +382,7 @@ def generate(job, emit):
     experts = job["experts"]  # [{"path", "until_sigma"}] in order, high noise first
     cfg_scale = float(job.get("cfg", 1.0))
     ctx = [c.to(device, dtype).unsqueeze(0) for c in contexts]
-    tokens = lt * (lh // 2) * (lw // 2)
+    tokens = (lt + (refs.shape[2] if refs is not None else 0)) * (lh // 2) * (lw // 2)
     preview_path = os.path.join(job.get("work_dir") or out_dir, "preview.png")
     done_blocks = [0]
     passes = 2 if cfg_scale > 1 else 1
@@ -419,13 +451,18 @@ def generate(job, emit):
                                note=f"memory full: retrying with {resident} blocks resident")
 
             negative_ctx = ctx[count] if negative is not None else None
-            x, cond, gen = xs[j].to(device), conds[j].to(device), gens[j]
+            x, gen = xs[j].to(device), gens[j]
+            cond = conds[j].to(device) if conds[j] is not None else None
+            ref = refs.to(device) if refs is not None else None
             for i in todo:
                 sigma, sigma_next = float(sigmas[i]), float(sigmas[i + 1])
                 t = torch.tensor([sigma * 1000.0], device=device)
-                inp = torch.cat([x, cond], dim=1)
-                v = predict(inp, t, ctx[j])
-                del inp
+                if ref is not None:  # the ingredients after the video's frames; the model's answer for them is dropped
+                    v = predict(torch.cat([x, ref], dim=2), t, ctx[j])[:, :, :lt]
+                else:
+                    inp = torch.cat([x, cond], dim=1)
+                    v = predict(inp, t, ctx[j])
+                    del inp
                 if job.get("sampler", "euler") == "lcm" and sigma_next > 0:
                     x0 = x - sigma * v
                     noise = torch.randn(x.shape, generator=gen, dtype=torch.float32).to(device)
@@ -438,7 +475,7 @@ def generate(job, emit):
                        note=part_note.lstrip(" |"))
                 del v
             xs[j] = x.cpu()
-            del x, cond
+            del x, cond, ref
         streamer.close()
         del streamer, model
         free_memory()
@@ -505,7 +542,7 @@ def write_outputs(job, frames, report):
     path = os.path.join(out_dir, base + ".mp4")
     h, w = frames.shape[1:3]
     meta = {k: job[k] for k in ("mode", "prompt", "negative", "seed", "steps", "shift", "cfg", "width", "height", "frames", "fps",
-                                "model_label", "start_image", "end_image", "init_video", "denoise_start_step", "loras",
+                                "model_label", "start_image", "end_image", "init_video", "denoise_start_step", "loras", "references",
                                 "driving_video", "character_image", "person", "start", "seconds", "parts") if k in job}
     cmd = [ffmpeg_exe(), "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}", "-r", str(fps),
            "-i", "-", "-c:v", "libx264", "-preset", "slow", "-crf", "15", "-pix_fmt", "yuv420p",

@@ -1,0 +1,267 @@
+[
+ {
+  "i": 0,
+  "en": "Characters",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 1,
+  "en": "Describe a character in any language - or give a reference picture - and FLUX 3 Klein draws a consistent character sheet over the pose template (front, side, back, faces, a close-up). Save the ones you like in projects, then send a character to Video Studio's Ingredients to Video with what it should do. Needs FLUX 3 Klein selected at the top of the page.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 2,
+  "en": "The character: who you want, in any language (🌐 writes it as a character; Create does it too)",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 3,
+  "en": "Reference picture (optional): the character is made from it",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 4,
+  "en": "Pose template (the sheet's layout)",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 5,
+  "en": "Make this template the default",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 6,
+  "en": "Back to the built-in template",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 7,
+  "en": "Sheets to draw (choose the best)",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 8,
+  "en": "Seed of the sheet (-1: random)",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 9,
+  "en": "Sheet prompt (advanced)",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 10,
+  "en": "The prompt around the character: {appearance}, {style}, {avoid}, {reference} are filled in",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 11,
+  "en": "Save the sheet prompt",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 12,
+  "en": "Built-in sheet prompt",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 13,
+  "en": "✨ Create the character sheet",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 14,
+  "en": "Sheets drawn: click the one to keep",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 15,
+  "en": "Name of the character",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 16,
+  "en": "Project (choose one or type a new name)",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 17,
+  "en": "💾 Save the character",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 18,
+  "en": "My characters",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 19,
+  "en": "Show",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 20,
+  "en": "All projects",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 21,
+  "en": "Search",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 22,
+  "en": "a name or a word",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 23,
+  "en": "Click a character to choose it.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 24,
+  "en": "Project of the character",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 25,
+  "en": "Save name and project",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 26,
+  "en": "✏️ Draw new versions of it",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 27,
+  "en": "🗑 Delete",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 28,
+  "en": "Sheet",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 29,
+  "en": "A video with this character",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 30,
+  "en": "What the character does in the video (any language; it is written as a Wan prompt)",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 31,
+  "en": "Ingredient slot",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 32,
+  "en": "First empty",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 33,
+  "en": "🎬 Send to Ingredients to Video",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 34,
+  "en": "Ready",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 35,
+  "en": "The prompt writer is writing the character…",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 36,
+  "en": "Waiting for Forge to be free…",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 37,
+  "en": "Sent to Video Studio → Ingredients to Video.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 38,
+  "en": "Choose a character in the library first.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 39,
+  "en": "Write what the character does in the video (any language).",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 40,
+  "en": "Describe the character (any language), or give a reference picture.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 41,
+  "en": "Create a sheet first.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 42,
+  "en": "This template is now the default.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 43,
+  "en": "Back to the built-in pose template.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 44,
+  "en": "Sheet prompt saved.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 45,
+  "en": "Sheet prompt back to the built-in one.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 46,
+  "en": "The character is in the box: change it if you like and press Create.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 47,
+  "en": "A 3D model of this character",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 48,
+  "en": "Detail of the shape",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 49,
+  "en": "🧊 Make a 3D model",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 50,
+  "en": "3D model",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 51,
+  "en": "Sent to Simulation 360 → Plain shapes and my objects.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 52,
+  "en": "Make the character's 3D model first.",
+  "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
+ }
+]

@@ -54,14 +54,15 @@ def setup(action, variant="edit-turbo", precision="int8"):
 def build():
     from modules import infotext_utils
     with gr.Blocks(analytics_enabled=False) as tab:
-        gr.Markdown("## FIBO 2.0 · יצירה ועריכת תמונות\n"
-                    "**Dev:** generation and editing (50 steps / CFG 5). **Edit Turbo:** editing (4 steps / CFG 1). "
+        # English only: the interface language switch (forge-hebrew-ui) translates these labels
+        gr.Markdown("## FIBO 2.0 · image generation and editing")
+        gr.Markdown("**Dev:** generation and editing (50 steps / CFG 5). **Edit Turbo:** editing (4 steps / CFG 1). "
                     "Choose a FIBO model here. Your SD/SDXL/FLUX3 checkpoint and settings stay selected.")
         with gr.Row():
             with gr.Column():
                 with gr.Row():
                     variant = gr.Radio(["dev", "edit-turbo"], value="dev", label="FIBO model")
-                    mode = gr.Radio(["generate", "edit"], value="generate", label="Task / פעולה")
+                    mode = gr.Radio(["generate", "edit"], value="generate", label="Task")
                 prompt = gr.Textbox(lines=5, label="Prompt / Edit instruction / VGL JSON", elem_id="fibo2_prompt",
                                     placeholder='Describe an image, write an edit instruction, or paste structured VGL JSON.')
                 negative = gr.Textbox(lines=2, label="Negative prompt (empty uses FIBO's trained null caption)")
@@ -91,7 +92,7 @@ def build():
                     loras = gr.Dropdown(choices=service.lora_choices(), multiselect=True, label="FIBO LoRAs in models/Lora")
                     weight = gr.Slider(-4, 4, value=1, step=0.05, label="LoRA strength")
                 with gr.Row():
-                    generate = gr.Button("Generate / ערוך או צור", variant="primary", elem_id="fibo2_generate")
+                    generate = gr.Button("Generate or edit",variant="primary", elem_id="fibo2_generate")
                     stop = gr.Button("Stop FIBO", elem_id="fibo2_stop")
             with gr.Column():
                 gallery = gr.Gallery(label="FIBO results", elem_id="fibo2_gallery").style(columns=2)

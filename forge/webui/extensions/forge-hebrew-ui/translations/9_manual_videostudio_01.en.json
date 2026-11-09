@@ -618,5 +618,65 @@
   "i": 123,
   "en": "Make the faces like the picture (FaceFusion face swap, about 1 min per person)",
   "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 124,
+  "en": "Ingredients to Video",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 125,
+  "en": "Up to four pictures of who and what is in the video - people, a pet, an object, a place, or a whole character sheet - and the prompt says what happens; the video keeps their looks (like Flow's Ingredients). Name them in the prompt: \"the woman (picture 1) pours coffee into the red cup (picture 2) in the kitchen (picture 3)\". The shape is the Shape at the top.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 126,
+  "en": "Ingredient 1",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 127,
+  "en": "Ingredient 2",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 128,
+  "en": "Ingredient 3",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 129,
+  "en": "Ingredient 4",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 130,
+  "en": "Download the model (7.2 GB)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 131,
+  "en": "Model: Phantom-Wan 14B FusionX Q3 (7.2 GB), here.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 132,
+  "en": "Model: Phantom-Wan 14B FusionX Q3 (7.2 GB) is not downloaded yet.",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 133,
+  "en": "How the ingredients are used",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 134,
+  "en": "First frame by FLUX 3 Klein from the pictures, then Wan 2.2 (keeps faces and style)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 135,
+  "en": "Phantom: the pictures go into the video (keeps clothes and things; faces and drawn styles drift)",
+  "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
  }
 ]

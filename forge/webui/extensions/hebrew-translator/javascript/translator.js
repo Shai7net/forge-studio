@@ -4,7 +4,7 @@
 // new elements, and these texts change in place.
 (function() {
     const FIELDS = ["txt2img_prompt", "txt2img_neg_prompt", "img2img_prompt", "img2img_neg_prompt", "vs_prompt",
-        "vs_part1", "vs_part2", "vs_part3", "vs_part4", "vs_part5"];
+        "vs_part1", "vs_part2", "vs_part3", "vs_part4", "vs_part5", "ch_character", "ch_video"];
     const state = {}; // per field: {source, written, target, label, id, rated, dislikedId}
 
     const TEXT = {
@@ -46,6 +46,7 @@
         sd15: "SD 1.5", sdxl: "SDXL", pony: "Pony", booru: "Illustrious / אנימה", flux: "FLUX",
         wan_t2v: "וידאו Wan מטקסט", wan_i2v: "וידאו Wan מתמונה", negative: "פרומפט שלילי",
         fibo: "FIBO 2.0 (JSON מובנה)", fibo_edit: "עריכה ב-FIBO 2.0",
+        character: "דמות לגיליון דמות (JSON)", wan_ingredients: "וידאו Wan מתמונות רכיבים",
     };
     // Material Icons "thumb_up" (Apache 2.0); thumb down is the same turned over
     const THUMB = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="currentColor" ' +
@@ -54,8 +55,14 @@
 
     const hebrew = () => document.documentElement.classList.contains("hebrew-ui-active");
 
+    // a language made with the translation kit (forge-hebrew-ui's languages/) has its own words for the English side
+    const other = (english) => {
+        const text = window.hebrewUi && window.hebrewUi.text ? window.hebrewUi.text(english) : undefined;
+        return text === undefined ? english : text;
+    };
+
     function t(key, values) {
-        let text = TEXT[key][hebrew() ? 1 : 0];
+        let text = hebrew() ? TEXT[key][1] : other(TEXT[key][0]);
         for (const [k, v] of Object.entries(values || {})) text = text.replace(`{${k}}`, v);
         return text;
     }

@@ -67,6 +67,18 @@ PC are the user's).
   user's own and left alone, and a leftover `<name>.part` folder is an interrupted fetch that the next run removes.
 - Models: `download-models.bat -Models <group>` resumes and verifies them.
 
+## Translating the interface into another language
+
+The interface is English, with a built-in Hebrew translation. To add a language the user asks for:
+
+1. Read `forge\webui\extensions\forge-hebrew-ui\translation-kit\README.md`; every `part-*.json` there carries its
+   own rules in `"instructions"`.
+2. Translate each part by those rules: change only the values of `"texts"` and `"blocks"`, never a key; fill in
+   `"language"` (its own name), `"code"` (for example `es`) and `"direction"` (`rtl` for right-to-left scripts).
+3. Save the results as `forge\webui\extensions\forge-hebrew-ui\languages\<code>\part-NN.json` (valid JSON, UTF-8).
+4. Check: with Forge Studio running, `GET http://127.0.0.1:7860/forge-ui/languages` lists the language with how
+   many of the kit's texts it covers; the language button's ▾ menu shows it. Missing texts stay in English.
+
 ## Do not
 
 - Do not move models, outputs or settings the user made (`forge\webui\models`, `outputs`, `config.json`,

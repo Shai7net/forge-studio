@@ -12,11 +12,11 @@
     const UI = {};
 
     const LOOKS = [
-        {id: 'center', label: 'Title in the middle', text: {template: 'center', text: 'כותרת', size: 7}},
-        {id: 'top', label: 'Title at the top', text: {template: 'top', text: 'כותרת', size: 5.5, outline: 2}},
-        {id: 'lower', label: 'Lower third', text: {template: 'lower', text: 'שם', sub: 'תיאור קצר', size: 4.5, box: true}},
-        {id: 'caption', label: 'Caption', text: {template: 'caption', text: 'שורת כתובית', size: 4, box: true, boxAlpha: 0.5}},
-        {id: 'card', label: 'Full-screen card', text: {template: 'card', text: 'פרק ראשון', size: 7, boxColor: '#101318'}},
+        {id: 'center', label: 'Title in the middle', text: {template: 'center', text: 'Title', size: 7}},
+        {id: 'top', label: 'Title at the top', text: {template: 'top', text: 'Title', size: 5.5, outline: 2}},
+        {id: 'lower', label: 'Lower third', text: {template: 'lower', text: 'Name', sub: 'Short description', size: 4.5, box: true}},
+        {id: 'caption', label: 'Caption', text: {template: 'caption', text: 'A caption line', size: 4, box: true, boxAlpha: 0.5}},
+        {id: 'card', label: 'Full-screen card', text: {template: 'card', text: 'Chapter one', size: 7, boxColor: '#101318'}},
         {id: 'signature', label: 'Signature in the corner', text: {template: 'signature', text: 'SHAI TIRI', font: 'Georgia', size: 6}},
     ];
 
@@ -25,20 +25,29 @@
      * over its card). A typewriter part types about 15 letters a second, as the inspector's choice does. */
     const TEMPLATES = [
         {id: 'opening', label: 'Opening', parts: [{at: 0, seconds: 4, animIn: 'type', animOut: 'fade', animOutSec: 0.6,
-            text: {template: 'center', text: 'שם הסרט', sub: 'סרט מאת', size: 7.5}}]},
+            text: {template: 'center', text: 'Film title', sub: 'A film by', size: 7.5}}]},
         {id: 'lower', label: 'Lower third', parts: [{at: 0, seconds: 5, animIn: 'wipe-r', animInSec: 0.5, animOut: 'wipe-r', animOutSec: 0.4,
-            text: {template: 'lower', text: 'שם', sub: 'תיאור קצר', size: 4.5, box: true}}]},
+            text: {template: 'lower', text: 'Name', sub: 'Short description', size: 4.5, box: true}}]},
         {id: 'chapter', label: 'Chapter', parts: [{at: 0, seconds: 3, animIn: 'fade', animInSec: 0.5, animOut: 'fade', animOutSec: 0.5,
-            text: {template: 'card', text: 'פרק ראשון', sub: 'שם הפרק', size: 7, boxColor: '#101318'}}]},
+            text: {template: 'card', text: 'Chapter one', sub: 'Chapter name', size: 7, boxColor: '#101318'}}]},
         {id: 'quote', label: 'Quote', parts: [{at: 0, seconds: 5, animIn: 'type', animOut: 'fade', animOutSec: 0.6,
-            text: {template: 'center', text: '״משפט אחד שנשאר״', sub: '— שם', size: 5.5, box: true, boxAlpha: 0.45}}]},
+            text: {template: 'center', text: '“One line that stays”', sub: '— Name', size: 5.5, box: true, boxAlpha: 0.45}}]},
         {id: 'ending', label: 'Ending', parts: [
-            {at: 0, seconds: 4.5, animIn: 'fade', animInSec: 0.6, text: {template: 'card', text: 'תודה שצפיתם', size: 6.5, boxColor: '#101318'}},
+            {at: 0, seconds: 4.5, animIn: 'fade', animInSec: 0.6, text: {template: 'card', text: 'Thanks for watching', size: 6.5, boxColor: '#101318'}},
             {at: 1, seconds: 3.5, animIn: 'pop', animInSec: 0.6, text: {template: 'signature', text: 'SHAI TIRI', font: 'Georgia', size: 6}}]},
     ];
     FS.TEMPLATES = TEMPLATES;
     const STICKERS = ['😂', '😍', '😮', '😢', '😡', '👍', '👏', '🙏', '🔥', '❤️', '✨', '⭐', '🎉', '💯', '👀', '💡',
         '✅', '❌', '⚠️', '➡️', '⬅️', '📍', '🎬', '🎵'];
+
+    /* the sample words of a new title in the page's language (the signature is a name and stays as it is) */
+    function sampleText(text) {
+        if (text.template !== 'signature') {
+            if (text.text) text.text = T(text.text);
+            if (text.sub) text.sub = T(text.sub);
+        }
+        return text;
+    }
 
     FS.addTemplate = function (tpl, at) {
         const time = FS.snapTime(at != null ? at : S.time);
@@ -52,7 +61,7 @@
                 track = track ? track.id : FS.addTrack('video');
                 floor = FS.visualTracks().findIndex((t) => t.id === track);
                 const clip = {id: FS.newId(), track, kind: 'text', start: FS.snapTime(a), duration: p.seconds,
-                    fadeIn: 0, fadeOut: 0, text: Object.assign({}, FS.TEXT_DEFAULTS, p.text)};
+                    fadeIn: 0, fadeOut: 0, text: sampleText(Object.assign({}, FS.TEXT_DEFAULTS, p.text))};
                 for (const k of ['animIn', 'animInSec', 'animOut', 'animOutSec']) if (p[k] != null) clip[k] = p[k];
                 if (clip.animIn === 'type' && clip.animInSec == null) clip.animInSec = Math.round(Math.max(0.3, Math.min(clip.duration * 0.7, FS.typeSteps(clip.text) / 15)) * 20) / 20;
                 d.clips.push(clip);
@@ -69,7 +78,7 @@
         return FS.change('text', (d) => {
             const track = trackId || FS.freeLayer(time, time + len);
             const clip = {id: FS.newId(), track, kind: 'text', start: FS.snapTime(time), duration: len,
-                fadeIn: 0.3, fadeOut: 0.3, text: Object.assign({}, FS.TEXT_DEFAULTS, look.text)};
+                fadeIn: 0.3, fadeOut: 0.3, text: sampleText(Object.assign({}, FS.TEXT_DEFAULTS, look.text))};
             d.clips.push(clip);
             FS.place(clip, 'free');
             S.selected = [clip.id];

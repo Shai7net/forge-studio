@@ -1,13 +1,18 @@
 /* Forge Hebrew UI */
 
 #hebrew-ui-toggle {
+    position: relative;
     flex: 0 0 auto;
     align-self: center;
     margin-left: auto;
+    display: inline-flex;
+    min-width: 0;
+}
+
+#hebrew-ui-toggle > button {
     min-width: 0;
     padding: 0.35em 1em;
     border: 1px solid var(--button-secondary-border-color, var(--border-color-primary));
-    border-radius: 999px;
     background: var(--button-secondary-background-fill, var(--background-fill-secondary));
     color: var(--button-secondary-text-color, var(--body-text-color));
     font-weight: 600;
@@ -15,7 +20,21 @@
     cursor: pointer;
 }
 
-#hebrew-ui-toggle:hover {
+#hebrew-ui-toggle > .ui-lang-main {
+    border-radius: 999px;
+}
+
+#hebrew-ui-toggle > .ui-lang-more:not([hidden]) {
+    padding: 0.35em 0.6em;
+    border-left: 0;
+    border-radius: 0 999px 999px 0;
+}
+
+#hebrew-ui-toggle > .ui-lang-main:has(+ .ui-lang-more:not([hidden])) {
+    border-radius: 999px 0 0 999px;
+}
+
+#hebrew-ui-toggle > button:hover {
     background: var(--button-secondary-background-fill-hover, var(--background-fill-primary));
 }
 
@@ -26,11 +45,158 @@
     z-index: 1000;
 }
 
+/* the language menu under the button */
+#hebrew-ui-toggle .ui-lang-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    min-width: 12em;
+    padding: 4px;
+    border: 1px solid var(--border-color-primary);
+    border-radius: 8px;
+    background: var(--background-fill-primary);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+}
+
+#hebrew-ui-toggle .ui-lang-item {
+    padding: 0.45em 0.8em;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--body-text-color);
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+#hebrew-ui-toggle .ui-lang-item:hover {
+    background: var(--background-fill-secondary);
+}
+
+#hebrew-ui-toggle .ui-lang-current {
+    font-weight: 700;
+}
+
+#hebrew-ui-toggle .ui-lang-current::after {
+    content: " ✓";
+}
+
+#hebrew-ui-toggle .ui-lang-menu hr {
+    margin: 4px 0;
+    border: 0;
+    border-top: 1px solid var(--border-color-primary);
+}
+
+/* the "Add a language" window */
+#ui-lang-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+#ui-lang-dialog .ui-lang-box {
+    width: min(640px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    padding: 20px 24px;
+    border: 1px solid var(--border-color-primary);
+    border-radius: 12px;
+    background: var(--background-fill-primary);
+    color: var(--body-text-color);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+}
+
+#ui-lang-dialog h3 {
+    margin: 0 0 0.5em;
+    font-size: 1.25em;
+}
+
+#ui-lang-dialog h4 {
+    margin: 1.1em 0 0.4em;
+}
+
+#ui-lang-dialog p {
+    margin: 0.3em 0;
+    line-height: 1.5;
+}
+
+#ui-lang-dialog .ui-lang-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+#ui-lang-dialog .ui-lang-end {
+    justify-content: flex-end;
+    margin-top: 1em;
+}
+
+#ui-lang-dialog .ui-lang-button {
+    display: inline-block;
+    padding: 0.45em 1em;
+    border: 1px solid var(--button-secondary-border-color, var(--border-color-primary));
+    border-radius: 8px;
+    background: var(--button-secondary-background-fill, var(--background-fill-secondary));
+    color: var(--button-secondary-text-color, var(--body-text-color));
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#ui-lang-dialog .ui-lang-primary {
+    border-color: var(--button-primary-border-color, transparent);
+    background: var(--button-primary-background-fill, #f97316);
+    color: var(--button-primary-text-color, #fff);
+}
+
+#ui-lang-dialog .ui-lang-name {
+    flex: 1 1 12em;
+    padding: 0.45em 0.7em;
+    border: 1px solid var(--input-border-color, var(--border-color-primary));
+    border-radius: 8px;
+    background: var(--input-background-fill, var(--background-fill-secondary));
+    color: var(--body-text-color);
+}
+
+#ui-lang-dialog .ui-lang-prompt {
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: 8px;
+    padding: 0.6em;
+    border: 1px solid var(--input-border-color, var(--border-color-primary));
+    border-radius: 8px;
+    background: var(--input-background-fill, var(--background-fill-secondary));
+    color: var(--body-text-color);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.9em;
+    resize: vertical;
+}
+
+#ui-lang-dialog .ui-lang-note {
+    opacity: 0.75;
+    font-size: 0.9em;
+}
+
+#ui-lang-dialog .ui-lang-status {
+    min-height: 1.4em;
+    margin-top: 0.6em;
+    white-space: pre-line;
+}
+
 .hebrew-ui-hidden {
     display: none !important;
 }
 
-.hebrew-ui-block {
+.hebrew-ui-block[dir="rtl"] {
     direction: rtl;
     text-align: right;
 }
@@ -48,13 +214,14 @@
 }
 
 /* a translated placeholder reads right to left, while typed prompts keep their own direction */
-html.hebrew-ui-active textarea::placeholder,
-html.hebrew-ui-active input::placeholder {
+html.ui-lang-active textarea::placeholder,
+html.ui-lang-active input::placeholder {
     unicode-bidi: plaintext;
     text-align: start;
 }
 
-/* Hebrew text reads right to left and sits on the right; the layout itself does not move */
-html.hebrew-ui-active [dir="auto"] {
+/* translated text takes its direction from its own letters (Hebrew reads right to left and sits on the right);
+   the layout itself does not move */
+html.ui-lang-active [dir="auto"] {
     unicode-bidi: plaintext;
 }

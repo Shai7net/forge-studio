@@ -100,7 +100,7 @@ index 8553f63..abc1f3d 100644
      source_face_index: int = 0  # source image or video face index
      driving_face_index: int = 0  # driving video face index
 diff --git a/liveportrait/gradio_pipeline.py b/liveportrait/gradio_pipeline.py
-index 2f22eec..de08294 100644
+index 2f22eec..e89ce90 100644
 --- a/liveportrait/gradio_pipeline.py
 +++ b/liveportrait/gradio_pipeline.py
 @@ -19,14 +19,33 @@ from .live_portrait_pipeline_animal import LivePortraitPipelineAnimal
@@ -322,7 +322,7 @@ index 2f22eec..de08294 100644
          vy_ratio_crop_driving_video=-0.1,
 +        source_tab_selection=None,
          tab_selection=None,
-+        source_processing_method="מעקב (מהיר)",
++        source_processing_method="Tracking (fast)",
 +        do_upscale=False,
 +        upscaler_name='None',
      ):
@@ -376,7 +376,7 @@ index 2f22eec..de08294 100644
                  'scale_crop_driving_video': scale_crop_driving_video,
                  'vx_ratio_crop_driving_video': vx_ratio_crop_driving_video,
                  'vy_ratio_crop_driving_video': vy_ratio_crop_driving_video,
-+                'source_processing_method': 'tracking' if source_processing_method == 'מעקב (מהיר)' else 'frame-by-frame',
++                'source_processing_method': 'tracking' if source_processing_method == 'Tracking (fast)' else 'frame-by-frame',
 +                'do_upscale': do_upscale,
 +                'upscaler_name': upscaler_name,
              }
@@ -2587,7 +2587,7 @@ index 6bc0313..fcf1f85 100644
 \ No newline at end of file
 +timm
 diff --git a/scripts/main.py b/scripts/main.py
-index ddf90c8..7493fc8 100644
+index ddf90c8..202c803 100644
 --- a/scripts/main.py
 +++ b/scripts/main.py
 @@ -2,6 +2,10 @@ import datetime
@@ -2891,15 +2891,15 @@ index ddf90c8..7493fc8 100644
 -                    with gr.Accordion(open=False, label="Animation Options"):
 +                    with gr.Accordion(open=True, label="Animation Options"):
 +                        with gr.Row():
-+                            source_processing_method = gr.Radio(["מעקב (מהיר)", "כל פריים (איטי, יציב)"], value="מעקב (מהיר)", label="שיטת עיבוד מקור")
-+                            lip_sync_intensity = gr.Slider(minimum=0.0, maximum=10.0, value=5.0, step=0.1, label="עוצמת סנכרון שפתיים (Lip Sync Intensity)")
++                            source_processing_method = gr.Radio(["Tracking (fast)", "Every frame (slow, steady)"], value="Tracking (fast)", label="Source processing")
++                            lip_sync_intensity = gr.Slider(minimum=0.0, maximum=10.0, value=5.0, step=0.1, label="Lip sync intensity")
 +                            driving_multiplier = gr.Number(value=1.0, label="driving multiplier", minimum=0.0, maximum=2.0, step=0.02)
                          with gr.Row():
                              flag_stitching = gr.Checkbox(value=False, label="stitching (not recommended)")
                              flag_remap_input = gr.Checkbox(value=False, label="paste-back (not recommended)")
 -                            driving_multiplier = gr.Number(value=1.0, label="driving multiplier", minimum=0.0, maximum=2.0, step=0.02)
 +                        with gr.Row():
-+                            do_upscale = gr.Checkbox(value=False, label="שפר רזולוציה (Upscale)")
++                            do_upscale = gr.Checkbox(value=False, label="Upscale")
 +                            upscaler_name = gr.Dropdown(label="Upscaler", choices=[u.name for u in shared.sd_upscalers], value=shared.sd_upscalers[0].name if shared.sd_upscalers else "None", visible=False)
 +                        
 +                        do_upscale.change(

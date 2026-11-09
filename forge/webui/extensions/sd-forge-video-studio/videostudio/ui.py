@@ -5,6 +5,7 @@ import html
 import json
 import os
 import random
+import re
 import shutil
 import subprocess
 import time
@@ -12,9 +13,17 @@ import time
 import gradio as gr
 from PIL import Image
 
-from . import CACHE_DIR, JOBS_DIR, OUTPUT_DIR, faceswap, models, prompting, runner, sound
+from . import CACHE_DIR, JOBS_DIR, OUTPUT_DIR, WEBUI_DIR, faceswap, models, prompting, runner, sheets, sound
 
-MODES = {"t2v": "Text to Video", "i2v": "Image to Video", "replace": "Replace a character"}
+MODES = {"t2v": "Text to Video", "i2v": "Image to Video", "ingredients": "Ingredients to Video",
+         "replace": "Replace a character"}
+MAX_INGREDIENTS = 4  # Phantom was trained on up to four
+# Measured on his character sheet (2026-11-09): Phantom kept the clothes but drew a different, real person; FLUX 3
+# Klein drawing the first frame from the sheet kept face, clothes and the 3D style, and Wan's Image to Video keeps
+# what the first frame shows.
+ING_FRAME = "First frame by FLUX 3 Klein from the pictures, then Wan 2.2 (keeps faces and style)"
+ING_PHANTOM = "Phantom: the pictures go into the video (keeps clothes and things; faces and drawn styles drift)"
+ING_METHODS = (ING_FRAME, ING_PHANTOM)
 # Image to Video takes up to this many pictures: one is a start, two a first and a last frame, more make one part per
 # pair, all made in one run and joined.
 MAX_PICTURES = 6
@@ -187,6 +196,52 @@ def draw_first_frame(prompt, negative, aspect, steps, cfg, sampler, seed, folder
     return path
 
 
+def flux3_glue():
+    """The FLUX 3 extension's glue when its checkpoint is the one selected at the top of the page (loading it if
+    Forge had let it go), else None."""
+    try:
+        from flux3 import glue
+        from modules import shared
+        return glue if glue.active(shared.sd_model) else None
+    except Exception:
+        return None
+
+
+def draw_from_ingredients(prompt, pictures, aspect, seed, folder):
+    """Ingredients to Video's first frame: FLUX 3 Klein draws the scene with the ingredient pictures as its
+    references (its own editing, as Shai made his character sheet from a pose sheet). Klein keeps a character's
+    face, clothes and style from a whole reference sheet, which Phantom does not (it turned a stylized 3D character
+    into a different real person, 2026-11-09); Wan then animates the frame."""
+    from modules import processing, shared
+    glue = flux3_glue()
+    if glue is None:
+        raise RuntimeError("Select FLUX 3 Klein at the top of the page: it draws the first frame from the "
+                           "ingredients. Or choose Phantom in this tab.")
+    aw, ah = ASPECTS.get(aspect, (9, 16))
+    w, h = fit_size(aw, ah, 1024 * 1024, 16)
+    refs = []
+    for path in pictures:
+        with Image.open(path) as im:
+            refs.append(im.convert("RGB"))
+    which = "the reference picture" if len(refs) == 1 else "the reference pictures"
+    text = (f"A single frame from a film, not a reference sheet: {prompt.strip()} Everyone and everything in it looks "
+            f"exactly as in {which}: the same face, hair, body, clothes and style.")
+    p = processing.StableDiffusionProcessingImg2Img(
+        sd_model=shared.sd_model, init_images=[refs[0]], denoising_strength=1.0, prompt=text, negative_prompt="",
+        width=w, height=h, steps=16, cfg_scale=1.0, sampler_name="Euler", seed=int(seed),
+        do_not_save_samples=True, do_not_save_grid=True)
+    p.flux3_edit_mode = glue.EDIT_MODES[0]
+    p.flux3_references = refs
+    try:
+        res = processing.process_images(p)
+    finally:
+        p.close()
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, "first_frame_from_ingredients.png")
+    res.images[0].save(path)
+    return path
+
+
 def build_job(kind, start, end, prompt, negative, quality, seconds, seed, preset, steps, shift, cfg, sampler, int8,
               attention, width, height, smooth, upscale, loras, aspect, parts=None):
     """`kind`: t2v, i2v (one picture), flf (first and last frame) or multi (`parts`, one per pair of pictures)."""
@@ -263,13 +318,31 @@ def generate(mode, count, *args):
     (t2v_aspect, t2v_picture_prompt, t2v_steps, t2v_cfg, t2v_sampler, prompt, negative, quality, seconds, seed, preset,
      steps, shift, cfg, sampler, int8, attention, width, height, smooth, upscale, lora1, lora1_w, lora2, lora2_w,
      styles, auto_sound, sound_words) = rest[:28]
-    replace = rest[28:]
+    replace = rest[28:42]
+    ingredients = rest[42:42 + MAX_INGREDIENTS]
+    method = rest[42 + MAX_INGREDIENTS] if len(rest) > 42 + MAX_INGREDIENTS else ING_FRAME
     mode = mode if mode in MODES else "i2v"
     nothing = gr.update()
 
     def out(status, preview=nothing, video=nothing, details=nothing, last=nothing):
         return status, preview, video, details, last
 
+    # Ingredients by a first frame: FLUX 3 Klein draws it from the pictures, then it goes on as Image to Video
+    from_ingredients = mode == "ingredients" and method != ING_PHANTOM
+    ingredient_pictures = [p for p in ingredients if p]
+    if from_ingredients:
+        if not ingredient_pictures:
+            yield out(status_html("error", error="Add at least one ingredient: a picture of who or what is in the video."))
+            return
+        if flux3_glue() is None:
+            yield out(status_html("error", error="Select FLUX 3 Klein at the top of the page: it draws the first frame "
+                                                 "from the ingredients. Or choose Phantom in this tab."))
+            return
+    elif mode == "ingredients":
+        yield from generate_ingredients(prompt, negative, quality, seconds, seed, t2v_aspect, int8, attention, smooth,
+                                        upscale, lora1, lora1_w, lora2, lora2_w, styles, auto_sound, sound_words,
+                                        *ingredients)
+        return
     if mode == "replace":
         yield from generate_replace(prompt, negative, seed, smooth, upscale, int8, attention, lora1, lora1_w, lora2,
                                     lora2_w, styles, auto_sound, sound_words, *replace)
@@ -277,7 +350,7 @@ def generate(mode, count, *args):
 
     n = max(1, min(MAX_PICTURES, int(count or 1))) if mode == "i2v" else 0
     used = pictures[:n]
-    kind = "t2v" if mode == "t2v" else ("i2v" if n == 1 else "flf" if n == 2 else "multi")
+    kind = "t2v" if mode == "t2v" else ("i2v" if n == 1 or from_ingredients else "flf" if n == 2 else "multi")
     texts = [(t or "").strip() for t in part_texts[:max(0, n - 1)]] if kind == "multi" else []
     if not (prompt or "").strip() and not (texts and all(texts)):
         yield out(status_html("error", error="Write a prompt: what happens in the video."))
@@ -321,6 +394,14 @@ def generate(mode, count, *args):
             if kind == "multi":
                 parts = [{"start_image": staged[k], "end_image": staged[k + 1], "prompt": part_prompts[k]}
                          for k in range(n - 1)]
+        elif from_ingredients:
+            yield out(status_html("picture", 0.5, note="FLUX 3 Klein draws the first frame from the ingredients"))
+            try:
+                start = draw_from_ingredients(styled, ingredient_pictures, t2v_aspect, seed, stage_dir)
+            except Exception as e:
+                yield out(status_html("error", error=f"Drawing the first frame failed: {type(e).__name__}: {e}"))
+                return
+            yield out(status_html("picture", 1.0), preview=start)
         else:
             yield out(status_html("picture", 0.5, note="Forge draws the first frame with the selected checkpoint"))
             try:
@@ -338,6 +419,9 @@ def generate(mode, count, *args):
         frames = spec["frames"] if not parts else len(parts) * (spec["frames"] - 1) + 1
         details = (f"{label} | {spec['width']}x{spec['height']} | {frames} frames at 16 fps "
                    f"({(frames - 1) / 16:.1f} s) | seed {seed} | {preset}")
+        if from_ingredients:
+            details += (f"\nFirst frame: FLUX 3 Klein from {len(ingredient_pictures)} ingredient"
+                        f"{'s' if len(ingredient_pictures) > 1 else ''}")
         if parts:
             details += "\nParts: " + " | ".join(f"{k + 1}. {part['prompt'][:70]}" for k, part in enumerate(parts))
         if loras:
@@ -404,6 +488,95 @@ def find_people(video, start, character=None):
         note += f"; {m} people in the picture: choose one, or 'Everyone in the picture'"
     return (out, gr.update(choices=[str(i + 1) for i in range(max(1, n))], value="1"),
             gr.update(choices=[str(i + 1) for i in range(max(1, m))], value="1"), status_html("idle", note=note))
+
+
+def generate_ingredients(prompt, negative, quality, seconds, seed, aspect, int8, attention, smooth, upscale, lora1,
+                         lora1_w, lora2, lora2_w, styles, auto_sound, sound_words, *pictures):
+    """Ingredients to Video (Phantom-Wan 14B): up to four pictures of who and what is in the video (people, an object,
+    a place) and the words for what happens; the video keeps their looks. The shape is the Shape at the top. A
+    character sheet (many views of one person on a plain background) is split into the views that carry the likeness
+    (sheet_views)."""
+    nothing = gr.update()
+
+    def out(status, preview=nothing, video=nothing, details=nothing, last=nothing):
+        return status, preview, video, details, last
+
+    refs = [p for p in pictures if p]
+    if not refs:
+        yield out(status_html("error", error="Add at least one ingredient: a picture of who or what is in the video."))
+        return
+    if not (prompt or "").strip():
+        yield out(status_html("error", error="Write what happens in the video, naming the ingredients "
+                                             "(\"the woman from picture 1 holds the cup from picture 2...\")."))
+        return
+    gone = models.ingredients_missing()
+    if gone:
+        yield out(status_html("error", error="The ingredients model is not downloaded yet (the button in this tab)."))
+        return
+    if runner.busy():
+        yield out(status_html("error", error="A video is already being made (it keeps going even if this page was "
+                                             "reloaded). Wait for it, press Stop, or press Show the last video."))
+        return
+    seed = int(seed) if seed is not None and int(seed) >= 0 else random.randint(0, 2 ** 31 - 1)
+    _, wan_prompt, negative, loras, not_wan = _wan_loras(prompt, negative, styles, lora1, lora1_w, lora2, lora2_w)
+    # Wan 2.2 LoRAs (high/low pairs) are for another model; Wan 2.1 14B LoRAs fit Phantom
+    loras = [l for l in loras if not re.search(r"(^|[^a-z])(high|low)([^a-z]|$)", os.path.basename(l["path"]).lower())]
+
+    stage_dir = os.path.join(JOBS_DIR, "inputs", time.strftime("%Y%m%d-%H%M%S"))
+    yield out(status_html("start", 0, note="looking at the ingredients"))
+    staged, sheet_notes = sheet_views(refs, stage_dir)
+    from modules.call_queue import queue_lock
+    yield out(status_html("start", 0, note="waiting for Forge to be free"))
+    with queue_lock:
+        preset = next(iter(models.PRESETS))
+        spec = build_job("t2v", None, None, wan_prompt, negative, quality, seconds, seed, preset, 8, 5.0, 1.0, "euler",
+                         int8, attention, 0, 0, smooth, upscale, loras, aspect)
+        spec.update(mode="ingredients", references=staged, model_label="Phantom-Wan 14B FusionX Q3",
+                    basename=f"{time.strftime('%H%M%S')}-ingredients-{seed}",
+                    experts=[{"path": models.file_path("phantom_q3"), "until_sigma": 0.0, "label": "phantom"}])
+        details = (f"{MODES['ingredients']} | {len(staged)} ingredient{'s' if len(staged) > 1 else ''} | "
+                   f"{spec['width']}x{spec['height']} | {spec['frames']} frames at 16 fps "
+                   f"({(spec['frames'] - 1) / 16:.1f} s) | seed {seed} | Phantom-Wan 14B FusionX")
+        if loras:
+            details += "\nLoRA: " + ", ".join(f"{os.path.splitext(os.path.basename(l['path']))[0]} {l['strength']:g}" for l in loras)
+        for note in sheet_notes:
+            details += "\n" + note
+        made = yield from _run_job(spec, details, out, nothing)
+    if made and auto_sound:
+        yield from _sound_after(made, (sound_words or "").strip() or wan_prompt, out, nothing, details)
+
+
+def sheet_views(refs, stage_dir):
+    """The ingredient pictures as staged for the engine. A character sheet shows one person many times and small;
+    given whole, Phantom reads a crowd and the video person comes out a stranger. So a sheet becomes the views of
+    it that carry the likeness (its front full body, and its close-up when it has one), within MAX_INGREDIENTS
+    pictures in all."""
+    staged, notes = [], []
+    matte = sheets.matte_file(os.path.join(WEBUI_DIR, "models"))
+    for k, path in enumerate(refs):
+        room = MAX_INGREDIENTS - len(staged) - (len(refs) - k - 1)
+        views = []
+        try:
+            views = sheets.split(path, matte)[:max(1, room)]
+        except Exception as e:  # never stop a video over this: the picture is used whole
+            print(f"[Video Studio] could not read ingredient {k + 1} as a character sheet: {e}")
+        if not views:
+            staged.append(_copy_input(path, stage_dir, f"ingredient{k + 1}"))
+            continue
+        os.makedirs(stage_dir, exist_ok=True)
+        for name, picture in views:
+            dest = os.path.join(stage_dir, f"ingredient{k + 1}-{name}.png")
+            picture.save(dest)
+            staged.append(dest)
+        notes.append(f"Ingredient {k + 1} is a character sheet: used its {' and '.join(n for n, _ in views)} "
+                     f"view{'s' if len(views) > 1 else ''}.")
+    return staged, notes
+
+
+def ingredients_models_markdown():
+    if not models.ingredients_missing():
+        return "Model: Phantom-Wan 14B FusionX Q3 (7.2 GB), here."
+    return "Model: Phantom-Wan 14B FusionX Q3 (7.2 GB) is not downloaded yet."
 
 
 def generate_replace(prompt, negative, seed, smooth, upscale, int8, attention, lora1, lora1_w, lora2, lora2_w, styles,
@@ -855,15 +1028,19 @@ def build():
     with gr.Blocks(analytics_enabled=False) as tab:
         mode = gr.Textbox(value="t2v", visible=False, elem_id="vs_mode")
         with gr.Row(elem_id="vs_main"):
-            with gr.Column(scale=5):
+            with gr.Column(scale=5, elem_id="vs_tabs_column"):
+                # Shared by every sub-tab; style.css sets it on the right of the sub-tab buttons
+                with gr.Row(elem_id="vs_shared_row"):
+                    t2v_aspect = gr.Dropdown(list(ASPECTS), value="9:16 portrait", label="Shape",
+                                             elem_id="vs_shape", min_width=124)
+                    t2v_sampler = gr.Dropdown(samplers, value=samplers[0] if samplers else None,
+                                              label="Sampler for the picture", elem_id="vs_picture_sampler",
+                                              min_width=152)
                 # ids let javascript/video-studio.js open a sub-tab by name (the 🎬 button, Continue)
                 with gr.Tabs(elem_id="vs_mode_tabs"):
                     with gr.Tab(MODES["t2v"], id="t2v", elem_id="vs_tab_t2v"):
                         gr.Markdown("Forge draws the first frame from your prompt with the checkpoint selected at the top "
                                     "of the page (and any LoRA tags in the picture prompt); then Wan animates it.")
-                        with gr.Row():
-                            t2v_aspect = gr.Dropdown(list(ASPECTS), value="9:16 portrait", label="Shape")
-                            t2v_sampler = gr.Dropdown(samplers, value=samplers[0] if samplers else None, label="Sampler for the picture")
                         t2v_picture_prompt = gr.Textbox(label="Picture prompt (empty: the video prompt)", lines=2)
                         with gr.Row():
                             t2v_steps = gr.Slider(1, 60, value=25, step=1, label="Picture steps")
@@ -891,6 +1068,22 @@ def build():
                                                        placeholder="What happens in this part (empty: the prompt below)")
                                             for k in range(MAX_PICTURES - 1)]
                         _take_over_send_to_video(pictures[0])
+                    with gr.Tab(MODES["ingredients"], id="ingredients", elem_id="vs_tab_ingredients"):
+                        gr.Markdown("Up to four pictures of who and what is in the video - people, a pet, an object, a "
+                                    "place, or a whole character sheet - and the prompt says what happens; the video "
+                                    "keeps their looks (like Flow's Ingredients). Name them in the prompt: \"the woman "
+                                    "(picture 1) pours coffee into the red cup (picture 2) in the kitchen (picture 3)\". "
+                                    "The shape is the Shape at the top.")
+                        ing_method = gr.Radio(list(ING_METHODS), value=ING_FRAME, label="How the ingredients are used",
+                                              elem_id="vs_ingredients_method")
+                        ingredients = []
+                        with gr.Row():
+                            for k in range(MAX_INGREDIENTS):
+                                ingredients.append(gr.Image(label=f"Ingredient {k + 1}", type="filepath", height=240,
+                                                            elem_id=f"vs_ingredient{k + 1}"))
+                        with gr.Row():
+                            ing_models = gr.Markdown(ingredients_models_markdown())
+                            ing_download = gr.Button("Download the model (7.2 GB)", size="sm")
                     with gr.Tab(MODES["replace"], id="replace", elem_id="vs_tab_replace"):
                         gr.Markdown("The person in your video becomes the character in your picture: the motion, the "
                                     "face's expressions, the camera and the background stay (Wan 2.2 Animate). A picture "
@@ -1034,7 +1227,12 @@ def build():
                   prompt, negative, quality, seconds, seed, preset, steps, shift, cfg, sampler, int8, attention,
                   width, height, smooth, upscale, lora1, lora1_w, lora2, lora2_w, styles, auto_sound, sound_words,
                   rep_video, rep_char, rep_person, rep_start, rep_seconds, rep_quality, rep_fps, rep_mask, rep_keep,
-                  rep_steps, rep_relight, rep_char_person, rep_who, rep_faces]
+                  rep_steps, rep_relight, rep_char_person, rep_who, rep_faces] + ingredients + [ing_method]
+        def start_ingredients_download():
+            models.DOWNLOADS.start(models.ingredients_missing())
+            return ingredients_models_markdown() + " Downloading…"
+
+        ing_download.click(start_ingredients_download, outputs=[ing_models], queue=False)
         go.click(_guarded(generate), inputs=inputs, outputs=[status, preview, video, details, last_frame], _js="videoStudioSubmit")
         rgo.click(_guarded(refine), inputs=[last_frame, rquality, rstrength, smooth, upscale, int8, attention, preset],
                   outputs=[status, preview, video, details, last_frame])

@@ -139,6 +139,25 @@ def test_broken_file_is_kept(tmp_path):
     assert any(p.name.startswith("learned.json.broken-") for p in tmp_path.iterdir())
 
 
+def test_characters_targets():
+    """sd-forge-characters' fields, and Video Studio's Ingredients sub-tab."""
+    assert styles.target_for("ch_character", "flux") == "character"
+    assert styles.target_for("ch_video", "flux") == "wan_ingredients"
+    assert styles.target_for("vs_prompt", "flux", "", "ingredients") == "wan_ingredients"
+    assert styles.target_for("vs_prompt", "flux", "", "t2v") == "wan_t2v"
+    answer = ('Meaning: a skater girl\nPrompt: ```json\n{"name": "Luna", "appearance": "A skater girl.", '
+              '"extra": 1}\n```')
+    value = json.loads(styles.tidy(answer, "character"))
+    assert list(value) == list(styles.CHARACTER_KEYS) and value["name"] == "Luna" and value["style"] == ""
+    try:
+        styles.tidy('Prompt: {"name": "Luna"}', "character")
+        raise AssertionError("a character without appearance must be refused")
+    except ValueError:
+        pass
+    for target in ("character", "wan_ingredients"):  # every target has its guide, example and family
+        assert styles.GUIDES[target] and styles.example(target) and styles.FAMILY[target]
+
+
 if __name__ == "__main__":  # Forge's venv has no pytest
     import inspect
     import pathlib

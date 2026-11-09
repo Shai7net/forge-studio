@@ -1,11 +1,15 @@
-# Forge Hebrew UI
+# Forge interface languages (forge-hebrew-ui)
 
-כפתור **עברית** בראש העמוד (ליד ההגדרות המהירות) מעביר את כל הממשק של Forge לעברית בלחיצה אחת, ו-**English** מחזיר אותו לאנגלית בדיוק כמו שהיה.
-הבחירה נשמרת בדפדפן, כך שבפעם הבאה העמוד נפתח בשפה האחרונה שנבחרה.
+The language button at the top right (next to the quick settings) switches the whole Forge interface between English
+and another language with one click, and back to exactly what it was. A full **Hebrew** translation is built in; any
+other language can be added with the **translation kit** and any AI (see *Other languages* below). The ▾ next to the
+button lists the languages, and the choice is remembered in the browser.
 
-A one-click switch between the English Forge interface and a Hebrew translation, for txt2img, img2img, ControlNet,
-AnimateDiff, Deforum (including Audio Keyframes), Infinite Zoom, Replacer, Segment Anything, ReActor, Dynamic Prompts,
-Image Browser, Extras, Train, Settings and Extensions.
+Covered: txt2img, img2img, ControlNet, AnimateDiff, Deforum (including Audio Keyframes), Infinite Zoom, Replacer,
+Segment Anything, ReActor, Dynamic Prompts, Image Browser, Extras, Train, Settings, Extensions and Forge Studio's own
+tabs (Video Studio, Characters, Forge Studio, Simulation 360, Time Strata, FLUX 3, FIBO 2.0, the prompt writer).
+
+כפתור השפה בראש העמוד מעביר את כל הממשק לעברית בלחיצה אחת, ובלחיצה נוספת מחזיר אותו לאנגלית בדיוק כמו שהיה.
 
 ## What it changes, and what it never changes
 
@@ -49,6 +53,26 @@ readable (a right-to-left mark before a line that opens with an English word, a 
 
 To find strings that are still in English on the page you are looking at, paste `tools/find_untranslated.js` into the
 browser console while Hebrew is on.
+
+## Other languages
+
+`translation-kit/` (written by `tools/build_dictionary.py` together with the Hebrew dictionary) holds every English text
+of the interface in parts small enough for an AI chat: Forge's own texts, the help blocks, and the words of the pages
+that draw themselves (Simulation 360, the Forge Studio editor, Time Strata, the prompt writer). Each part carries its
+rules in `"instructions"`. The files an AI returns go to `languages/<code>/` (any names, any number), either through
+**▾ → Add a language…** on the page or by copying them there; `scripts/ui_languages.py` serves them:
+
+| Route | |
+|---|---|
+| `GET /forge-ui/languages` | the languages in `languages/`, each with how many of the kit's texts it covers |
+| `GET /forge-ui/languages/<code>` | one language's dictionary, all its files merged |
+| `GET /forge-ui/translation-kit.zip` | the kit |
+| `POST /forge-ui/languages` | `{"files": [{"name", "text"}], "name"}`: saves returned files (only from the PC itself) |
+
+Files may come wrapped in a chat's words or in ``` fences; a plain `{"English": "translation"}` table works too.
+Missing texts stay in English. For a right-to-left language the same direction marks as for Hebrew are added, and help
+blocks are cleaned of scripts and event handlers before they reach the page. Pages that draw their own words ask
+`window.hebrewUi.text(english)` for a language from `languages/` and keep their own Hebrew tables.
 
 ## Rules that keep it safe
 

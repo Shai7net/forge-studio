@@ -40,6 +40,9 @@ with `"flux3_text_encoder": "<file in models/text_encoder>"` and/or `"vae": "<fi
   scene you describe from it (describe the result, e.g. "the same scene at night under a full moon");
   "Classic img2img" redraws with Denoising strength. Inpainting (with a mask, including "Only masked") always
   runs the classic way and Forge pastes back only the masked area.
+  Another extension can give its own references with `p.flux3_references` (a list of PIL pictures): each keeps its
+  shape (the first at 1024², the others sharing half as much, at least 512² each) instead of being stretched to the output like the init
+  picture. Video Studio's Ingredients to Video draws its first frame this way.
 - **LoRA**: `<lora:name:1>` in the prompt, FLUX 3 LoRAs in `models/Lora` (diffusers/PEFT, ComfyUI or kohya keys).
 - A1111 prompt syntax is reduced to plain text (emphasis weights are dropped, `[a:b:0.5]` uses its final
   prompt, `BREAK` becomes a new line).

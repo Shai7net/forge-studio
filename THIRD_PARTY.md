@@ -10,7 +10,7 @@ Forge Studio is a distribution of other people's work plus its own extensions. T
 | [Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) | AUTOMATIC1111 and contributors | AGPL-3.0 | Forge's base |
 | [Deforum for Forge](https://github.com/deforum-art/sd-forge-deforum) | Deforum LLC and contributors | AGPL-3.0 | `extensions/sd-forge-deforum`, extended: Audio Keyframes, Map Key, DeforumationQT switch, live control |
 | [Time Strata](https://github.com/Shai7net/sd-forge-time-strata) | Shai Tiri | MIT | `extensions/sd-forge-time-strata` |
-| Forge Studio's extensions: Video Studio, Forge Studio editor, Simulation 360, FLUX 3, FIBO 2.0, prompt writer (hebrew-translator), Tab Presets, Hebrew UI, Navigation Bookmarks, Gallery Generate, RTX Video Super Resolution | Shai Tiri, written with AI coding assistants | AGPL-3.0 | `extensions/` |
+| Forge Studio's extensions: Video Studio, Characters, Forge Studio editor, Simulation 360, FLUX 3, FIBO 2.0, prompt writer (hebrew-translator), Tab Presets, interface languages (forge-hebrew-ui), Navigation Bookmarks, Gallery Generate, RTX Video Super Resolution | Shai Tiri, written with AI coding assistants | AGPL-3.0 | `extensions/` |
 
 Some of Forge Studio's extensions carry small copies of other projects' code (for example DWPose in Video Studio,
 from Forge's ControlNet preprocessors, Apache-2.0); each keeps its origin noted in the file.
@@ -64,6 +64,9 @@ Every model is downloaded from its authors' own page; its license is listed in `
 - **FLUX 3 Image Klein**: Black Forest Labs, FLUX Kommunity License (accept it on Hugging Face before downloading).
 - **FIBO 2.0**: Bria, CC BY-NC 4.0 (non-commercial; commercial use needs Bria's agreement).
 - **Gemma 4**: Google, Apache-2.0. **Wan 2.2**: Alibaba Wan team, Apache-2.0.
+- **Phantom-Wan 14B FusionX** (Ingredients to Video; downloaded by the button in that tab, not by the installer):
+  Phantom by ByteDance on Wan 2.1, the FusionX merge, GGUF by QuantStack; see
+  [its page](https://huggingface.co/QuantStack/Phantom_Wan_14B_FusionX-GGUF) for the license.
 - **Stable Diffusion 1.5 / SDXL checkpoints, LoRAs and ControlNets**: CreativeML OpenRAIL-M / OpenRAIL++ and similar.
 
 You are responsible for using each model within its license.

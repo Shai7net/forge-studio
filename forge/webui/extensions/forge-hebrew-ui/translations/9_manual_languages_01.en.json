@@ -1,0 +1,92 @@
+[
+ {
+  "i": 0,
+  "en": "Languages",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 1,
+  "en": "Add a language…",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 2,
+  "en": "Back to English (Ctrl+Alt+E)",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 3,
+  "en": "Forge Studio in your language",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 4,
+  "en": "Forge Studio comes in English and Hebrew. Any AI chat (ChatGPT, Claude, Gemini…) or AI coding agent can translate it into another language from the translation kit; what it returns is loaded here.",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 5,
+  "en": "1. Download the translation kit",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 6,
+  "en": "{0} files, {1} texts",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 7,
+  "en": "2. Give your AI one or more of the files at a time, with this request:",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 8,
+  "en": "Your language",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 9,
+  "en": "Copy",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 10,
+  "en": "Copied",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 11,
+  "en": "3. Load the files it returned",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 12,
+  "en": "Load the translated files",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 13,
+  "en": "Loading…",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 14,
+  "en": "{0}: {1} of {2} texts are translated. Whatever is missing stays in English.",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 15,
+  "en": "Could not load: {0}",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 16,
+  "en": "Some files could not be read: {0}",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ },
+ {
+  "i": 17,
+  "en": "Or copy the files into {0} (for example {1}) and reload the page.",
+  "ctx": "[t] the language menu and its 'Add a language' window (forge-hebrew-ui/javascript/hebrew-ui.js)"
+ }
+]
