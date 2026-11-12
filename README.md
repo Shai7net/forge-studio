@@ -262,6 +262,10 @@ ForgeStudio\
 
 ## Updating
 
+The quickest way: the round 🐸 **Check for updates** button next to *Language* at the top of Forge. It asks GitHub
+for the newest version and, if you agree, downloads it and restarts Forge to apply it (when packages or extensions
+changed, it tells you to run `update.bat`).
+
 Run **`update.bat`**: it pulls the newest version and runs the setup again, keeping your models, outputs and
 settings. If you changed Forge Studio's own files, git may refuse; move your changes aside first.
 

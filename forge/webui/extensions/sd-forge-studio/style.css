@@ -543,3 +543,22 @@ body.fx-noscroll { overflow: hidden !important; }
 .im-result img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; border-radius: 3px; }
 .im-ai-tools { display: grid; grid-template-columns: 1fr; gap: 5px; }
 .im-ai-btn { font-size: 12px; text-align: start; padding: 5px 7px; }
+
+/* ---- 🐸 Check for updates (forge-studio-r-updates.js), next to Language at the top of Forge ---- */
+#fs-update { position: fixed; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 1px; direction: ltr; }
+.fs-upd-frog { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border-color-primary, #3a3f49);
+    background: radial-gradient(circle at 35% 30%, #8fe08a, #2f8f3a); font-size: 17px; line-height: 1; padding: 0; cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.fs-upd-frog:hover { filter: brightness(1.1); }
+.fs-upd-frog.spinning { animation: fs-upd-spin .9s linear infinite; }
+@keyframes fs-upd-spin { to { transform: rotate(360deg); } }
+.fs-upd-label { font-size: 9px; line-height: 1; opacity: .75; white-space: nowrap; color: var(--body-text-color, #e8ebf1); }
+.fs-upd-panel { position: absolute; top: calc(100% + 6px); right: -60px; width: 320px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;
+    background: var(--background-fill-primary, #14171d); color: var(--body-text-color, #e8ebf1); border: 1px solid var(--border-color-primary, #323946);
+    border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.45); font-size: 13px; text-align: left; }
+.fs-upd-notes { max-height: 160px; overflow: auto; white-space: pre-wrap; font-size: 12px; opacity: .85; }
+.fs-upd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fs-upd-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color-primary, #323946); background: var(--button-secondary-background-fill, #1b1f27);
+    color: inherit; cursor: pointer; }
+.fs-upd-btn.primary { background: #2f8f3a; border-color: #2f8f3a; color: #fff; }
+.fs-upd-panel a { color: #8fe08a; }

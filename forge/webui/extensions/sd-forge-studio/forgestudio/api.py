@@ -11,7 +11,7 @@ from urllib.parse import unquote, urlsplit
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 
-from . import NAME, VERSION, beats, clipkit, continuers, duck, framefiles, frames, generate, imageai, imagedoc, imagegen, layers, lipsync, lipspeech, library, media, paths, projectbin, projects, render, sound, soundbank
+from . import NAME, VERSION, beats, clipkit, continuers, duck, framefiles, frames, generate, imageai, imagedoc, imagegen, layers, updates, lipsync, lipspeech, library, media, paths, projectbin, projects, render, sound, soundbank
 
 _RANGE = re.compile(r"bytes=(\d*)-(\d*)")
 mimetypes.add_type("application/wasm", ".wasm")
@@ -411,6 +411,21 @@ async def api_image_erase(request: Request):
     return _guard(lambda: imageai.erase(form["name"], form["shot"], picture, mask))
 
 
+def api_updates_check():
+    try:
+        return updates.check()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"could not reach GitHub: {e}")
+
+
+def api_updates_apply():
+    return _guard(updates.apply)
+
+
+def api_updates_restart():
+    return _guard(updates.restart)
+
+
 def api_image_tidy(name: str = Body(...), shot: str = Body(...), used: list = Body(...)):
     """Earlier flattened pictures of the shot that no clip shows (asked when the workspace opens, so an undo in the
     editor during a session never points at a removed file)."""
@@ -673,6 +688,9 @@ def register(app: FastAPI):
     route("/forge-studio/image/file", api_image_file, methods=["GET"])
     route("/forge-studio/image/save", api_image_save, methods=["POST"])
     route("/forge-studio/image/tidy", api_image_tidy, methods=["POST"])
+    route("/forge-studio/updates/check", api_updates_check, methods=["GET"])
+    route("/forge-studio/updates/apply", api_updates_apply, methods=["POST"])
+    route("/forge-studio/updates/restart", api_updates_restart, methods=["POST"])
     route("/forge-studio/image/genoptions", api_image_genoptions, methods=["GET"])
     route("/forge-studio/image/generate", api_image_generate, methods=["POST"])
     route("/forge-studio/image/subject", api_image_subject, methods=["POST"])

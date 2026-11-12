@@ -211,3 +211,13 @@ div.tab-presets-bar .tab-presets-line {
     margin: 4px 6px;
     background: var(--border-color-primary);
 }
+.fw-model-note {padding:6px 10px; margin:4px 0; border-inline-start:3px solid #20bfa9; font-size:12px; color:var(--body-text-color); background:var(--block-background-fill);}
+.fw-add-style {border:1px solid var(--border-color-primary); background:var(--button-secondary-background-fill); color:var(--button-secondary-text-color); padding:3px 7px; border-radius:5px; font-size:11px; cursor:pointer;}
+.fw-veil {position:fixed; inset:0; z-index:100001; display:flex; align-items:center; justify-content:center; background:#0009; backdrop-filter:blur(3px);}
+.fw-dialog {width:min(390px,90vw); padding:20px; border:1px solid var(--border-color-primary); border-radius:14px; background:var(--block-background-fill,#20242d); color:var(--body-text-color,#eee); box-shadow:0 16px 60px #0008;}
+.fw-dialog h3 {margin:0 0 14px; font-size:17px;}
+.fw-dialog label {display:block; margin:10px 0; font-size:13px;}
+.fw-dialog input:not([type=checkbox]) {display:block; width:100%; box-sizing:border-box; padding:8px; margin-top:4px; border-radius:7px; border:1px solid var(--border-color-primary); background:var(--input-background-fill); color:inherit;}
+.fw-dialog-buttons {display:flex; justify-content:flex-end; gap:8px; margin-top:14px;}
+.fw-dialog-buttons button {padding:7px 14px; border:1px solid var(--border-color-primary); border-radius:7px; background:var(--button-secondary-background-fill); color:inherit; cursor:pointer;}
+.fw-dialog-buttons button[type=submit] {background:#20bfa9; color:#08251e;}
