@@ -1,5 +1,16 @@
 # FIBO 2.0 for Forge
 
+The native-controls panel also follows a selected FLUX 3 checkpoint. Its title and writer
+label change with the model; ordered references, source-size preservation, Auto/Generate/Edit
+and an optional exact mask are passed to FLUX's own engine. The main img2img picture stays
+reference 1. FIBO retains its VGL and adapter behavior; its setup/adapter section is hidden
+for FLUX because those weights are incompatible. Use FLUX adapters in the normal LoRA picker.
+Writer choices are remembered separately for each family while switching models.
+
+Native FIBO runs initialize Forge's batch and step counters, so the normal progress endpoint
+reports sampling progress through decoding. Forge Studio also supplies frog feedback during
+model loading, sampling and result delivery when installed.
+
 FIBO 2.0 Dev generates and edits images. Edit Turbo edits in four steps at CFG 1.
 The two models are in Forge's own **Stable Diffusion checkpoint** list, used from
 txt2img and img2img like any checkpoint, next to SD 1.5, SDXL and FLUX 3.

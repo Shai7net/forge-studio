@@ -131,6 +131,11 @@
             h('button', { type: 'button', class: 's360-btn s360-icon', tt: 'Open the project folder', on: { click: guarded(() => E.call('/open-folder', { body: { project: E.name || '' } })) } }, '📂'),
             UI.saved,
             UI.status,
+            h('button', { type:'button', class:'s360-btn s360-icon', id:'sim360-capture-frame', tt:'Capture this view and save or send the frame', on:{click:guarded(async()=>{
+                if(!window.forgeFrameShare)throw Error('Frame sharing requires Forge Studio');
+                const shot=await E.captureFrame();
+                await window.forgeFrameShare.open({canvas:shot.canvas,filename:(E.name||'world')+'-view-'+Date.now()+'.png',host:UI.root});
+            })}}, '📷'),
             h('button', { type: 'button', class: 's360-btn s360-icon', tt: 'Help', on: { click: showHelp } }, '?'),
             h('button', { type: 'button', class: 's360-btn s360-icon', tt: 'A big view: the world as wide and tall as the page, the panel under it', on: { click: () => bigView(!UI.root.classList.contains('s360-wide')) } }, '↕'),
             h('button', { type: 'button', class: 's360-btn s360-icon', tt: 'Full screen', on: { click: fullScreen } }, '⛶'));

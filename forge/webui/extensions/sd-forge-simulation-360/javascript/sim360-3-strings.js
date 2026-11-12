@@ -13,7 +13,7 @@
 
     /* T('Leads to {0}', name): the text in the page's language, with the values put in */
     S.T = function (text) {
-        let out = S.hebrew() && Object.prototype.hasOwnProperty.call(S.he, text) ? S.he[text] : (S.other(text) ?? text);
+        let out = S.hebrew() ? (Object.prototype.hasOwnProperty.call(S.he, text) ? S.he[text] : (window.hebrewUiDictionary?.texts?.[text] ?? text)) : (S.other(text) ?? text);
         for (let i = 1; i < arguments.length; i++) out = out.split(`{${i - 1}}`).join(arguments[i]);
         return out;
     };

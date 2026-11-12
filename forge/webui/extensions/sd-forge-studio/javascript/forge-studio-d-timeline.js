@@ -46,10 +46,12 @@
         }, {passive: false});
         TL.rulerView.addEventListener('pointerdown', scrubStart);
         TL.content.addEventListener('pointerdown', (e) => {
-            if (e.target === TL.content || e.target.classList.contains('ft-lane')) {
-                FS.select([]);
-                scrubStart(e);
-            }
+            if (!e.target.closest('.ft-clip,.ft-cut,.ft-menu')) marqueeStart(e);
+        });
+        TL.content.addEventListener('contextmenu', (e) => {
+            if (e.target.closest('.ft-clip')) return;
+            e.preventDefault();
+            if (FS.region()) TL.regionMenu(e.clientX, e.clientY);
         });
         new ResizeObserver(() => { drawRuler(); placePlayhead(); }).observe(TL.scroll);
         return root;
@@ -61,6 +63,9 @@
         TL.snapBtn = btn('⌖', T('Snap to edges and the playhead'), () => { TL.snap = !TL.snap; TL.snapBtn.classList.toggle('on', TL.snap); }, 'on');
         TL.zoom = h('input', {type: 'range', min: 0, max: 100, value: 40, class: 'ft-zoom', title: T('Zoom')});
         TL.zoom.addEventListener('input', () => setZoom(zoomFromSlider(+TL.zoom.value)));
+        TL.regionButton = btn('▧', T('Generate in the selected range'), (e) => {
+            const r = TL.regionButton.getBoundingClientRect(); TL.regionMenu(r.left, r.bottom);
+        });
         return h('div', {class: 'ft-toolbar'},
             btn('↶', T('Undo (Ctrl+Z)'), () => FS.undo()),
             btn('↷', T('Redo (Ctrl+Y)'), () => FS.redo()),
@@ -69,7 +74,9 @@
             btn('🗑', T('Delete (Del)'), () => S.selected.length && FS.remove(S.selected)),
             btn('⧉', T('Duplicate (Ctrl+D)'), () => TL.duplicate()),
             h('span', {class: 'ft-sep'}),
-            TL.magnetBtn, TL.snapBtn,
+            btn('🖼＋', T('New image shot at the playhead: an empty picture to draw, generate or put pictures on'), () => FS.imageShop.create()),
+            h('span', {class: 'ft-sep'}),
+            TL.magnetBtn, TL.snapBtn, TL.regionButton,
             h('span', {class: 'ft-spacer'}),
             btn('－', T('Zoom out'), () => zoomAt(1 / 1.4)),
             TL.zoom,
@@ -144,6 +151,7 @@
         TL.content.style.height = y + 'px';
         TL.heads.style.height = y + 'px';
         TL.playhead.style.height = y + 'px';
+        drawRegion();
         placePlayhead();
         drawRuler();
     };
@@ -159,7 +167,7 @@
     }
 
     function clipEl(c, hgt) {
-        const sel = S.selected.includes(c.id);
+        const sel = FS.linkedIds(S.selected).includes(c.id);
         const el = h('div', {class: `ft-clip ft-${c.kind}${sel ? ' sel' : ''}`, 'data-id': c.id,
             style: `left:${c.start * TL.pps}px;width:${Math.max(2, c.duration * TL.pps)}px;height:${hgt - 6}px`});
         const info = S.info[c.media];
@@ -242,6 +250,7 @@
         if (c.kind === 'text') label = '𝐓 ' + ((c.text && (c.text.text || c.text.sub)) || T('Text'));
         if (c.kind === 'gen') label = '✨ ' + T('Being made') + ((c.gen && c.gen.progress != null) ? ` ${Math.round(c.gen.progress * 100)}%` : '');
         const badges = [];
+        if(c.linkedTo||S.doc.clips.some(a=>a.linkedTo===c.id))badges.push('🔗');
         if (Math.abs(speed - 1) > 1e-3) badges.push(h('span', {class: 'ft-badge'}, `${+speed.toFixed(2)}×`));
         if (c.reversed) badges.push(h('span', {class: 'ft-badge', title: T('Played backwards')}, '⏪'));
         if (c.lips) badges.push(h('span', {class: 'ft-badge', title: T('Lip sync')}, '👄'));
@@ -370,6 +379,7 @@
     }
 
     function scrubStart(e) {
+        if (e.button !== 0) return;
         if (S.playing) FS.player.pause();
         // the playhead is pulled onto a marker it passes close to
         const toMarker = (t) => { for (const m of FS.markers()) if (Math.abs(m.t - t) * TL.pps < SNAP_PX) return m.t; return t; };
@@ -378,6 +388,90 @@
         const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
         window.addEventListener('pointermove', move);
         window.addEventListener('pointerup', up);
+    }
+
+    function drawRegion() {
+        if (!TL.content) return;
+        TL.content.querySelectorAll('.ft-region').forEach((el) => el.remove());
+        const r = FS.region();
+        if (TL.regionButton) {
+            TL.regionButton.disabled = !r;
+            TL.regionButton.textContent = r ? '▧ ' + (r.out - r.in).toFixed(2) + 's · ✨' : '▧';
+        }
+        if (!r || TL.marquee) return;
+        const lanes = TL.lanes.filter((l) => l.track ? r.tracks.includes(l.track.id) : r.newTrack === l.newTrack && r.kind === l.kind);
+        for (const l of lanes) TL.content.append(h('div', {class: 'ft-region',
+            style: `left:${r.in * TL.pps}px;width:${(r.out - r.in) * TL.pps}px;top:${l.top}px;height:${l.height}px`}));
+    }
+
+    TL.regionMenu = function (x, y) {
+        const r = FS.region();
+        if (!r) return;
+        const region = JSON.parse(JSON.stringify(r));
+        const audio = region.kind === 'audio';
+        TL.menu(x, y, null, [
+            !audio && FS.gen ? {label: '🎬 ' + T('Generate video in the selected range'), run: () => FS.gen.inRegion(region)} : null,
+            !audio && FS.openRangeLips ? {label: '👄 ' + T('Lip sync in the selected range'), run: () => FS.openRangeLips(region)} : null,
+            audio && FS.sound ? {label: '🔊 ' + T('Generate sound effects in the selected range'), run: () => FS.sound.inRegion('effects', region)} : null,
+            audio && FS.sound ? {label: '🎵 ' + T('Generate music in the selected range'), run: () => FS.sound.inRegion('music', region)} : null,
+            S.selected.length ? {label: '🗑 ' + T('Delete selected clips'), run: () => FS.remove(S.selected)} : null,
+            {label: '✕ ' + T('Clear the selected range'), run: () => FS.clearRegion()},
+        ]);
+    };
+
+    function marqueeStart(e) {
+        if (e.button !== 0 || !S.doc) return;
+        e.preventDefault();
+        TL.closeMenu();
+        if (S.playing) FS.player.pause();
+        const project = S.project, startLane = laneAt(e.clientY);
+        const origin = {x: timeAt(e.clientX) * TL.pps, y: e.clientY - TL.content.getBoundingClientRect().top};
+        const base = e.ctrlKey || e.metaKey || e.shiftKey ? S.selected.slice() : [];
+        let moved = false, last = e;
+        const box = h('div', {class: 'ft-marquee'});
+        TL.marquee = box;
+        const update = (ev) => {
+            last = ev;
+            if (S.project !== project) { up(null, true); return; }
+            const x = timeAt(ev.clientX) * TL.pps, y = ev.clientY - TL.content.getBoundingClientRect().top;
+            if (!moved && Math.abs(x - origin.x) + Math.abs(y - origin.y) < 4) return;
+            moved = true;
+            const left = Math.min(x, origin.x), right = Math.max(x, origin.x), top = Math.min(y, origin.y), bottom = Math.max(y, origin.y);
+            const lanes = TL.lanes.filter((l) => l.top < bottom && l.top + l.height > top);
+            const ids = lanes.filter((l) => l.track).map((l) => l.track.id);
+            const selected = S.doc.clips.filter((c) => {
+                const lane = lanes.find((l) => l.track && l.track.id === c.track);
+                return lane && lane.top + 3 < bottom && lane.top + lane.height - 3 > top &&
+                    c.start * TL.pps < right && FS.end(c) * TL.pps > left;
+            }).map((c) => c.id);
+            FS.select([...new Set(base.concat(selected))]);
+            FS.setRegion(left / TL.pps, right / TL.pps, ids, startLane.kind, startLane.newTrack);
+            box.style.cssText = `left:${left}px;width:${right - left}px;top:${Math.max(0, top)}px;height:${bottom - Math.max(0, top)}px`;
+            TL.content.append(box);
+        };
+        const move = (ev) => update(ev);
+        const scroll = setInterval(() => {
+            if (!moved) return;
+            const r = TL.scroll.getBoundingClientRect(), border = 30;
+            const dx = last.clientX > r.right - border ? 16 : last.clientX < r.left + border ? -16 : 0;
+            const dy = last.clientY > r.bottom - border ? 10 : last.clientY < r.top + border ? -10 : 0;
+            if (dx || dy) { TL.scroll.scrollLeft += dx; TL.scroll.scrollTop += dy; update(last); }
+        }, 50);
+        const key = (ev) => { if (ev.key === 'Escape') up(null, true); };
+        const up = (ev, cancelled) => {
+            clearInterval(scroll);
+            window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
+            window.removeEventListener('pointercancel', cancel); window.removeEventListener('keydown', key);
+            if (TL.cancelPointer === cancel) TL.cancelPointer = null;
+            box.remove(); TL.marquee = null;
+            if (cancelled) { FS.clearRegion(); FS.select(base); }
+            else if (!moved) { FS.clearRegion(); FS.select(base); FS.seek(FS.snapTime(origin.x / TL.pps)); }
+            drawRegion();
+        };
+        const cancel = () => up(null, true);
+        TL.cancelPointer = cancel;
+        window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+        window.addEventListener('pointercancel', cancel); window.addEventListener('keydown', key);
     }
 
     /* the nearest snapping point within SNAP_PX of time t (or t itself) */
@@ -397,23 +491,29 @@
     function clipPointer(e, c) {
         if (e.button !== 0) return;
         e.stopPropagation();
+        FS.clearRegion();
         if (S.playing) FS.player.pause();
         const handle = e.target.classList.contains('ft-l') ? 'l' : e.target.classList.contains('ft-r') ? 'r' : null;
+        if(handle&&FS.audioParent(c))c=FS.audioParent(c);
         // Ctrl-click picks clips one by one (again: leaves it out), Shift-click adds, as with files
         if (e.ctrlKey || e.metaKey) { FS.select(S.selected.includes(c.id) ? S.selected.filter((id) => id !== c.id) : S.selected.concat(c.id)); return; }
         if (!S.selected.includes(c.id) || e.shiftKey) FS.select(e.shiftKey ? S.selected.concat(c.id) : [c.id]);
         const x0 = e.clientX, y0 = e.clientY;
         const orig = JSON.parse(JSON.stringify(c));
-        let moved = false;
+        const group = FS.linkedIds(S.selected).map((id) => FS.clip(id)).filter(Boolean).map((x) => JSON.parse(JSON.stringify(x)));
+        const linkedGroup=group.length>1&&FS.linkedRoots(S.selected).length===1;
+        let moved = false, extension = 0, extensionClip = null;
         const track = FS.track(c.track);
         const move = (ev) => {
             const dx = (ev.clientX - x0) / TL.pps;
             if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
             if (!moved) { moved = true; FS.beginEdit(); }
             const clip = FS.clip(c.id);
+            extension = 0;
             if (handle === 'l') {
                 const minIn = clip.kind === 'video' || clip.kind === 'audio' ? -val(orig, 'in') / val(orig, 'speed') : -Infinity;
                 let d = Math.max(minIn, Math.min(orig.duration - 1 / FS.fps(), dx));
+                extension = orig.kind === 'video' && Number.isFinite(minIn) ? Math.max(0, minIn - dx) : 0;
                 if (!(track.main && FS.magnet)) d = snapped(orig.start + d, c.id) - orig.start;
                 d = Math.max(minIn, Math.min(orig.duration - 1 / FS.fps(), d));
                 // the file second the new start shows (a ramp's own sums inside the clip; its first speed before it)
@@ -422,44 +522,82 @@
                 if (orig.keys) { clip.keys = JSON.parse(JSON.stringify(orig.keys)); FS.moveKeys(clip, d); }
                 if (!(track.main && FS.magnet)) clip.start = orig.start + d;
                 if (track.main && FS.magnet) FS.closeGaps();
+                extensionClip = JSON.parse(JSON.stringify(clip));
             } else if (handle === 'r') {
                 let end = orig.start + orig.duration + dx;
                 end = track.main && FS.magnet ? snapped(end, c.id, c.track) : snapped(end, c.id);
                 clip.duration = Math.max(1 / FS.fps(), Math.min(FS.room(orig), end - orig.start));
+                extension = orig.kind === 'video' && Number.isFinite(FS.room(orig)) ? Math.max(0, end - orig.start - FS.room(orig)) : 0;
                 if (track.main && FS.magnet) FS.closeGaps();
+                extensionClip = JSON.parse(JSON.stringify(clip));
             } else {
                 let start = Math.max(0, orig.start + dx);
                 const s1 = snapped(start, c.id), s2 = snapped(start + orig.duration, c.id) - orig.duration;
                 start = Math.abs(s1 - start) <= Math.abs(s2 - start) ? s1 : s2;
                 clip.start = Math.max(0, start);
+                delete clip.fixedStart;
+                if (group.length > 1) {
+                    const d = Math.max(-Math.min(...group.map((x) => x.start)), clip.start - orig.start);
+                    for (const g of group) { const item = FS.clip(g.id); item.start = g.start + d; delete item.fixedStart; }
+                    if(linkedGroup){const lane=laneAt(ev.clientY);TL.dropLane=lane;if(lane.track&&lane.kind===(clip.kind==='audio'?'audio':'video'))clip.track=lane.track.id;}
+                    FS.liveEdit(); return;
+                }
                 const lane = laneAt(ev.clientY);
                 TL.dropLane = lane;
                 TL.lanes.forEach((l) => l.el.classList.toggle('ft-target', l === lane && l.kind === (clip.kind === 'audio' ? 'audio' : 'video')));
                 if (lane.track && lane.kind === (clip.kind === 'audio' ? 'audio' : 'video')) clip.track = lane.track.id;
             }
             FS.liveEdit();
+            if (extension >= 1 / FS.fps() && extensionClip) {
+                const lane = TL.lanes.find((l) => l.track && l.track.id === clip.track);
+                if (lane) TL.content.append(h('div', {class: 'ft-extension',
+                    style: `left:${(handle === 'l' ? Math.max(0, clip.start - extension) : FS.end(clip)) * TL.pps}px;width:${extension * TL.pps}px;top:${lane.top + 3}px;height:${lane.height - 6}px`},
+                    '✨ ' + T('Continue the shot') + ' · ' + FS.snapTime(extension).toFixed(2) + 's'));
+            }
         };
-        const up = () => {
+        const cancel = () => { cleanup(); if (moved) FS.cancelEdit(); };
+        const key = (ev) => { if (ev.key === 'Escape') cancel(); };
+        const cleanup = () => {
             window.removeEventListener('pointermove', move);
             window.removeEventListener('pointerup', up);
+            window.removeEventListener('pointercancel', cancel);
+            window.removeEventListener('keydown', key);
+            if (TL.cancelPointer === cancel) TL.cancelPointer = null;
+        };
+        const up = () => {
+            cleanup();
             if (!moved) { FS.emit('inspect', c.id); return; }
             const clip = FS.clip(c.id);
-            if (!handle) {
+            if (!handle && (group.length === 1||linkedGroup)) {
                 const lane = TL.dropLane;
                 if (lane && lane.newTrack && lane.kind === (clip.kind === 'audio' ? 'audio' : 'video')) {
                     clip.track = FS.addTrack(lane.kind, lane.newTrack === 'top' ? FS.visualTracks().slice(-1)[0].id : null);
                 }
                 clip.start = FS.snapTime(clip.start);
                 if (FS.track(orig.track).main && FS.magnet && clip.track !== orig.track) FS.closeGaps();
-                FS.place(clip, FS.track(clip.track).main ? 'insert' : 'free');
+                const anchor=FS.audioParent(clip)||clip;
+                FS.place(anchor, FS.track(anchor.track).main ? 'insert' : 'free');
                 FS.dropEmptyTracks();
+            }
+            if (!handle && group.length > 1&&!linkedGroup) {
+                const ids = new Set(group.map((g) => g.id));
+                const overlaps = group.some((g) => S.doc.clips.some((other) => !ids.has(other.id) && other.track === g.track &&
+                    other.start < FS.end(FS.clip(g.id)) - 1e-6 && FS.end(other) > FS.clip(g.id).start + 1e-6));
+                if (overlaps) { FS.cancelEdit(); return; }
+                if (FS.magnet) FS.closeGaps();
             }
             TL.lanes.forEach((l) => l.el.classList.remove('ft-target'));
             TL.dropLane = null;
             FS.commitEdit(handle ? 'trim' : 'move');
+            if (handle && extension >= 1 / FS.fps() && extensionClip && FS.gen) {
+                FS.guard(() => FS.gen.extendClip(extensionClip, handle, extension))();
+            }
         };
         window.addEventListener('pointermove', move);
         window.addEventListener('pointerup', up);
+        window.addEventListener('pointercancel', cancel);
+        window.addEventListener('keydown', key);
+        TL.cancelPointer = cancel;
     }
 
     /* ---- commands ---- */
@@ -478,7 +616,8 @@
         if (!S.selected.length) return;
         FS.change('duplicate', (d) => {
             const made = [];
-            for (const id of S.selected) {
+            const ids=FS.linkedIds(S.selected),copies=new Map();
+            for (const id of ids) {
                 const c = FS.clip(id);
                 const copy = JSON.parse(JSON.stringify(c));
                 copy.id = FS.newId();
@@ -486,7 +625,9 @@
                 d.clips.push(copy);
                 FS.place(copy, FS.track(copy.track).main ? 'insert' : 'free');
                 made.push(copy.id);
+                copies.set(id,copy.id);
             }
+            for(const id of made){const x=FS.clip(id);if(x.linkedTo&&copies.has(x.linkedTo)){x.linkedTo=copies.get(x.linkedTo);x.from=x.linkedTo;}if(x.detachedAudio&&copies.has(x.detachedAudio))x.detachedAudio=copies.get(x.detachedAudio);}
             S.selected = made;
         });
         FS.emit('select', S.selected);
@@ -542,15 +683,16 @@
         const info = S.info[clip.media] || {};
         const hasSound = clip.kind === 'audio' || (clip.kind === 'video' && info.audio);
         if (!hasSound) return [];
-        const ids = S.selected.includes(clip.id) ? S.selected : [clip.id];
-        const items = [{label: clip.muted ? '🔊 ' + T('Sound back on') : '🔇 ' + T('Mute'), run: () => {
-            const on = !clip.muted;
-            FS.change('mute', () => { for (const id of ids) { const c = FS.clip(id); if (c && (c.kind === 'audio' || c.kind === 'video')) c.muted = on; } });
+        const target=FS.soundTarget(clip),ids=S.selected.includes(clip.id)?S.selected:[clip.id];
+        const items = [{label: target.muted ? '🔊 ' + T('Sound back on') : '🔇 ' + T('Mute'), run: () => {
+            const on = !target.muted;
+            FS.change('mute', () => { for (const id of ids) { const c = FS.soundTarget(FS.clip(id)); if (c && (c.kind === 'audio' || c.kind === 'video')) c.muted = on; } });
         }}];
-        if (clip.kind === 'video' && !clip.muted) items.push({label: '🎵 ' + T('Separate the sound from the video'), run: () => {
-            FS.detachAudio(clip.id);
-            FS.message(T('The sound is a clip of its own now'));
-        }});
+        if(clip.kind==='video'&&!FS.detachedAudio(clip)&&!clip.muted){
+            items.push({label:'🔗 '+T('Detach audio (keep linked)'),run:()=>FS.detachAudio(clip.id,true)});
+            items.push({label:'🎵 '+T('Detach audio (independent)'),run:()=>FS.detachAudio(clip.id,false)});
+        }
+        items.push(...FS.audioLinkItems(clip));
         return items;
     }
 
@@ -570,7 +712,7 @@
             ...soundItems(clip),
             {label: '✂ ' + T('Split at the playhead'), run: () => FS.split([clip.id], FS.snapTime(S.time))},
             {label: '⧉ ' + T('Duplicate'), run: () => TL.duplicate()},
-            {label: '🗑 ' + T('Delete'), run: () => FS.remove([clip.id])},
+            {label: '🗑 ' + T('Delete'), run: () => FS.remove(S.selected.includes(clip.id) ? S.selected : [clip.id])},
         ].concat(FS.clipActions.filter((a) => !a.when || a.when(clip)).map((a) => ({label: a.label, run: () => a.run(clip)})));
         items = items.filter(Boolean);
         if (!items.length) return;
@@ -609,7 +751,8 @@
 
     FS.on('doc', (e) => { if (e && e.live) TL.render(); else TL.render(); });
     FS.on('select', () => TL.render());
+    FS.on('region', () => drawRegion());
     FS.on('talk', () => TL.render());
     FS.on('time', () => placePlayhead());
-    FS.on('project', () => setTimeout(() => TL.fit(), 50));
+    FS.on('project', () => { FS.clearRegion(); setTimeout(() => TL.fit(), 50); });
 })();

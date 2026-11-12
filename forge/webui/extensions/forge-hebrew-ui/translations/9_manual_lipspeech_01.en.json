@@ -1,0 +1,152 @@
+[
+ {
+  "i": 0,
+  "en": "1. Generate speech preview",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 1,
+  "en": "2. Generate lip sync",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 2,
+  "en": "Speech before lip sync",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 3,
+  "en": "Speech range inside the shot",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 4,
+  "en": "Start in shot (seconds)",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 5,
+  "en": "The mouse selection sets this range. Speech and lips start here; the shot keeps its length.",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 6,
+  "en": "The speech range must fit inside this shot",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 7,
+  "en": "Voice samples",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 8,
+  "en": "Create voice sample",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 9,
+  "en": "Delivery style",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 10,
+  "en": "Expression",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 11,
+  "en": "Natural",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 12,
+  "en": "Relaxed",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 13,
+  "en": "Expressive",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 14,
+  "en": "Energetic",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 15,
+  "en": "Pitch (semitones)",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 16,
+  "en": "Tone: warm to bright",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 17,
+  "en": "Volume (dB)",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 18,
+  "en": "Fit all words inside the selected time",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 19,
+  "en": "Long speech is sped up to fit. Faster speech leaves silence at the end; words are never cut off.",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 20,
+  "en": "Update speech preview",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 21,
+  "en": "Updating speech preview; the lips have not been generated",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 22,
+  "en": "Selected: {0} seconds. Effective speed: {1}x. Speech: {2} seconds.",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 23,
+  "en": "Listen to the speech. Adjust it, then generate the lips.",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 24,
+  "en": "Generating speech only; lip sync has not started",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 25,
+  "en": "Voice settings changed. Generate speech again before the lips.",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 26,
+  "en": "Generate and listen to the speech preview first",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 27,
+  "en": "Select a range inside one shot for lip sync",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 28,
+  "en": "Lip sync in the selected range",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ },
+ {
+  "i": 29,
+  "en": "Piper has fixed delivery; pitch, tone and speed remain adjustable.",
+  "ctx": "[t] Forge Studio speech audition and lip-sync timing"
+ }
+]

@@ -269,7 +269,7 @@ def web_path(path):
     return (path if rel.startswith("..") else rel).replace("\\", "/")
 
 
-def prepare_video(cid, idea, slot):
+def prepare_video(cid, idea, slot, video_model=""):
     """(video box, payload for the page, status): the Wan prompt (written by the writer when the idea is not in
     English) and what javascript/characters.js puts into Ingredients to Video."""
     keep = gr.update()
@@ -282,7 +282,10 @@ def prepare_video(cid, idea, slot):
         return keep, "", status("error", "Write what the character does in the video (any language).")
     if not sheet.is_english(idea):
         try:
-            answer = writer.write(writer.video_request(idea, c.get("character", {})), "ch_video")
+            # an LTX model chosen in Video Studio gets an LTX prompt (with the sound in it)
+            ltx = " LTX " in f" {video_model or ''} "
+            answer = writer.write(writer.video_request(idea, c.get("character", {})), "ch_video",
+                                  video_mode="ltx:ingredients" if ltx else "")
         except writer.WriterError as e:
             return keep, "", status("error", str(e))
         prompt = answer.get("prompt", "").strip() or idea
@@ -400,6 +403,7 @@ def build():
         template_builtin.click(builtin_template, outputs=[info, template])
         sheet_text_save.click(save_sheet_text, inputs=[sheet_text], outputs=[info])
         sheet_text_reset.click(reset_sheet_text, outputs=[info, sheet_text])
-        send_btn.click(prepare_video, inputs=[selected, video, slot], outputs=[video, payload, info]).then(
+        send_btn.click(prepare_video, inputs=[selected, video, slot, payload], outputs=[video, payload, info],
+                       _js="charactersVideoModel").then(
             None, inputs=[payload], outputs=None, _js="charactersSendToVideo")
     return tab

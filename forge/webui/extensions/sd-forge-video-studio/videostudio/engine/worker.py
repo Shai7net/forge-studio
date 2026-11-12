@@ -29,7 +29,11 @@ def main():
         job = json.load(f)
     from videostudio.engine import pipeline
     try:
-        pipeline.generate(job, emit)
+        if job.get('backend') == 'ltx':
+            from videostudio.engine import ltx_pipeline
+            ltx_pipeline.generate(job, emit)
+        else:
+            pipeline.generate(job, emit)
     except pipeline.Cancelled:
         emit({"stage": "cancelled"})
         sys.exit(3)

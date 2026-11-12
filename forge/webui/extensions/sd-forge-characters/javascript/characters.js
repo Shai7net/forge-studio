@@ -83,6 +83,12 @@ onUiLoaded(() => {
     }
 });
 
+// 🎬: the video model chosen in Video Studio goes along (in the payload box's place), so the writer writes for it
+function charactersVideoModel(cid, idea, slot, payload) {
+    const model = gradioApp().querySelector("#vs_model input");
+    return [cid, idea, slot, model ? model.value : ""];
+}
+
 // 🎬 Send to Ingredients to Video: the sheet goes into an ingredient slot of Video Studio, the Wan prompt into its
 // prompt, and the "first frame by FLUX 3 Klein" way is chosen (the one that keeps a character's face and style).
 async function charactersSendToVideo(payload) {

@@ -1,0 +1,674 @@
+[
+  {
+    "id": "photo-editorial",
+    "category": "Photo",
+    "name": "Universal · Photo · Editorial",
+    "medium": "photography",
+    "treatment": "Refined editorial photography with considered framing, natural texture, controlled contrast and a restrained magazine finish"
+  },
+  {
+    "id": "photo-documentary",
+    "category": "Photo",
+    "name": "Universal · Photo · Documentary",
+    "medium": "photography",
+    "treatment": "Candid documentary treatment with available light, honest surface detail, natural color and an unforced sense of observation"
+  },
+  {
+    "id": "photo-fine-art",
+    "category": "Photo",
+    "name": "Universal · Photo · Fine Art",
+    "medium": "photography",
+    "treatment": "Fine art photographic treatment with deliberate negative space, subtle tonal separation and carefully balanced visual rhythm"
+  },
+  {
+    "id": "photo-fashion-campaign",
+    "category": "Photo",
+    "name": "Universal · Photo · Fashion Campaign",
+    "medium": "photography",
+    "treatment": "High fashion campaign treatment with sculpted light, elegant composition, rich material definition and polished color separation"
+  },
+  {
+    "id": "photo-beauty-studio",
+    "category": "Photo",
+    "name": "Universal · Photo · Beauty Studio",
+    "medium": "photography",
+    "treatment": "Beauty studio treatment with broad soft illumination, delicate highlights, clean tonal transitions and realistic fine texture"
+  },
+  {
+    "id": "photo-product-studio",
+    "category": "Photo",
+    "name": "Universal · Photo · Product Studio",
+    "medium": "photography",
+    "treatment": "Premium product photography with precise edges, controlled reflections, readable materials and clean studio lighting"
+  },
+  {
+    "id": "photo-food-editorial",
+    "category": "Photo",
+    "name": "Universal · Photo · Food Editorial",
+    "medium": "photography",
+    "treatment": "Food editorial treatment with appetizing natural color, tactile surface detail, soft directional light and gentle highlight rolloff"
+  },
+  {
+    "id": "photo-architectural",
+    "category": "Photo",
+    "name": "Universal · Photo · Architectural",
+    "medium": "photography",
+    "treatment": "Architectural photography with coherent perspective, clean verticals, balanced exposure and careful separation of light and materials"
+  },
+  {
+    "id": "photo-landscape",
+    "category": "Photo",
+    "name": "Universal · Photo · Landscape",
+    "medium": "photography",
+    "treatment": "Landscape photography with layered depth, atmospheric perspective, nuanced natural color and convincing near-to-far detail"
+  },
+  {
+    "id": "photo-macro-detail",
+    "category": "Photo",
+    "name": "Universal · Photo · Macro Detail",
+    "medium": "photography",
+    "treatment": "Macro photographic treatment with intricate microtexture, precise focal placement and smooth optical falloff away from the focal plane"
+  },
+  {
+    "id": "photo-sports-action",
+    "category": "Photo",
+    "name": "Universal · Photo · Sports Action",
+    "medium": "photography",
+    "treatment": "Sports editorial treatment with decisive framing, crisp action detail, strong subject separation and lively but believable color"
+  },
+  {
+    "id": "photo-vintage-35mm",
+    "category": "Photo",
+    "name": "Universal · Photo · Vintage 35mm",
+    "medium": "analog photography",
+    "treatment": "Vintage 35mm film character with fine organic grain, gentle halation, softened highlights and restrained analog color"
+  },
+  {
+    "id": "cinema-anamorphic",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Anamorphic",
+    "medium": "cinematic imagery",
+    "treatment": "Anamorphic cinema character with broad spatial depth, soft highlight bloom, subtle oval optical falloff and a cohesive filmic grade"
+  },
+  {
+    "id": "cinema-film-noir",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Film Noir",
+    "medium": "cinematic imagery",
+    "treatment": "Classic black-and-white noir treatment with sculptural shadows, hard directional lighting and a rich silver tonal range"
+  },
+  {
+    "id": "cinema-neo-noir",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Neo Noir",
+    "medium": "cinematic imagery",
+    "treatment": "Neo-noir treatment with deep controlled shadows, selective saturated highlights and expressive separation between warm and cool light"
+  },
+  {
+    "id": "cinema-golden-hour-drama",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Golden Hour Drama",
+    "medium": "cinematic imagery",
+    "treatment": "Warm late-day cinematic treatment with amber edge light, long tonal gradients and luminous highlights with preserved detail"
+  },
+  {
+    "id": "cinema-blue-hour-thriller",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Blue Hour Thriller",
+    "medium": "cinematic imagery",
+    "treatment": "Blue-hour thriller treatment with cool ambient illumination, restrained saturation, deep blue shadows and precise highlight accents"
+  },
+  {
+    "id": "cinema-period-drama",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Period Drama",
+    "medium": "cinematic imagery",
+    "treatment": "Period-drama treatment with painterly natural illumination, muted pigments, rich fabric texture and gentle film contrast"
+  },
+  {
+    "id": "cinema-epic-fantasy",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Epic Fantasy",
+    "medium": "cinematic imagery",
+    "treatment": "Epic fantasy treatment with majestic spatial layering, luminous atmospheric depth, rich material detail and coherent dramatic light"
+  },
+  {
+    "id": "cinema-grounded-sci-fi",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Grounded Sci-Fi",
+    "medium": "cinematic imagery",
+    "treatment": "Grounded science-fiction treatment with plausible materials, controlled practical-looking illumination and a restrained technical color palette"
+  },
+  {
+    "id": "cinema-retro-futurism",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Retro Futurism",
+    "medium": "cinematic imagery",
+    "treatment": "Retro-futurist treatment with analog-era color design, warm highlights, cool accent tones and softly textured film rendering"
+  },
+  {
+    "id": "cinema-gritty-drama",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Gritty Drama",
+    "medium": "cinematic imagery",
+    "treatment": "Gritty drama treatment with textured midtones, subdued color, available-light character and natural imperfect surfaces"
+  },
+  {
+    "id": "cinema-dreamlike",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Dreamlike",
+    "medium": "cinematic imagery",
+    "treatment": "Dreamlike cinema treatment with luminous diffusion, soft tonal boundaries, delicate color harmonies and clear visual hierarchy"
+  },
+  {
+    "id": "cinema-documentary-film",
+    "category": "Cinema",
+    "name": "Universal · Cinema · Documentary Film",
+    "medium": "cinematic imagery",
+    "treatment": "Observational documentary cinema treatment with unobtrusive natural light, honest colors and organic fine-grained texture"
+  },
+  {
+    "id": "painting-oil-impasto",
+    "category": "Painting",
+    "name": "Universal · Painting · Oil Impasto",
+    "medium": "oil painting",
+    "treatment": "Thick tactile impasto, visible loaded brushwork, sculpted pigment edges and expressive but controlled color relationships"
+  },
+  {
+    "id": "painting-classical-glazing",
+    "category": "Painting",
+    "name": "Universal · Painting · Classical Glazing",
+    "medium": "oil painting",
+    "treatment": "Classical transparent glazing, luminous layered pigment, precise tonal modeling and a subtle canvas surface"
+  },
+  {
+    "id": "painting-watercolor",
+    "category": "Painting",
+    "name": "Universal · Painting · Watercolor",
+    "medium": "watercolor painting",
+    "treatment": "Transparent washes, softly bleeding pigment edges, visible paper grain and carefully preserved paper-white highlights"
+  },
+  {
+    "id": "painting-gouache",
+    "category": "Painting",
+    "name": "Universal · Painting · Gouache",
+    "medium": "gouache painting",
+    "treatment": "Matte opaque pigment, confident flat brush shapes, subtly textured paper and clean overlapping color planes"
+  },
+  {
+    "id": "painting-acrylic",
+    "category": "Painting",
+    "name": "Universal · Painting · Acrylic",
+    "medium": "acrylic painting",
+    "treatment": "Crisp layered brushwork, saturated opaque pigment, alternating smooth and dry-brush passages and a balanced contemporary palette"
+  },
+  {
+    "id": "painting-pastel",
+    "category": "Painting",
+    "name": "Universal · Painting · Pastel",
+    "medium": "soft pastel drawing",
+    "treatment": "Velvety pigment, softly broken edges, visible tooth of the paper and subtle transitions between layered color marks"
+  },
+  {
+    "id": "painting-ink-wash",
+    "category": "Painting",
+    "name": "Universal · Painting · Ink Wash",
+    "medium": "ink wash painting",
+    "treatment": "Expressive ink washes, economical brush marks, varied ink density and generous use of unpainted paper"
+  },
+  {
+    "id": "painting-charcoal",
+    "category": "Painting",
+    "name": "Universal · Painting · Charcoal",
+    "medium": "charcoal drawing",
+    "treatment": "Rich charcoal blacks, soft rubbed tonal masses, energetic contour marks and visible textured drawing paper"
+  },
+  {
+    "id": "painting-graphite",
+    "category": "Painting",
+    "name": "Universal · Painting · Graphite",
+    "medium": "graphite drawing",
+    "treatment": "Fine graphite linework, layered hatching, delicate value control and restrained metallic sheen on textured paper"
+  },
+  {
+    "id": "painting-impressionism",
+    "category": "Painting",
+    "name": "Universal · Painting · Impressionism",
+    "medium": "impressionist painting",
+    "treatment": "Broken-color brushwork, lively reflected light, atmospheric edges and a harmonious palette built from visible pigment strokes"
+  },
+  {
+    "id": "painting-expressionism",
+    "category": "Painting",
+    "name": "Universal · Painting · Expressionism",
+    "medium": "expressionist painting",
+    "treatment": "Emotionally charged color relationships, assertive gestural brushwork, simplified planes and purposeful contour distortion"
+  },
+  {
+    "id": "painting-fresco",
+    "category": "Painting",
+    "name": "Universal · Painting · Fresco",
+    "medium": "fresco painting",
+    "treatment": "Mineral earth pigments, softly weathered plaster texture, broad luminous color planes and restrained matte tonal transitions"
+  },
+  {
+    "id": "illustration-editorial-ink",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Editorial Ink",
+    "medium": "ink illustration",
+    "treatment": "Confident economical ink lines, selective solid blacks, clear silhouettes and a refined editorial sense of visual hierarchy"
+  },
+  {
+    "id": "illustration-graphic-novel",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Graphic Novel",
+    "medium": "graphic novel illustration",
+    "treatment": "Expressive brush-ink contours, dramatic value grouping, rich controlled color and clear cinematic staging"
+  },
+  {
+    "id": "illustration-ligne-claire",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Ligne Claire",
+    "medium": "ligne claire illustration",
+    "treatment": "Uniform clean contour lines, flat carefully separated colors, precise shape design and minimal decorative shading"
+  },
+  {
+    "id": "illustration-anime-film",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Anime Film",
+    "medium": "anime illustration",
+    "treatment": "Refined animated-film linework, expressive shape design, precise cel shading and painterly atmospheric color"
+  },
+  {
+    "id": "illustration-storybook",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Storybook",
+    "medium": "storybook illustration",
+    "treatment": "Warm hand-drawn shapes, gentle textured shading, inviting color harmonies and an intimate illustrated-book finish"
+  },
+  {
+    "id": "illustration-vintage-etching",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Vintage Etching",
+    "medium": "etching",
+    "treatment": "Fine incised contours, densely layered cross-hatching, subtle plate tone and an authentic printed-paper texture"
+  },
+  {
+    "id": "illustration-botanical-plate",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Botanical Plate",
+    "medium": "botanical illustration",
+    "treatment": "Patient observational linework, delicate transparent color, precise organic detail and balanced scientific-plate composition"
+  },
+  {
+    "id": "illustration-scientific-diagram",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Scientific Diagram",
+    "medium": "scientific illustration",
+    "treatment": "Accurate readable structure, disciplined line weights, clear form separation and restrained explanatory color coding"
+  },
+  {
+    "id": "illustration-art-nouveau",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Art Nouveau",
+    "medium": "Art Nouveau illustration",
+    "treatment": "Flowing organic contours, elegant rhythmic shapes, flattened decorative color and refined ornamental balance"
+  },
+  {
+    "id": "illustration-woodblock-print",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Woodblock Print",
+    "medium": "woodblock print",
+    "treatment": "Carved contour character, broad overlapping ink planes, deliberate negative space and subtle printed-paper grain"
+  },
+  {
+    "id": "illustration-pixel-art",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Pixel Art",
+    "medium": "pixel art",
+    "treatment": "Intentional pixel clusters, a coherent limited palette, crisp stepped contours and carefully designed dithering"
+  },
+  {
+    "id": "illustration-flat-vector",
+    "category": "Illustration",
+    "name": "Universal · Illustration · Flat Vector",
+    "medium": "vector illustration",
+    "treatment": "Precise scalable-looking contours, simple geometric shape relationships, clean flat fills and balanced negative space"
+  },
+  {
+    "id": "3d-animated-feature",
+    "category": "3D",
+    "name": "Universal · 3D · Animated Feature",
+    "medium": "3D animation rendering",
+    "treatment": "Appealing sculpted forms, polished stylized materials, expressive shape language and soft cinematic global illumination"
+  },
+  {
+    "id": "3d-claymation",
+    "category": "3D",
+    "name": "Universal · 3D · Claymation",
+    "medium": "clay animation rendering",
+    "treatment": "Hand-shaped clay surfaces, small sculpting impressions, rounded tactile forms and soft miniature-studio illumination"
+  },
+  {
+    "id": "3d-stop-motion-miniature",
+    "category": "3D",
+    "name": "Universal · 3D · Stop Motion Miniature",
+    "medium": "miniature set rendering",
+    "treatment": "Hand-built miniature material detail, practical-looking studio illumination and believable small-scale depth of field"
+  },
+  {
+    "id": "3d-low-poly",
+    "category": "3D",
+    "name": "Universal · 3D · Low Poly",
+    "medium": "low-poly 3D rendering",
+    "treatment": "Deliberate faceted geometry, clean planar color separation, simple material response and readable geometric silhouettes"
+  },
+  {
+    "id": "3d-isometric-diorama",
+    "category": "3D",
+    "name": "Universal · 3D · Isometric Diorama",
+    "medium": "isometric 3D rendering",
+    "treatment": "Consistent isometric projection, carefully organized spatial layers, tactile miniature materials and clean ambient occlusion"
+  },
+  {
+    "id": "3d-architectural-render",
+    "category": "3D",
+    "name": "Universal · 3D · Architectural Render",
+    "medium": "architectural visualization",
+    "treatment": "Physically plausible light transport, well-resolved architectural materials, coherent perspective and balanced interior-exterior exposure"
+  },
+  {
+    "id": "3d-product-visualization",
+    "category": "3D",
+    "name": "Universal · 3D · Product Visualization",
+    "medium": "product visualization",
+    "treatment": "Precisely modeled surfaces, physically plausible reflections, controlled studio highlights and premium material definition"
+  },
+  {
+    "id": "3d-stylized-game-art",
+    "category": "3D",
+    "name": "Universal · 3D · Stylized Game Art",
+    "medium": "stylized 3D rendering",
+    "treatment": "Bold readable forms, hand-authored material character, clean lighting separation and a coherent game-art color palette"
+  },
+  {
+    "id": "3d-pbr-realism",
+    "category": "3D",
+    "name": "Universal · 3D · PBR Realism",
+    "medium": "physically based 3D rendering",
+    "treatment": "Convincing material roughness, subtle surface imperfections, accurate reflection behavior and natural global illumination"
+  },
+  {
+    "id": "3d-hand-painted-assets",
+    "category": "3D",
+    "name": "Universal · 3D · Hand Painted Assets",
+    "medium": "hand-painted 3D rendering",
+    "treatment": "Painted material gradients, intentional brush texture, simplified sculpted forms and art-directed color relationships"
+  },
+  {
+    "id": "3d-papercraft-3d",
+    "category": "3D",
+    "name": "Universal · 3D · Papercraft 3D",
+    "medium": "papercraft rendering",
+    "treatment": "Layered cut-paper construction, visible paper thickness, folded edges and soft contact shadows between tactile paper forms"
+  },
+  {
+    "id": "3d-ambient-sculpture",
+    "category": "3D",
+    "name": "Universal · 3D · Ambient Sculpture",
+    "medium": "sculptural 3D rendering",
+    "treatment": "Restrained sculptural forms, quiet material surfaces, broad ambient illumination and subtle shadow gradients"
+  },
+  {
+    "id": "design-swiss-editorial",
+    "category": "Design",
+    "name": "Universal · Design · Swiss Editorial",
+    "medium": "graphic design",
+    "treatment": "Disciplined grid-based composition, strong scale hierarchy, clean geometric alignment and generous purposeful negative space"
+  },
+  {
+    "id": "design-minimal-poster",
+    "category": "Design",
+    "name": "Universal · Design · Minimal Poster",
+    "medium": "poster design",
+    "treatment": "Reduced visual elements, bold shape hierarchy, restrained color and carefully balanced empty space"
+  },
+  {
+    "id": "design-bauhaus",
+    "category": "Design",
+    "name": "Universal · Design · Bauhaus",
+    "medium": "geometric graphic design",
+    "treatment": "Primary geometric relationships, functional visual rhythm, strong asymmetrical balance and a disciplined primary-color palette"
+  },
+  {
+    "id": "design-art-deco",
+    "category": "Design",
+    "name": "Universal · Design · Art Deco",
+    "medium": "Art Deco design",
+    "treatment": "Elegant stepped geometry, symmetrical visual rhythm, luxurious metallic accents and deep restrained color"
+  },
+  {
+    "id": "design-risograph",
+    "category": "Design",
+    "name": "Universal · Design · Risograph",
+    "medium": "risograph print",
+    "treatment": "Limited spot-color layers, subtle ink misregistration, grainy translucent coverage and warm uncoated-paper texture"
+  },
+  {
+    "id": "design-screen-print",
+    "category": "Design",
+    "name": "Universal · Design · Screen Print",
+    "medium": "screen print",
+    "treatment": "Bold separated ink shapes, tactile opaque pigment, deliberate limited-color layering and lightly distressed print edges"
+  },
+  {
+    "id": "design-halftone",
+    "category": "Design",
+    "name": "Universal · Design · Halftone",
+    "medium": "halftone print",
+    "treatment": "Clearly organized halftone dots, purposeful tonal simplification, strong ink contrast and subtle paper texture"
+  },
+  {
+    "id": "design-collage",
+    "category": "Design",
+    "name": "Universal · Design · Collage",
+    "medium": "mixed-media collage",
+    "treatment": "Layered cut-and-torn edges, varied tactile paper surfaces, coherent scale relationships and a unified restrained palette"
+  },
+  {
+    "id": "design-cut-paper",
+    "category": "Design",
+    "name": "Universal · Design · Cut Paper",
+    "medium": "cut-paper illustration",
+    "treatment": "Clean hand-cut silhouettes, overlapping colored paper layers, delicate edge shadows and clear shape hierarchy"
+  },
+  {
+    "id": "design-blueprint",
+    "category": "Design",
+    "name": "Universal · Design · Blueprint",
+    "medium": "blueprint drawing",
+    "treatment": "Precise technical contours, consistent fine line weights, cyanotype-blue tonal treatment and clean geometric construction"
+  },
+  {
+    "id": "design-technical-cutaway",
+    "category": "Design",
+    "name": "Universal · Design · Technical Cutaway",
+    "medium": "technical cutaway illustration",
+    "treatment": "Clear structural layering, precise material boundaries, readable internal form relationships and controlled technical shading"
+  },
+  {
+    "id": "design-retro-print",
+    "category": "Design",
+    "name": "Universal · Design · Retro Print",
+    "medium": "vintage print design",
+    "treatment": "Warm aged-paper character, restrained vintage inks, gently worn printed edges and balanced mid-century graphic shapes"
+  },
+  {
+    "id": "material-porcelain",
+    "category": "Material",
+    "name": "Universal · Material · Porcelain",
+    "medium": null,
+    "treatment": "Porcelain material treatment with smooth glazed surfaces, delicate subsurface softness and crisp but gentle specular highlights"
+  },
+  {
+    "id": "material-glass",
+    "category": "Material",
+    "name": "Universal · Material · Glass",
+    "medium": null,
+    "treatment": "Glass material treatment with convincing transparency, controlled refraction, clean highlight edges and readable internal depth"
+  },
+  {
+    "id": "material-brushed-metal",
+    "category": "Material",
+    "name": "Universal · Material · Brushed Metal",
+    "medium": null,
+    "treatment": "Brushed-metal material treatment with coherent directional microtexture, restrained reflections and carefully shaped specular highlights"
+  },
+  {
+    "id": "material-carved-wood",
+    "category": "Material",
+    "name": "Universal · Material · Carved Wood",
+    "medium": null,
+    "treatment": "Carved-wood material treatment with coherent wood grain, subtle tool marks, warm tonal variation and tactile surface relief"
+  },
+  {
+    "id": "material-marble",
+    "category": "Material",
+    "name": "Universal · Material · Marble",
+    "medium": null,
+    "treatment": "Marble material treatment with restrained natural veining, polished stone response and subtle translucent depth"
+  },
+  {
+    "id": "material-knitted-wool",
+    "category": "Material",
+    "name": "Universal · Material · Knitted Wool",
+    "medium": null,
+    "treatment": "Knitted-wool material treatment with coherent interlocking stitches, soft individual fibers and gentle tactile shading"
+  },
+  {
+    "id": "material-felt-craft",
+    "category": "Material",
+    "name": "Universal · Material · Felt Craft",
+    "medium": null,
+    "treatment": "Handcrafted felt material treatment with soft fiber edges, layered fabric thickness and warm diffuse surface shading"
+  },
+  {
+    "id": "material-origami",
+    "category": "Material",
+    "name": "Universal · Material · Origami",
+    "medium": null,
+    "treatment": "Folded-paper material treatment with precise crease lines, crisp planar folds, visible paper texture and delicate contact shadows"
+  },
+  {
+    "id": "lighting-soft-window",
+    "category": "Lighting",
+    "name": "Universal · Lighting · Soft Window",
+    "medium": null,
+    "treatment": "Soft directional window-light treatment with broad luminous highlights, gradual shadow transitions and believable ambient fill"
+  },
+  {
+    "id": "lighting-rembrandt",
+    "category": "Lighting",
+    "name": "Universal · Lighting · Rembrandt",
+    "medium": null,
+    "treatment": "Rembrandt lighting treatment with a small illuminated shadow-side triangle, sculpted tonal depth and restrained ambient fill"
+  },
+  {
+    "id": "lighting-butterfly",
+    "category": "Lighting",
+    "name": "Universal · Lighting · Butterfly",
+    "medium": null,
+    "treatment": "Butterfly lighting treatment with elevated centered soft illumination, balanced side falloff and delicate sculpting of surface relief"
+  },
+  {
+    "id": "lighting-rim-light",
+    "category": "Lighting",
+    "name": "Universal · Lighting · Rim Light",
+    "medium": null,
+    "treatment": "Controlled rim lighting with a narrow luminous edge, clear form separation and enough fill to retain important surface detail"
+  },
+  {
+    "id": "lighting-high-key",
+    "category": "Lighting",
+    "name": "Universal · Lighting · High Key",
+    "medium": null,
+    "treatment": "High-key lighting with airy bright midtones, broad soft illumination, delicate shadow detail and controlled unclipped highlights"
+  },
+  {
+    "id": "lighting-low-key",
+    "category": "Lighting",
+    "name": "Universal · Lighting · Low Key",
+    "medium": null,
+    "treatment": "Low-key lighting with deep controlled shadows, selective directional highlights and readable detail in the focal areas"
+  },
+  {
+    "id": "lighting-overcast-diffusion",
+    "category": "Lighting",
+    "name": "Universal · Lighting · Overcast Diffusion",
+    "medium": null,
+    "treatment": "Overcast diffuse-light treatment with soft wraparound illumination, subtle shadow transitions and faithful material color"
+  },
+  {
+    "id": "lighting-volumetric",
+    "category": "Lighting",
+    "name": "Universal · Lighting · Volumetric",
+    "medium": null,
+    "treatment": "Subtle volumetric lighting with coherent light direction, delicate atmospheric scattering and preserved foreground contrast"
+  },
+  {
+    "id": "color-warm-analog-film",
+    "category": "Color",
+    "name": "Universal · Color · Warm Analog Film",
+    "medium": null,
+    "treatment": "Warm analog-film color grade with gentle amber highlights, natural midtones, restrained grain and smooth highlight rolloff"
+  },
+  {
+    "id": "color-cool-muted",
+    "category": "Color",
+    "name": "Universal · Color · Cool Muted",
+    "medium": null,
+    "treatment": "Cool muted color grade with slate-blue undertones, restrained saturation, clear tonal separation and neutral luminous highlights"
+  },
+  {
+    "id": "color-pastel",
+    "category": "Color",
+    "name": "Universal · Color · Pastel",
+    "medium": null,
+    "treatment": "Pastel color harmony with softly lifted values, delicate low-saturation hues and enough tonal contrast to preserve clear form"
+  },
+  {
+    "id": "color-teal-and-amber",
+    "category": "Color",
+    "name": "Universal · Color · Teal and Amber",
+    "medium": null,
+    "treatment": "Restrained teal-and-amber color grade with cool shadow tones, warm luminous highlights and natural transitions through the midtones"
+  },
+  {
+    "id": "color-silver-black-and-white",
+    "category": "Color",
+    "name": "Universal · Color · Silver Black and White",
+    "medium": null,
+    "treatment": "Silver-rich monochrome treatment with nuanced midtone separation, luminous whites, deep detailed blacks and fine organic grain"
+  },
+  {
+    "id": "color-cross-process",
+    "category": "Color",
+    "name": "Universal · Color · Cross Process",
+    "medium": null,
+    "treatment": "Analog cross-process color character with selective cyan shadows, warm yellow highlights and carefully controlled color shifts"
+  },
+  {
+    "id": "color-earthy-natural",
+    "category": "Color",
+    "name": "Universal · Color · Earthy Natural",
+    "medium": null,
+    "treatment": "Earth-toned color harmony with muted ochres, warm browns, gentle greens and balanced natural tonal relationships"
+  },
+  {
+    "id": "color-jewel-tones",
+    "category": "Color",
+    "name": "Universal · Color · Jewel Tones",
+    "medium": null,
+    "treatment": "Rich jewel-tone color harmony with luminous saturated accents, controlled deep values and carefully separated complementary hues"
+  }
+]

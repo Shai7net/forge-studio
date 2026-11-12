@@ -50,6 +50,22 @@ class Media(unittest.TestCase):
         sound._segment(src, 0.5, 1.0, 16, out)
         self.assertAlmostEqual(sound.duration(out), 1.0, delta=0.1)
 
+    def test_long_speech_never_replays_or_reverses_the_picture(self):
+        import numpy as np
+        src, out = os.path.join(self.dir, 'ordered.mkv'), os.path.join(self.dir, 'held.mp4')
+        pictures = b''.join(bytes([i * 3]) * (64 * 64 * 3) for i in range(64))
+        subprocess.run([sound.ffmpeg(), '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24',
+                        '-s', '64x64', '-r', '32', '-i', '-', '-c:v', 'ffv1', src], input=pictures, check=True)
+        for start in (0, 0.5):
+            sound._segment(src, start, 3.5, 32, out)
+            raw = subprocess.check_output([sound.ffmpeg(), '-v', 'error', '-i', out, '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'])
+            frames = np.frombuffer(raw, dtype=np.uint8).reshape((-1, 64, 64, 3))
+            values = frames[:, 32, 32, 0].astype(float)
+            self.assertEqual(len(values), 112)
+            self.assertTrue(np.all(np.diff(values) >= -3), values.tolist())
+            self.assertAlmostEqual(values[0], round(start * 32) * 3, delta=3)
+            self.assertTrue(np.all(abs(values[64 - round(start * 32):] - 189) <= 3))
+
     def test_mix_speech_and_effects(self):
         video, fx, sp, out = (os.path.join(self.dir, n) for n in ("v.mp4", "fx.wav", "sp.wav", "o.mp4"))
         make_video(video, 3)

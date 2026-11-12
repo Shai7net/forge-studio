@@ -35,8 +35,8 @@
                         h('button', {class: 'fx-primary', onclick: () => done(area.value.trim())}, '✨ ' + T('Go')),
                         h('button', {class: 'fx-btn', onclick: () => done(null)}, T('Cancel')))));
             area.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) done(area.value.trim());
-                if (e.key === 'Escape') done(null);
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); done(area.value.trim()); }
+                if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(null); }
             });
             FS.UI.root.append(box);
             area.focus();
@@ -62,34 +62,43 @@
 
     /* ---- placeholders ---- */
 
-    function placeholder(time, seconds, trackId, text) {
+    function placeholder(time, seconds, trackId, text, exact, shift) {
         return FS.change('generate', (d) => {
+            if (shift) for (const c of d.clips) c.start += shift;
             const clip = {id: FS.newId('g'), track: trackId || FS.mainTrack().id, kind: 'gen', start: FS.snapTime(time),
                 duration: seconds, gen: {text: text || '', progress: 0}};
             d.clips.push(clip);
-            FS.place(clip, FS.track(clip.track).main ? 'insert' : 'free');
+            if (exact) clip.fixedStart = true;
+            FS.place(clip, exact ? 'exact' : FS.track(clip.track).main ? 'insert' : 'free');
             return clip;
         });
     }
 
-    /* Video Studio makes 1 + 4k frames at 16 a second; the clip is that long */
-    const madeSeconds = (s) => (4 * Math.max(1, Math.round(s * 16 / 4))) / 16;
-
     G.request = async function (body, opts) {
         if (!S.project) throw new Error(T('Open or create a project first'));
+        const project = S.project;
         opts = opts || {};
         if (body.prompt) body.prompt = await FS.english(body.prompt, body.kind === 'text' ? 't2v' : 'i2v');
-        const seconds = madeSeconds(body.seconds || G.seconds);
-        let clip = opts.take ? FS.clip(opts.take) : placeholder(opts.time != null ? opts.time : S.time, seconds, opts.track, body.prompt);
+        if (S.project !== project) throw new Error(T('The project changed; request cancelled'));
+        const seconds = FS.snapTime(body.seconds || G.seconds);
+        const shifted = opts.shift ? S.doc.clips.map((c) => c.id) : [];
+        let clip = opts.take ? FS.clip(opts.take) : placeholder(opts.time != null ? opts.time : S.time, seconds, opts.track, body.prompt, opts.exact, opts.shift);
         const payload = Object.assign({name: S.project, seconds, quality: G.quality || null, sound: G.sound,
-            width: S.doc.settings.width, height: S.doc.settings.height}, body, {placeholder: {clip: clip.id, take: !!opts.take}});
+            width: S.doc.settings.width, height: S.doc.settings.height, fps: FS.fps()}, body,
+            {seconds, placeholder: {clip: clip.id, take: !!opts.take, exact: !!opts.exact, shift: opts.shift || 0, shifted,
+                extension:opts.extension || null}});
         let record;
         try {
             record = await FS.api('generate', payload);
         } catch (e) {
-            if (!opts.take) FS.change('generate', (d) => { d.clips = d.clips.filter((c) => c.id !== clip.id); FS.closeGaps(); });
+            if (!opts.take && S.project === project) FS.change('generate', (d) => {
+                d.clips = d.clips.filter((c) => c.id !== clip.id);
+                if (opts.shift) for (const c of d.clips) if (shifted.includes(c.id)) c.start -= opts.shift;
+                FS.closeGaps();
+            });
             throw e;
         }
+        if (S.project !== project) return record;
         if (opts.take) FS.change('take', () => { FS.clip(clip.id).pendingTake = record.id; });
         else FS.change('generate', () => { FS.clip(clip.id).gen = {id: record.id, text: T('Waiting'), progress: 0}; });
         G.records.push(record);
@@ -108,7 +117,9 @@
 
     G.refresh = FS.guard(async function () {
         if (!S.project) return;
+        const project = S.project;
         const r = await FS.api('generations?name=' + q(S.project));
+        if (S.project !== project) return;
         G.records = r.generations;
         let busy = false;
         for (const g of G.records) {
@@ -116,6 +127,7 @@
             const clip = clipId && FS.clip(clipId);
             if (g.state === 'waiting' || g.state === 'running') {
                 busy = true;
+                FS.emit('task-progress',{id:'video:'+project+':'+g.id,kind:'video',state:g.state,progress:g.live?.progress,started:g.started||g.created});
                 if (clip && clip.kind === 'gen') {
                     const live = g.live || {};
                     clip.gen = {id: g.id, text: g.state === 'waiting' ? T('Waiting for the card') : (live.text || ''), progress: live.progress};
@@ -123,8 +135,15 @@
                 }
             } else if (g.state === 'done' && g.video) {
                 await place(g, clip);
-            } else if ((g.state === 'error' || g.state === 'cancelled') && clip && clip.kind === 'gen') {
-                FS.change('generate', (d) => { d.clips = d.clips.filter((c) => c.id !== clip.id); FS.closeGaps(); });
+            } else if (g.state === 'error' || g.state === 'cancelled') {
+                FS.emit('task-progress',{id:'video:'+project+':'+g.id,kind:'video',state:g.state,text:g.message});
+                if (clip && clip.kind === 'gen') FS.change('generate', (d) => {
+                    d.clips = d.clips.filter((c) => c.id !== clip.id);
+                    const p = g.placeholder || {};
+                    if (p.shift) for (const c of d.clips) if ((p.shifted || []).includes(c.id)) c.start = Math.max(0, c.start - p.shift);
+                    FS.closeGaps();
+                });
+                else if (clip && clip.pendingTake === g.id) FS.change('take failed', () => { delete clip.pendingTake; });
                 if (g.state === 'error') FS.message(T('Making the clip failed: {0}', g.message || ''), 'error');
                 await FS.api('generate/placed', {name: S.project, id: g.id});
             }
@@ -134,19 +153,23 @@
     });
 
     async function place(g, clip) {
-        const added = await FS.api('project/add', {name: S.project, path: g.video});
+        const project = S.project;
+        const added = await FS.api('project/add', {name: project, path: g.video});
+        if (S.project !== project) return;
         S.media[added.web] = {path: g.video, missing: false};
         const info = await FS.probe(added.web);
+        if (S.project !== project) return;
         FS.change('generated', () => {
             const c = clip && FS.clip(clip.id);
             if (c && c.kind === 'gen') {
                 c.kind = 'video';
                 c.media = added.web;
                 c.in = 0;
-                c.duration = info.duration || c.duration;
+                c.duration = Math.min(c.duration, info.duration || c.duration);
                 c.takes = [added.web];
+                c.generated = true;
                 delete c.gen;
-                FS.closeGaps();
+                if (!(g.placeholder || {}).exact) FS.closeGaps();
             } else if (c && g.placeholder.take) {
                 c.takes = c.takes && c.takes.length ? c.takes : [c.media];
                 if (!c.takes.includes(added.web)) c.takes.push(added.web);
@@ -157,18 +180,90 @@
                 FS.closeGaps();
             }
         });
-        await FS.api('generate/placed', {name: S.project, id: g.id, web: added.web});
+        await FS.api('generate/placed', {name: project, id: g.id, web: added.web});
+        FS.emit('task-progress',{id:'video:'+project+':'+g.id,kind:'video',state:'done',progress:1});
         FS.message(clip ? T('The new clip is on the timeline') : T('The new clip is in the project (its placeholder was removed)'));
         if (FS.refreshLibrary) FS.refreshLibrary();
+        if (clip && (g.placeholder || {}).extension) await G.offerMerge(g, clip.id);
     }
+
+    G.combineClips = (sourceId, extensionId, result) => FS.change('combine extension', d => {
+        const source=FS.clip(sourceId), extra=FS.clip(extensionId);
+        if(!source || !extra)throw Error(T('The clips changed; combine them again'));
+        const start=Math.min(source.start,extra.start), id=source.id, track=source.track;
+        const combined={id,track,kind:'video',media:result.web,start,duration:result.seconds,in:0,
+            generated:true,fixedStart:source.fixedStart || extra.fixedStart || false,
+            combinedFrom:JSON.parse(JSON.stringify([source,extra]))};
+        const linkedAudio=d.clips.filter(a=>a.linkedTo===sourceId||a.linkedTo===extensionId);
+        if(linkedAudio.some(a=>FS.isSpeech(a))||FS.isSpeech(source)||FS.isSpeech(extra))combined.speech=true;
+        const first=source.start<=extra.start?source:extra;
+        for(const key of ['transitionIn','transition','soundIn'])if(first[key]!=null)combined[key]=JSON.parse(JSON.stringify(first[key]));
+        d.clips=d.clips.filter(c=>c.id!==sourceId && c.id!==extensionId&&!linkedAudio.some(a=>a.id===c.id));d.clips.push(combined);
+        S.selected=[id];
+    });
+    G.offerMerge = async function(g,extensionId) {
+        const project=S.project, sourceId=g.placeholder.extension.source;
+        const pair=()=>[FS.clip(sourceId),FS.clip(extensionId)];
+        const audio=()=>S.doc.clips.filter(a=>a.kind==='audio'&&(a.linkedTo===sourceId||a.linkedTo===extensionId));
+        const snapshot=()=>JSON.stringify({clips:pair(),audio:audio()});
+        const valid=()=>{const [a,b]=pair();return a&&b&&a.track===b.track&&
+            Math.abs(Math.min(FS.end(a),FS.end(b))-Math.max(a.start,b.start))<.51/FS.fps();};
+        if(!valid())return;
+        const before=snapshot();
+        const yes=await G.confirmMerge();
+        if(!yes || S.project!==project || !valid() || snapshot()!==before)return;
+        FS.busy && FS.busy(T('Combining the shot and extension…'));
+        try {
+            const result=await FS.follow(await FS.api('clip/merge',{name:project,clips:pair(),audio:audio(),settings:S.doc.settings}),
+                t=>FS.busy && FS.busy(T('Combining clips: {0}%',Math.round((t.progress || 0)*100))));
+            if(S.project!==project || snapshot()!==before)throw Error(T('The clips changed; the combined file is saved in the project'));
+            S.media[result.web]={path:result.web,missing:false};await FS.probe(result.web);
+            if(S.project!==project || snapshot()!==before)return;
+            G.combineClips(sourceId,extensionId,result);
+            FS.message(T('Shot and extension combined. Undo restores both clips.'));
+        }finally{FS.busy && FS.busy(null);}
+    };
+    G.confirmMerge = () => new Promise(resolve=>{
+        const h=FS.h, done=value=>{box.remove();resolve(value);};
+        const box=h('div',{class:'fx-modal-back',dir:FS.hebrew()?'rtl':'ltr'},h('div',{class:'fx-modal fx-combine-dialog',role:'dialog','aria-modal':'true'},
+            h('div',{class:'fx-modal-head'},T('Combine the extended shot?')),
+            h('div',{class:'fx-modal-body'},T('Keep the shot and its extension as one clip. The two timeline pieces are replaced only after combining succeeds.')),
+            h('div',{class:'fx-modal-foot'},h('div',{class:'fx-row'},
+                h('button',{class:'fx-btn fx-primary',id:'fx-combine-yes',onclick:()=>done(true)},T('Combine clips')),
+                h('button',{class:'fx-btn',id:'fx-combine-no',onclick:()=>done(false)},T('Keep separate'))))));
+        box.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')done(false);});
+        FS.UI.root.append(box);box.querySelector('#fx-combine-yes').focus();
+    });
 
     /* ---- the kinds of request ---- */
 
-    G.newShot = async function (time, track) {
+    G.newShot = async function (time, track, region) {
+        const project = S.project;
         const prompt = await FS.ask(T('A new shot from words'), T('What happens in the shot (Hebrew or English)'), '',
             T('Forge draws its first frame with the checkpoint chosen at the top, then Wan animates it.'));
         if (!prompt) return;
-        await G.request({kind: 'text', prompt}, {time, track});
+        if (S.project !== project) throw new Error(T('The project changed; request cancelled'));
+        if (region && !track) track = FS.change('track', () => FS.addTrack('video'));
+        await G.request({kind: 'text', prompt, seconds: region ? region.out - region.in : G.seconds}, {time, track, exact: !!region});
+    };
+
+    G.inRegion = async function (region) {
+        region = JSON.parse(JSON.stringify(region || FS.region()));
+        if (!region) return;
+        let track = region.tracks.find((id) => FS.track(id) && FS.track(id).kind !== 'audio');
+        await G.newShot(region.in, track, region);
+    };
+
+    G.extendClip = async function (clip, edge, seconds) {
+        seconds = FS.snapTime(seconds);
+        if (seconds < 1 / FS.fps() - 1e-8) return;
+        const before = edge === 'l';
+        // At time zero, make room for pre-roll. All tracks move together to preserve sound sync.
+        const shift = before ? Math.max(0, seconds - clip.start) : 0;
+        const time = before ? clip.start + shift - seconds : FS.end(clip);
+        await G.request({kind: 'continue', prompt: 'Continue the shot', seconds, direction: before ? 'before' : 'after',
+            start: {web: clip.media, seconds: before ? val(clip, 'in') : lastFrame(clip)}}, {time, track: clip.track, exact: true, shift,
+                extension:{source:clip.id,edge}});
     };
 
     G.fromFrame = async function (clip, time) {
@@ -191,7 +286,7 @@
                 ['wan', 'Wan (Video Studio)' + (engine === 'wan' ? ' ✓' : '')]]});
         if (!answer || !answer.text) return;
         await G.request({kind: 'continue', prompt: answer.text, engine: answer.choice,
-            start: {web: clip.media, seconds: lastFrame(clip)}}, {time: FS.end(clip), track: clip.track});
+            start: {web: clip.media, seconds: lastFrame(clip)}}, {time: FS.end(clip), track: clip.track,extension:{source:clip.id,edge:'r'}});
     };
 
     /* a join, frame to frame: from the last frame of the first clip to the first frame of the second, by Wan (first +
@@ -226,7 +321,7 @@
 
     const isVideo = (c) => c && c.kind === 'video' && c.media;
     const isPicture = (c) => c && (c.kind === 'video' || c.kind === 'image') && c.media;
-    const madeByWan = (c) => isVideo(c) && /-(t2v|i2v|flf|multi|picture|text|continue|between)-\d+/.test(c.media + (c.takes || []).join(' '));
+    const madeByWan = (c) => isVideo(c) && (c.generated || /-(t2v|i2v|flf|multi|picture|text|continue|between)-\d+/.test(c.media + (c.takes || []).join(' ')));
 
     FS.cutActions = [
         {label: '⇄ ' + T('Dissolve between them (1 s)'), when: (l, r) => r && !(r.transitionIn > 0), run: (l, r) => FS.transition(r.id, 1, 'dissolve')},

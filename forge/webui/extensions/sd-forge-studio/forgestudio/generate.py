@@ -13,6 +13,7 @@ that made the clip).
 
 import html
 import json
+import math
 import os
 import random
 import re
@@ -30,6 +31,7 @@ _lock = threading.Lock()
 _wake = threading.Condition(_lock)
 _thread = None
 live = {}  # id -> what the running request is doing now
+_cancelled = set()
 
 
 def _vs():
@@ -135,7 +137,7 @@ def _made_with(path):
 # ---- requests ----
 
 def submit(name, kind, prompt="", seconds=5.0, seed=-1, quality=None, sound=True, width=0, height=0,
-           start=None, end=None, take_of=None, placeholder=None, engine="auto"):
+           start=None, end=None, take_of=None, placeholder=None, engine="auto", direction="after", fps=30):
     """`start` / `end`: {web, seconds, last} of the frames to begin and end on; `take_of`: the web name of a clip
     to make again. Returns the record."""
     if kind not in KINDS:
@@ -157,11 +159,19 @@ def submit(name, kind, prompt="", seconds=5.0, seed=-1, quality=None, sound=True
         raise ValueError("this needs a picture to start from")
     if kind == "between" and not end:
         raise ValueError("a transition needs the frame it ends on")
+    seconds, fps = float(seconds), float(fps)
+    if not math.isfinite(seconds) or not 1 / 120 - 1e-9 <= seconds <= 240:
+        raise ValueError("duration must be between 1/120 and 240 seconds")
+    if not math.isfinite(fps) or not 1 <= fps <= 120:
+        raise ValueError("frame rate must be between 1 and 120")
+    if direction not in ("after", "before"):
+        raise ValueError("unknown continuation direction")
     record = {"id": uuid.uuid4().hex[:10], "kind": kind, "prompt": prompt.strip(), "seconds": float(seconds),
               "seed": int(seed) if seed is not None and int(seed) >= 0 else random.randint(0, 2 ** 31 - 1),
               "quality": quality, "sound": bool(sound), "width": int(width or 0), "height": int(height or 0),
               "start": start, "end": end, "take_of": take_of, "placeholder": placeholder, "project": name,
               "engine": engine if engine in continuers.ENGINES else "auto",
+              "direction": direction, "fps": fps,
               "state": "waiting", "asked": time.time()}
     with _lock:
         recs = _read(name)
@@ -187,6 +197,7 @@ def cancel(name, gen_id):
     if waiting:
         _update(name, gen_id, state="cancelled")
     elif gen_id in live:
+        _cancelled.add(gen_id)
         if live[gen_id].get("engine") in ("animatediff", "deforum"):
             continuers.cancel_running()
         else:
@@ -227,6 +238,7 @@ def _loop():
             _update(name, gen_id, state="cancelled" if stopped else "error", message=str(e)[:600], ended=time.time())
         finally:
             live.pop(gen_id, None)
+            _cancelled.discard(gen_id)
 
 
 def _picture(name, ref):
@@ -263,6 +275,69 @@ def _recipe_of(name, web):
 
 
 def _make(name, record):
+    """Generate in supported windows, then fit to the requested edit frames, including a backwards pre-roll."""
+    engine = engine_for(name, record)
+    fps = record.get("fps", 30)
+    remaining = record["seconds"]
+    work = os.path.join(projects._folder(name), "generated", record["id"])
+    os.makedirs(work, exist_ok=True)
+    parts, current = [], dict(record, engine=engine)
+    while remaining > 1e-6:
+        if record["id"] in _cancelled:
+            raise RuntimeError("cancelled")
+        length = min(7.5, remaining)
+        if record["kind"] == "between":
+            current["kind"] = "between" if remaining <= 7.5 else "picture" if not parts else "continue"
+        current["seconds"] = max(1, math.ceil(length * 4) / 4)
+        video = _make_segment(name, current)
+        if not video:
+            raise RuntimeError("Video generation returned no file")
+        out = os.path.join(work, f"part-{len(parts)}.mp4")
+        has_audio = bool(media.probe(video).get("audio"))
+        reverse = record.get("direction") == "before"
+        vf = f"fps={fps},tpad=stop_mode=clone:stop_duration=1,trim=duration={length:.9f},setpts=PTS-STARTPTS"
+        if reverse:
+            vf += ",reverse,setpts=PTS-STARTPTS"
+        cmd = [library.ffmpeg(), "-v", "error", "-y", "-i", video]
+        if not has_audio:
+            cmd += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"]
+        af = f"aresample=48000,apad,atrim=duration={length:.9f},asetpts=PTS-STARTPTS"
+        if reverse:
+            af += ",areverse,asetpts=PTS-STARTPTS"
+        cmd += ["-map", "0:v:0", "-map", "0:a:0" if has_audio else "1:a:0", "-vf", vf, "-af", af,
+                "-t", str(length), "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
+                "-c:a", "aac", "-ac", "2", "-ar", "48000", "-movflags", "+faststart", out]
+        subprocess.run(cmd, check=True, capture_output=True, timeout=600,
+                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        parts.append(out)
+        remaining -= length
+        if remaining > 1e-6:
+            anchor = os.path.join(work, f"anchor-{len(parts)}.png")
+            media.grab(video, max(0, length - 1 / fps), anchor)
+            # Keep the original clip's web reference for its tool's recipe, but use the new last frame.
+            current["start"] = dict(record.get("start") or {}, path=anchor)
+            current["kind"] = "continue"
+    if record.get("direction") == "before":
+        parts.reverse()
+    if record["id"] in _cancelled:
+        raise RuntimeError("cancelled")
+    listing = os.path.join(work, "parts.txt")
+    with open(listing, "w", encoding="utf-8") as f:
+        f.write("".join("file '" + os.path.basename(p) + "'\n" for p in parts))
+    target = os.path.join(work, "shot.mp4")
+    subprocess.run([library.ffmpeg(), "-v", "error", "-y", "-f", "concat", "-safe", "1", "-i", listing,
+                    "-c", "copy", "-movflags", "+faststart", target], check=True, capture_output=True, timeout=300,
+                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    with open(os.path.splitext(target)[0] + ".json", "w", encoding="utf-8") as f:
+        json.dump({"prompt": record["prompt"], "mode": "i2v" if record.get("start") else "t2v",
+                   "frames": 1 + round(record["seconds"] * 16), "fps": fps, "seed": record.get("seed"),
+                   "start_image": _picture(name, record["start"]) if record.get("start") else None,
+                   "end_image": _picture(name, record["end"]) if record.get("end") else None,
+                   "studio_recipe": _recipe_of(name, record["start"]["web"]) if engine != "wan" and record.get("start", {}) and record["start"].get("web") else None}, f)
+    return target
+
+
+def _make_segment(name, record):
     engine = engine_for(name, record)
     if engine in ("animatediff", "deforum"):
         refs = [record["start"]] + ([record["end"]] if record["kind"] == "between" else [])

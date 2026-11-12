@@ -110,6 +110,8 @@ def _deforum_settings(path):
 def recipe(path, made_with=None):
     """{"engine": wan|animatediff|deforum, "label", "prompt", ...} for a clip file."""
     if made_with:
+        if made_with.get("studio_recipe"):
+            return made_with["studio_recipe"]
         return {"engine": "wan", "label": "Wan (Video Studio)", "prompt": made_with.get("prompt", "")}
     text = _animatediff_infotext(path)
     if text:

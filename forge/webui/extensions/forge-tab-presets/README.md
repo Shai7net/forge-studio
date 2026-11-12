@@ -1,5 +1,40 @@
 # Forge Tab Presets
 
+## Universal styles
+
+The normal Forge **Styles** selector includes 96 curated styles, grouped by the
+`Universal ·` prefix: Photo (12), Cinema (12), Painting (12), Illustration (12),
+3D (12), Design (12), Material (8), Lighting (8), and Color (8). Search by category
+or name, for example `Watercolor`, `Film Noir`, `Claymation`, or `Soft Window`.
+The same collection is available in txt2img, img2img, and Video Studio.
+
+Start with one base treatment. Optionally add a Lighting or Color style, such as
+`Photo · Editorial` + `Lighting · Soft Window` + `Color · Warm Analog Film`.
+Combining contradictory base treatments can weaken the result. Styles describe
+visual treatment while leaving the prompt's subject and action to you. They need
+no LoRA, embedding, checkpoint-specific trigger, or download; model capabilities
+still determine how strongly a treatment appears.
+
+SD/SDXL receive concise comma-separated art direction. FLUX receives natural-language
+visual instructions. FIBO receives natural language or valid structured VGL: the
+style medium and artistic treatment are updated while subjects, quoted lettering,
+references, and edit instructions remain intact. Video Studio explicitly uses
+video phrasing that preserves the requested action and camera movement, regardless
+of the image checkpoint selected at the top of Forge. Personal styles retain their
+normal syntax and negatives; personal style text is placed inside the artistic
+direction field when applying it to a FIBO JSON prompt.
+
+The collection lives in `universal_styles.json`, and `scripts/universal_styles.py`
+registers it before the native UI is built. Existing personal styles stay first,
+in their existing order. Installation and refresh do not modify `styles.csv`.
+The native style editor can save an edited built-in as a personal CSV override,
+or delete it from the list. Deleted catalog entries are remembered in the private
+`webui/tab-presets/_universal_style_hidden.json` file. Neither personal overrides
+nor hidden-style preferences belong in a public release.
+
+Tests: `python -m unittest discover -s extensions/forge-tab-presets/tests -v`
+(run from `webui` with Forge's existing venv).
+
 סרגל **שמור / טען / אחרונים / איפוס** בראש כל לשונית (txt2img, img2img, Extras, Deforum, Infinite Zoom, Replacer…).
 שמירה תופסת את *כל* מה שמוגדר בלשונית באותו רגע: פרומפטים, דגימה, Hires. fix, כל יחידות ה-ControlNet, AnimateDiff
 (כולל Music ו-Dance), סקריפטים וכל תוסף אחר, וגם איזו תת-לשונית ואיזה אקורדיון פתוחים. טעינה מחזירה את הכול בדיוק.

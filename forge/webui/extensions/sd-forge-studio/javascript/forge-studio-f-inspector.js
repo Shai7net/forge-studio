@@ -244,14 +244,17 @@
                 get: (x) => x.duration, set: (x, v) => { x.duration = v; FS.closeGaps(); }}) : null,
             c.kind === 'video' ? timeTools(c) : null));
         if (c.kind === 'audio' || (c.kind === 'video' && info.audio)) {
-            const mute = h('input', {type: 'checkbox', checked: !!c.muted});
-            mute.addEventListener('change', () => FS.change('mute', () => { FS.clip(c.id).muted = mute.checked; }));
+            const sound=FS.soundTarget(c);
+            const mute = h('input', {type: 'checkbox', checked: !!sound.muted});
+            mute.addEventListener('change', () => FS.change('mute', () => { FS.clip(sound.id).muted = mute.checked; }));
             out.push(section('Sound',
-                field('Volume', c.id, 'volume', {keyed: true, min: 0, max: 200, step: 1, reset: 1, show: (v) => Math.round(v * 100), store: (v) => v / 100, set: (x, v) => { x.volume = v; }}),
+                field('Volume', sound.id, 'volume', {keyed: true, min: 0, max: 200, step: 1, reset: 1, show: (v) => Math.round(v * 100), store: (v) => v / 100, set: (x, v) => { x.volume = v; }}),
                 h('label', {class: 'fx-check'}, mute, ' ', T('Mute this clip')),
                 c.kind === 'video' && !c.muted ? h('button', {class: 'fx-ai-btn', title: T('The sound becomes a clip of its own below, and the video goes quiet'),
                     onclick: () => { FS.detachAudio(c.id); FS.message(T('The sound is a clip of its own now')); }}, '🔊 ' + T('Separate the sound')) : null,
-                duckTools(c), beatTools(c)));
+                ...FS.audioLinkItems(c).map(a=>h('button',{class:'fx-btn',onclick:FS.guard(a.run)},a.label)),
+                c.linkedTo||FS.detachedAudio(c)?.linkedTo?h('div',{class:'fx-dim'},T('Audio follows the video')):null,
+                duckTools(sound), beatTools(sound)));
         }
         const actions = FS.clipActions.filter((a) => !a.when || a.when(c));
         if (actions.length) {

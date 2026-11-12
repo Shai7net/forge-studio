@@ -1,8 +1,8 @@
 """Lip sync for a clip of the edit, three ways, each giving the clip a new take:
 
 - to a sound already in the edit (a narration, a recording): MuseTalk draws the mouth over the clip for that sound
-  (Video Studio's `lipsync`: the whole clip, silence before and after the words so the mouth rests, the clip played
-  back and forth past its end when the words are longer);
+  (Video Studio's `lipsync`: the whole clip, silence before and after the words so the mouth rests, its last frame
+  held past its end when the words are longer);
 - to written words: a voice of Video Studio (Chatterbox, with niqqud for Hebrew) says them, then the same;
 - to a face video (someone filmed saying it): LivePortrait (the sd-webui-live-portrait extension, through its own
   API function, as Simulation 360 does) moves the character's face, head and lips like the face in the video, and
@@ -13,10 +13,10 @@ spaces and Hebrew in paths). Every run waits its turn for the graphics card (For
 """
 
 import asyncio
+import json
 import os
 import shutil
 import subprocess
-import time
 import uuid
 
 from . import frames, library, media, projects
@@ -73,11 +73,23 @@ def lipsync(name, web, start, seconds, mode, options=None):
     """`web`'s file from `start` for `seconds` (the clip's used part) made to say something: mode 'sound' (options:
     sound, sound_in, sound_seconds, offset = where the words begin in the clip), 'text' (text, language, voice,
     expressive) or 'face' (face = a face video of the project, region = 'all' | 'lips')."""
-    if mode not in ("sound", "text", "face"):
+    if mode not in ("sound", "text", "face", "prepared"):
         raise ValueError("unknown lip sync mode")
     path = projects.media_path(name, web)
     if (media.probe(path).get("kind") or library.kind_of(path)) not in ("video", "image"):
         raise ValueError("lip sync needs a video or a picture")
+    if mode == 'prepared':
+        from .lipspeech import number
+        opt = options or {}
+        total = number(opt.get('clip_seconds', seconds), 1 / 120, 240, 'Shot duration')
+        offset = number(opt.get('offset', 0), 0, total, 'Speech start')
+        speech_path = projects.media_path(name, opt.get('speech'))
+        if library.kind_of(speech_path) != 'audio':
+            raise ValueError('Choose prepared speech audio')
+        said = media.probe(speech_path).get('duration') or 0
+        if said <= 0 or offset + said > total + 0.01:
+            raise ValueError('The prepared speech must fit completely inside the shot')
+        options = dict(opt, clip_seconds=total)
     return frames._task("lipsync", _lipsync, name, web, float(start), float(seconds), mode, dict(options or {}))
 
 
@@ -92,6 +104,7 @@ def _lipsync(task, name, web, start, seconds, mode, opt):
     original = projects.media_path(name, web)
     clip = _part(original, start, seconds, os.path.join(work, "clip.mp4"))
     speech_web = None
+    duration_out = None
     try:
         if mode == "face":
             picture = None
@@ -103,7 +116,23 @@ def _lipsync(task, name, web, start, seconds, mode, opt):
         else:
             vs = _vs_sound()
             t = _Task(task, work)
-            if mode == "sound":
+            if mode == 'prepared':
+                wav = projects.media_path(name, opt['speech'])
+                speech_web = opt['speech']
+                offset = float(opt.get('offset', 0))
+                fps = vs.video_info(clip)[2]
+                speed = float(opt.get('source_speed', 1))
+                if not 0.1 <= speed <= 8:
+                    raise ValueError('invalid source speed')
+                if speed != 1:
+                    retimed = os.path.join(work, 'retimed.mp4')
+                    _ff(['-i', clip, '-vf', f'setpts=(PTS-STARTPTS)/{speed},fps={fps:g}', '-an', '-c:v', 'libx264', '-crf', '12', retimed], 'could not retime the source')
+                    clip = retimed
+                whole = os.path.join(work, 'whole-shot.mp4')
+                vs._segment(clip, 0, float(opt['clip_seconds']), fps, whole)
+                task['text'] = 'Animating lips for the approved speech in the selected range'
+                _on_card(lambda: vs.lipsync(t, whole, wav, offset, out, span=(0.05, 1)))
+            elif mode == "sound":
                 wav = _part(projects.media_path(name, opt["sound"]), float(opt.get("sound_in") or 0),
                             float(opt.get("sound_seconds") or 0) or 600.0, os.path.join(work, "said.wav"), video=False)
                 offset = max(0.0, float(opt.get("offset") or 0))
@@ -117,7 +146,7 @@ def _lipsync(task, name, web, start, seconds, mode, opt):
                 voice = opt.get("voice") if opt.get("voice") in choices else choices[0]
                 made = os.path.join(projects._folder(name), "sound", "made")
                 os.makedirs(made, exist_ok=True)
-                wav = os.path.join(made, f"voice-{time.strftime('%H%M%S')}.wav")
+                wav = os.path.join(made, f"voice-{uuid.uuid4().hex[:10]}.wav")
                 task["text"] = "waiting for the graphics card"
 
                 def run():
@@ -126,11 +155,25 @@ def _lipsync(task, name, web, start, seconds, mode, opt):
                     vs.lipsync(t, clip, wav, 0.0, out, span=(0.3, 1.0))
                 _on_card(run)
                 speech_web = projects.add_media(name, wav)
+            # A self-contained preview with the words, while the timeline continues to use its independent
+            # sound track. Applying the result mutes this embedded copy to avoid doubled speech.
+            voiced = os.path.join(work, "preview.mp4")
+            duration_out = media.probe(out).get("duration") or seconds
+            offset = max(0.0, float(opt.get("offset") or 0)) if mode in ("sound", "prepared") else 0.0
+            delay = int(round(offset * 1000))
+            _ff(["-i", out, "-i", wav, "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
+                 "-af", f"adelay={delay}|{delay},apad,atrim=duration={duration_out:.9f}",
+                 "-c:a", "aac", "-b:a", "192k", "-t", f"{duration_out:.9f}", "-movflags", "+faststart", voiced],
+                "could not add the preview's speech")
+            os.replace(voiced, out)
     finally:
         shutil.rmtree(work, ignore_errors=True)
     new = projects.add_media(name, out)
-    seconds_out = media.probe(out).get("duration") or seconds
-    return {"web": new, "speech": speech_web, "seconds": round(seconds_out, 3), "progress": 1.0,
+    seconds_out = duration_out or media.probe(out).get("duration") or seconds
+    # Keep enough local provenance to reopen the form and repair a result without guessing its source or voice.
+    projects._write(out + ".lips.json", json.dumps({"source": web, "start": start, "seconds": seconds, "mode": mode,
+                                                   "options": opt, "speech": speech_web}, ensure_ascii=False, indent=1))
+    return {"web": new, "speech": speech_web, "speech_offset": float(opt.get('offset', 0)), "seconds": seconds_out, "progress": 1.0,
             "text": f"{seconds_out:.1f} s talking"}
 
 
@@ -162,7 +205,7 @@ def _face(task, name, clip, opt, work, out, picture=None):
         "-pix_fmt", "yuv420p", "-c:a", "aac", drive], "could not read the face video")
     w, h, fps = vs.video_info(clip)
     face_fps = vs.video_info(drive)[2]
-    # a video clip as long as the face video (played back and forth past its end, as for MuseTalk)
+    # A video clip as long as the face video, holding its last frame past the source's end.
     source = picture
     if not source:
         source = os.path.join(work, "source.mp4")

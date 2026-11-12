@@ -513,4 +513,76 @@ test('keyboard trimming: Q / W trim to the playhead keeping the outer edge, the 
     assert.strictEqual(FS.cutNear(7, 1), undefined);
 });
 
+test('mouse regions include empty time, reverse drags and sound lanes without changing the edit', () => {
+    fresh([]);
+    const before = JSON.stringify(S.doc);
+    FS.setRegion(7, 5, ['a1'], 'audio');
+    same(FS.region(), {in: 5, out: 7, tracks: ['a1'], kind: 'audio', newTrack: null});
+    assert.strictEqual(JSON.stringify(S.doc), before);
+    FS.clearRegion();
+    assert.strictEqual(FS.region(), null);
+});
+
+test('exact generation keeps an empty main-track range and never covers existing clips', () => {
+    fresh([{id: 'a', track: 'v1', kind: 'video', start: 0, duration: 2}]);
+    FS.magnet = true;
+    const g = {id: 'g', track: 'v1', kind: 'gen', start: 5, duration: 2, fixedStart: true};
+    S.doc.clips.push(g); FS.place(g, 'exact'); FS.closeGaps();
+    same([g.track, g.start, g.duration], ['v1', 5, 2]);
+    const overlap = {id: 'o', track: 'v1', kind: 'gen', start: 1, duration: 2, fixedStart: true};
+    S.doc.clips.push(overlap); FS.place(overlap, 'exact');
+    assert.notStrictEqual(overlap.track, 'v1');
+    assert.strictEqual(overlap.start, 1);
+});
+
+test('canceling a pointer edit restores the complete timeline without an undo step', () => {
+    fresh([{id: 'a', track: 'v1', kind: 'video', start: 0, duration: 2}]);
+    const before = JSON.stringify(S.doc);
+    FS.beginEdit(); FS.clip('a').duration = 9; FS.cancelEdit();
+    assert.strictEqual(JSON.stringify(S.doc), before);
+});
+
+test('repeating lip sync uses the original motion, and restoring the clip restores its mute state', () => {
+    fresh([{id: 'v', track: 'v1', kind: 'video', media: 'original.mp4', start: 2, duration: 4.1, in: 0, speed: 1}]);
+    FS.takeLips('v', 'bad-lips.mp4', 7.5);
+    const c = FS.clip('v'); c.muted = true;
+    const source = FS.lipsSource(c);
+    same([source.media, source.duration, source.in], ['original.mp4', 4.1, 0]);
+    FS.takeLips('v', 'corrected-lips.mp4', 7.53125);
+    assert.strictEqual(FS.clip('v').lips.media, 'original.mp4');
+    FS.lipsBack('v');
+    same([FS.clip('v').media, FS.clip('v').duration, FS.clip('v').muted], ['original.mp4', 4.1, undefined]);
+});
+
+test('speech uses the mouse range inside a shot, preserving absolute placement even at a fractional shot start', () => {
+    const c={start:7.2,duration:7.53125};
+    const r=FS.lipsWindow(c,{in:7.5,out:9.5});
+    near(c.start+r.offset,7.5,'exact selected start'); near(r.seconds,2,'exact selected length');
+    same(FS.lipsWindow(c,null),{offset:0,seconds:7.53125});
+    near(FS.lipsWindow(c,{in:6,out:8}).seconds,0.8,'clipped to the shot');
+});
+
+test('applying a same-length talking take preserves the selected absolute time even with the magnet on', () => {
+    fresh([{id:'v',track:'v1',kind:'video',media:'original.mp4',start:2,duration:7.53125},
+        {id:'next',track:'v1',kind:'video',media:'next.mp4',start:12,duration:2}]);
+    FS.magnet=true;
+    FS.takeLips('v','talking.mp4',7.53125);
+    same([FS.clip('v').start,FS.clip('next').start],[2,12]);
+    const w=FS.lipsWindow(FS.clip('v'),{in:3,out:7});
+    near(FS.clip('v').start+w.offset,3,'speech stays at the selected absolute start');
+    FS.lipsBack('v');
+    same([FS.clip('v').start,FS.clip('next').start],[2,12]);
+});
+
+test('new dictionary entries translate without replacing Studio context-specific wording', () => {
+    const original=FS.hebrew;
+    FS.hebrew=()=>true;
+    const key=Object.keys(FS.he)[0];
+    window.hebrewUiDictionary={texts:{[key]:'generic wording','Making image':'dictionary wording'}};
+    assert.equal(FS.T(key),FS.he[key]);
+    assert.equal(FS.T('Making image'),'dictionary wording');
+    FS.hebrew=()=>false;assert.equal(FS.T('Making image'),'Making image');
+    FS.hebrew=original;delete window.hebrewUiDictionary;
+});
+
 console.log(`${passed} passed`);

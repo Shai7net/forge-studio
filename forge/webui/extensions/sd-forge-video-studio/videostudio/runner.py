@@ -53,6 +53,11 @@ def free_forge_memory():
             manager.soft_empty_cache()
         except Exception:
             pass
+    flux = sys.modules.get('flux3.glue')
+    engine = getattr(flux, 'ENGINE', None)
+    if engine is not None:
+        with engine.lock:
+            engine.offload_all()
     try:
         import torch
         torch.cuda.empty_cache()
@@ -96,7 +101,7 @@ class Job:
         env.pop("PYTHONHOME", None)
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         self.proc = subprocess.Popen(
-            [engine_python(), "-u", WORKER, self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            [worker_python(self.spec), "-u", WORKER, self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             env=env, cwd=self.dir, creationflags=flags, text=True, encoding="utf-8", errors="replace", bufsize=1)
         threading.Thread(target=self._read, name=f"video-studio-{self.id}", daemon=True).start()
 
@@ -156,6 +161,24 @@ class Job:
 
 
 LAST = {"video": None}
+
+
+def worker_python(spec):
+    if spec.get('backend') == 'ltx':
+        from . import ltx
+        if not ltx.runtime_ready():
+            raise RuntimeError('Set up the LTX engine in Models before generating with LTX.')
+        return str(ltx.python_executable())
+    return engine_python()
+
+
+def setup_ltx_engine():
+    tool = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tools', 'setup_ltx.py')
+    result = subprocess.run([sys.executable, '-u', tool], capture_output=True, text=True,
+                            encoding='utf-8', errors='replace', creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    if result.returncode:
+        raise RuntimeError('LTX setup failed: ' + (result.stderr or result.stdout)[-1800:])
+    return 'LTX engine ready.'
 
 
 def start(spec):

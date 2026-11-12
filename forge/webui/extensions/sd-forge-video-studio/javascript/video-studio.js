@@ -9,7 +9,7 @@ function videoStudioOpenTab() {
 
 function videoStudioMode() {
     return {vs_tab_t2v: "t2v", vs_tab_i2v: "i2v", vs_tab_ingredients: "ingredients",
-            vs_tab_replace: "replace"}[videoStudioOpenTab()] || "t2v";
+            vs_tab_replace: "replace", vs_tab_ltx_audio: "ltx_audio"}[videoStudioOpenTab()] || "t2v";
 }
 
 function videoStudioSubmit(...args) {

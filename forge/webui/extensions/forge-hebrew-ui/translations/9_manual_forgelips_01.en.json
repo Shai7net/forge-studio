@@ -1,0 +1,22 @@
+[
+ {
+  "i": 0,
+  "en": "Apply to timeline",
+  "ctx": "[t] Forge Studio lip-sync preview and approval"
+ },
+ {
+  "i": 1,
+  "en": "Lip sync applied to the timeline",
+  "ctx": "[t] Forge Studio lip-sync preview and approval"
+ },
+ {
+  "i": 2,
+  "en": "Making a preview. The timeline changes only after you apply it.",
+  "ctx": "[t] Forge Studio lip-sync preview and approval"
+ },
+ {
+  "i": 3,
+  "en": "Preview ready. Watch it, then apply it to the timeline or cancel.",
+  "ctx": "[t] Forge Studio lip-sync preview and approval"
+ }
+]

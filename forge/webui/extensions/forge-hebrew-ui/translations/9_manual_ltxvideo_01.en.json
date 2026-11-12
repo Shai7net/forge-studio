@@ -1,0 +1,157 @@
+[
+  {
+    "i": 0,
+    "en": "Video model",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 1,
+    "en": "Image + Audio to Video",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 2,
+    "en": "Talking picture",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 3,
+    "en": "Driving audio",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 4,
+    "en": "LTX synchronized sound",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 5,
+    "en": "Set up LTX engine",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 6,
+    "en": "Generate sound together with the video. This takes priority over automatic MMAudio.",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 7,
+    "en": "Choose Wan or LTX. Model selection loads efficient defaults automatically. Character replacement and Phantom use their dedicated Wan models. Ingredients draws one first frame of all the pictures with an installed FLUX 3 Klein (the image checkpoint stays as chosen), then the chosen video model animates it; without FLUX 3 it uses Phantom.",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 8,
+    "en": "Wan: Forge draws the first frame with the image checkpoint, then Wan animates it. LTX: generates video and optional synchronized sound directly from the video prompt.",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 9,
+    "en": "LTX: animate a picture to your audio. Speech and singing drive the video. Choose an LTX model above, add the picture and recording, then describe the scene. Length controls how much audio is used; the original audio is preserved in the result.",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 10,
+    "en": "LTX 288p · quick draft",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 11,
+    "en": "LTX 416p · balanced for 8 GB",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 12,
+    "en": "LTX 480p · more detail",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 13,
+    "en": "LTX 576p · more memory",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 14,
+    "en": "LTX 2.3 Distilled 1.1 · Q3 · recommended for 8 GB",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 15,
+    "en": "LTX 2.3 Distilled 1.1 · Q2 · smaller for 6 GB",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 16,
+    "en": "LTX 2.3 Distilled 1.1 · Q4 · quality for 12 GB+",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 17,
+    "en": "Smooth motion: 48 fps (FILM)",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 18,
+    "en": "LoRAs follow the selected video model. Wan: models/VideoStudio/loras or models/Lora/wan. LTX: models/VideoStudio/ltx/loras or models/Lora/ltx. Wan high/low pairs are loaded together. `<lora:name:1>` in a prompt or style also works.",
+    "ctx": "[t] Video Studio LTX model selection and audio-driven video"
+  },
+  {
+    "i": 19,
+    "en": "First frame by FLUX 3 Klein from the pictures, then LTX 2.3 (keeps faces and style)",
+    "ctx": "[t] Video Studio LTX ingredients renderer"
+  },
+  {
+    "i": 20,
+    "en": "Automatic: use the best available reference workflow",
+    "ctx": "[t] Video Studio native Ingredients and character references"
+  },
+  {
+    "i": 21,
+    "en": "LTX Ingredients: native reference conditioning (no FLUX checkpoint needed)",
+    "ctx": "[t] Video Studio native Ingredients and character references"
+  },
+  {
+    "i": 22,
+    "en": "Download missing Ingredients models",
+    "ctx": "[t] Video Studio native Ingredients and character references"
+  },
+  {
+    "i": 23,
+    "en": "Optional for photographic faces; leave off for drawn or 3D characters.",
+    "ctx": "[t] Video Studio native Ingredients and character references"
+  },
+  {
+    "i": 24,
+    "en": "Download LTX Ingredients in this tab and set up the LTX engine in Models.",
+    "ctx": "[t] Video Studio native Ingredients and character references"
+  },
+  {
+    "i": 25,
+    "en": "A complete FLUX 3 Klein model is not installed. Choose Automatic, native LTX Ingredients or Phantom.",
+    "ctx": "[t] Video Studio reference generation status"
+  },
+  {
+    "i": 26,
+    "en": "The original Ingredients references or runtime are missing. Restore them before refining.",
+    "ctx": "[t] Video Studio reference generation status"
+  },
+  {
+    "i": 27,
+    "en": "first-frame generation stopped",
+    "ctx": "[t] Video Studio reference generation status"
+  },
+  {
+    "i": 28,
+    "en": "Character sheet: using the complete front view, not the repeated faces",
+    "ctx": "[t] Video Studio reference generation status"
+  },
+  {
+    "i": 29,
+    "en": "Encoding the reference sheet for native LTX Ingredients",
+    "ctx": "[t] Video Studio reference generation status"
+  },
+  {
+    "i": 30,
+    "en": "Automatic can use an installed FLUX 3 model without changing your checkpoint. Native LTX is slower and needs more RAM; describe the references and target scene separately.",
+    "ctx": "[t] Video Studio Ingredients workflow guidance"
+  }
+]

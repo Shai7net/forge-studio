@@ -26,11 +26,16 @@ class Fibo2Script(scripts.Script):
     def ui(self, is_img2img):
         tab = "img2img" if is_img2img else "txt2img"
         with gr.Group(elem_id=f"{tab}_fibo2_panel", visible=True):
-            with gr.Accordion("FIBO 2.0 · native controls", open=True):
+            with gr.Accordion("FIBO 2.0 · native controls", open=True, elem_id=f"{tab}_fibo2_controls"):
                 gr.Markdown(
                     "This panel is active only when a FIBO 2.0 model is selected in **Stable Diffusion checkpoint**. "
-                    "The main prompt, negative prompt, dimensions, seed, batch, sampler, steps and CFG above are used directly."
-                )
+                    "The main prompt, negative prompt, dimensions, seed, batch, sampler, steps and CFG above are used directly.",
+                    elem_id=f"{tab}_fibo2_model_note")
+                gr.Markdown(
+                    "FLUX 3 uses these ordered references, source size and exact mask controls. "
+                    "Write a plain-language edit instruction; quoted lettering stays in its original language. "
+                    "Use FLUX-compatible LoRAs from the normal LoRA picker; FIBO VGL and FIBO adapters are model-specific.",
+                    elem_classes=["fibo2-flux-note"])
                 mode = gr.Radio(["auto", "generate", "edit"], value="edit" if is_img2img else "auto",
                                 label="Task (Auto edits when references are supplied)", visible=not is_img2img,
                                 elem_id=f"{tab}_fibo2_mode")
@@ -51,7 +56,7 @@ class Fibo2Script(scripts.Script):
                 mask = gr.Image(type="pil", image_mode="L",
                                 label="Optional exact mask · white edits, black pixels are preserved",
                                 elem_id=f"{tab}_fibo2_mask")
-                with gr.Accordion("Text rendering, FIBO LoRA and setup", open=False):
+                with gr.Accordion("Text rendering, FIBO LoRA and setup", open=False, elem_classes=["fibo2-only"]):
                     gr.Markdown(
                         "Typography uses VGL `text_render`. JSON edits also need `edit_instruction`. "
                         "Only FIBO-compatible LoRAs can be applied; SD/FLUX LoRAs use different layers."

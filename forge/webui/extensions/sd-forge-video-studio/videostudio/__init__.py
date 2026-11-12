@@ -1,4 +1,4 @@
-"""Video Studio: Wan 2.2 text / image / first+last frame to video inside Forge, built for 8 GB cards."""
+"""Video Studio: Wan 2.2 and LTX-2.3 generation inside Forge, built for 8 GB cards."""
 
 import os
 

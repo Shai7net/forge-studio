@@ -1,5 +1,13 @@
 # FLUX 3 for Forge (sd-forge-flux3)
 
+With sd-forge-fibo2 installed, its panel becomes **FLUX 3 · native controls** when FLUX is
+selected. Up to four ordered references work from txt2img and img2img; the main img2img
+picture precedes the extra references. Single-source edits can keep the source size,
+rounded down to a multiple of 16. An exact mask requires one source and matching dimensions:
+white pixels edit, black pixels are copied from the source in pixel space. Use plain-language
+instructions and FLUX-compatible LoRAs from the normal picker. FIBO VGL and FIBO adapters
+remain specific to FIBO. API callers without shared-panel inputs retain existing FLUX behavior.
+
 FLUX 3 Image Klein (Black Forest Labs, 2026-10-15, 5.6B) as an ordinary checkpoint of this Forge (f0.0.17).
 Put the checkpoint in `models/Stable-diffusion`, choose it at the top of the page and press Generate: the text
 encoder and the VAE load with it, and the page switches to the settings FLUX 3 is made for.

@@ -40,9 +40,10 @@
 
 #hebrew-ui-toggle.hebrew-ui-floating {
     position: fixed;
-    top: 8px;
+    top: 4px;
     right: 12px;
     z-index: 1000;
+    font-size: 12px;
 }
 
 /* the language menu under the button */

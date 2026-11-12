@@ -611,7 +611,7 @@
  },
  {
   "i": 122,
-  "en": "The person in your video becomes the character in your picture: the motion, the face's expressions, the camera and the background stay (Wan 2.2 Animate). A picture of several people: choose one, or 'Everyone in the picture' (one pass per person). Describe the character in the prompt (clothes, hair) for the best likeness.",
+  "en": "The person in your video becomes the character in your picture: the motion, the face's expressions, the camera and the background stay (Wan 2.2 Animate). A picture of several people: choose one, or 'Everyone in the picture' (one pass per person). Describe the character in the prompt (clothes, hair) for the best likeness, and never a dance style or an occasion (waltz, wedding): the model dresses the character for it.",
   "ctx": "[t] Video Studio tab (sd-forge-video-studio, videostudio/ui.py)"
  },
  {

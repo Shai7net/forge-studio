@@ -318,6 +318,8 @@ def generate_replace(job, emit):
     result = write_outputs(job, frames_u8, report)
     # the picture the character was drawn from (cut out of a group picture), for the face pass after
     Image.open(job["character_image"]).convert("RGB").save(result["video"][:-4] + ".character.png")
+    if job.get("character_face"):
+        Image.open(job["character_face"]).convert("RGB").save(result["video"][:-4] + ".character-face.png")
     if job.get("keep_sound", True):
         with_sound = result["video"][:-4] + "-sound.mp4"
         if mux_sound(result["video"], job["driving_video"], job.get("start", 0.0), n / prep["fps"], with_sound):

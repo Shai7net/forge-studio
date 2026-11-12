@@ -1,0 +1,167 @@
+[
+ {
+  "i": 0,
+  "en": "Continue the shot",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 1,
+  "en": "Generate in the selected range",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 2,
+  "en": "Generate video in the selected range",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 3,
+  "en": "Generate sound effects in the selected range",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 4,
+  "en": "Generate music in the selected range",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 5,
+  "en": "Delete selected clips",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 6,
+  "en": "Clear the selected range",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 7,
+  "en": "The sound is ready in its original project",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 8,
+  "en": "Sound saved for reuse",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 9,
+  "en": "Writing the audio prompt in English…",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 10,
+  "en": "English prompt: {0}",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 11,
+  "en": "Ready: {0}",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 12,
+  "en": "Music for the selected range",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 13,
+  "en": "Sound effects for the selected range",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 14,
+  "en": "Describe what is heard in any language",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 15,
+  "en": "Save sound for reuse",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 16,
+  "en": "{0} saved sounds",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 17,
+  "en": "Add to the timeline",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 18,
+  "en": "Remove from the sound library",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 19,
+  "en": "Selected: {0} seconds at {1}",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 20,
+  "en": "Drag on an empty lane to select time, then generate here or right-click the range.",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 21,
+  "en": "Describe the music in any language",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 22,
+  "en": "Describe the sound effect in any language",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 23,
+  "en": "Make sound effects",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 24,
+  "en": "Search saved sounds",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 25,
+  "en": "All sounds",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 26,
+  "en": "Download free sounds (CC0)",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 27,
+  "en": "Downloading the free sound packs…",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 28,
+  "en": "Save generated sounds for reuse",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 29,
+  "en": "Sound library",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 30,
+  "en": "Audio prompts are written in English for the sound model. Each generation waits its turn for the graphics card.",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 31,
+  "en": "Name this sound",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ },
+ {
+  "i": 32,
+  "en": "The project changed; request cancelled",
+  "ctx": "[t] Forge Studio timeline and sound library"
+ }
+]

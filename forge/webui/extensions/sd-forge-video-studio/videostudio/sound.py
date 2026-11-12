@@ -9,6 +9,7 @@ A job runs in a thread of its own and keeps Forge's queue until it ends, so it s
 """
 
 import json
+import math
 import os
 import re
 import shutil
@@ -154,25 +155,16 @@ def make_effects(task, video, prompt, negative, seed, out, span=(0, 1), text_onl
 
 
 def _segment(video, start, length, fps, out):
-    """[start, start + length) of the video at its own frame rate; past its end the last second plays back and
-    forth (a still frame would freeze the face while it talks)."""
-    total = duration(video)
-    ff = ffmpeg()
-    if start + length <= total + 1e-3:
-        subprocess.run([ff, "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{start:.3f}", "-i", video, "-t", f"{length:.3f}",
-                        "-an", "-r", f"{fps:g}", "-c:v", "libx264", "-crf", "12", "-preset", "fast", out], check=True)
-        return
-    tail = min(1.0, total - start) if total - start > 0.2 else 1.0
-    tail_start = max(0.0, total - tail)
-    need = start + length - total
-    loops = int(need / (2 * tail)) + 2
-    chain = "".join(f"[f{i}][r{i}]" for i in range(loops))
-    graph = (f"[0:v]trim=start={start:.3f},setpts=PTS-STARTPTS[main];"
-             f"[0:v]trim=start={tail_start:.3f},setpts=PTS-STARTPTS,split={loops}" + "".join(f"[t{i}]" for i in range(loops)) + ";"
-             + "".join(f"[t{i}]split[f{i}][rr{i}];[rr{i}]reverse[r{i}];" for i in range(loops))
-             + f"[main]{chain}concat=n={1 + 2 * loops}:v=1:a=0,trim=duration={length:.3f}[v]")
-    subprocess.run([ff, "-hide_banner", "-loglevel", "error", "-y", "-i", video, "-filter_complex", graph, "-map", "[v]",
-                    "-r", f"{fps:g}", "-c:v", "libx264", "-crf", "12", "-preset", "fast", out], check=True)
+    """Play the requested source once, in order, then hold its last frame for any remaining speech.
+
+    MuseTalk/LivePortrait still animate the mouth on the held frame. Replaying the last second forwards then
+    backwards made an entering character jump back, walk in again and reverse direction during long speech.
+    """
+    if not all(math.isfinite(v) for v in (start, length, fps)) or start < 0 or length <= 0 or fps <= 0:
+        raise ValueError("invalid video segment")
+    subprocess.run([ffmpeg(), "-hide_banner", "-loglevel", "error", "-y", "-ss", f"{start:.9f}", "-i", video,
+                    "-vf", f"setpts=PTS-STARTPTS,fps={fps:g},tpad=stop_mode=clone:stop_duration={length:.9f}",
+                    "-t", f"{length:.9f}", "-an", "-c:v", "libx264", "-crf", "12", "-preset", "fast", out], check=True)
 
 
 def lipsync(task, video, speech, start, out, span=(0, 1)):
@@ -182,13 +174,13 @@ def lipsync(task, video, speech, start, out, span=(0, 1)):
     w, h, fps = video_info(video)
     total = duration(video)
     said = duration(speech)
-    length = max(total, start + said)
+    length = math.ceil(max(total, start + said) * fps - 1e-8) / fps
     seg = os.path.join(task.dir, "talk_in.mp4")
     _segment(video, 0.0, length, fps, seg)
     padded = os.path.join(task.dir, "talk_sound.wav")
     delay = int(round(start * 1000))
     subprocess.run([ffmpeg(), "-hide_banner", "-loglevel", "error", "-y", "-i", speech,
-                    "-af", f"aresample=16000,adelay={delay}|{delay},apad,atrim=duration={length:.3f}", "-ac", "1", padded], check=True)
+                    "-af", f"aresample=16000,adelay={delay}|{delay},apad,atrim=duration={length:.9f}", "-ac", "1", padded], check=True)
     python = os.path.join(MUSETALK_HOME, "env", "Scripts", "python.exe")
     work = os.path.join(MUSETALK_HOME, "work", f"vs-{time.time_ns()}")
     env = _clean_env({"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "HF_HOME": os.path.join(MUSETALK_HOME, "hf"),

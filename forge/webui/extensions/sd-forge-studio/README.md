@@ -1,5 +1,22 @@
 # Forge Studio
 
+Lip-sync results play their embedded speech as part of the video. Moving, trimming,
+splitting or changing speed keeps speech synchronized. Unchanged older automatic speech
+clips are folded back into their existing talking video when the project opens;
+customized audio is preserved. Undo restores that conversion.
+
+Right-click a video and choose **Detach audio (keep linked)** or **Detach audio (independent)**.
+Linked audio and video move, trim, split, duplicate and delete together. **Unlink audio
+(move independently)** lets sound stay in place; **Link audio to video (restore sync)**
+realigns it. Combining an extended shot also includes linked sound. Originals remain available.
+
+Long generation jobs show a green frog, actual percentage and a remaining-time estimate
+after enough measured progress. Loading/queued work has no invented countdown. A short
+synthesized croak signals success after a user gesture enables browser audio; the speaker
+button mutes it. Reduced-motion preferences are respected. Image generation uses this
+feedback for FIBO and when a normal bar is missing or stalled at zero. A new gallery result
+is required before playing the completion sound.
+
 A video editor inside Forge, in the spirit of CapCut and Higgsfield, where everything Forge can make is part of
 the edit: a shot made from words drops into the timeline, a clip is continued or made again with a click, a frame
 is repainted and the change carried through the clip, a person is cut out onto a new background, narration, music,
@@ -7,10 +24,37 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
 
 ## The editor
 
+- **Mouse ranges and selection:** drag a rectangle from empty space on a timeline lane, just as when selecting
+  files. Every intersecting clip is selected (Ctrl/Shift adds to the selection), and the time range stays blue
+  even when it contains no clips. Dragging selected clips moves them together. The ruler still scrubs normally.
+  Right-click the range, or press its blue range button in the timeline toolbar: video lanes offer video generation;
+  audio lanes offer sound effects or music. The request uses the selected start and duration, independently of the
+  playhead. Occupied destinations use a free layer rather than overwrite existing media. Escape clears the range.
+- **Extend a shot by its edge:** pull a video's edge beyond the available source footage. A striped AI extension
+  shows the added seconds; releasing asks for **Continue the shot** for exactly that time. Normal trimming still
+  reveals existing source frames first. The right edge continues from the last visible frame; the left edge makes
+  pre-roll that ends on the first visible frame. At time zero, the whole edit moves together to make room. Escape
+  cancels a drag. Requests longer than a model window are continued in pieces; the result is fitted to the edit's
+  frame rate and requested duration. Requests and placeholders survive a page reload.
+- **Sound library:** the Sound panel has searchable music and effects with previews, add and remove controls.
+  Generated effects and music are saved for reuse by default (the checkbox can turn this off); use **Save sound
+  for reuse** on an audio clip or a recent result to save it manually. Using a saved sound copies it into the project,
+  so removing the library entry cannot break existing edits. The library lives in the local Forge Studio data folder.
+  **Download free sounds (CC0)** installs Kenney's [Interface Sounds](https://kenney.nl/assets/interface-sounds)
+  and [Music Jingles](https://kenney.nl/assets/music-jingles), with license files retained locally. Both are CC0.
+- **Audio in any language:** effects and music prompts use the installed multilingual prompt writer with separate
+  MMAudio and ACE-Step instructions. It describes audible events or musical instruments, tempo and mood in English,
+  and shows the resulting prompt. Translation errors are reported instead of silently submitting untranslated text.
+  A two-second audio selection produces a two-second WAV at that exact timeline position, including on an empty
+  audio lane. Effects for a video use its visible trim and speed instead of the whole source file.
+
 - **Top bar:** the project (open, new, with its shape), the shape of the video (9:16, 16:9, 1:1, 4:5, 3:4),
   ⛶ to lay the editor over all of Forge (Esc returns), Export.
-- **Side panels:** Media (every file in Forge's output folders, newest first; drag to the timeline, double-click
-  or + to add at the playhead; ⤒ brings files from the computer), AI, Sound, Text.
+- **Side panels:** Media starts with this project's registered imports and generated files only; a new project
+  is empty. **Show all application media** opens the global output library explicitly, and **Back to project
+  media** returns to the project bin. Search and kind filters work in both views. Opening another project resets
+  the bin to project-only. Drag to the timeline, double-click or + to add at the playhead; ⤒ imports local files.
+  The global index starts on demand. Other panels: AI, Sound, Text.
 - **A bigger preview:** ⇔ under the picture (or P) folds the side panels away (remembered); ⛶ next to it (or F)
   shows the picture alone on the whole screen (Esc returns). The line above the timeline drags it taller or shorter.
 - **Picking clips:** click one, Ctrl-click more (Ctrl-click again leaves one out), Shift-click adds; right-clicking
@@ -123,8 +167,19 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
 - **Separate the sound (🔊):** in a video's Sound section, its sound becomes a clip of its own on a free sound
   track below (same file, place, trim, speed, volume, fades, volume keyframes and lowering), and the video goes
   quiet; then it can be moved, trimmed, lowered under speech or cut to the beat on its own. One undo.
-- **Save the frame (📷, top bar):** the frame at the playhead, every layer, at the edit's full size, as the player
-  draws it, saved as a PNG next to the exports (`<project>-frame-<time>-<clock>.png`) and put in the library.
+- **Save or send a frame (📷, top bar):** captures every visible layer at the edit's full size without selection
+  guides. The preview offers **Save picture as…** (choose the name and destination) or sends the frame to img2img,
+  Inpaint, native FIBO/FLUX controls, Video Studio Image to Video or Ingredients to Video. Video/native references
+  fill the next free slot, never overwrite existing pictures, and report when full. Image to Video automatically
+  reveals the required picture rows and updates Pictures in use. The last destination is remembered while the
+  page is open. Sending does not start generation. Save As does not import the PNG or populate the global library.
+  Chromium uses its Save As picker; other browsers use the local application's native Save As dialog.
+
+  The same dialog receives Simulation 360 captures. `window.forgeFrameShare.open({canvas, filename, host})`
+  opens it; `await forgeFrameShare.send(pngDataUrl, 'img2img'|'inpaint'|'native'|'i2v'|'ingredients')` sends one
+  frame and returns `{target, slot}`. `GET /forge-studio/project/bin?name=...&kind=...&text=...&offset=0&limit=90`
+  returns the project media bin; `POST /forge-studio/still/export` accepts `{image: pngDataUrl, filename}` and
+  opens the native Save As dialog, returning `{saved, path}` or `{cancelled: true}`.
 - **A marked part (I / O):** I marks the start of a part at the playhead and O its end (by the key's place, so a
   Hebrew keyboard works too); the ruler shows it as a blue band, and with nothing selected the inspector shows it
   with ✕ to clear it. The export window's "Part" can then take just that part: the page cuts a copy of the edit to
@@ -147,6 +202,12 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
   end. By the key's place, so they work on a Hebrew keyboard too (`FS.trimTo`, `FS.nudge`, `FS.cutNear`).
 
 ## AI in the edit
+
+- **Combine after extending:** once a dragged-edge extension or continuation finishes, choose **Combine clips**
+  or **Keep separate**. Combining renders just the two adjacent visual pieces into a new take, including their
+  picture and embedded sound settings. Only successful completion replaces the two timeline pieces with one;
+  separate audio tracks and original source files remain intact. One main-timeline Undo restores both clips.
+  Declining, a render failure or edits made while rendering leave the pieces in place.
 
 - **Prompts in Hebrew:** every prompt box takes Hebrew or English; the 🌐 prompt writer (Gemma) writes the
   English prompt for the model before the request goes out, and the request shows what it wrote.
@@ -186,7 +247,8 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
   already in the edit (the part of it that plays with the clip, starting where it starts in the clip), or to written
   words that a voice of the list says (Chatterbox with niqqud, or Piper; the speech also lands on a free sound track
   under the clip): MuseTalk draws the mouth again over the whole clip, so the skin looks the same before, during and
-  after the words, and a clip shorter than the words plays back and forth past its end. Like a face video (someone
+  after the words. If the clip is shorter than the words, it plays once and holds its last frame while the mouth
+  keeps talking; it never replays the action or reverses direction. Like a face video (someone
   filmed saying it): LivePortrait (the sd-webui-live-portrait extension, called in-process) moves the character's
   lips (or, when asked, the whole face and head: livelier, but the edge of the pasted face can show on a still portrait) like the video's, and the video's sound comes with it; a still picture goes
   to it as a portrait, a video clip frame by frame. The face video has to be a close-up from the front, like a
@@ -194,6 +256,33 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
   plays the talking take from its start at normal speed (a 👄 on the timeline); "Back to the original" returns the
   file, trim, speed and ramp it had. `forgestudio/lipsync.py`; the clip's part is cut out under a plain name first.
   Measured on the RTX 3070 Laptop: written words to a 5 s clip 117 s, a sound 61 s, a 7 s face video about 40 s.
+  The result opens as a video preview with sound. **Apply to timeline** confirms it; **Cancel** closes it without
+  changing the edit. Generating a preview never applies it automatically. A repeated lip-sync starts from the
+  original source motion, and reopening the form remembers the last settings after applying. Speech is not
+  doubled: the preview's embedded voice is muted on the picture when a separate sound track supplies the words.
+  **Written speech is staged:** the text mode opens by default. All four reference voices and Piper have sample
+  buttons inside the voice dropdown. First choose a voice, language and delivery style
+  (Natural, Relaxed, Expressive or Energetic; Expression can be set by hand), then **Generate speech**.
+  This runs speech synthesis only. Listen, then tune pitch in semitones, speed, warm/bright tone and volume.
+  Piper has a fixed delivery, so style/expression are disabled for it; pitch, tone, speed and volume still work.
+  Tuning reuses the exact same raw take instead of rerolling the voice. A changed voice/style requires new speech;
+  changed playback settings update the audio preview. **Generate lip sync** stays disabled until the current
+  speech settings are prepared. The final video still requires **Apply to timeline**.
+  A mouse range inside the shot fills **Start in shot** and **Seconds**; the same action is in the range menu.
+  The speech lands at that exact offset, and the shot keeps its full length. With no selection, the whole shot
+  is the default. Automatic fitting speeds up an overlong sentence enough to retain every word; a faster manual
+  speed leaves silence at the end. The effective speed is shown. With fitting off, speech that cannot fit is
+  rejected rather than truncated. Very short selections that need more than 8x acceleration ask for more time.
+  **The lip workspace** puts the video above its own speech timeline. Voice samples play from buttons inside the
+  voice dropdown. Expression, speed, pitch, tone and gain have sliders with small numerical fields; extra tuning
+  folds away. After making speech, drag a waveform to place it within the shot, drag its edges to trim, click the
+  ruler to seek, use **Split** / S and **Delete**, or Shift-drag across speech and delete the marked range.
+  **Remove silence** removes detected quiet stretches within the selected piece (or all pieces if none is selected),
+  retaining a short margin around words and closing the removed gaps within that piece. Local Undo/Redo and Ctrl+Z/Y
+  affect speech edits only. The original recording is retained. Playback and lip generation use the same compiled
+  audio; applying creates editable speech pieces at their exact positions in the main timeline. Reopening remembers
+  the raw take, tuning and cuts. Slower tuning that would overlap or truncate edited pieces is rejected.
+  See [LIP-EDITOR-DESIGN.md](LIP-EDITOR-DESIGN.md) for layout and interaction rules.
 - **Text and captions:** text clips in six looks (title, title at the top, lower third, caption, full-screen card,
   the SHAI TIRI signature), edited in the inspector; captions from the edit's own sound by Whisper large-v2, one
   caption clip per sentence on a track of their own.
@@ -208,6 +297,47 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
   `FS.drawShape`; a sticker is a big emoji in the middle), so they are dragged in the picture, keyed, animated and
   exported like any text. Checked: a star, an outlined heart, a turned arrow and a 🔥 export as the player shows
   them (an average difference of 0.46 of 255 over the frame).
+
+## The image workspace (image shots)
+
+A picture shot made or edited like in a photo editor, without leaving the edit. **🖼＋** in the timeline bar puts a
+new empty shot at the playhead (the edit's size, white) and opens it; **🖼 Open in the image workspace** in an image
+clip's menu opens any picture (it becomes the first layer). The player is covered by the canvas, a column of tools
+stands beside it and the layers take the inspector's place; the timeline stays. Picking another clip saves and closes.
+
+- **Tools:** move (V; arrows a pixel, Shift ten), rectangle / ellipse selection (M), lasso (L), magic wand (W:
+  tolerance, contiguous), 🎯 select an object (A, AI), brush and eraser (B / E: size, hardness, opacity; `[` `]`),
+  fill (G: the selection, or the area like the clicked one), eyedropper (I), text (T: a text layer whose words stay
+  editable, Hebrew right to left), crop (C, then Enter), hand (space) and zoom (Z, the wheel, Ctrl+0 fit). Two colours
+  (X swaps, D white and black). Selections show marching ants; Shift adds, Alt takes away, with a feather.
+- **Layers:** visibility, opacity, 16 blend modes, order, duplicate, merge down, delete, rename, a picture from the
+  computer (or dropped / pasted onto the canvas). Ctrl+J makes a layer of the selected pixels, Ctrl+C / Ctrl+V copy and
+  paste, Delete clears the selection, Ctrl+A / Ctrl+D / Ctrl+Shift+I select all / none / invert, Ctrl+Z / Ctrl+Y undo
+  and redo (30 steps; a removed layer comes back with its pixels).
+- **Generate with Forge**, with the checkpoint chosen at the top of Forge, the five ways of Forge's tabs: from words
+  (txt2img), the picture again (img2img), sketch (paint colours first), inpaint (only the selection) and inpaint
+  sketch. Prompt (Hebrew is translated), negative, steps, CFG, sampler, schedule, seed, 1-4 variations (they swap into
+  the same layer), strength, and for inpaint the masked content, the area only at full size, its soft edge and room.
+  **SD 1.5 / SDXL** go through Forge's own API functions in this process, so **ControlNet** works with every
+  preprocessor and model Forge has (the ones made for the model first), its picture from the shot, a layer or a file.
+  **FIBO 2.0** and **FLUX 3** show their **native controls** instead (ordered references, the prompt writer, keeping
+  the source size); FLUX 3 without references inpaints through Forge's classic mask like its Inpaint tab (its
+  "edit with reference" path drew a flat block for a description). Every result is a new layer; an inpaint result
+  only inside the selection.
+- **AI tools:** select the subject (BiRefNet-lite), select an object with a click (SAM ViT-B from the Segment Anything
+  extension's models; one click takes the whole object, Shift+click adds, Alt+click takes a part away), remove the
+  background (on a copy of the active layer, the original hidden), take away what is selected (LaMa from the Cleaner
+  extension; best for small things), add something in the selection (inpaint).
+- **Done:** 💾 save into the shot (the clip shows the flattened picture; Ctrl+S), 🎬 make a video from it (Wan starts
+  from it; the clip goes right after the shot), 📤 save / send (a PNG file, or to img2img, Inpaint, FIBO / FLUX
+  references, or Video Studio's Image to Video / Ingredients, where Wan and LTX are).
+
+On the server: `forgestudio/imagedoc.py` keeps a shot as `images/<shot>/doc.json` and one PNG per layer (a layer whose
+pixels change gets a new file name), the flattened picture as `media/shot-<shot>-<n>.png` (earlier ones go when the
+workspace opens and no clip shows them, so an undo in the editor never points at a removed file);
+`forgestudio/imagegen.py` generates; `forgestudio/imageai.py` runs BiRefNet, SAM and LaMa under Forge's queue with
+Forge's models off the card. Measured on the RTX 3070 Laptop: SD 1.5 from words with a canny ControlNet 16 s, an
+inpaint 8 s, FLUX 3 inpaint 36 s, FIBO 2.0 Dev 12 steps 118 s; the subject 8 s, an object 3 s, LaMa 10 s.
 
 ## How it is built
 
@@ -241,6 +371,34 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
 
 All routes are under `/forge-studio/` on Forge's address.
 
+Range-aware audio and saved sounds:
+
+```javascript
+const task = await ForgeStudio.api('sound/effects', {
+    name: ForgeStudio.state.project, words: 'Three knocks on a wooden door', seconds: 2
+}); // no web: sound from words; web/start/speed: sound from a trimmed video
+const ready = await ForgeStudio.follow(task);
+await ForgeStudio.api('sound/save', {name: ForgeStudio.state.project, web: ready.web, label: 'Wooden door', kind: 'effects'});
+const saved = await ForgeStudio.api('sound/library');
+// POST sound/use {name, id} -> {web}; POST sound/remove {id}; GET sound/file?id=... (preview)
+// POST sound/install {} -> task; POST sound/music {name, caption, seconds, seed?}
+```
+
+```python
+import requests
+base = "http://127.0.0.1:7861/forge-studio/"
+task = requests.post(base + "sound/music", json={"name": "My film", "caption": "Soft piano", "seconds": 2}).json()
+print(requests.get(base + "task", params={"id": task["id"]}).json())
+```
+
+```bash
+curl -X POST http://127.0.0.1:7861/forge-studio/sound/effects -H "Content-Type: application/json" -d '{"name":"My film","words":"Footsteps on gravel","seconds":2}'
+curl http://127.0.0.1:7861/forge-studio/sound/library
+```
+
+Video generation also accepts `direction: "before" | "after"`, `fps` and `seconds` (1/120–240).
+The UI rounds to edit frames. No paid API or new model download is needed for these features.
+
 ```bash
 curl "http://127.0.0.1:7860/forge-studio/project?name=My%20film"
 curl -X POST http://127.0.0.1:7860/forge-studio/render/start -H "Content-Type: application/json" -d "{\"name\": \"My film\", \"doc\": {...}, \"preset\": \"h264\", \"loudness\": -14}"
@@ -272,9 +430,53 @@ frame, bounded memory for huge
 sizes, music lowered under speech, volume keyframes, freeze frames and backwards, soft sound at cuts, typewriter text, converting an old
 project), `test_generate` (requests with a stand-in Video Studio; the frame a continuation starts from, also at
 the very end of a 15 fps clip on a 30 fps timeline), `test_continuers` (which tool made a clip, AnimateDiff's request
-and Deforum's settings for a continuation), `test_frames` (carrying an edit through a clip).
+and Deforum's settings for a continuation), `test_frames` (carrying an edit through a clip), `test_imagedoc`
+(image shots: a new one, from a picture, saving layers, old flattened pictures).
 
 `node tests/test_core_js.js` runs the page's core without a browser (keyframes, splitting with keyframes, cutting
 to the beat, undo, music under speech, transitions, freeze frames, volume keyframes, looks, crop, masks, markers,
 copying style, animations, separating the sound, speed ramps, chroma key, blurred background, auto reframe, a marked
 part, taking a lip sync and going back, soft sound at a cut, typewriter counts, templates, shapes, keyboard trimming); `tests/test_beats.py` checks the beat finder on music made with known beats.
+
+`tests/test_ranges_sound.py` checks exact short audio, empty-lane and trimmed-video effect requests, multilingual
+audio targets, multi-window video duration, invalid ranges and library removal without breaking project copies.
+The JavaScript tests also cover reversed empty ranges, fixed placement with the main-track magnet on, overlap
+protection and cancelling a pointer edit.
+`node tests/test_generation_js.js` checks failed and cancelled pre-roll rollback, failed takes, stale project
+responses and restoring an edit when submission fails.
+`tests/test_lipsync.py` checks self-contained previews, retained speech and untouched original media/edit.
+`tests/test_lipspeech.py` checks speech-only generation, independent pitch/speed with real audio measurements,
+exact selection duration, silence padding, no word truncation, voice/expression forwarding and invalid controls.
+Video Studio's `tests/test_sound.py` also checks every frame of a synthetic clip to ensure a long spoken line
+never makes it run backwards or replay.
+
+Speech-stage API (all under `/forge-studio/`):
+
+```javascript
+const name = ForgeStudio.state.project;
+const raw = await ForgeStudio.follow(await ForgeStudio.api('lips/speech', {
+    name, text: 'I need your help!', language: 'English', voice: 'Hebrew woman 1',
+    seconds: 2, delivery: 'Expressive', expressive: 0.85
+}));
+const tuned = await ForgeStudio.follow(await ForgeStudio.api('lips/prepare-speech', {
+    name, web: raw.raw, seconds: 2, speed: 1.1, pitch: 2, tone: -0.3, gain: 0, fit: true
+}));
+// Listen to project/media?name=...&web=<tuned.web> before calling lips.
+// POST lips: mode="prepared", options={speech:tuned.web, offset:1, clip_seconds:5, source_speed:1}.
+// The resulting speech clip starts one second inside the five-second shot; the shot remains five seconds.
+```
+
+`GET lips/options` includes installed voices, sample availability and delivery presets;
+`GET lips/voice-file?voice=...` streams an allowlisted sample, and `POST lips/voice-sample {voice}` caches a missing
+Piper sample. Voice previews, raw speech and settings stay in local data/project folders.
+
+`POST lips/edit-speech {name, web, seconds, segments:[{start, in, duration}, ...]}` compiles a non-overlapping
+speech edit into an exact shot-length WAV. This is the file auditioned and used by `mode: "prepared"` with offset 0.
+`POST clip/merge {name, clips:[first, second], settings}` renders two adjacent visual clips into a new project file.
+Both are tasks followed through `task?id=...`; neither endpoint changes the saved project document.
+
+`node tests/test_speech_editor_js.js` covers local edits, bounds, source-time preservation, silence removal and undo.
+`node tests/test_modal_keys_js.js` verifies that window-level shortcuts defer to dialogs instead of editing the
+main timeline, while keeping the main shortcuts working when dialogs are closed.
+`tests/test_combine.py` renders real clips and checks order, duration and original preservation;
+`test_generation_js.js` also covers merge decline, failure, stale responses and undo/redo.

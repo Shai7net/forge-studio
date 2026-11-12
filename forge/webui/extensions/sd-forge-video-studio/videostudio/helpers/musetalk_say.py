@@ -119,7 +119,11 @@ def main():
         features, length = audio.get_audio_feature(sound)
         chunks = audio.get_whisper_chunk(features, device, kind, whisper, length, fps=fps, audio_padding_length_left=2, audio_padding_length_right=2)
         # each frame's face, as the model sees it (a frame with no face is passed on as it is, in its place)
-        total = min(len(frames), len(chunks))
+        if not len(chunks):
+            raise RuntimeError("the speech produced no audio features")
+        # Whisper rounds the audio down to whole frames. Keep the video's final frame as well (rounding away
+        # one frame cut the end of a 7.53 s line at 32 fps); only that tiny audio remainder uses the last chunk.
+        total = len(frames)
         latents, with_face = [], []
         for index in range(total):
             box, frame = boxes[index], frames[index]
@@ -136,7 +140,7 @@ def main():
         size = max(1, a.batch)
         for start in range(0, len(with_face), size):
             some = with_face[start:start + size]
-            said = pe(torch.stack([chunks[i] for i in some]).to(device))
+            said = pe(torch.stack([chunks[min(i, len(chunks) - 1)] for i in some]).to(device))
             latent_batch = torch.cat(latents[start:start + size], dim=0).to(device=device, dtype=kind)
             predicted = unet.model(latent_batch, timesteps, encoder_hidden_states=said).sample
             for index, mouth in zip(some, vae.decode_latents(predicted)):

@@ -91,7 +91,8 @@ class Runner:
                         on_progress(self.status())
                 if self.process.returncode:
                     tail = logpath.read_text(encoding="utf-8", errors="replace")[-2500:]
-                    raise RuntimeError(f"FIBO worker failed. Log: {logpath}\n{tail}")
+                    code = self.process.returncode
+                    raise RuntimeError(f"FIBO worker failed (exit {code}, 0x{code & 0xffffffff:08X}). Log: {logpath}\n{tail}")
             response = json.loads((jobdir / "result.json").read_text(encoding="utf-8"))
             response["log"] = str(logpath)
             self.last = {"stage": "done", **response}

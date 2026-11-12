@@ -22,9 +22,9 @@ def _base():
     return f"http://127.0.0.1:{port}"
 
 
-def write(text, field, timeout=240):
+def write(text, field, timeout=240, video_mode=""):
     """The writer's answer for `text` written for `field`'s target: {"prompt", "meaning", ...}."""
-    body = json.dumps({"text": text, "field": field, "video_mode": "", "again": False,
+    body = json.dumps({"text": text, "field": field, "video_mode": video_mode, "again": False,
                        "seed": random.randint(0, 10 ** 9)}).encode()
     req = urllib.request.Request(_base() + "/translator/write", body, {"Content-Type": "application/json"})
     try:

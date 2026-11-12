@@ -11,14 +11,16 @@ aside first, so it never shares the 8 GB card with a picture being drawn.
 """
 
 import json
+import math
 import os
 import re
 import subprocess
 import sys
 import time
+import types
 import uuid
 
-from . import frames, library, paths, projects
+from . import frames, library, media, paths, projects
 
 SD_ROOT = os.path.normpath(os.path.join(paths.WEBUI, "..", ".."))
 WHISPER_PY = os.path.join(SD_ROOT, "auto-subtitle-main", "venv", "Scripts", "python.exe")
@@ -157,7 +159,7 @@ def _voice(task, name, text, language, voice_name, expressive, seed):
     choices = vs.voice_choices()
     voice_name = voice_name if voice_name in choices else choices[0]
     work = _folder(name, "voice-" + uuid.uuid4().hex[:6])
-    out = os.path.join(_folder(name, "made"), f"voice-{time.strftime('%H%M%S')}.wav")
+    out = os.path.join(_folder(name, "made"), f"voice-{uuid.uuid4().hex[:10]}.wav")
     t = _Task(task, work)
     task["text"] = "making the voice"
     _on_card(lambda: vs.make_speech(t, text, language, voice_name, out, exaggeration=expressive, seed=seed))
@@ -169,48 +171,119 @@ def _voice(task, name, text, language, voice_name, expressive, seed):
 def music(name, caption, seconds, seed=-1):
     if not (caption or "").strip():
         raise ValueError("describe the music")
-    seconds = max(5.0, min(240.0, float(seconds)))
+    seconds = _seconds(seconds, 240)
     return frames._task("music", _music, name, caption.strip(), seconds, int(seed))
 
 
 def _music(task, name, caption, seconds, seed):
     if not os.path.isfile(ACE_PY):
         raise RuntimeError(f"ACE-Step is not installed ({ACE_HOME})")
-    work = _folder(name, "music-" + uuid.uuid4().hex[:6])
-    out = os.path.join(_folder(name, "made"), f"music-{time.strftime('%H%M%S')}.wav")
+    caption = _english(task, caption, "fs_music")
+    work = _folder(name, "music-" + uuid.uuid4().hex[:8])
+    out = os.path.join(_folder(name, "made"), f"music-{uuid.uuid4().hex[:10]}.wav")
     request = os.path.join(work, "request.json")
     with open(request, "w", encoding="utf-8") as f:
-        json.dump({"home": ACE_HOME, "caption": caption, "seconds": seconds, "seed": seed, "out": out, "work": work,
+        json.dump({"home": ACE_HOME, "caption": caption, "seconds": max(5, seconds), "seed": seed, "out": out, "work": work,
                    "instrumental": True}, f, ensure_ascii=False)
     task["text"] = "ACE-Step is composing"
     _on_card(lambda: _run([ACE_PY, "-u", os.path.join(HELPERS, "music_make.py"), request], work,
                           _env({"HF_HOME": HF_CACHE}), task, os.path.join(work, "music.log")))
     if not os.path.isfile(out):
         raise RuntimeError("ACE-Step made nothing")
+    _fit_audio(out, seconds)
     return _result(name, out, f"{seconds:.0f} s of music")
 
 
 # ---- effects for a clip ----
 
-def effects(name, web, words="", seed=0):
-    return frames._task("effects", _effects, name, web, words or "", int(seed))
+def effects(name, web=None, words="", seed=0, seconds=None, start=0.0, speed=1.0):
+    if not web and not (words or "").strip():
+        raise ValueError("describe the sound effect")
+    seconds = _seconds(seconds, 240) if seconds is not None else None
+    start, speed = float(start), float(speed)
+    if not math.isfinite(start) or start < 0 or not math.isfinite(speed) or not 0.1 <= speed <= 8:
+        raise ValueError("invalid sound source range")
+    return frames._task("effects", _effects, name, web, words or "", int(seed), seconds, start, speed)
 
 
-def _effects(task, name, web, words, seed):
+def _effects(task, name, web, words, seed, seconds=None, start=0.0, speed=1.0):
     vs = _vs_sound()
     if not vs.status()["effects"]:
         raise RuntimeError("MMAudio is not installed")
-    source = projects.media_path(name, web)
-    if library.kind_of(source) != "video":
+    source = projects.media_path(name, web) if web else None
+    if source and library.kind_of(source) != "video":
         raise ValueError("sound effects are made from a video clip")
-    work = _folder(name, "effects-" + uuid.uuid4().hex[:6])
-    out = os.path.join(_folder(name, "made"), f"effects-{time.strftime('%H%M%S')}.wav")
+    words = _english(task, words, "fs_effects") if words.strip() else ""
+    seconds = seconds or (media.probe(source).get("duration") if source else 5)
+    seconds = _seconds(seconds, 240)
+    model_seconds = max(1.0, seconds)
+    work = _folder(name, "effects-" + uuid.uuid4().hex[:8])
+    out = os.path.join(_folder(name, "made"), f"effects-{uuid.uuid4().hex[:10]}.wav")
+    carrier = os.path.join(work, "source.mp4")
+    exe = library.ffmpeg()
+    cmd = [exe, "-v", "error", "-y"]
+    if source:
+        cmd += ["-ss", str(start), "-i", source, "-vf",
+                f"setpts=(PTS-STARTPTS)/{speed},scale=320:-2,tpad=stop_mode=clone:stop_duration={model_seconds},fps=25"]
+    else:
+        cmd += ["-f", "lavfi", "-i", "color=c=black:s=320x180:r=25"]
+    cmd += ["-t", str(model_seconds), "-an", "-c:v", "libx264", "-preset", "ultrafast", carrier]
+    subprocess.run(cmd, capture_output=True, check=True, timeout=180,
+                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     t = _Task(task, work)
     task["text"] = "MMAudio is listening to the picture"
-    _on_card(lambda: vs.make_effects(t, source, words, "music, speech, talking", seed, out))
+    _on_card(lambda: vs.make_effects(t, carrier, words, "music, speech, talking", seed, out, text_only=not bool(source)))
     if not os.path.isfile(out):
         raise RuntimeError("MMAudio made no sound")
-    return _result(name, out, "sound effects for " + web)
+    _fit_audio(out, seconds)
+    return _result(name, out, f"{seconds:g} s of sound effects")
+
+
+def _seconds(value, maximum=240):
+    seconds = float(value)
+    if not math.isfinite(seconds) or not 1 / 120 - 1e-9 <= seconds <= maximum:
+        raise ValueError(f"duration must be between 1/120 and {maximum} seconds")
+    return seconds
+
+
+def _english(task, text, field):
+    """Reuse the installed prompt writer, before taking the generation queue. Never feed an untranslated failure silently."""
+    # Read module dictionaries directly: torch.classes and lazy modules run code on getattr.
+    writer = next((m for m in list(sys.modules.values()) if isinstance(m, types.ModuleType)
+                   and isinstance(vars(m).get("EXT_DIR"), str)
+                   and vars(m)["EXT_DIR"].replace("\\", "/").endswith("/hebrew-translator")
+                   and callable(vars(m).get("write"))), None)
+    bridge = sys.modules.get("prompt_writer")
+    if isinstance(bridge, types.ModuleType) and callable(vars(bridge).get("audio_write")):
+        writer = types.SimpleNamespace(write=vars(bridge)["audio_write"], engine_name=vars(bridge)["audio_engine_name"])
+    task.update(text="writing the audio prompt in English", source_prompt=text)
+    if writer is None or (callable(getattr(writer, "engine_name", None)) and writer.engine_name() is None):
+        if any(ord(c) > 127 and c.isalpha() for c in text):
+            raise RuntimeError("The multilingual prompt writer is unavailable. Start the Prompt writer extension or enter an English prompt.")
+        task["prompt"] = text
+        return text
+    while True:
+        try:
+            answer = writer.write(text, field)
+            break
+        except Exception as exc:
+            if type(exc).__name__ != "Busy":
+                raise
+            task["text"] = "waiting for the card to write the audio prompt"
+            time.sleep(1)
+    prompt = (answer.get("prompt") or "").strip()
+    if not prompt:
+        raise RuntimeError("The audio prompt writer returned no English prompt. Try again.")
+    task["prompt"] = prompt
+    return prompt
+
+
+def _fit_audio(path, seconds):
+    target = os.path.splitext(path)[0] + "-fit.wav"
+    subprocess.run([library.ffmpeg(), "-v", "error", "-y", "-i", path, "-af",
+                    f"apad,atrim=duration={seconds:.9f},asetpts=PTS-STARTPTS", "-c:a", "pcm_s16le", target],
+                   check=True, capture_output=True, timeout=180, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    os.replace(target, path)
 
 
 def _result(name, path, text):

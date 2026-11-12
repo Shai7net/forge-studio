@@ -33,9 +33,11 @@
 
     /* a task the server runs (frames.tasks), followed until it ends */
     FS.follow = async function (task, onText) {
+        FS.emit('task-progress', task);
         while (task.state === 'running') {
             await new Promise((r) => setTimeout(r, 1200));
             task = await FS.api('task?id=' + task.id);
+            FS.emit('task-progress', task);
             if (onText) onText(task);
         }
         if (task.state === 'error') throw new Error(task.text);
@@ -502,6 +504,7 @@
         let result;
         changing++;
         try { result = fn(S.doc); } finally { changing--; }
+        if (FS.reconcileAudioLinks) FS.reconcileAudioLinks(JSON.parse(before), true);
         const after = JSON.stringify(S.doc);
         if (before !== after) {
             history.undo.push({label, doc: before});
@@ -526,13 +529,20 @@
         changed(true);
     };
     /* a drag: the document changes live while the pointer moves, and becomes one undo step when it is let go */
-    let pending = null;
-    FS.beginEdit = () => { pending = JSON.stringify(S.doc); };
-    FS.liveEdit = () => FS.emit('doc', {live: true});
+    let pending = null, linkBaseline = null;
+    FS.beginEdit = () => { pending = JSON.stringify(S.doc); linkBaseline = pending; };
+    FS.cancelEdit = () => { if (pending != null) { S.doc = JSON.parse(pending); pending = null; linkBaseline = null; FS.liveEdit(); } };
+    FS.liveEdit = () => {
+        if (FS.reconcileAudioLinks) FS.reconcileAudioLinks(linkBaseline ? JSON.parse(linkBaseline) : null);
+        if (pending != null) linkBaseline = JSON.stringify(S.doc);
+        FS.emit('doc', {live: true});
+    };
     FS.commitEdit = function (label) {
         if (pending == null) return;
         const before = pending;
+        if (FS.reconcileAudioLinks) FS.reconcileAudioLinks(linkBaseline ? JSON.parse(linkBaseline) : JSON.parse(before), true);
         pending = null;
+        linkBaseline = null;
         if (before !== JSON.stringify(S.doc)) {
             history.undo.push({label, doc: before});
             if (history.undo.length > history.limit) history.undo.shift();
@@ -596,6 +606,8 @@
             const info = S.info[c.media];
             if (info && c.kind !== 'text' && c.kind !== 'gen') c.kind = info.kind === 'image' ? 'image' : info.kind === 'audio' ? 'audio' : 'video';
         }
+        if (FS.migrateLipAudio) FS.change('embed existing lip audio', () => FS.migrateLipAudio());
+        if (FS.reconcileAudioLinks) FS.reconcileAudioLinks(null);
         try { localStorage.setItem('forgeStudio.project', name); } catch (e) { /* storage off */ }
         FS.emit('project', {name, migrated: p.migrated, missing: Object.keys(S.media).filter((w) => S.media[w].missing)});
         FS.emit('doc', {structural: true});
@@ -625,7 +637,7 @@
         opts = opts || {};
         const info = await FS.probe(web);
         const kind = info.kind === 'image' ? 'image' : info.kind === 'audio' ? 'audio' : 'video';
-        const duration = kind === 'image' ? (opts.seconds || 5) : Math.max(1 / FS.fps(), info.duration || 5);
+        const duration = opts.seconds != null ? Math.min(opts.seconds, info.duration || opts.seconds) : kind === 'image' ? 5 : Math.max(1 / FS.fps(), info.duration || 5);
         let trackId = where && where.track;
         return FS.change('add', (d) => {
             if (!trackId || !FS.track(trackId) || (FS.track(trackId).kind === 'audio') !== (kind === 'audio')) {
@@ -633,9 +645,10 @@
             }
             const time = where && where.time != null ? where.time : S.time;
             const clip = {id: FS.newId(), track: trackId, kind, media: web, start: FS.snapTime(time), duration, in: 0};
+            if (opts.exact) clip.fixedStart = true;
             if (opts.extra) Object.assign(clip, opts.extra);
             d.clips.push(clip);
-            FS.place(clip, opts.mode || (FS.track(trackId).main ? 'insert' : 'free'));
+            FS.place(clip, opts.exact ? 'exact' : opts.mode || (FS.track(trackId).main ? 'insert' : 'free'));
             S.selected = [clip.id];
             return clip;
         });
@@ -671,14 +684,14 @@
     FS.place = function (clip, mode) {
         const track = FS.track(clip.track);
         const others = S.doc.clips.filter((c) => c.track === clip.track && c.id !== clip.id).sort((a, b) => a.start - b.start);
-        if (track.main && FS.magnet) {
+        if (track.main && FS.magnet && mode !== 'exact' && !clip.fixedStart) {
             // inserted at the nearest cut to its start; everything after moves along
             const order = others.slice();
             let index = order.findIndex((c) => clip.start < c.start + c.duration / 2);
             if (index < 0) index = order.length;
             order.splice(index, 0, clip);
             let t = 0;
-            for (const c of order) { c.start = t; t += c.duration; }
+            for (const c of order) { c.start = c.fixedStart ? Math.max(t, c.start) : t; t = FS.end(c); }
             return;
         }
         if (mode === 'insert') {
@@ -699,13 +712,13 @@
         const main = FS.mainTrack();
         if (!main || !FS.magnet) return;
         let t = 0;
-        for (const c of FS.clipsOn(main.id)) { c.start = t; t += c.duration; }
+        for (const c of FS.clipsOn(main.id)) { c.start = c.fixedStart ? Math.max(t, c.start) : t; t = FS.end(c); }
     };
 
     FS.split = function (clipIds, time) {
         return FS.change('split', (d) => {
-            const made = [];
-            for (const id of clipIds) {
+            const made = new Map();
+            for (const id of FS.linkedIds(clipIds)) {
                 const c = FS.clip(id);
                 if (!c || time <= c.start + 1 / FS.fps() || time >= FS.end(c) - 1 / FS.fps()) continue;
                 const first = time - c.start;
@@ -725,9 +738,14 @@
                 c.duration = first;
                 c.fadeOut = 0;
                 d.clips.push(right);
-                made.push(right.id);
+                made.set(id,right.id);
             }
-            return made;
+            for (const id of made.values()) {
+                const c=FS.clip(id);
+                if(c.linkedTo&&made.has(c.linkedTo)){c.linkedTo=made.get(c.linkedTo);c.from=c.linkedTo;}
+                if(c.detachedAudio&&made.has(c.detachedAudio))c.detachedAudio=made.get(c.detachedAudio);
+            }
+            return clipIds.map(id=>made.get(id)).filter(Boolean);
         });
     };
 
@@ -739,7 +757,7 @@
         const main = FS.mainTrack();
         let ids = clipIds && clipIds.length ? clipIds.slice()
             : S.doc.clips.filter((c) => main && c.track === main.id && c.start < time && FS.end(c) > time).map((c) => c.id);
-        ids = ids.filter((id) => { const c = FS.clip(id); return c && time > c.start + 1 / FS.fps() && time < FS.end(c) - 1 / FS.fps(); });
+        ids = FS.linkedIds(ids).filter((id) => { const c = FS.clip(id); return c && time > c.start + 1 / FS.fps() && time < FS.end(c) - 1 / FS.fps(); });
         if (!ids.length) return [];
         return FS.change(edge === 'start' ? 'trim start' : 'trim end', (d) => {
             const was = {};
@@ -771,7 +789,7 @@
         const main = FS.mainTrack();
         let moved = 0;
         FS.change('nudge', () => {
-            for (const id of clipIds) {
+            for (const id of FS.linkedRoots(clipIds)) {
                 const c = FS.clip(id);
                 if (!c || (main && c.track === main.id && FS.magnet)) continue;
                 const to = Math.max(0, FS.snapTime(c.start + dt));
@@ -798,6 +816,7 @@
     /* a steady speed on a clip (inside FS.change): the same stretch of its file, so the clip gets shorter or longer,
      * its keyframes moved with it; a speed ramp on it gives way */
     FS.applySpeed = function (x, v) {
+        x=FS.audioParent(x)||x;
         v = Math.max(0.1, Math.min(8, +v || 1));
         if (x.keys && x.keys.speed) delete x.keys.speed;
         const was = FS.val(x, 'speed');
@@ -910,6 +929,15 @@
         d.range = r;
     });
     FS.clearRange = () => FS.change('marked part', (d) => { delete d.range; });
+    /* Mouse selections include empty time and one or more lanes; copied before asynchronous generation. */
+    FS.region = () => S.region && S.region.out - S.region.in >= 1 / FS.fps() - 1e-8 ? S.region : null;
+    FS.setRegion = function (a, b, tracks, kind, newTrack) {
+        const start = FS.snapTime(Math.min(a, b)), end = FS.snapTime(Math.max(a, b));
+        S.region = end > start ? {in: start, out: end, tracks: (tracks || []).slice(), kind: kind || 'video', newTrack: newTrack || null} : null;
+        FS.emit('region', FS.region());
+        return FS.region();
+    };
+    FS.clearRegion = () => { S.region = null; FS.emit('region', null); };
     /* a copy of the edit cut to [a, b] and moved to start at 0: each clip trimmed the way a split or a trim does
      * (its place in the file, keyframes, speed ramp and fades kept), transitions from clips left out dropped */
     FS.docInRange = function (doc, a, b) {
@@ -1007,19 +1035,82 @@
         });
     };
 
-    /* the sound of a video as a clip of its own on a free sound track below it (same file, place, trim, speed, volume,
-     * fades, volume keyframes, lowering and speech); the video goes quiet. One undo. */
-    FS.detachAudio = function (clipId) {
+    /* Linked audio shares the video's source clock. Unlinking leaves a fully independent audio clip. */
+    FS.audioParent = c => c && c.linkedTo && S.doc.clips.find(v=>v.id===c.linkedTo&&v.kind==='video') || null;
+    FS.detachedAudio = c => c && S.doc.clips.find(a=>a.kind==='audio'&&a.from===c.id&&a.id===c.detachedAudio) || null;
+    FS.soundTarget = c => c&&c.kind==='video'&&FS.detachedAudio(c)?.linkedTo ? FS.detachedAudio(c):c;
+    FS.audioLinkItems = c => {
+        const a=c?.kind==='audio'?c:FS.detachedAudio(c),v=a&&FS.clip(a.from);
+        if(!a||!v||v.kind!=='video'||a.media!==v.media)return [];
+        const items=[{label:a.linkedTo?'🔓 '+FS.T('Unlink audio (move independently)'):'🔗 '+FS.T('Link audio to video (restore sync)'),run:()=>FS.linkAudio(a.id,!a.linkedTo)}];
+        if(c.kind==='video')items.push({label:FS.T('Select detached audio'),run:()=>FS.select([a.id])});
+        return items;
+    };
+    FS.linkedRoots = ids => [...new Set(ids.map(id=>{const c=FS.clip(id);return (FS.audioParent(c)||c)?.id;}).filter(Boolean))];
+    FS.linkedIds = ids => {
+        const set=new Set(ids), roots=new Set(FS.linkedRoots(ids));
+        for(const id of roots)set.add(id);
+        for(const c of S.doc.clips)if(c.linkedTo&&roots.has(c.linkedTo))set.add(c.id);
+        return [...set].filter(id=>FS.clip(id));
+    };
+    const audioTiming = c => JSON.stringify([c.start,c.duration,FS.val(c,'in'),FS.val(c,'speed'),FS.keysOf(c,'speed')||null]);
+    function copyAudioTiming(source,target) {
+        target.start=source.start;target.duration=source.duration;target.in=FS.val(source,'in');
+        if(source.speed==null)delete target.speed;else target.speed=source.speed;
+        if(FS.keysOf(source,'speed')){target.keys=target.keys||{};target.keys.speed=JSON.parse(JSON.stringify(source.keys.speed));target.keyEase=source.keyEase||'smooth';}
+        else if(target.keys){delete target.keys.speed;if(!Object.keys(target.keys).length)delete target.keys;}
+    }
+    FS.reconcileAudioLinks = function(before,place=false) {
+        const old=new Map((before?.clips||[]).map(c=>[c.id,c]));
+        let ripple=false;
+        S.doc.clips=S.doc.clips.filter(c=>!c.linkedTo||!!FS.audioParent(c));
+        for(const a of S.doc.clips.filter(c=>c.kind==='audio'&&c.linkedTo)){
+            const v=FS.audioParent(a),oa=old.get(a.id),ov=old.get(v.id);
+            if(oa&&ov&&a.media!==oa.media&&v.media===ov.media){delete a.linkedTo;continue;}
+            const audioChanged=oa&&audioTiming(a)!==audioTiming(oa),videoChanged=ov&&audioTiming(v)!==audioTiming(ov);
+            if(audioChanged&&!videoChanged){
+                const oldIn=FS.val(v,'in'),oldSpeed=FS.val(v,'speed'),oldDuration=v.duration;
+                copyAudioTiming(a,v);
+                // A left trim made on the audio must trim the picture's motion too.
+                if(v.keys&&Math.abs(FS.val(a,'in')-oldIn)>1e-8)FS.moveKeys(v,(FS.val(a,'in')-oldIn)/oldSpeed);
+                ripple=ripple||Math.abs(v.duration-oldDuration)>1e-8;
+            }else copyAudioTiming(v,a);
+            a.media=v.media;a.from=v.id;v.detachedAudio=a.id;v.muted=true;
+        }
+        if(ripple)FS.closeGaps();
+        for(const a of S.doc.clips.filter(c=>c.kind==='audio'&&c.linkedTo)){
+            const v=FS.audioParent(a);copyAudioTiming(v,a);a.media=v.media;
+            if(place)FS.place(a,'free');
+        }
+        for(const v of S.doc.clips)if(v.detachedAudio&&!FS.detachedAudio(v))delete v.detachedAudio;
+    };
+    FS.linkAudio = function(audioId,follow) {
+        return FS.change(follow?'link audio':'unlink audio',()=>{
+            const a=FS.clip(audioId),v=a&&FS.clip(a.from);
+            if(!a||a.kind!=='audio')return;
+            if(!follow){delete a.linkedTo;return;}
+            if(!v||v.kind!=='video'||v.media!==a.media)throw Error(FS.T('The original video is no longer available for linking'));
+            if(S.doc.clips.some(x=>x.id!==a.id&&x.linkedTo===v.id))throw Error(FS.T('This video already has linked audio'));
+            a.linkedTo=v.id;v.detachedAudio=a.id;v.muted=true;copyAudioTiming(v,a);
+        });
+    };
+    /* Same file and source window: the embedded stream is silenced so it never doubles the detached copy. */
+    FS.detachAudio = function (clipId,follow=true) {
         return FS.change('separate the sound', () => {
             const c = FS.clip(clipId);
+            if(!c||c.kind!=='video')return null;
+            const existing=FS.detachedAudio(c);if(existing)return existing;
             const a = c.start, b = FS.end(c);
             let track = FS.audioTracks().find((t) => !S.doc.clips.some((x) => x.track === t.id && x.start < b - 1e-6 && FS.end(x) > a + 1e-6));
             const trackId = track ? track.id : FS.addTrack('audio');
             const sound = {id: FS.newId(), track: trackId, kind: 'audio', media: c.media, start: c.start, duration: c.duration, from: c.id};
+            if(follow)sound.linkedTo=c.id;
             for (const k of ['in', 'speed', 'volume', 'fadeIn', 'fadeOut', 'duck', 'speech']) if (c[k] != null) sound[k] = c[k];
             if (FS.keysOf(c, 'volume')) { sound.keys = {volume: JSON.parse(JSON.stringify(c.keys.volume))}; delete c.keys.volume; if (!Object.keys(c.keys).length) delete c.keys; }
+            if(FS.keysOf(c,'speed')){sound.keys=sound.keys||{};sound.keys.speed=JSON.parse(JSON.stringify(c.keys.speed));sound.keyEase=c.keyEase||'smooth';}
             delete c.duck;
             c.muted = true;
+            c.detachedAudio=sound.id;
             S.doc.clips.push(sound);
             S.selected = [sound.id];
             return sound;
@@ -1069,7 +1160,8 @@
 
     FS.remove = function (clipIds) {
         FS.change('delete', (d) => {
-            d.clips = d.clips.filter((c) => !clipIds.includes(c.id));
+            const ids=FS.linkedIds(clipIds);
+            d.clips = d.clips.filter((c) => !ids.includes(c.id));
             FS.closeGaps();
             FS.dropEmptyTracks();
         });

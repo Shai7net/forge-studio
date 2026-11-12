@@ -57,9 +57,9 @@
             if (!S.project) throw new Error(T('Open or create a project first'));
             still.disabled = true;
             try {
+                FS.player.pause();
                 const cv = await FS.player.fullFrame();
-                const r = await FS.api('still/save', {name: S.project, image: cv.toDataURL('image/png'), seconds: S.time});
-                FS.message(T('The frame is saved: {0}', r.path.split(/[\\/]/).pop()));
+                await window.forgeFrameShare.open({canvas: cv, filename: S.project + '-frame-' + S.time.toFixed(2) + '.png', host: UI.root});
             } finally { still.disabled = false; }
         })}, '📷');
         UI.busy = h('span', {class: 'fx-busy', hidden: true});
@@ -90,6 +90,7 @@
         fitHeight();
         setTimeout(() => { FS.player.resize(); FS.timeline.render(); }, 30);
     }
+    FS.setFull = setFull;
 
     function popover(anchor, ...content) {
         closePopover();
@@ -283,7 +284,7 @@
 
     /* ---- the library ---- */
 
-    const lib = {kind: '', text: '', items: [], done: false};
+    const lib = {scope: 'project', kind: '', text: '', items: [], done: false, epoch: 0};
 
     function mediaPanel() {
         const kinds = h('div', {class: 'fx-chips'});
@@ -302,24 +303,34 @@
         UI.more = h('button', {class: 'fx-btn', onclick: FS.guard(() => loadMore())}, T('More'));
         UI.libState = h('div', {class: 'fx-dim'});
         UI.libPreview = h('div', {class: 'fx-libpreview', hidden: true});
+        UI.libScope = h('button', {class: 'fx-btn', id: 'fx-library-scope', onclick: () => {
+            lib.scope = lib.scope === 'project' ? 'all' : 'project';
+            UI.libScope.textContent = T(lib.scope === 'project' ? 'Show all application media' : 'Back to project media');
+            UI.libPreview.hidden = true; UI.libPreview.innerHTML = ''; refreshLibrary();
+        }}, T(lib.scope === 'project' ? 'Show all application media' : 'Back to project media'));
         const panel = h('div', {class: 'fx-panel-body'},
             h('div', {class: 'fx-row'}, search,
                 h('button', {class: 'fx-btn', title: T('Bring files from this computer'), onclick: () => upload.click()}, '⤒'),
-                h('button', {class: 'fx-btn', title: T('Refresh'), onclick: FS.guard(async () => { await FS.api('library/scan', {}); setTimeout(refreshLibrary, 1500); })}, '⟳')),
-            kinds, upload, UI.libPreview, UI.libState, h('div', {class: 'fx-scroll'}, UI.grid, h('div', {class: 'fx-center'}, UI.more)));
+                h('button', {class: 'fx-btn', title: T('Refresh'), onclick: FS.guard(async () => { if(lib.scope === 'all') await FS.api('library/scan', {}); await refreshLibrary(); })}, '⟳')),
+            UI.libScope, kinds, upload, UI.libPreview, UI.libState, h('div', {class: 'fx-scroll'}, UI.grid, h('div', {class: 'fx-center'}, UI.more)));
         setTimeout(refreshLibrary, 50);
         return panel;
     }
 
     async function loadMore(reset) {
-        if (reset) { lib.items = []; lib.done = false; }
+        if (reset) { lib.epoch++; lib.items = []; lib.done = false; drawGrid(); }
+        const epoch = lib.epoch, project = S.project, scope = lib.scope;
+        if(scope === 'project' && !project){lib.done=true;drawGrid();UI.libState.textContent=T('Project media');return;}
         const last = lib.items[lib.items.length - 1];
         const params = new URLSearchParams({kind: lib.kind, text: lib.text, limit: 90});
-        if (last && !reset) params.set('before', last.mtime);
-        const r = await FS.api('library?' + params);
+        if(scope === 'project'){params.set('name',project);params.set('offset',lib.items.length);}
+        else if (last && !reset) params.set('before', last.mtime);
+        const r = await FS.api((scope === 'project' ? 'project/bin?' : 'library?') + params);
+        if(epoch !== lib.epoch || project !== S.project || scope !== lib.scope)return;
         lib.items = lib.items.concat(r.items);
-        lib.done = r.items.length < 90;
+        lib.done = scope === 'project' ? lib.items.length >= r.total : r.items.length < 90;
         UI.libState.textContent = r.state && r.state.scanning ? T('Indexing your folders… {0} so far', r.state.scanned) : (r.state && r.state.files ? T('{0} files', r.state.files) : '');
+        if(scope === 'project')UI.libState.textContent=T('Project media') + ' · ' + T('{0} files',r.total);
         drawGrid();
         if (r.state && r.state.scanning && !lib.items.length) setTimeout(refreshLibrary, 2500);
     }
@@ -328,7 +339,7 @@
 
     function drawGrid() {
         UI.grid.innerHTML = '';
-        if (!lib.items.length) UI.grid.append(h('div', {class: 'fx-dim'}, T('Nothing here yet')));
+        if (!lib.items.length) UI.grid.append(h('div', {class: 'fx-dim'}, T(lib.scope === 'project' ? 'Import files or create a shot to start this project' : 'Nothing here yet')));
         for (const item of lib.items) UI.grid.append(tile(item));
         UI.more.hidden = lib.done;
     }
@@ -342,7 +353,7 @@
         el.addEventListener('click', () => libPreview(item));
         el.addEventListener('dblclick', FS.guard(() => FS.addFromLibrary(item)));
         el.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('application/x-forge-studio', JSON.stringify({id: item.id, kind: item.kind, name: item.name}));
+            e.dataTransfer.setData('application/x-forge-studio', JSON.stringify({id: item.id, web: item.web, project: item.project, kind: item.kind, name: item.name}));
             e.dataTransfer.effectAllowed = 'copy';
         });
         return el;
@@ -362,6 +373,7 @@
             item.kind !== 'audio' ? h('button', {class: 'fx-btn', onclick: FS.guard(() => FS.addFromLibrary(item, {layer: true}))}, T('As a layer above')) : null,
             item.kind !== 'audio' && FS.layers ? h('button', {class: 'fx-btn', onclick: FS.guard(() => FS.layers.cutoutLibrary(item))}, '✂ ' + T('Cut out, as a layer')) : null),
         made);
+        if(item.web)return;
         const info = await FS.api('library/info?id=' + item.id);
         if (info.made && info.made.prompt) {
             made.append(h('div', {class: 'fx-dim'}, T('Made with') + (info.made.seed != null ? ` · ${T('Seed')} ${info.made.seed}` : '')),
@@ -371,22 +383,32 @@
 
     async function uploadFiles(files) {
         if (!S.project) await FS.newProject(FS.defaultProjectName());
-        for (const f of files) {
-            FS.busy(T('Bringing in {0}…', f.name));
-            const r = await FS.api(`project/upload?name=${q(S.project)}&web=${q(f.name)}`, f, true);
-            S.media[r.web] = {path: r.web, missing: false};
-            await FS.addMedia(r.web, null, {mode: 'insert'});
-        }
-        FS.busy(null);
+        try {
+            for (const f of files) {
+                const project=S.project;
+                FS.busy(T('Bringing in {0}…', f.name));
+                const r = await FS.api(`project/upload?name=${q(project)}&web=${q(f.name)}`, f, true);
+                if(project!==S.project)throw Error(T('The project changed; add this file again'));
+                S.media[r.web] = {path: r.web, missing: false};
+                await FS.addMedia(r.web, null, {mode: 'insert'});
+            }
+        } finally { FS.busy(null); }
+        await refreshLibrary();
     }
 
     /* a library file into the edit: at the playhead on the main track, as a layer, or where it was dropped */
     FS.addFromLibrary = async function (item, opts) {
         opts = opts || {};
         if (!S.project) await FS.newProject(FS.defaultProjectName());
-        const added = await FS.api('project/add', {name: S.project, id: item.id});
-        S.media[added.web] = {path: item.path, missing: false};
-        const info = await FS.probe(added.web);
+        if(item.web && item.project !== S.project)throw Error(T('This file belongs to another project'));
+        const project=S.project;
+        const added = item.web ? {web:item.web} : await FS.api('project/add', {name: S.project, id: item.id});
+        if(project!==S.project)throw Error(T('The project changed; add this file again'));
+        if(!item.web)S.media[added.web] = {path: item.path, missing: false};
+        const info = S.info[added.web] || await FS.api(`probe?name=${q(project)}&web=${q(added.web)}`);
+        if(project!==S.project)throw Error(T('The project changed; add this file again'));
+        S.info[added.web]=info;
+        if(!item.web)refreshLibrary();
         let where = {time: opts.time != null ? opts.time : S.time};
         const lane = opts.lane;
         if (lane && lane.newTrack) {
@@ -441,9 +463,12 @@
 
     function keys(e) {
         if (!UI.root || UI.root.offsetParent === null && !UI.root.classList.contains('fx-full')) return;
+        // A dialog owns its shortcuts. The window capture listener must let those events reach it.
+        if (UI.root.querySelector('.fx-modal-back, .fx-ask')) return;
         const tag = (e.target.tagName || '').toLowerCase();
         if (['input', 'textarea', 'select'].includes(tag) || e.target.isContentEditable) return;
         if (!S.doc) return;
+        if (FS.imageShop && FS.imageShop.active && FS.imageShop.keys(e)) return;   // the image workspace's own keys
         const k = e.key, ctrl = e.ctrlKey || e.metaKey;
         const take = () => { e.preventDefault(); e.stopPropagation(); };
         if (k === ' ') { take(); FS.player.toggle(); }
@@ -485,7 +510,12 @@
         else if (k === 'ArrowRight') { take(); FS.seek(FS.snapTime(S.time + (e.shiftKey ? 1 : 1 / FS.fps()))); }
         else if (k === 'Home') { take(); FS.seek(0); }
         else if (k === 'End') { take(); FS.seek(FS.total()); }
-        else if (k === 'Escape') { if (UI.root.classList.contains('fx-full')) { take(); setFull(false); } else FS.select([]); }
+        else if (k === 'Escape') {
+            take();
+            if (FS.timeline.cancelPointer) { FS.timeline.cancelPointer(); return; }
+            FS.clearRegion(); FS.timeline.closeMenu();
+            if (UI.root.classList.contains('fx-full')) setFull(false); else FS.select([]);
+        }
     }
 
     /* ---- building and starting ---- */
@@ -560,6 +590,12 @@
     }
 
     FS.on('project', (p) => {
+        lib.scope='project';lib.kind='';lib.text='';
+        const search=document.getElementById('fx-lib-search');if(search)search.value='';
+        UI.grid?.closest('.fx-panel-body')?.querySelectorAll('.fx-chip').forEach(b=>b.classList.toggle('on',b.dataset.kind===''));
+        if(UI.libScope)UI.libScope.textContent=T('Show all application media');
+        if(UI.libPreview){UI.libPreview.hidden=true;UI.libPreview.innerHTML='';}
+        if(UI.grid)refreshLibrary();
         UI.projectBtn.querySelector('.fx-pname').textContent = p.name;
         const a = ASPECTS.find((x) => x[1] === S.doc.settings.width && x[2] === S.doc.settings.height);
         UI.aspect.value = a ? a[0] : 'custom';
@@ -571,6 +607,8 @@
         const a = ASPECTS.find((x) => x[1] === S.doc.settings.width && x[2] === S.doc.settings.height);
         UI.aspect.value = a ? a[0] : 'custom';
         UI.saved.textContent = S.dirty ? '●' : '';
+        const stamp=S.project+'|'+Object.keys(S.media).join('|');
+        if(stamp!==lib.mediaStamp){lib.mediaStamp=stamp;clearTimeout(lib.refreshTimer);lib.refreshTimer=setTimeout(()=>{if(UI.grid)refreshLibrary();},250);}
     });
     FS.on('select', () => {
         const picked = S.selected.map((id) => FS.clip(id)).filter((c) => c && (c.kind === 'video' || c.kind === 'image'));

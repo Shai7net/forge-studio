@@ -8,6 +8,7 @@ const path = require('node:path');
 const folder = path.join(__dirname, '..', 'javascript');
 global.window = { Sim360: {} };
 global.document = { documentElement: { classList: { contains: () => true } } };
+require(path.join(__dirname, '..', '..', 'forge-hebrew-ui', 'javascript', 'hebrew-ui-dictionary.js'));
 require(path.join(folder, 'sim360-3-strings.js'));
 const S = global.window.Sim360;
 
@@ -41,6 +42,7 @@ test('every text of the page has its Hebrew', () => {
     const missing = [];
     for (const [text, where] of texts) {
         if (Object.prototype.hasOwnProperty.call(S.he, text)) continue;
+        if (Object.prototype.hasOwnProperty.call(window.hebrewUiDictionary.texts, text)) continue;
         if (notForPeople.test(text) && !/ /.test(text)) continue;
         missing.push(`${where}: ${text}`);
     }
@@ -53,5 +55,6 @@ test('the values of a text survive the translation', () => {
         assert.strictEqual((hebrew.match(/\{\d\}/g) || []).sort().join(), wanted, english);
     }
     assert.strictEqual(S.T('World {0}', 3), 'עולם 3');
+    assert.match(S.T('Capture this view and save or send the frame'), /[א-ת]/);
     assert.strictEqual(S.helpText().length, 5);
 });

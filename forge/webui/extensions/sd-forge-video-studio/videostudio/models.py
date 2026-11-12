@@ -1,6 +1,7 @@
 """The model files Video Studio knows, where they live, and fetching the missing ones (aria2c when present)."""
 
 import glob
+import hashlib
 import os
 import shutil
 import subprocess
@@ -9,12 +10,16 @@ import time
 import urllib.request
 
 from . import MODELS_DIR, WEBUI_DIR
+from . import ltx
 
 HF = "https://huggingface.co/"
 COMFY = HF + "Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/"
 LIGHTX2V = HF + "Abiray/Wan2.2-LightX2V-260412-4STEP-GGUF/resolve/main/"
 
 FILES = {
+    'sheet_matte': dict(path='../time-strata/birefnet-general-lite.onnx', size=224005088,
+        sha256='5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333',
+        url='https://github.com/danielgatis/rembg/releases/download/v0.0.0/BiRefNet-general-bb_swin_v1_tiny-epoch_232.onnx'),
     "umt5": dict(path="text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors", size=6735906897,
                  url=COMFY + "text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors"),
     "vae21": dict(path="vae/wan_2.1_vae.safetensors", size=253815318,
@@ -70,7 +75,11 @@ REPLACE_FILES = ["animate_q3", "animate_relight", "lightx2v_i2v", "sam2", "sam2_
 
 
 def replace_missing():
-    return [k for k in REPLACE_FILES if not present(k)]
+    from . import sheets
+    keys = list(REPLACE_FILES)
+    if not sheets.matte_file(os.path.join(WEBUI_DIR, 'models')):
+        keys.append('sheet_matte')
+    return [k for k in keys if not present(k)]
 
 # Wan 2.2 I2V A14B: the high-noise expert lays out motion and composition while t >= 900, the low-noise expert
 # draws the detail after it. The lightx2v 260412 distillation (April 2026) needs 4 steps at CFG 1, shift 5.
@@ -83,6 +92,8 @@ PRESETS = {
         text_encoder="umt5", vae="vae21", steps=4, shift=5.0, cfg=1.0),
 }
 DEFAULT_PRESET = next(iter(PRESETS))
+FILES.update(ltx.ASSETS)
+PRESETS.update(ltx.PRESETS)
 
 
 def file_path(key):
@@ -95,6 +106,8 @@ def present(key):
 
 
 def preset_files(name):
+    if ltx.is_ltx(name):
+        return ltx.asset_keys(name)
     pr = PRESETS[name]
     return [k for k, _, _ in pr["experts"]] + [pr["text_encoder"], pr["vae"]]
 
@@ -172,6 +185,16 @@ class Download:
                 _fetch(info["url"], dest, lambda n: self._progress(base + n))
                 if os.path.getsize(dest) != info["size"]:
                     raise RuntimeError(f"{os.path.basename(dest)}: size {os.path.getsize(dest)} != {info['size']}")
+                if info.get('sha256'):
+                    with self.lock:
+                        self.state['text'] = 'Verifying ' + os.path.basename(dest)
+                    digest = hashlib.sha256()
+                    with open(dest, 'rb') as source:
+                        for block in iter(lambda: source.read(8 << 20), b''):
+                            digest.update(block)
+                    if digest.hexdigest() != info['sha256']:
+                        os.replace(dest, dest + '.invalid')
+                        raise RuntimeError('Checksum mismatch: ' + os.path.basename(dest))
                 base += info["size"]
         except Exception as e:
             with self.lock:

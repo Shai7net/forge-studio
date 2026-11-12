@@ -15,7 +15,11 @@ from PIL import Image
 
 ANALYSE = 512          # the sheet is studied at this size (long side)
 SMOOTH = 1.5           # a studio backdrop's border changes less than this per pixel (photos: 3 and up)
-SAME_COLOURS = 0.55    # histogram overlap of two views of one character (different people: well under)
+# Histogram overlap (8 levels a channel) of two views of one character. Measured 2026-11-11: five real sheets
+# 0.70-0.95; a picture of two different characters side by side 0.50 (at 4 levels it was 0.71, over the old 0.55,
+# and a girl and a dog were taken for one character)
+SAME_COLOURS = 0.6
+MIN_VIEWS = 3          # a sheet shows its character at least three times (front, side, back...); two figures are two people
 MATTE_FILES = ("birefnet-general-lite.fp16.onnx", "birefnet-general-lite.onnx")  # Time Strata's copies
 MEAN = np.array([0.485, 0.456, 0.406], np.float32)
 STD = np.array([0.229, 0.224, 0.225], np.float32)
@@ -46,11 +50,14 @@ def plain_backdrop(small):
     return sum(np.percentile(side, 60) < SMOOTH for side in sides) >= 3
 
 
-def _session(model_path):
+def _session(model_path, cpu=False):
     """BiRefNet on the card when it has room (well under a second), else on the processor (~20 s)."""
     import onnxruntime as ort
+    options = ort.SessionOptions()
+    options.log_severity_level = 3
+    options.intra_op_num_threads = min(4, os.cpu_count() or 1)
     fp16 = "fp16" in os.path.basename(model_path)
-    if "CUDAExecutionProvider" in ort.get_available_providers():
+    if not cpu and "CUDAExecutionProvider" in ort.get_available_providers():
         try:
             import torch
             free = torch.cuda.mem_get_info()[0]
@@ -60,19 +67,19 @@ def _session(model_path):
             cuda = {"cudnn_conv_algo_search": "HEURISTIC", "arena_extend_strategy": "kSameAsRequested",
                     "gpu_mem_limit": str(int(free - 0.5 * 1024 ** 3))}
             try:
-                return ort.InferenceSession(model_path, providers=[("CUDAExecutionProvider", cuda)]), fp16
+                return ort.InferenceSession(model_path, options, providers=[("CUDAExecutionProvider", cuda)]), fp16
             except Exception:
                 pass
     if fp16:  # the processor has no half-precision kernels
         full = model_path.replace(".fp16.onnx", ".onnx")
         if os.path.isfile(full):
-            return ort.InferenceSession(full, providers=["CPUExecutionProvider"]), False
-    return ort.InferenceSession(model_path, providers=["CPUExecutionProvider"]), fp16
+            return ort.InferenceSession(full, options, providers=["CPUExecutionProvider"]), False
+    return ort.InferenceSession(model_path, options, providers=["CPUExecutionProvider"]), fp16
 
 
-def birefnet_mask(picture, model_path):
+def birefnet_mask(picture, model_path, cpu=False):
     """BiRefNet-lite's cut-out of everything in front of the background, at ANALYSE size."""
-    session, fp16 = _session(model_path)
+    session, fp16 = _session(model_path, cpu=cpu)
     im = np.asarray(picture.resize((1024, 1024), Image.BICUBIC)).astype(np.float32) / 255.0
     im = ((im - MEAN) / STD).transpose(2, 0, 1)[None]
     if session.get_inputs()[0].type == "tensor(float16)":
@@ -128,19 +135,22 @@ def pick_views(boxes, size=None):
 
 
 def colours(small, mask, box):
-    """A coarse colour histogram (4 levels a channel) of a figure's own pixels."""
+    """A colour histogram (8 levels a channel) of a figure's own pixels."""
     x0, y0, x1, y1 = box[:4]
     px = small[y0:y1, x0:x1][mask[y0:y1, x0:x1]]
     if not len(px):
-        return np.zeros(64)
-    q = np.clip(px // 64, 0, 3).astype(int)
-    hist = np.bincount(q[:, 0] * 16 + q[:, 1] * 4 + q[:, 2], minlength=64).astype(np.float64)
+        return np.zeros(512)
+    q = np.clip(px // 32, 0, 7).astype(int)
+    hist = np.bincount(q[:, 0] * 64 + q[:, 1] * 8 + q[:, 2], minlength=512).astype(np.float64)
     return hist / hist.sum()
 
 
 def one_character(small, mask, boxes, front):
     """True when the tallest figures (and so the views kept) look like one character: each overlaps the front's
-    colours by SAME_COLOURS or more. Two or more full-body figures are needed to call a picture a sheet."""
+    colours by SAME_COLOURS or more. Two or more full-body figures, and MIN_VIEWS figures in all, are needed to
+    call a picture a sheet."""
+    if len(boxes) < MIN_VIEWS:
+        return False
     top = max(b[3] - b[1] for b in boxes)
     tall = [b for b in boxes if b[3] - b[1] >= 0.85 * top]
     if len(tall) < 2:
@@ -157,7 +167,7 @@ def crop(picture, box, scale, pad=0.05):
                          min(picture.width, round(x1 + p)), min(picture.height, round(y1 + p))))
 
 
-def split(path, matte_model):
+def split(path, matte_model, cpu=False):
     """[(name, PIL picture), ...] for a character sheet, or [] when the picture is not one. The figures are found
     by BiRefNet's cut-out (`matte_model`), which a lit backdrop and floor shadows do not fool; it runs only for
     pictures on a plain backdrop."""
@@ -168,7 +178,7 @@ def split(path, matte_model):
     small, scale = _small(picture)
     if not plain_backdrop(small):
         return []
-    mask = birefnet_mask(picture, matte_model)
+    mask = birefnet_mask(picture, matte_model, cpu=cpu)
     boxes = figures(mask)
     front, close = pick_views(boxes, small.shape[1::-1])
     if front is None or not one_character(small, mask, boxes, front):

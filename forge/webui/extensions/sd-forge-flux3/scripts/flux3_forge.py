@@ -43,11 +43,22 @@ class Flux3Script(scripts.Script):
         p.flux3_writer = writer if writer in WRITER_CHOICES else "Auto"
         if edit_mode in glue.EDIT_MODES:
             p.flux3_edit_mode = edit_mode
+        if glue.active():
+            from flux3.controls import prepare
+            prepare(p)
 
     def postprocess(self, p, processed, *args):
         captions = getattr(p, "flux3_captions", None)
         if captions and glue.active():
             processed.comments = (processed.comments or "") + "FLUX 3 caption: " + captions[0] + "\n"
+
+    def postprocess_image_after_composite(self, p, pp, *args):
+        mask = getattr(p, "flux3_exact_mask", None)
+        if glue.active() and mask is not None:
+            from flux3.controls import restore_black_pixels
+            # Forge quantizes decoded floats with truncation; this final pixel-space
+            # copy prevents a one-level rounding change outside an exact mask.
+            pp.image = restore_black_pixels(pp.image, p.flux3_references[0], mask)
 
 
 def on_app_started(demo, app):

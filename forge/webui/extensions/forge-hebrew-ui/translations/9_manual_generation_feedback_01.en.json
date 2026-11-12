@@ -1,0 +1,177 @@
+[
+  {
+    "i": 0,
+    "en": "Unlink audio (move independently)",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 1,
+    "en": "Link audio to video (restore sync)",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 2,
+    "en": "Select detached audio",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 3,
+    "en": "The original video is no longer available for linking",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 4,
+    "en": "This video already has linked audio",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 5,
+    "en": "Detach audio (keep linked)",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 6,
+    "en": "Detach audio (independent)",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 7,
+    "en": "Audio follows the video",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 8,
+    "en": "The lip preview has no embedded audio",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 9,
+    "en": "The source sound changed; generate a new lip preview",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 10,
+    "en": "Use original embedded lip audio",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 11,
+    "en": "Making image",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 12,
+    "en": "Making video",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 13,
+    "en": "Lip sync",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 14,
+    "en": "Creating speech",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 15,
+    "en": "Making music",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 16,
+    "en": "Making sound effects",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 17,
+    "en": "Drawing",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 18,
+    "en": "Editing video",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 19,
+    "en": "Creating captions",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 20,
+    "en": "Combining clips",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 21,
+    "en": "Ready!",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 22,
+    "en": "Generation failed",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 23,
+    "en": "Generation stopped",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 24,
+    "en": "Generating…",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 25,
+    "en": "Your result is ready",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 26,
+    "en": "Waiting for the graphics card",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 27,
+    "en": "Estimating remaining time…",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 28,
+    "en": "About {0}s remaining",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 29,
+    "en": "About {0}m {1}s remaining",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 30,
+    "en": "Completion sound on",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 31,
+    "en": "Completion sound off",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 32,
+    "en": "FLUX 3 · native controls",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 33,
+    "en": "Local Qwen3-VL prompt writer · any language → English",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  },
+  {
+    "i": 34,
+    "en": "FLUX 3 uses these ordered references, source size and exact mask controls. Write a plain-language edit instruction; quoted lettering stays in its original language. Use FLUX-compatible LoRAs from the normal LoRA picker; FIBO VGL and FIBO adapters are model-specific.",
+    "ctx": "[t] Linked lip audio, generation frog and shared native image controls"
+  }
+]

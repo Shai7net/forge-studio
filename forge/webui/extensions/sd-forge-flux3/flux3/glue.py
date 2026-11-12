@@ -325,7 +325,7 @@ def clean_prompt(text):
 
 
 def wants_writer(p, prompt):
-    mode = getattr(p, "flux3_writer", None) or opts.data.get("flux3_writer", "Auto")
+    mode = getattr(p, "flux3_panel_writer", None) or getattr(p, "flux3_writer", None) or opts.data.get("flux3_writer", "Auto")
     if mode == "Off" or not prompt.strip():
         return False  # an empty prompt stays empty: the writer would invent a scene
     if mode == "Always":
@@ -337,8 +337,8 @@ def wants_writer(p, prompt):
 
 def final_prompt(p, prompt, width, height, mode="t2i"):
     text = clean_prompt(prompt)
-    if mode == "t2i" and wants_writer(p, text):
-        caption = ENGINE.upsample(text, width, height, "t2i")
+    if (mode == "t2i" or hasattr(p, "flux3_panel_writer")) and wants_writer(p, text):
+        caption = ENGINE.upsample(text, width, height, "t2i" if mode == "t2i" else "i2i")
         p.extra_generation_params["FLUX 3 prompt writer"] = "Qwen3-VL-4B"
         if caption and len(getattr(p, "flux3_captions", [])) < 4:
             p.flux3_captions = getattr(p, "flux3_captions", []) + [caption]
@@ -426,23 +426,27 @@ def make_setup_conds(original):
 def txt2img_sample(self, conditioning, unconditional_conditioning, seeds, subseeds, subseed_strength, prompts):
     if not active():
         return _orig["txt2img_sample"](self, conditioning, unconditional_conditioning, seeds, subseeds, subseed_strength, prompts)
+    from .controls import prepare
+    prepare(self)  # Script.process errors are logged by Forge; invalid controls must also stop inference.
     eng = ENGINE
     _note(self, eng)
     with eng.lock:
         w16, h16 = _size16(self.width, self.height)
         noise = _noise(self, seeds, subseeds, h16 // 16, w16 // 16)
         out = processing.DecodedSamples()
+        refs = encode_references(eng, getattr(self, "flux3_references", None))
         for b, prompt in enumerate(prompts):
             with torch.autocast("cuda", enabled=False):
-                emb = eng.encode(final_prompt(self, prompt, w16, h16))
-            lat = _run(eng, self, noise[b:b + 1], emb, self.steps)
+                emb = eng.encode(final_prompt(self, prompt, w16, h16, "edit" if refs else "t2i"))
+            lat = _run(eng, self, noise[b:b + 1], emb, self.steps, **({"refs": refs} if refs else {}))
             if state.interrupted:
                 out.append(_fit(eng.decode(lat)[0], self.width, self.height))
                 continue
             img = eng.decode(lat)[0]
             if self.enable_hr and not state.skipped:
                 img = _hires(self, eng, img, b, seeds, subseeds)
-            out.append(img if self.enable_hr else _fit(img, self.width, self.height))
+            img = img if self.enable_hr else _fit(img, self.width, self.height)
+            out.append(exact_mask(self, img))
         return out
 
 
@@ -476,6 +480,8 @@ EDIT_MODES = ("Edit with reference (FLUX 3)", "Classic img2img (denoise)")
 def img2img_init(self, all_prompts, all_seeds, all_subseeds):
     if not active():
         return _orig["img2img_init"](self, all_prompts, all_seeds, all_subseeds)
+    from .controls import prepare
+    prepare(self)
     eng = ENGINE
     self.extra_generation_params["Denoising strength"] = self.denoising_strength
     self.image_cfg_scale = None
@@ -568,8 +574,10 @@ def img2img_init(self, all_prompts, all_seeds, all_subseeds):
     # Other extensions may give their own reference pictures (`p.flux3_references`, PIL images): each keeps its own
     # shape (see the sizes below) instead of being stretched to the output like the init picture.
     # Video Studio's Ingredients draws a character from a reference sheet this way (2026-11-09).
-    refs = getattr(self, "flux3_references", None)
-    self.flux3_ref_latents = None
+    self.flux3_ref_latents = encode_references(eng, getattr(self, "flux3_references", None))
+
+
+def encode_references(eng, refs):
     if refs:
         latents = []
         for k, im in enumerate(refs):
@@ -582,7 +590,17 @@ def img2img_init(self, all_prompts, all_seeds, all_subseeds):
             w, h = (max(16, round(v * scale / 16) * 16) for v in im.size)
             with torch.autocast("cuda", enabled=False):
                 latents.append(eng.encode_image(_from_pil(im, w, h)))
-        self.flux3_ref_latents = latents
+        return latents
+    return None
+
+
+def exact_mask(p, img):
+    mask = getattr(p, "flux3_exact_mask", None)
+    if mask is None:
+        return img
+    from .controls import preserve_exact
+    result = preserve_exact(_to_pil(img), p.flux3_references[0], mask)
+    return _from_pil(result, result.width, result.height)[0]
 
 
 REF_AREA = 1024 * 1024
@@ -596,7 +614,8 @@ def img2img_sample(self, conditioning, unconditional_conditioning, seeds, subsee
     mode = getattr(self, "flux3_edit_mode", None) or opts.data.get("flux3_edit_mode", EDIT_MODES[0])
     # inpainting always takes the classic path: an edit redraws the whole frame and does not keep its geometry
     # exactly, so the pasted-back mask area did not line up (a second car in the sky, 2026-10-26)
-    edit = mode == EDIT_MODES[0] and self.flux3_mask is None
+    edit = (getattr(self, "flux3_panel_edit", False) and getattr(self, "flux3_exact_mask", None) is not None
+            or mode == EDIT_MODES[0] and self.flux3_mask is None)
     self.extra_generation_params["FLUX 3 img2img"] = "edit with reference" if edit else "classic"
     with eng.lock:
         w16, h16 = self.flux3_size
@@ -607,7 +626,7 @@ def img2img_sample(self, conditioning, unconditional_conditioning, seeds, subsee
             mask = self.flux3_mask
             if mask is not None and self.inpainting_fill == 2:
                 init = init * (1 - mask.to(init)) + noise[b:b + 1].to(init) * mask.to(init)
-            text = clean_prompt(prompt)
+            text = final_prompt(self, prompt, w16, h16, "edit")
             with torch.autocast("cuda", enabled=False):
                 emb = eng.encode(text)
             if edit:
@@ -620,7 +639,7 @@ def img2img_sample(self, conditioning, unconditional_conditioning, seeds, subsee
             else:
                 lat = _run(eng, self, noise[b:b + 1], emb, self.steps, denoise=float(self.denoising_strength),
                            init=init, mask=mask)
-            out.append(_fit(eng.decode(lat)[0], self.width, self.height))
+            out.append(exact_mask(self, _fit(eng.decode(lat)[0], self.width, self.height)))
         return out
 
 

@@ -125,7 +125,8 @@
             if (!S.project) await FS.newProject(FS.defaultProjectName());
             FS.busy(T('Cutting out…'));
             try {
-                const task = await FS.follow(await FS.api('layers/cutout', {name: S.project, id: item.id}), (t) => FS.busy(t.text));
+                if(item.web && item.project!==S.project)throw Error(T('This file belongs to another project'));
+                const task = await FS.follow(await FS.api('layers/cutout', {name: S.project, ...(item.web?{web:item.web}:{id:item.id})}), (t) => FS.busy(t.text));
                 S.media[task.web] = {path: task.web, missing: false};
                 const info = await FS.probe(task.web);
                 await FS.addMedia(task.web, {time: S.time, track: FS.change('track', () => FS.freeLayer(S.time, S.time + (info.duration || 5)))}, {mode: 'free'});

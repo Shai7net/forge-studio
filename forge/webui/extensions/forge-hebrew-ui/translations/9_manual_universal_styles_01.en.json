@@ -1,0 +1,482 @@
+[
+  {
+    "i": 0,
+    "en": "Universal · Photo · Editorial",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 1,
+    "en": "Universal · Photo · Documentary",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 2,
+    "en": "Universal · Photo · Fine Art",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 3,
+    "en": "Universal · Photo · Fashion Campaign",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 4,
+    "en": "Universal · Photo · Beauty Studio",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 5,
+    "en": "Universal · Photo · Product Studio",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 6,
+    "en": "Universal · Photo · Food Editorial",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 7,
+    "en": "Universal · Photo · Architectural",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 8,
+    "en": "Universal · Photo · Landscape",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 9,
+    "en": "Universal · Photo · Macro Detail",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 10,
+    "en": "Universal · Photo · Sports Action",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 11,
+    "en": "Universal · Photo · Vintage 35mm",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 12,
+    "en": "Universal · Cinema · Anamorphic",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 13,
+    "en": "Universal · Cinema · Film Noir",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 14,
+    "en": "Universal · Cinema · Neo Noir",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 15,
+    "en": "Universal · Cinema · Golden Hour Drama",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 16,
+    "en": "Universal · Cinema · Blue Hour Thriller",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 17,
+    "en": "Universal · Cinema · Period Drama",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 18,
+    "en": "Universal · Cinema · Epic Fantasy",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 19,
+    "en": "Universal · Cinema · Grounded Sci-Fi",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 20,
+    "en": "Universal · Cinema · Retro Futurism",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 21,
+    "en": "Universal · Cinema · Gritty Drama",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 22,
+    "en": "Universal · Cinema · Dreamlike",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 23,
+    "en": "Universal · Cinema · Documentary Film",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 24,
+    "en": "Universal · Painting · Oil Impasto",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 25,
+    "en": "Universal · Painting · Classical Glazing",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 26,
+    "en": "Universal · Painting · Watercolor",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 27,
+    "en": "Universal · Painting · Gouache",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 28,
+    "en": "Universal · Painting · Acrylic",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 29,
+    "en": "Universal · Painting · Pastel",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 30,
+    "en": "Universal · Painting · Ink Wash",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 31,
+    "en": "Universal · Painting · Charcoal",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 32,
+    "en": "Universal · Painting · Graphite",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 33,
+    "en": "Universal · Painting · Impressionism",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 34,
+    "en": "Universal · Painting · Expressionism",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 35,
+    "en": "Universal · Painting · Fresco",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 36,
+    "en": "Universal · Illustration · Editorial Ink",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 37,
+    "en": "Universal · Illustration · Graphic Novel",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 38,
+    "en": "Universal · Illustration · Ligne Claire",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 39,
+    "en": "Universal · Illustration · Anime Film",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 40,
+    "en": "Universal · Illustration · Storybook",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 41,
+    "en": "Universal · Illustration · Vintage Etching",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 42,
+    "en": "Universal · Illustration · Botanical Plate",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 43,
+    "en": "Universal · Illustration · Scientific Diagram",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 44,
+    "en": "Universal · Illustration · Art Nouveau",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 45,
+    "en": "Universal · Illustration · Woodblock Print",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 46,
+    "en": "Universal · Illustration · Pixel Art",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 47,
+    "en": "Universal · Illustration · Flat Vector",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 48,
+    "en": "Universal · 3D · Animated Feature",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 49,
+    "en": "Universal · 3D · Claymation",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 50,
+    "en": "Universal · 3D · Stop Motion Miniature",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 51,
+    "en": "Universal · 3D · Low Poly",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 52,
+    "en": "Universal · 3D · Isometric Diorama",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 53,
+    "en": "Universal · 3D · Architectural Render",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 54,
+    "en": "Universal · 3D · Product Visualization",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 55,
+    "en": "Universal · 3D · Stylized Game Art",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 56,
+    "en": "Universal · 3D · PBR Realism",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 57,
+    "en": "Universal · 3D · Hand Painted Assets",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 58,
+    "en": "Universal · 3D · Papercraft 3D",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 59,
+    "en": "Universal · 3D · Ambient Sculpture",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 60,
+    "en": "Universal · Design · Swiss Editorial",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 61,
+    "en": "Universal · Design · Minimal Poster",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 62,
+    "en": "Universal · Design · Bauhaus",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 63,
+    "en": "Universal · Design · Art Deco",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 64,
+    "en": "Universal · Design · Risograph",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 65,
+    "en": "Universal · Design · Screen Print",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 66,
+    "en": "Universal · Design · Halftone",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 67,
+    "en": "Universal · Design · Collage",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 68,
+    "en": "Universal · Design · Cut Paper",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 69,
+    "en": "Universal · Design · Blueprint",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 70,
+    "en": "Universal · Design · Technical Cutaway",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 71,
+    "en": "Universal · Design · Retro Print",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 72,
+    "en": "Universal · Material · Porcelain",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 73,
+    "en": "Universal · Material · Glass",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 74,
+    "en": "Universal · Material · Brushed Metal",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 75,
+    "en": "Universal · Material · Carved Wood",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 76,
+    "en": "Universal · Material · Marble",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 77,
+    "en": "Universal · Material · Knitted Wool",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 78,
+    "en": "Universal · Material · Felt Craft",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 79,
+    "en": "Universal · Material · Origami",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 80,
+    "en": "Universal · Lighting · Soft Window",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 81,
+    "en": "Universal · Lighting · Rembrandt",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 82,
+    "en": "Universal · Lighting · Butterfly",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 83,
+    "en": "Universal · Lighting · Rim Light",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 84,
+    "en": "Universal · Lighting · High Key",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 85,
+    "en": "Universal · Lighting · Low Key",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 86,
+    "en": "Universal · Lighting · Overcast Diffusion",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 87,
+    "en": "Universal · Lighting · Volumetric",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 88,
+    "en": "Universal · Color · Warm Analog Film",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 89,
+    "en": "Universal · Color · Cool Muted",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 90,
+    "en": "Universal · Color · Pastel",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 91,
+    "en": "Universal · Color · Teal and Amber",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 92,
+    "en": "Universal · Color · Silver Black and White",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 93,
+    "en": "Universal · Color · Cross Process",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 94,
+    "en": "Universal · Color · Earthy Natural",
+    "ctx": "Shared image and video style selector"
+  },
+  {
+    "i": 95,
+    "en": "Universal · Color · Jewel Tones",
+    "ctx": "Shared image and video style selector"
+  }
+]

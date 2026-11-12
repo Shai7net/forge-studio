@@ -1,0 +1,167 @@
+[
+  {
+    "i": 0,
+    "en": "Show all application media",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 1,
+    "en": "Back to project media",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 2,
+    "en": "Project media",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 3,
+    "en": "Import files or create a shot to start this project",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 4,
+    "en": "This file belongs to another project",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 5,
+    "en": "The project changed; add this file again",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 6,
+    "en": "Save or send this frame",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 7,
+    "en": "Save picture as…",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 8,
+    "en": "Send frame",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 9,
+    "en": "Captured frame",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 10,
+    "en": "File name",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 11,
+    "en": "Destination",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 12,
+    "en": "Image to Image",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 13,
+    "en": "Video Studio · Image to Video",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 14,
+    "en": "Video Studio · Ingredients to Video",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 15,
+    "en": "FIBO / FLUX3 · native controls",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 16,
+    "en": "Video and native references fill the next free slot. Existing pictures are kept.",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 17,
+    "en": "Preparing the frame…",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 18,
+    "en": "Save cancelled",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 19,
+    "en": "The frame is saved",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 20,
+    "en": "PNG picture",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 21,
+    "en": "There is no frame to capture",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 22,
+    "en": "All reference slots are full. Clear a slot first.",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 23,
+    "en": "Clear the exact mask before adding another reference",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 24,
+    "en": "This destination is not available",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 25,
+    "en": "Choose a captured PNG frame",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 26,
+    "en": "No FIBO or FLUX3 checkpoint is available",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 27,
+    "en": "Could not select the image model",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 28,
+    "en": "Capture this view and save or send the frame",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 29,
+    "en": "Open a world before capturing a frame",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 30,
+    "en": "Frame sharing requires Forge Studio",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 31,
+    "en": "Could not read the captured PNG frame",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  },
+  {
+    "i": 32,
+    "en": "Save the frame with a .png extension",
+    "ctx": "[t] Project media bin and shared frame capture destinations"
+  }
+]

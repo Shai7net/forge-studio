@@ -266,6 +266,17 @@ def ffmpeg(name="ffmpeg"):
 def thumbnail(media_id, size=320):
     """A JPEG at most `size` pixels wide, made once per file version."""
     item = get(media_id)
+    return _thumbnail(item, size)
+
+
+def thumbnail_path(path, size=320):
+    import hashlib
+    key = hashlib.sha256((os.path.abspath(path) + str(os.stat(path).st_mtime_ns)).encode()).hexdigest()[:24]
+    return _thumbnail({'id': key, 'mtime': 0, 'path': path,
+                       'kind': _KIND_OF.get(os.path.splitext(path)[1].lower())}, size)
+
+
+def _thumbnail(item, size):
     out = os.path.join(paths.sub("thumbs"), f"{item['id']}-{int(item['mtime'])}-{size}.jpg")
     if os.path.isfile(out):
         return out

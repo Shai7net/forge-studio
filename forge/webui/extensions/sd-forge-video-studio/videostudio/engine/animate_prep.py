@@ -237,6 +237,7 @@ def cut_out(image, pose, sam_dir, device, pick=0, background=255, margin=0.06):
     others = [k for i, (_, k) in enumerate(found) if i != pick]
     mask = masks(frame[None], found[pick][1], others, sam_dir, device, 0.3, lambda *a, **k: None)[0]
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((15, 15), np.uint8))  # small holes where two people touch
+    mask = whole_figure(image, mask)
     mask = cv2.dilate(mask, np.ones((3, 3), np.uint8))
     out = np.where(mask[..., None] > 0, frame, np.uint8(background))
     ys, xs = np.nonzero(mask)
@@ -247,11 +248,58 @@ def cut_out(image, pose, sam_dir, device, pick=0, background=255, margin=0.06):
     return np.ascontiguousarray(out), len(found)
 
 
+def whole_figure(image, mask):
+    """SAM's cut of one person, made whole. Prompted with body points, SAM left holes inside a figure (a purple
+    hoodie, a trouser pocket) and dropped white sneakers on a light backdrop; on white those holes became white
+    cloth that Wan Animate drew as a flapping sheet beside the dancer (2026-11-11). Holes are filled, and on a plain
+    backdrop the person is BiRefNet's figure that SAM's cut lies on (BiRefNet keeps the whole silhouette; separate
+    people are separate figures), joined with SAM's cut."""
+    from scipy import ndimage
+    from .. import WEBUI_DIR, sheets
+    mask = ndimage.binary_fill_holes(mask > 0).astype(np.uint8)
+    matte = sheets.matte_file(os.path.join(WEBUI_DIR, "models"))
+    if not matte or not mask.any():
+        return mask
+    small, _ = sheets._small(image)
+    if not sheets.plain_backdrop(small):
+        return mask
+    figure = sheets.birefnet_mask(image, matte)
+    figure = cv2.resize(figure.astype(np.uint8), (mask.shape[1], mask.shape[0]), interpolation=cv2.INTER_NEAREST)
+    labels, count = ndimage.label(ndimage.binary_fill_holes(figure))
+    if not count:
+        return mask
+    overlap = np.bincount(labels[mask > 0], minlength=count + 1)
+    overlap[0] = 0
+    best = int(overlap.argmax())
+    piece = labels == best
+    # the figure must be this person (most of it under SAM's cut), not two people who touch
+    if overlap[best] < 0.6 * mask.sum() or piece.sum() > 1.8 * mask.sum():
+        return mask
+    return (piece | (mask > 0)).astype(np.uint8)
+
+
 def character_picture(job, device, report):
     """The character picture the model gets: as given when it shows one person, else the chosen person
     (`character_person`, numbered from the left) cut out onto white."""
     from PIL import Image
+    from .. import WEBUI_DIR, sheets
     path = job["character_image"]
+    # A turnaround is one identity, not a group. SAM's negative points on all the
+    # other views can erase the chosen body and leave disconnected face fragments.
+    views = sheets.split(path, sheets.matte_file(os.path.join(WEBUI_DIR, "models")))
+    if views:
+        folder = job.get("work_dir") or job["output_dir"]
+        os.makedirs(folder, exist_ok=True)
+        target = os.path.join(folder, "character-front.png")
+        views[0][1].save(target)
+        for name, picture in views[1:]:
+            if name == "close-up":
+                job["character_face"] = os.path.join(folder, "character-face.png")
+                picture.save(job["character_face"])
+        job["character_sheet"] = True
+        report("prepare", 0.0, note="Character sheet: using the complete front view, not the repeated faces",
+               preview=target)
+        return target
     with Image.open(path) as im:
         image = im.convert("RGB")
     pose = Pose(job["pose_detector"], job["pose_model"], gpu=device.type == "cuda")
@@ -260,7 +308,8 @@ def character_picture(job, device, report):
     if count <= 1 and not pick:
         return path
     report("prepare", 0.0, note=f"the picture shows {count} people: cutting out number {int(pick or 0) + 1}")
-    out, _ = cut_out(image, pose, job["sam_model"], device, int(pick or 0))
+    out, _ = cut_out(image, pose, job["sam_model"], device, int(pick or 0),
+                     background=int(job.get("character_background", 255)))
     target = os.path.join(job.get("work_dir") or job["output_dir"], "character-cut.png")
     Image.fromarray(out).save(target)
     if device.type == "cuda":
@@ -310,6 +359,8 @@ def prepare(job, device, report):
     if reach > 0:
         grown = np.stack([grown[max(0, i - reach):i + reach + 1].max(axis=0) for i in range(len(grown))])
     bg = frames * (1 - grown[..., None])
+    # (Filling this black area with the room behind - a background plate of a static camera - was tried on
+    # 2026-11-11: the model then copied the plate and drew no one there. The black area is what says "draw here".)
     if job.get("work_dir"):
         path = os.path.join(job["work_dir"], "prepared.mp4")
         try:

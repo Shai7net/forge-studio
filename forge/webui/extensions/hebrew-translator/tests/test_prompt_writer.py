@@ -14,6 +14,8 @@ from prompt_writer import memory as pmem, styles  # noqa: E402
 
 
 def test_targets():
+    assert styles.target_for('fs_effects', 'flux') == 'mmaudio'
+    assert styles.target_for('fs_music', 'sdxl') == 'ace_music'
     assert styles.target_for("txt2img_prompt", "sd15") == "sd15"
     assert styles.target_for("img2img_prompt", "sdxl", "juggernautXL_v9.safetensors") == "sdxl"
     assert styles.target_for("txt2img_prompt", "sdxl", "ponyDiffusionV6XL.safetensors") == "pony"
@@ -28,6 +30,17 @@ def test_targets():
     assert styles.target_for("txt2img_prompt", "fibo", "FIBO 2.0 Edit Turbo (INT8) [1f6fa7c499]") == "fibo_edit"
     assert styles.target_for("txt2img_neg_prompt", "fibo") == "negative"
     assert set(styles.TARGETS) == set(styles.GUIDES) == set(styles.EXAMPLES) == set(styles.FAMILY)
+
+
+def test_audio_prompts_describe_sound_in_any_language():
+    for target in ('mmaudio', 'ace_music'):
+        system, turns, user, tags = prompt_writer.compose('дождь по крыше', target)
+        assert 'ANY language' in system
+        assert 'audible details' in system
+        assert user == 'дождь по крыше'
+        assert turns and tags == []
+    assert 'MMAudio' in styles.system_prompt('mmaudio')
+    assert 'ACE-Step' in styles.system_prompt('ace_music')
 
 
 def test_tidy():
@@ -154,7 +167,19 @@ def test_characters_targets():
         raise AssertionError("a character without appearance must be refused")
     except ValueError:
         pass
-    for target in ("character", "wan_ingredients"):  # every target has its guide, example and family
+    # Video Studio with an LTX model: LTX targets (long paragraph with the sound), every sub-tab
+    assert styles.target_for("vs_prompt", "flux", "", "ltx:t2v") == "ltx_t2v"
+    assert styles.target_for("vs_prompt", "flux", "", "ltx:i2v") == "ltx_i2v"
+    assert styles.target_for("vs_prompt", "flux", "", "ltx:ltx_audio") == "ltx_i2v"
+    assert styles.target_for("vs_prompt", "flux", "", "ltx:ingredients") == "ltx_ingredients"
+    assert styles.target_for("vs_part2", "flux", "", "ltx:i2v") == "ltx_i2v"
+    assert styles.target_for("ch_video", "flux", "", "ltx:ingredients") == "ltx_ingredients"
+    assert styles.target_for("vs_part2", "flux", "", "i2v") == "wan_i2v"
+    # Replace a character is Wan Animate whatever video model is chosen
+    assert styles.target_for("vs_prompt", "flux", "", "replace") == "wan_replace"
+    assert styles.target_for("vs_prompt", "flux", "", "ltx:replace") == "wan_replace"
+    assert "no skirt" in styles.GUIDES["wan_replace"] and "waltz" in styles.GUIDES["wan_replace"]
+    for target in ("character", "wan_ingredients", "ltx_t2v", "ltx_i2v", "ltx_ingredients", "wan_replace"):
         assert styles.GUIDES[target] and styles.example(target) and styles.FAMILY[target]
 
 

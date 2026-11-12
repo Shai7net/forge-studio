@@ -1,5 +1,8 @@
 # Forge interface languages (forge-hebrew-ui)
 
+The language switch floats at the upper-right corner, outside the quick-settings flex row,
+so it never adds a wrapped row or pushes the tabs down. Its menu still opens below the button.
+
 The language button at the top right (next to the quick settings) switches the whole Forge interface between English
 and another language with one click, and back to exactly what it was. A full **Hebrew** translation is built in; any
 other language can be added with the **translation kit** and any AI (see *Other languages* below). The ▾ next to the

@@ -268,6 +268,10 @@ def _error(message, status=400):
 
 
 def mount(demo, app: FastAPI):
+    # Forge loads script files without registering them in sys.modules. Other extensions use the package bridge
+    # to reuse this loaded writer rather than import a second model/server instance.
+    prompt_writer.audio_write = write
+    prompt_writer.audio_engine_name = engine_name
     @app.post("/translator/write")
     def route_write(req: WriteRequest):
         if not req.text.strip():

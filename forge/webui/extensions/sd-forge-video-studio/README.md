@@ -1,21 +1,92 @@
 # Video Studio (סטודיו וידאו)
 
-Wan 2.2 video generation inside Forge, built for 8 GB graphics cards (written and measured on an RTX 3070 Laptop,
+Wan 2.2 and LTX-2.3 video generation inside Forge, built for 8 GB graphics cards (written and measured on an RTX 3070 Laptop,
 8 GB, with 48 GB of system memory).
 
-Three sub-tabs, one **Generate video** button:
+Five sub-tabs, one **Generate video** button, and a visible **Video model** selector:
 
-| Sub-tab | What you give | What Wan does |
+| Sub-tab | What you give | What the video engine does |
 |---|---|---|
-| **Text to Video** | a prompt | Forge draws the first frame with the checkpoint selected at the top of the page, then Wan animates it |
+| **Text to Video** | a prompt | Wan: Forge draws a first frame with the image checkpoint, then animates it. LTX: generates video directly, optionally with synchronized sound |
 | **Image to Video** | one picture and a prompt | a clip that starts on the picture |
 | | **➕ Last frame**: a second picture | a clip that starts on the first picture and ends on the last, doing what the prompt says in between |
 | | **➕ Another picture**: up to six | one part per pair of pictures (1→2, 2→3, …), all made in one run and joined into one video; each part can have its own description, and Length is per part |
 | **Ingredients to Video** | up to four pictures (people, a pet, an object, a place) and a prompt | a video with them in it, keeping their looks, doing what the prompt says (like Flow's Ingredients) |
 | **Replace a character** | a video and a picture of a character | the person in the video becomes the character: motion, expressions, camera and background stay |
+| **Image + Audio to Video** | a picture, an audio recording and a scene prompt | LTX animates the picture to the recording and preserves the source audio in the output |
+
+## LTX-2.3 on limited VRAM
+
+Choose **LTX 2.3 Distilled 1.1 · Q3 · recommended for 8 GB** above the tabs.
+The model switch automatically sets the native 8-step distilled schedule, CFG 1,
+24 fps, Euler ancestral sampling, and LTX quality choices. The recommended 8 GB
+starting point is **416p**; 288p is a quicker draft. Exact dimensions are aligned
+to 32 pixels and frame counts to 8n+1. A requested duration is rounded to the
+nearest valid frame count (within one sixth of a second). Frame size and duration
+still determine activation memory; a larger quant does not replace that memory.
+
+Q3 is the default compromise between retained detail, system memory and streaming
+cost. Q2 is offered for tighter memory; Q4 for higher quality with more headroom.
+The three choices use the same encoders and VAEs. Model downloads are selected
+individually, use pinned Hugging Face revisions, and verify SHA-256 after download.
+The Q3 package is about **21.2 GB** including Gemma 3 12B Q4_K_M, the LTX-2.3
+embedding connectors, and both video/audio VAEs. Existing Wan assets are retained.
+Allow system RAM for CPU offload as well as VRAM; 32 GB or more is recommended.
+
+Measured on this RTX 3070 Laptop: a 5-second 736×416 clip, 8 steps, native sound,
+and a cached prompt completed in about 117 seconds, peaking at 5.99 GB allocated
+VRAM. A 3-second audio-driven portrait, FILM to 48 fps and x2 enlargement to
+832×1408 completed in about 186 seconds, at 6.07 GB allocated VRAM. Cold text
+encoding adds time; timings vary with the scene, resolution and available memory.
+
+Under **Models**, download the missing files and press **Set up LTX engine** once.
+The LTX worker has its own environment under `video-studio/ltx/env`. Setup can
+reference an already installed compatible FIBO or Video Studio environment
+read-only, avoiding duplicate CUDA installations. Additional packages install in
+the LTX environment only. ComfyUI and ComfyUI-GGUF are pinned to the revisions in
+`videostudio/ltx.py`; no separately running ComfyUI server is required. The native
+Comfy LTX nodes perform conditioning, joint audio/video sampling and tiled VAE
+decoding. GGUF blocks stream between CPU and CUDA; the text encoder unloads before
+the diffusion model starts. Encoded prompts are cached between jobs.
+
+Both backends share Image to Video, first/last frame conditioning, chains of up to
+six pictures, Continue, Styles, FILM and enlargement. Ingredients with LTX goes through
+one FLUX 3 Klein first frame of all the pictures (see Ingredients to Video below).
+Phantom and character replacement remain their dedicated **Wan** models, even
+when LTX is selected; they are not represented as native LTX capabilities.
+
+**LTX synchronized sound** generates sound during video sampling and takes priority
+over automatic MMAudio. Disable it to make a silent clip or use the existing
+MMAudio workflow. **Image + Audio to Video** uses the supplied recording as audio
+conditioning and copies that audio into the final clip, including after FILM.
+Use a clear, visible face for dialogue; prompt following and lip quality depend
+on the shot and model. For deterministic speech editing, the existing speech and
+MuseTalk tools also remain available after either backend generates a clip.
+
+LTX Refine re-encodes the rendered motion at the requested size (up to 576p on
+these profiles), runs the late distilled steps, and retains its original audio.
+Refine follows the last video's model family; it never sends LTX latents to Wan.
+Multi-part refinement follows the existing single-clip restriction.
+
+LoRAs are separated by model family. LTX adapters live under
+`models/VideoStudio/ltx/loras` or `models/Lora/ltx`; they can be selected in the
+normal slots or referenced by `<lora:name:weight>`. Wan adapters never load into
+LTX. A LoRA with no compatible model layers fails with an explicit message.
+
+The worker uses the existing job lifecycle: progress events, queue locking,
+background completion and cancellation. Outputs retain `.first.png`, `.last.png`
+and `.json`; LTX metadata includes the backend, base frame rate/count, audio
+mode, model and peak allocated VRAM. These private outputs and downloaded model
+files do not belong in a source release.
 
 The 🎬 button under the txt2img and img2img results sends the picture to Image to Video (it used to go to the SVD
 tab).
+
+Forge Studio's frame dialog and Simulation 360's camera button can also send PNG frames here. Repeated sends
+fill the next free Image to Video picture (up to six) or Ingredient (up to four), preserving existing inputs.
+Image to Video reveals additional rows and updates its picture count automatically. A full destination asks
+you to clear a slot; it never replaces a picture silently. Capture several shots or world viewpoints to collect
+references, then write the prompt and Generate when ready.
 
 In a video made from several pictures, each picture is a frame of the video (part 1 ends on picture 2 and part 2
 starts on it, so that frame is kept once). The two Wan experts are loaded once for all the parts, and FILM and the
@@ -46,7 +117,8 @@ ends. **Show the last video** brings back the newest result (or the progress of 
   one male voice, a few seconds a line) is there too. Phonikud's voices are licensed for non-commercial use.
 * **Speech from a recording**: a sound file or the microphone.
 * **Lips moved to the words (MuseTalk 1.5)** over the whole clip, so the lower face looks the same before, during
-  and after the words. If the speech is longer than the clip, its last second plays back and forth.
+  and after the words. If the speech is longer than the clip, the video plays once and holds its last frame;
+  MuseTalk continues animating the mouth there. Motion is never replayed or reversed to fill long speech.
 * **The mix**: speech at its start time, the background ducked under it, the whole at about -14 LUFS.
 
 Measured on the RTX 3070 Laptop: a 7 s Hebrew line takes about 1 minute (Chatterbox), effects for a 7 s clip about
@@ -55,15 +127,28 @@ Video from a crop) for a character who talks.
 
 ## Ingredients to Video
 
-Two ways, chosen in the tab:
+Choose the workflow in the tab; it stays interactive for both video families.
 
-**First frame by FLUX 3 Klein, then Wan 2.2** (the default). FLUX 3 Klein (the checkpoint selected at the top of
-the page) draws one frame of the scene with the ingredient pictures as its references - its own editing, each
-picture at its own shape (`p.flux3_references`, added to sd-forge-flux3 for this) - and Wan 2.2 Image to Video
-animates it with the tab's model, steps and quality. Klein reads a whole character sheet and keeps the face, the
-clothes and the drawn style; Image to Video keeps what the first frame shows. Measured on Shai's 3D character sheet
-(2026-11-09): this kept him; Phantom kept his clothes but drew a different, real person, even told "3D cartoon".
-About 70 s for the frame, then the usual Image to Video time.
+**Automatic** (the default) uses the first-frame way whenever a complete FLUX 3 Klein is installed, and Phantom
+otherwise. Explicit Phantom uses Wan independently of the main video selector; the result details name the engine
+actually used.
+
+**First frame by FLUX 3 Klein, then the selected video model.** FLUX 3 Klein draws one frame of the scene with all
+the ingredient pictures as its references - its own editing, each picture at its own shape (`p.flux3_references` in
+sd-forge-flux3) - and the selected Wan or LTX model animates it as Image to Video. Klein reads a whole character sheet
+and keeps the face, the clothes and the drawn style; Image to Video keeps what the first frame shows. Measured on
+Shai's 3D character sheet (2026-11-09): this kept him; Phantom kept his clothes but drew a different, real person.
+
+FLUX 3 does not have to be the selected image checkpoint: with another one selected, the extension loads Klein's own
+engine for that one picture and unloads it afterwards; the selected checkpoint and its options stay as they were.
+The frame is drawn at 8 steps: on a two-character frame (1376x768, two references) 8 steps looked as good as 16 in
+42 s instead of 83 (2026-11-11). Measured end to end with two pictures and LTX Q3 at 416p, 5 s, native sound, FILM
+48 fps and x2 enlargement: 6.5 min, both characters kept through the shot, 5.8 GB peak VRAM. A temporary engine adds
+about 20 s of loading. Video Studio's Stop works during this first-frame phase as well as during the video worker.
+
+A native LTX Ingredients route (the official IC-LoRA recipe: Dev Q3 + Ingredients adapter on a reference sheet) was
+built and tested on 2026-11-11 and removed: it returned the pictures as separate panels instead of one scene, needed
+a 23 GB extra package, and was slower than the first-frame way.
 
 **Phantom: the pictures go into the video.** Phantom-Wan 14B (ByteDance's subject-to-video model on Wan 2.1 14B; the FusionX merge, so 8 steps at CFG 1 are
 enough; Q3_K_M GGUF, 7.2 GB in `models/VideoStudio/phantom`). Each picture is encoded by the VAE into one latent frame
@@ -106,10 +191,17 @@ the chosen one is cut out (SAM) onto white before use; **Who becomes whom → Ev
 person of the video with one of the picture (from the left, or reversed), one pass per person, each pass on the
 result of the one before. Very different body shapes (a child for an adult) can bend.
 
-**Make the faces like the picture** (on when FaceFusion is installed next to Forge, `C:\ForgeStudioacefusion`)
+Character sheets are recognized before group-person segmentation. The complete
+front view is used for Animate, and a large close-up is retained for the optional
+face pass. The repeated views are one identity in Find the people as well.
+This avoids SAM treating a sheet's many heads as separate people and erasing the
+body with its negative prompts. The worker shows and saves the actual front view.
+
+**Make the faces like the picture** (optional, off by default; available when FaceFusion is installed next to Forge)
 finishes with a face swap: at 480p Wan draws a dancer's face at about 40 pixels with the driving face's expression,
 so it is a look-alike; HyperSwap (512 boost) + GFPGAN put each character's real face from the picture on their dancer,
-matched by position on the first frame, about a minute per person. The video without it is kept as `-raw.mp4`.
+matched by position on the first frame, about a minute per person. Use this for photographic faces;
+leave it off for drawn and 3D characters, whose style it can change. The video without it is kept as `-raw.mp4`.
 
 The person is followed by SAM 2 (prompted on the first frame), not by boxes: when two dancers cross, box overlap
 jumped to the partner. Each frame's skeleton is the detected body whose points lie inside SAM's cut.
@@ -117,7 +209,7 @@ jumped to the partner. Each frame's skeleton is the detected body whose points l
 Each frame's area also covers its two neighbours on each side: the VAE packs four frames into one latent frame, and
 a fast-moving skirt otherwise left traces in the background that came out as white smoke.
 
-## The model
+## The Wan model
 
 Wan 2.2 I2V A14B with the lightx2v 4-step distillation of 2026-04-12 (`lightx2v/Wan2.2-Distill-Models`), as GGUF
 (`Abiray/Wan2.2-LightX2V-260412-4STEP-GGUF`), Q3_K_M: 7.2 GB for each of the two experts. The high-noise expert
@@ -209,6 +301,15 @@ The worker prints progress as `@@VS {json}` lines and ends with `{"stage": "done
 `{"stage": "error", ...}`. Creating the file named in `cancel_file` stops it after the current block.
 
 ## Credits
+
+LTX: Lightricks LTX-2.3 / Distilled 1.1 (LTX community license), GGUF quantization
+by Unsloth, ComfyUI native LTX nodes (GPL-3.0), and City96 ComfyUI-GGUF
+(Apache-2.0). Sources and reference workflows:
+https://huggingface.co/Lightricks/LTX-2.3,
+https://huggingface.co/unsloth/LTX-2.3-GGUF,
+https://docs.comfy.org/tutorials/video/ltx/ltx-2-3,
+https://github.com/Lightricks/ComfyUI-LTXVideo,
+https://github.com/city96/ComfyUI-GGUF.
 
 Model code follows ComfyUI (`comfy/ldm/wan`) and Forge Neo, after Wan-Video/Wan2.1 (Apache-2.0). GGUF dequantisation
 follows llama.cpp's formats via gguf-py. Weights: Wan-AI (Apache-2.0), lightx2v distillation, GGUF by Abiray.

@@ -16,8 +16,16 @@ the style.
 | txt2img with FIBO 2.0 Dev | FIBO's structured JSON caption (VGL: objects, background, lighting, camera, style; `text_render` keeps requested lettering in its own language) |
 | img2img with FIBO, or Edit Turbo | one direct edit instruction ("Change ... Keep ... unchanged") |
 | txt2img / img2img negative prompt | a plain list of things to avoid (nothing added) |
-| Video Studio prompt | Wan 2.2: one continuous shot with motion and camera; from a picture (Image to Video), mostly the motion |
-| Video Studio part boxes | Wan 2.2 between two of your pictures |
+| Video Studio prompt, Wan model chosen | Wan 2.2: one continuous shot with motion and camera; from a picture (Image to Video), mostly the motion; Ingredients names "the ... from picture N" |
+| Video Studio prompt, LTX model chosen | LTX-2.3: one long chronological paragraph (action, gestures, looks, place, camera, light, changes) ending with the sound - ambience, effects, music and spoken lines in quotes - since LTX makes the sound too; per sub-tab (`ltx_t2v`, `ltx_i2v` also for Image + Audio, `ltx_ingredients`) |
+| Video Studio part boxes | Wan 2.2 or LTX-2.3 between two of your pictures, by the chosen model |
+| Characters: character / video | the character as JSON for a sheet; the video idea for Ingredients, for the model chosen in Video Studio |
+| Forge Studio sound effects (`fs_effects`) | MMAudio: audible source, action, material, rhythm, distance and acoustic environment; no visual prompt |
+| Forge Studio music (`fs_music`) | ACE-Step: genre, instruments, tempo, mood and arrangement; instrumental music |
+
+Forge Studio invokes these two audio targets automatically before generating sound, for input in any language,
+including English. The resulting English prompt is shown in the sound request status. These targets use audio
+instructions instead of the image and video creativity settings.
 
 `<lora:...>` tags you wrote are kept as they are.
 

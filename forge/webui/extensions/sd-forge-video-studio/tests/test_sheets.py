@@ -57,6 +57,12 @@ class OneCharacter(unittest.TestCase):
         small, mask, boxes = self.picture([(250, 250, 250), (30, 30, 120), (200, 40, 40)])
         self.assertFalse(sheets.one_character(small, mask, boxes, boxes[0]))
 
+    def test_two_figures_are_two_people_not_a_sheet(self):
+        """A cast picture (a girl and a dog side by side, 2026-11-11) was taken for one character: two figures are
+        two people however alike their colours, and Replace a character gives each its own pass."""
+        small, mask, boxes = self.picture([(250, 250, 250), (245, 248, 250)])
+        self.assertFalse(sheets.one_character(small, mask, boxes, boxes[0]))
+
 
 class Backdrop(unittest.TestCase):
     def test_lit_studio_backdrop_is_plain_and_texture_is_not(self):

@@ -18,13 +18,20 @@ TARGETS = {
     "fibo_edit": "FIBO 2.0 edit",
     "negative": "Negative prompt",
     "character": "Character for a reference sheet (JSON)",
+    "wan_replace": "Wan Animate: replace a character",
+    "ltx_t2v": "LTX video, from text",
+    "ltx_i2v": "LTX video, from a picture",
+    "ltx_ingredients": "LTX video from ingredient pictures",
     "wan_ingredients": "Wan video from ingredient pictures",
+    "mmaudio": "MMAudio sound effects",
+    "ace_music": "ACE-Step instrumental music",
 }
 
 # targets that write alike: a liked example of one teaches the others in its family a little
 FAMILY = {"sd15": "tags", "sdxl": "mixed", "pony": "booru", "booru": "booru", "flux": "prose",
           "wan_t2v": "video", "wan_i2v": "video", "fibo": "json", "fibo_edit": "edit", "negative": "negative",
-          "character": "character", "wan_ingredients": "video"}
+          "character": "character", "wan_ingredients": "video", "mmaudio": "sound", "ace_music": "music",
+          "ltx_t2v": "ltx", "ltx_i2v": "ltx", "ltx_ingredients": "ltx", "wan_replace": "replace"}
 
 CREATIVITY = {
     "Faithful": "Add as little as possible: translate the idea into clear prompt English and add only the words "
@@ -52,6 +59,8 @@ Target model: {target}
 {guide}"""
 
 GUIDES = {
+    "mmaudio": "MMAudio makes sound effects. Translate any input language into concise natural English describing ONLY what is heard: the sound source, action, material, rhythm, distance, acoustic environment and timing, when specified. Preserve the requested sequence and number of events. Do not add music, speech, visual details, camera directions or unrelated sounds. One or two sentences, no quality tags.",
+    "ace_music": "ACE-Step makes instrumental music. Translate any input language into a compact English music caption: genre, instruments, mood, tempo or BPM, rhythm, energy, texture and arrangement when specified. Preserve named instruments and requested changes. No camera directions, visual description, lyrics or vocals unless explicitly requested. Do not invent a new genre or instruments. One paragraph, under 70 words.",
     "sd15": """Stable Diffusion 1.5 reads short comma-separated phrases, and the first phrases matter most (about 75 tokens). Write 15 to 35 phrases on one line: the main subject and its action first, then details of the subject, the setting, the lighting, the camera and composition, the art style, and at the end a few quality words (masterpiece, best quality, highly detailed). No full sentences.""",
     "sdxl": """SDXL understands one short descriptive sentence followed by comma-separated details. Write one clear sentence about the subject and what it does, then 8 to 20 comma-separated details: setting, lighting, composition, style and a few quality words. One line, under 75 words.""",
     "pony": """A Pony Diffusion (SDXL) model trained on booru tags. Start with "score_9, score_8_up, score_7_up," then write comma-separated booru-style tags: the subject count (1girl, 1boy, 2girls, no humans...), the character's features, clothing, action and pose, the setting, the lighting, the framing (close-up, cowboy shot, full body...). One line, no sentences.""",
@@ -78,12 +87,22 @@ Only when the user asks for written words in the picture, add "text_render": a l
 "appearance": 3 to 5 sentences that start with "a" or "an": age, gender, build, skin, face, eyes, hair and its style, the usual expression, then EVERY piece of clothing and accessory with its exact color and material, and how the personality shows in the face and posture. Concrete, visual words only; everything must be drawable from the front, the side and the back;
 "style": the rendering style: keep the user's (anime, realistic photo, Pixar, clay...); if they name none, "Premium stylized 3D animation, polished cinematic rendering";
 "avoid": comma-separated things that must not appear, always including: different faces, inconsistent clothing, extra limbs, distorted anatomy, skeleton overlays, text, cropped body.""",
+    # Video Studio's Replace a character (Wan 2.2 Animate, with either video model chosen): the motion comes from the
+    # video, so the words only describe who appears. "Dance a waltz" drew a flowing white gown on a girl in trousers
+    # (2026-11-11); describing her real clothes, with "no dress", removed it.
+    "wan_replace": """Wan 2.2 Animate puts the character(s) from the user's picture into the motion of a person in a video: the movement, the camera and the place come from the video. Write one paragraph of 40 to 90 words that describes ONLY who appears, as the picture shows them: for each character, who it is (a young woman, an upright Dalmatian...), face and hair, then EVERY piece of clothing and footwear with its color, and the style (the picture's: 3D animation, photo...). Then one short clause on what they do (dance together, walk, talk) and the place in plain words. Never name a dance style, an occasion or a role that suggests a costume (waltz, ballet, wedding, ball, princess); when the character wears trousers or shorts, say "no dress, no skirt". No camera words, no quality tags.""",
+    # LTX-2.3 (Video Studio): Lightricks' prompting guide - one detailed chronological paragraph; sound is generated too
+    "ltx_t2v": """LTX-2.3 makes the video and its sound together, from a long, precise description. Write ONE flowing paragraph of 90 to 180 words in the present tense, in chronological order, as one continuous shot: start with the main action, then the exact movements and gestures, how the people and things look, the place and the background, the camera (angle and movement: static, slow push-in, tracking shot, orbit, handheld...), the light and the colors, and any change during the shot. End with the sound: the ambient sound, the sound effects and any music, and every spoken line in double quotes, saying who speaks and how (\"she whispers: ...\"); spoken words stay in the language the user wants them spoken. No lists, no cuts, no quality tags, no negative words. Everything seen comes from the words, so describe the subjects fully.""",
+    "ltx_i2v": """LTX-2.3 makes the video and its sound together, from a long, precise description. Write ONE flowing paragraph of 90 to 180 words in the present tense, in chronological order, as one continuous shot: start with the main action, then the exact movements and gestures, how the people and things look, the place and the background, the camera (angle and movement: static, slow push-in, tracking shot, orbit, handheld...), the light and the colors, and any change during the shot. End with the sound: the ambient sound, the sound effects and any music, and every spoken line in double quotes, saying who speaks and how (\"she whispers: ...\"); spoken words stay in the language the user wants them spoken. No lists, no cuts, no quality tags, no negative words. The user's picture is the first frame: name the subjects briefly as they are in it and spend the words on what moves and what is heard.""",
+    "ltx_ingredients": """LTX-2.3 makes the video and its sound together, from a long, precise description. Write ONE flowing paragraph of 90 to 180 words in the present tense, in chronological order, as one continuous shot: start with the main action, then the exact movements and gestures, how the people and things look, the place and the background, the camera (angle and movement: static, slow push-in, tracking shot, orbit, handheld...), the light and the colors, and any change during the shot. End with the sound: the ambient sound, the sound effects and any music, and every spoken line in double quotes, saying who speaks and how (\"she whispers: ...\"); spoken words stay in the language the user wants them spoken. No lists, no cuts, no quality tags, no negative words. FLUX 3 first draws the opening frame from the user's pictures: name each pictured character or thing as "the <2-6 word look> from picture N" (picture 1 when there is one) and keep the pictures' style.""",
     "wan_ingredients": """Wan 2.2 makes a 5 second video of characters and things the user gives as pictures: FLUX 3 first draws the opening frame from those pictures, then Wan animates it. Write one paragraph of 60 to 110 words in the present tense describing ONE continuous shot. Name each pictured character or thing as "the <2-6 word look> from picture N" (picture 1 when there is one; the user may say "the character", "him", "her" or a name), then the setting, exactly what they do in order with clear motion verbs, their expressions, what the camera does (tracking shot, slow push-in, orbit, low angle...), the light and the time of day, and the style (keep the pictures' style; if a style is given below, end with it). Describe motion over time, not a still picture. No cuts, no lists, no quality tags.""",
     "fibo_edit": """FIBO 2.0 Edit changes the user's own picture. Write ONE direct English instruction in the imperative, 1 to 3 sentences: exactly what to change, how it should look after, and what must stay as it is ("keep the face, the pose and the background unchanged"). Do not describe the whole picture. When several reference pictures are used, call them <image_1>, <image_2>... in the user's order.""",
 }
 
 # One example per target, used while fewer than two liked examples of its own exist. The learned ones replace it.
 EXAMPLES = {
+    "mmaudio": ("Three knocks on a wooden door", "Three distinct knocks on a wooden door, with short pauses and a dry wooden resonance."),
+    "ace_music": ("Calm piano with gentle strings", "Calm instrumental piano with gentle sustained strings, a relaxed tempo and a soft, warm arrangement."),
     "sd15": ("ילדה ג'ינג'ית רצה בשדה חמניות בשקיעה",
              "a red-haired girl running through a sunflower field at sunset, long flowing red hair, summer dress, "
              "tall sunflowers all around, golden hour, warm backlight, lens flare, wide shot, photorealistic, "
@@ -134,6 +153,35 @@ EXAMPLES = {
                   'loose, every bit the charming street-smart guy.", "style": "Premium stylized 3D animation, polished '
                   'cinematic rendering", "avoid": "different faces, inconsistent clothing, aggressive expression, '
                   'weapons, extra limbs, distorted anatomy, skeleton overlays, text, cropped body"}'),
+    "wan_replace": ("הבחורה עם הכובע הצהוב והכלב הדלמטי רוקדים ואלס במקום הזוג",
+                    "A young woman with curly brown hair in a mustard-yellow beanie, a light-blue denim jacket over a "
+                    "purple hoodie, dark cargo trousers and white sneakers - trousers, no dress, no skirt - and an "
+                    "upright anthropomorphic Dalmatian in a dark suit jacket, white shirt, light trousers and black "
+                    "shoes dance together in a bright room with white curtains and a wooden floor. Premium stylized "
+                    "3D animation."),
+    "ltx_t2v": ("איש עושה עמידת ידיים על החוף",
+                "A man in swim shorts walks onto a sunny beach, bends down, plants his hands in the wet sand and "
+                "kicks his legs up into a steady handstand, toes pointing at the sky, his arms trembling slightly as he "
+                "holds it. Small waves roll in and wash around his hands. He is tanned and lean, with short dark hair. "
+                "Behind him the sea glitters under a clear blue sky and a few gulls glide past. The camera starts wide "
+                "at eye level and slowly circles to his side as he holds the pose. Bright midday sunlight, deep blue "
+                "and warm sand tones, realistic. Sound: waves breaking and hissing on the sand, gulls calling in the "
+                "distance, a light wind, and the man exhales sharply as he kicks up."),
+    "ltx_i2v": ("הילדה מסתובבת אל המצלמה ומחייכת, הרוח מזיזה לה את השיער",
+                "The girl slowly turns her head toward the camera and breaks into a warm smile, while a light breeze "
+                "lifts strands of her hair across her face and she tucks one behind her ear. The flowers behind her "
+                "sway gently and a few petals drift past. The camera holds steady at eye level, then pushes in slightly "
+                "toward her face as the smile widens. Soft afternoon light, warm colors. Sound: a gentle breeze "
+                "rustling the flowers, distant birdsong, and she laughs softly under her breath."),
+    "ltx_ingredients": ("הדמות מכדררת כדורסל במגרש רחוב, קולעת ומחייכת למצלמה",
+                        "The young man in the backward red cap from picture 1 dribbles a basketball between his legs on "
+                        "an outdoor street court on a sunny afternoon, spins past an invisible defender, jumps and sinks "
+                        "a shot that swishes through the net, then turns to the camera with a big grin and points at it. "
+                        "He wears a white t-shirt, a thin gold chain and ripped light-blue jeans. Chain-link fences and "
+                        "apartment blocks stand behind the court. The camera tracks beside him at hip height and slowly "
+                        "pushes in on the grin. Warm late-afternoon sun, long soft shadows, the same premium stylized 3D "
+                        "animation look as the picture. Sound: the ball thudding on the asphalt, sneakers squeaking, the "
+                        "swish of the net, distant traffic, and he shouts: \"Told you!\""),
     "wan_ingredients": ("הדמות מכדררת כדורסל במגרש רחוב, קולעת ומחייכת למצלמה",
                         "The young man in the backward red cap from picture 1 dribbles a basketball between his legs "
                         "on an outdoor street court on a sunny afternoon, spins past an invisible defender, jumps and "
@@ -156,6 +204,8 @@ MEANINGS = {
     "תצבע את המכונית בצהוב": "Paint the car yellow.",
     "בחור צעיר וחייכן עם כובע מצחייה אדום הפוך, חולצה לבנה וג'ינס קרוע, סגנון אנימציה תלת ממדית":
         "A young smiling guy with a backward red cap, a white shirt and ripped jeans, 3D animation style.",
+    "הבחורה עם הכובע הצהוב והכלב הדלמטי רוקדים ואלס במקום הזוג":
+        "The girl with the yellow hat and the Dalmatian dog dance a waltz instead of the couple.",
     "הדמות מכדררת כדורסל במגרש רחוב, קולעת ומחייכת למצלמה":
         "The character dribbles a basketball on a street court, scores and smiles at the camera.",
 }
@@ -190,6 +240,11 @@ def system_prompt(target, creativity="Rich", notes=(), avoid=(), words=()):
     versions he disliked."""
     text = BASE.format(creativity=CREATIVITY.get(creativity, CREATIVITY["Rich"]), target=TARGETS[target],
                        guide=GUIDES[target])
+    if target in ("mmaudio", "ace_music"):
+        text = ("You translate sound and music requests from ANY language into English for an audio model. "
+                "Preserve the user's intent and write only audible details. Never turn the request into an image or video prompt.\n"
+                "Answer in exactly two lines:\nMeaning: a literal English translation.\nPrompt: the English audio prompt.\n"
+                f"Target model: {TARGETS[target]}\n{GUIDES[target]}")
     if target == "negative":
         # a list of things to avoid has nothing to enrich
         text = text.replace(CREATIVITY.get(creativity, CREATIVITY["Rich"]), CREATIVITY["Faithful"])
@@ -213,16 +268,26 @@ _BOORU = re.compile(r"illustrious|noob|ilxl|animagine|\bwai", re.I)
 
 def target_for(field, architecture="", checkpoint="", video_mode=""):
     """The target for a prompt field. `architecture` is "sd15", "sdxl", "flux" (read from the checkpoint's
-    weights) or "fibo" (a FIBO 2.0 checkpoint of sd-forge-fibo2), `video_mode` the open Video Studio sub-tab."""
+    weights) or "fibo" (a FIBO 2.0 checkpoint of sd-forge-fibo2), `video_mode` the open Video Studio sub-tab,
+    "ltx:<sub-tab>" when Video Studio's video model is an LTX one."""
     field = field or ""
+    ltx = (video_mode or "").startswith("ltx:")
+    mode = (video_mode or "").split(":", 1)[-1]
+    if field in ("fs_effects", "fs_music"):
+        return "mmaudio" if field == "fs_effects" else "ace_music"
     if field.startswith("vs_part"):
-        return "wan_i2v"  # a part runs between two of the user's pictures
+        return "ltx_i2v" if ltx else "wan_i2v"  # a part runs between two of the user's pictures
     if field == "ch_character":
         return "character"  # sd-forge-characters: the character for a reference sheet
     if field == "ch_video":
-        return "wan_ingredients"  # sd-forge-characters: what the character does in a video
+        # sd-forge-characters: what the character does in a video (it goes to Ingredients)
+        return "ltx_ingredients" if ltx else "wan_ingredients"
+    if field.startswith("vs_") and mode == "replace":
+        return "wan_replace"  # Replace a character is Wan Animate whichever video model is chosen
     if field.startswith("vs_"):
-        return {"i2v": "wan_i2v", "ingredients": "wan_ingredients"}.get(video_mode, "wan_t2v")
+        if ltx:
+            return {"i2v": "ltx_i2v", "ltx_audio": "ltx_i2v", "ingredients": "ltx_ingredients"}.get(mode, "ltx_t2v")
+        return {"i2v": "wan_i2v", "ingredients": "wan_ingredients"}.get(mode, "wan_t2v")
     if "neg" in field:
         return "negative"
     if architecture == "fibo":

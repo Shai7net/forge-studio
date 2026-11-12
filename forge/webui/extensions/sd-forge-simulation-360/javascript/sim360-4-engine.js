@@ -2203,6 +2203,15 @@
     };
 
     /* the view as a picture file, without guides: what the automatic selection and the character look at */
+    E.captureFrame = async () => {
+        if(!E.doc||!E.worldId||!E.gl)throw new Error('Open a world before capturing a frame');
+        const aspect=E.aspect(),w=1920,h=Math.max(64,Math.round(w/aspect)),scale=Math.min(1,4096/Math.max(w,h),Math.sqrt(8000000/(w*h)));
+        const width=Math.round(w*scale),height=Math.round(h*scale);
+        // Keep the actual viewpoint, camera movement, portals, weather and transitions.
+        // The clean flag removes editor guides and selection outlines only.
+        const state=E.renderState(true);
+        return {canvas:canvasFromPixels(E.gl.capture(state,width,height),width,height),state};
+    };
     E.snapshot = async (width, height, options) => {
         options = options || {};
         const state = E.renderState(options.closed === false ? true : 'closed', options.cam || { ...E.cam, pos: E.cam.pos.slice(), roll: 0 });

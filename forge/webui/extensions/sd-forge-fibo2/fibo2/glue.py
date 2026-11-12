@@ -208,8 +208,13 @@ def _fibo_request(p, info):
         width, height = (max(64, int(x) // 16 * 16) for x in references[0].size)
 
     count = int(p.batch_size) * int(p.n_iter)
+    prompt, negative = p.prompt or "", p.negative_prompt or ""
+    from modules import shared
+    style_bridge = getattr(shared.prompt_styles, 'apply_styles_for_model', None)
+    if style_bridge:
+        prompt, negative = style_bridge(prompt, negative, getattr(p, 'styles', []) or [], 'fibo')
     request = Generation(
-        variant=info.fibo2_variant, mode=mode, prompt=p.prompt or "", negative_prompt=p.negative_prompt or "",
+        variant=info.fibo2_variant, mode=mode, prompt=prompt, negative_prompt=negative,
         width=width, height=height, steps=int(p.steps), cfg=float(p.cfg_scale), seed=int(p.seed), count=count,
         precision=info.fibo2_precision, prompt_writer=getattr(p, "fibo2_prompt_writer", "off"),
     )

@@ -1,0 +1,172 @@
+[
+ {
+  "i": 0,
+  "en": "No removable silence in this selection",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 1,
+  "en": "Drag to move; edges trim. Shift-drag marks a range. S splits; Delete removes.",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 2,
+  "en": "Combine clips",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 3,
+  "en": "Combine the extended shot?",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 4,
+  "en": "Combining clips: {0}%",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 5,
+  "en": "Combining the shot and extension…",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 6,
+  "en": "Keep separate",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 7,
+  "en": "Keep the shot and its extension as one clip. The two timeline pieces are replaced only after combining succeeds.",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 8,
+  "en": "Shot and extension combined. Undo restores both clips.",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 9,
+  "en": "The clips changed; combine them again",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 10,
+  "en": "The clips changed; the combined file is saved in the project",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 11,
+  "en": "Drag speech to move it. Drag edges to trim. S splits; Delete removes a piece or marked range.",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 12,
+  "en": "Effective speed: {0}x",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 13,
+  "en": "Generate lip sync",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 14,
+  "en": "Generate speech",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 15,
+  "en": "Generate speech to begin a new take",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 16,
+  "en": "Generate speech to start editing",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 17,
+  "en": "Lip preview",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 18,
+  "en": "Listen and edit. Generate lips when the timing is right.",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 19,
+  "en": "No speech pieces. Undo or generate speech again.",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 20,
+  "en": "Preview voice: {0}",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 21,
+  "en": "Redo speech edit",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 22,
+  "en": "Refresh audio",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 23,
+  "en": "Remove silence",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 24,
+  "en": "Shot preview",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 25,
+  "en": "Speech at this speed no longer fits the edited positions. Move the pieces or use a faster speed.",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 26,
+  "en": "Speech track",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 27,
+  "en": "The shot changed; reopen lip sync",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 28,
+  "en": "Timeline zoom",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 29,
+  "en": "Undo speech edit",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 30,
+  "en": "Updating edited speech…",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 31,
+  "en": "Video track",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 32,
+  "en": "Voice tuning",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ },
+ {
+  "i": 33,
+  "en": "Wait for the edited speech preview",
+  "ctx": "[t] Forge Studio compact lip editor and extension combine"
+ }
+]

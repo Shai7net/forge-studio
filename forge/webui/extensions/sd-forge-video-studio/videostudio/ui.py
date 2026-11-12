@@ -9,21 +9,72 @@ import re
 import shutil
 import subprocess
 import time
+import threading
+import functools
 
 import gradio as gr
 from PIL import Image
 
-from . import CACHE_DIR, JOBS_DIR, OUTPUT_DIR, WEBUI_DIR, faceswap, models, prompting, runner, sheets, sound
+from . import CACHE_DIR, JOBS_DIR, OUTPUT_DIR, WEBUI_DIR, faceswap, ltx, models, prompting, runner, sheets, sound
+
+_FRAME_ACTIVE = False
+_FRAME_STOP = threading.Event()
+
+
+class FrameCancelled(RuntimeError):
+    pass
+
+
+def frame_task(function):
+    @functools.wraps(function)
+    def draw(*args, **kwargs):
+        from modules import shared
+        global _FRAME_ACTIVE
+        _FRAME_STOP.clear()
+        shared.state.begin(job='Video Studio first frame')
+        _FRAME_ACTIVE = True
+        try:
+            result = function(*args, **kwargs)
+            if _FRAME_STOP.is_set() or shared.state.interrupted:
+                raise FrameCancelled()
+            return result
+        except Exception:
+            if _FRAME_STOP.is_set():
+                raise FrameCancelled() from None
+            raise
+        finally:
+            _FRAME_ACTIVE = False
+            shared.state.end()
+    return draw
 
 MODES = {"t2v": "Text to Video", "i2v": "Image to Video", "ingredients": "Ingredients to Video",
-         "replace": "Replace a character"}
+         "replace": "Replace a character", "ltx_audio": "Image + Audio to Video"}
 MAX_INGREDIENTS = 4  # Phantom was trained on up to four
 # Measured on his character sheet (2026-11-09): Phantom kept the clothes but drew a different, real person; FLUX 3
 # Klein drawing the first frame from the sheet kept face, clothes and the 3D style, and Wan's Image to Video keeps
 # what the first frame shows.
 ING_FRAME = "First frame by FLUX 3 Klein from the pictures, then Wan 2.2 (keeps faces and style)"
+ING_LTX_FRAME = 'First frame by FLUX 3 Klein from the pictures, then LTX 2.3 (keeps faces and style)'
 ING_PHANTOM = "Phantom: the pictures go into the video (keeps clothes and things; faces and drawn styles drift)"
-ING_METHODS = (ING_FRAME, ING_PHANTOM)
+ING_AUTO = 'Automatic: use the best available reference workflow'
+# FLUX 3 Klein (flow map) at 8 steps drew the two-character first frame as well as at 16, in 42 s instead of 83
+# (1376x768 with two references, 2026-11-11)
+FIRST_FRAME_STEPS = 8
+ING_METHODS = (ING_AUTO, ING_FRAME, ING_PHANTOM)
+
+
+def ingredient_methods(is_ltx):
+    return [ING_AUTO, ING_LTX_FRAME, ING_PHANTOM] if is_ltx else list(ING_METHODS)
+
+
+def ingredient_route(method, is_ltx, flux_available):
+    if method == ING_PHANTOM:
+        return 'phantom'
+    if method in (ING_FRAME, ING_LTX_FRAME):
+        return 'flux'
+    if flux_available:
+        return 'flux'
+    return 'phantom'
 # Image to Video takes up to this many pictures: one is a start, two a first and a last frame, more make one part per
 # pair, all made in one run and joined.
 MAX_PICTURES = 6
@@ -148,6 +199,7 @@ def models_markdown():
                        ("effects", "Sound effects (MMAudio)"), ("lips", "Lip sync (MuseTalk)")):
         lines.append(f"- {label}: {'ready' if have[key] else 'not installed'}")
     py = runner.engine_python()
+    lines.append('- LTX engine: ' + ('ready' if ltx.runtime_ready() else 'not set up (Set up LTX engine below)'))
     lines.append(f"- Engine: `{'Video Studio engine (PyTorch 2.9, SageAttention)' if 'video-studio' in py else 'Forge Python (slower: no SageAttention)'}`")
     st = models.DOWNLOADS.status()
     if st["active"]:
@@ -175,6 +227,7 @@ def _copy_input(path, job_dir, name):
     return dest
 
 
+@frame_task
 def draw_first_frame(prompt, negative, aspect, steps, cfg, sampler, seed, folder):
     """Text to Video's first frame, drawn by Forge with the checkpoint selected at the top of the page."""
     from modules import processing, shared
@@ -196,17 +249,31 @@ def draw_first_frame(prompt, negative, aspect, steps, cfg, sampler, seed, folder
     return path
 
 
+def installed_flux3_checkpoint(glue):
+    """A complete installed Klein checkpoint, without changing Forge's selected model."""
+    candidates = sorted(glue.sd_models.checkpoints_list.values(),
+                        key=lambda info: ('klein' not in info.filename.lower(), info.filename.lower()))
+    for info in candidates:
+        if glue.is_flux3_info(info):
+            try:
+                glue.components(info)
+                return info
+            except (OSError, ValueError):
+                continue
+    return None
+
+
 def flux3_glue():
-    """The FLUX 3 extension's glue when its checkpoint is the one selected at the top of the page (loading it if
-    Forge had let it go), else None."""
+    """Active or complete installed FLUX 3 support; no checkpoint-selection prerequisite."""
     try:
         from flux3 import glue
         from modules import shared
-        return glue if glue.active(shared.sd_model) else None
+        return glue if glue.active(shared.sd_model) or installed_flux3_checkpoint(glue) else None
     except Exception:
         return None
 
 
+@frame_task
 def draw_from_ingredients(prompt, pictures, aspect, seed, folder):
     """Ingredients to Video's first frame: FLUX 3 Klein draws the scene with the ingredient pictures as its
     references (its own editing, as Shai made his character sheet from a pose sheet). Klein keeps a character's
@@ -215,8 +282,7 @@ def draw_from_ingredients(prompt, pictures, aspect, seed, folder):
     from modules import processing, shared
     glue = flux3_glue()
     if glue is None:
-        raise RuntimeError("Select FLUX 3 Klein at the top of the page: it draws the first frame from the "
-                           "ingredients. Or choose Phantom in this tab.")
+        raise RuntimeError('Install a complete FLUX 3 Klein model for first-frame references, or choose Automatic.')
     aw, ah = ASPECTS.get(aspect, (9, 16))
     w, h = fit_size(aw, ah, 1024 * 1024, 16)
     refs = []
@@ -226,9 +292,15 @@ def draw_from_ingredients(prompt, pictures, aspect, seed, folder):
     which = "the reference picture" if len(refs) == 1 else "the reference pictures"
     text = (f"A single frame from a film, not a reference sheet: {prompt.strip()} Everyone and everything in it looks "
             f"exactly as in {which}: the same face, hair, body, clothes and style.")
+    if not glue.active(shared.sd_model):
+        image = draw_with_installed_flux(glue, text, refs, w, h, seed)
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, 'first_frame_from_ingredients.png')
+        image.save(path)
+        return path
     p = processing.StableDiffusionProcessingImg2Img(
         sd_model=shared.sd_model, init_images=[refs[0]], denoising_strength=1.0, prompt=text, negative_prompt="",
-        width=w, height=h, steps=16, cfg_scale=1.0, sampler_name="Euler", seed=int(seed),
+        width=w, height=h, steps=FIRST_FRAME_STEPS, cfg_scale=1.0, sampler_name="Euler", seed=int(seed),
         do_not_save_samples=True, do_not_save_grid=True)
     p.flux3_edit_mode = glue.EDIT_MODES[0]
     p.flux3_references = refs
@@ -242,6 +314,36 @@ def draw_from_ingredients(prompt, pictures, aspect, seed, folder):
     return path
 
 
+def draw_with_installed_flux(glue, prompt, references, width, height, seed):
+    """Use the extension's own engine transiently; retain the user's image checkpoint and options."""
+    import torch
+    from modules import devices, shared
+    info = installed_flux3_checkpoint(glue)
+    if info is None:
+        raise RuntimeError('The installed FLUX 3 Klein model is incomplete.')
+    runner.free_forge_memory()
+    engine = glue.feng.Flux3Engine(glue.components(info))
+    try:
+        engine.load(devices.device)
+        with engine.lock, torch.inference_mode(), torch.autocast('cuda', enabled=False):
+            clean = prompting.LORA_TAG.sub('', prompt)
+            embedding = engine.encode(glue.clean_prompt(clean))
+            reference_latents = glue.encode_references(engine, references)
+            noise = torch.randn((1, 128, height // 16, width // 16),
+                                generator=torch.Generator('cpu').manual_seed(int(seed)))
+            def preview(step, total, latent):
+                shared.state.sampling_steps, shared.state.sampling_step = total, step + 1
+                if (step + 1) % 2 == 0:
+                    shared.state.assign_current_image(glue.feng.latent_preview(latent[0]))
+            latent = engine.sample(noise, embedding, FIRST_FRAME_STEPS, refs=reference_latents, callback=preview,
+                                   should_stop=lambda: _FRAME_STOP.is_set() or shared.state.interrupted)
+            if _FRAME_STOP.is_set() or shared.state.interrupted:
+                raise FrameCancelled()
+            return glue._to_pil(engine.decode(latent)[0])
+    finally:
+        engine.unload()
+
+
 def build_job(kind, start, end, prompt, negative, quality, seconds, seed, preset, steps, shift, cfg, sampler, int8,
               attention, width, height, smooth, upscale, loras, aspect, parts=None):
     """`kind`: t2v, i2v (one picture), flf (first and last frame) or multi (`parts`, one per pair of pictures)."""
@@ -251,7 +353,10 @@ def build_job(kind, start, end, prompt, negative, quality, seconds, seed, preset
             iw, ih = im.size
     else:
         iw, ih = ASPECTS.get(aspect, (9, 16))
-    w, h = fit_size(iw, ih, QUALITY[quality])
+    is_ltx = ltx.is_ltx(preset)
+    qualities = ltx.QUALITY if is_ltx else QUALITY
+    area = qualities.get(quality, qualities[ltx.default_quality(preset) if is_ltx else DEFAULT_QUALITY])
+    w, h = fit_size(iw, ih, area, 32 if is_ltx else 16)
     if width and height:
         w, h = int(width) // 16 * 16, int(height) // 16 * 16
     day = time.strftime("%Y-%m-%d")
@@ -267,7 +372,7 @@ def build_job(kind, start, end, prompt, negative, quality, seconds, seed, preset
         "steps": int(steps), "shift": float(shift), "cfg": float(cfg), "sampler": sampler, "seed": int(seed),
         "int8": bool(int8), "attention": attention,
         "text_encoder": models.file_path(pr["text_encoder"]), "vae": models.file_path(pr["vae"]),
-        "experts": [{"path": models.file_path(k), "until_sigma": s, "label": label} for k, s, label in pr["experts"]],
+        "experts": [{"path": models.file_path(k), "until_sigma": s, "label": label} for k, s, label in pr.get("experts", [])],
         "cache_dir": CACHE_DIR, "output_dir": out_dir, "basename": base, "model_label": preset,
         "interpolate": bool(smooth), "film_model": models.film_model(),
         "upscale": {"model": ups.get(upscale.split(" ", 1)[-1]), "scale": float(upscale.split(" ", 1)[0][1:])}
@@ -276,6 +381,8 @@ def build_job(kind, start, end, prompt, negative, quality, seconds, seed, preset
     }
     if parts:
         job["parts"] = parts
+    if is_ltx:
+        job = ltx.adapt_job(job, preset, quality, seconds)
     return job
 
 
@@ -320,25 +427,38 @@ def generate(mode, count, *args):
      styles, auto_sound, sound_words) = rest[:28]
     replace = rest[28:42]
     ingredients = rest[42:42 + MAX_INGREDIENTS]
-    method = rest[42 + MAX_INGREDIENTS] if len(rest) > 42 + MAX_INGREDIENTS else ING_FRAME
+    method = rest[42 + MAX_INGREDIENTS] if len(rest) > 42 + MAX_INGREDIENTS else ING_AUTO
+    ltx_inputs = rest[43 + MAX_INGREDIENTS:]
+    audio_picture, audio_file, native_audio = (list(ltx_inputs) + [None, None, True])[:3] if ltx_inputs else (None, None, True)
     mode = mode if mode in MODES else "i2v"
     nothing = gr.update()
 
     def out(status, preview=nothing, video=nothing, details=nothing, last=nothing):
         return status, preview, video, details, last
 
+    is_ltx = ltx.is_ltx(preset)
+    audio_mode = mode == 'ltx_audio'
+    if audio_mode:
+        if not is_ltx or not audio_picture or not audio_file:
+            yield out(status_html('error', error='Choose an LTX model, add a picture and an audio file in Image + Audio to Video.'))
+            return
+        mode, count, pictures = 'i2v', 1, [audio_picture] + pictures[1:]
+    route = ingredient_route(method, is_ltx, flux3_glue() is not None) if mode == 'ingredients' else None
+    if is_ltx and not ltx.runtime_ready() and mode != 'replace' and route != 'phantom':
+        yield out(status_html('error', error='Set up the LTX engine in Models before generating with LTX.'))
+        return
+
     # Ingredients by a first frame: FLUX 3 Klein draws it from the pictures, then it goes on as Image to Video
-    from_ingredients = mode == "ingredients" and method != ING_PHANTOM
+    from_ingredients = route == 'flux'
     ingredient_pictures = [p for p in ingredients if p]
     if from_ingredients:
         if not ingredient_pictures:
             yield out(status_html("error", error="Add at least one ingredient: a picture of who or what is in the video."))
             return
         if flux3_glue() is None:
-            yield out(status_html("error", error="Select FLUX 3 Klein at the top of the page: it draws the first frame "
-                                                 "from the ingredients. Or choose Phantom in this tab."))
+            yield out(status_html('error', error='A complete FLUX 3 Klein model is not installed. Choose Automatic or Phantom.'))
             return
-    elif mode == "ingredients":
+    elif route == 'phantom':
         yield from generate_ingredients(prompt, negative, quality, seconds, seed, t2v_aspect, int8, attention, smooth,
                                         upscale, lora1, lora1_w, lora2, lora2_w, styles, auto_sound, sound_words,
                                         *ingredients)
@@ -372,8 +492,8 @@ def generate(mode, count, *args):
 
     # Styles exactly as txt2img applies them; <lora:...> tags (typed or from a style) become Wan LoRAs and are
     # taken out of what Wan reads; the full styled prompt still goes to Forge for Text to Video's first picture.
-    styled, wan_prompt, negative, loras, not_wan = _wan_loras((prompt or "").strip() or texts[0], negative, styles,
-                                                              lora1, lora1_w, lora2, lora2_w)
+    styled, wan_prompt, negative, loras, not_wan = video_loras((prompt or "").strip() or texts[0], negative, styles,
+                                                              lora1, lora1_w, lora2, lora2_w, preset)
     if not wan_prompt.strip():
         yield out(status_html("error", error="After taking out the <lora:...> tags the prompt is empty: describe the video too."))
         return
@@ -398,15 +518,21 @@ def generate(mode, count, *args):
             yield out(status_html("picture", 0.5, note="FLUX 3 Klein draws the first frame from the ingredients"))
             try:
                 start = draw_from_ingredients(styled, ingredient_pictures, t2v_aspect, seed, stage_dir)
+            except FrameCancelled:
+                yield out(status_html('cancelled', note='first-frame generation stopped'))
+                return
             except Exception as e:
                 yield out(status_html("error", error=f"Drawing the first frame failed: {type(e).__name__}: {e}"))
                 return
             yield out(status_html("picture", 1.0), preview=start)
-        else:
+        elif not is_ltx:
             yield out(status_html("picture", 0.5, note="Forge draws the first frame with the selected checkpoint"))
             try:
                 start = draw_first_frame((t2v_picture_prompt or "").strip() or styled, negative, t2v_aspect,
                                          t2v_steps, t2v_cfg, t2v_sampler, seed, stage_dir)
+            except FrameCancelled:
+                yield out(status_html('cancelled', note='first-frame generation stopped'))
+                return
             except Exception as e:
                 yield out(status_html("error", error=f"Drawing the first frame failed: {type(e).__name__}: {e}"))
                 return
@@ -414,11 +540,14 @@ def generate(mode, count, *args):
 
         spec = build_job(kind, start, end, wan_prompt, negative, quality, seconds, seed, preset, steps, shift, cfg,
                          sampler, int8, attention, width, height, smooth, upscale, loras, t2v_aspect, parts)
+        if is_ltx:
+            spec['native_audio'] = bool(native_audio) or audio_mode
+            spec['source_audio'] = _copy_input(audio_file, stage_dir, 'source-audio') if audio_mode else None
         label = {"flf": "Image to Video, first and last frame",
                  "multi": f"Image to Video, {n} pictures ({n - 1} parts)"}.get(kind, MODES[mode])
         frames = spec["frames"] if not parts else len(parts) * (spec["frames"] - 1) + 1
-        details = (f"{label} | {spec['width']}x{spec['height']} | {frames} frames at 16 fps "
-                   f"({(frames - 1) / 16:.1f} s) | seed {seed} | {preset}")
+        details = (f"{label} | {spec['width']}x{spec['height']} | {frames} frames at {spec['fps']} fps "
+                   f"({(frames - 1) / spec['fps']:.1f} s) | seed {seed} | {preset}")
         if from_ingredients:
             details += (f"\nFirst frame: FLUX 3 Klein from {len(ingredient_pictures)} ingredient"
                         f"{'s' if len(ingredient_pictures) > 1 else ''}")
@@ -427,12 +556,36 @@ def generate(mode, count, *args):
         if loras:
             details += "\nLoRA: " + ", ".join(f"{os.path.splitext(os.path.basename(l['path']))[0]} {l['strength']:g}" for l in loras)
         if not_wan:
-            details += "\nNot Wan LoRAs (used for the first picture only): " + ", ".join(not_wan)
+            details += ('\nImage-only LoRAs omitted from LTX: ' if is_ltx else
+                        '\nNot Wan LoRAs (used for the first picture only): ') + ', '.join(not_wan)
         made = yield from _run_job(spec, details, out, nothing)
     # The sound job takes Forge's queue itself, so it starts after this one has let it go.
-    if made and auto_sound:
+    if made and auto_sound and not (is_ltx and spec.get('native_audio')):
         words = (sound_words or "").strip() or wan_prompt
         yield from _sound_after(made, words, out, nothing, details)
+
+
+def video_loras(prompt, negative, styles, lora1, lora1_w, lora2, lora2_w, preset):
+    if not ltx.is_ltx(preset):
+        return _wan_loras(prompt, negative, styles, lora1, lora1_w, lora2, lora2_w)
+    styled, neg = prompting.apply_styles(prompt, negative or '', styles or [])
+    available = {prompting._norm(os.path.basename(p)): p for p in ltx.loras()}
+    requested = [(m.group(1), float(m.group(2) or 1)) for m in prompting.LORA_TAG.finditer(styled)]
+    for name, strength in [(lora1, lora1_w), (lora2, lora2_w)]:
+        if name and name != NO_LORA:
+            if prompting._norm(name) not in available:
+                raise ValueError('This LoRA is not in the LTX folder. Clear the slot or choose an LTX LoRA: ' + name)
+            requested.append((name, float(strength)))
+    adapters, image_only = [], []
+    for name, strength in requested:
+        path = available.get(prompting._norm(name))
+        if path:
+            if not any(item['path'] == path for item in adapters):
+                adapters.append(dict(path=path, strength=strength, family='ltx'))
+        else:
+            image_only.append(name)
+    clean = prompting.LORA_TAG.sub('', styled).strip(' ,')
+    return styled, clean, prompting.LORA_TAG.sub('', neg).strip(' ,'), adapters, image_only
 
 
 def _wan_loras(prompt, negative, styles, lora1, lora1_w, lora2, lora2_w):
@@ -486,6 +639,8 @@ def find_people(video, start, character=None):
         note = "one person in the video" if n == 1 else "nobody found on this frame: try another start time"
     if m > 1:
         note += f"; {m} people in the picture: choose one, or 'Everyone in the picture'"
+    if found.get("character_sheet"):
+        note += "; character sheet: one identity, using its front view"
     return (out, gr.update(choices=[str(i + 1) for i in range(max(1, n))], value="1"),
             gr.update(choices=[str(i + 1) for i in range(max(1, m))], value="1"), status_html("idle", note=note))
 
@@ -573,10 +728,15 @@ def sheet_views(refs, stage_dir):
     return staged, notes
 
 
-def ingredients_models_markdown():
+def ingredients_models_markdown(preset=None):
+    """What each way of Ingredients needs. The first-frame way needs only an installed FLUX 3 Klein (it is used
+    for that one picture even when another checkpoint is selected) and the chosen video model; Phantom needs its own
+    model, whichever video model is chosen."""
+    flux = ("First frame: FLUX 3 Klein is installed." if flux3_glue() is not None else
+            "First frame: FLUX 3 Klein is not installed (Phantom is used instead).")
     if not models.ingredients_missing():
-        return "Model: Phantom-Wan 14B FusionX Q3 (7.2 GB), here."
-    return "Model: Phantom-Wan 14B FusionX Q3 (7.2 GB) is not downloaded yet."
+        return flux + " Phantom-Wan 14B FusionX Q3 (7.2 GB): here."
+    return flux + " Phantom-Wan 14B FusionX Q3 (7.2 GB): not downloaded yet."
 
 
 def generate_replace(prompt, negative, seed, smooth, upscale, int8, attention, lora1, lora1_w, lora2, lora2_w, styles,
@@ -676,6 +836,8 @@ def generate_replace(prompt, negative, seed, smooth, upscale, int8, attention, l
         if faces and faceswap.available():
             pictures = [os.path.join(out_dir, step_base(first_base, i, len(passes)) + ".character.png")
                         for i in range(len(passes))]
+            pictures = [p.replace(".character.png", ".character-face.png")
+                        if os.path.isfile(p.replace(".character.png", ".character-face.png")) else p for p in pictures]
             made = yield from _match_faces(made, [(pic, vid) for pic, (_, vid) in zip(pictures, passes)], out, details)
     # With the video's own sound kept, MMAudio is only asked when the video had none.
     if made and auto_sound and not (keep_sound and has_sound):
@@ -728,10 +890,10 @@ def _count_picture_people(path):
     os.makedirs(folder, exist_ok=True)
     # a picture is a one-frame video to ffmpeg
     cmd = [runner.engine_python(), worker, path, "0", str(w // 2 * 2), str(h // 2 * 2),
-           os.path.join(folder, "picture.png"), models.file_path("dw_det"), models.file_path("dw_pose")]
+           os.path.join(folder, "picture.png"), models.file_path("dw_det"), models.file_path("dw_pose"), path]
     r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
     try:
-        return int(json.loads(r.stdout.strip().splitlines()[-1])["people"])
+        return int(json.loads(r.stdout.strip().splitlines()[-1])["picture_people"])
     except (ValueError, IndexError, KeyError):
         return 0
 
@@ -800,7 +962,7 @@ def _run_job(spec, details, out, nothing):
                           details=details + f"\nJob folder: {job.dir}")
                 return
             p = ev.get("progress")
-            frac = overall(stage, p)
+            frac = ev.get('overall_progress', overall(stage, p))
             elapsed = time.time() - t0
             eta = elapsed * (1 - frac) / frac if frac > 0.08 else None
             note = ev.get("note", "")
@@ -808,14 +970,15 @@ def _run_job(spec, details, out, nothing):
                 note = f"step {ev['step']} of {ev['steps']}" + (f" | {note}" if note else "")
             preview = ev.get("preview")
             if preview and os.path.isfile(preview):
-                snap = os.path.join(job.dir, f"preview_{ev.get('step', 0)}.png")
+                snap = os.path.join(job.dir, f"preview_{ev.get('preview_key', ev.get('step', 0))}.png")
                 if snap != last_preview:
                     try:
                         shutil.copyfile(preview, snap)
                         last_preview = snap
                     except OSError:
                         pass
-            yield out(status_html(stage, p, note=note, elapsed=elapsed, eta=eta),
+            yield out(status_html(stage, frac if 'overall_progress' in ev else p, note=note,
+                                  elapsed=elapsed, eta=eta, absolute='overall_progress' in ev),
                       preview=last_preview if preview else nothing)
     finally:
         # The page may be gone; the job keeps running in its own thread and saves its video either way. Keep Forge's
@@ -881,6 +1044,30 @@ def refine(last_frame, rquality, rstrength, smooth, upscale, int8, attention, pr
         yield out(status_html("error", error="Refine works on a single clip. A video made from several pictures is "
                                              "not refined: make it at 576p directly."))
         return
+    if meta.get('backend') == 'ltx':
+        chosen = preset if ltx.is_ltx(preset) else meta.get('model_label', ltx.DEFAULT_PRESET)
+        if not ltx.is_ltx(chosen):
+            chosen = ltx.DEFAULT_PRESET
+        if models.missing(chosen) or not ltx.runtime_ready():
+            yield out(status_html('error', error='Download the selected LTX model and set up its engine before refining.'))
+            return
+        w, h = fit_size(int(meta['width']), int(meta['height']), min(REFINE_QUALITY[rquality], 576 * 1024), 32)
+        fps = int(meta.get('base_fps', 24))
+        frame_count = int(meta.get('base_frames', meta['frames']))
+        spec = build_job('i2v', None, None, meta.get('prompt', ''), meta.get('negative', ''),
+            ltx.DEFAULT_QUALITY, (frame_count - 1) / fps, int(meta.get('seed', 0)), chosen,
+            8, 2, 1, 'euler_ancestral', False, attention, w, h, smooth, upscale,
+            [item for item in meta.get('loras', []) if item.get('family') == 'ltx' and os.path.isfile(item.get('path', ''))],
+            next(iter(ASPECTS)))
+        spec.update(init_video=video, source_audio=video if meta.get('native_audio') else None,
+                    native_audio=bool(meta.get('native_audio')), denoise_start_step=6 if REFINE_STRENGTH[rstrength] == 3 else 5)
+        from modules.call_queue import queue_lock
+        yield out(status_html('start', 0, note='waiting for Forge to be free'))
+        with queue_lock:
+            yield from _run_job(spec, f'LTX refine | {w}x{h} | same motion and original audio', out, nothing)
+        return
+    if ltx.is_ltx(preset):
+        preset = meta.get('model_label', models.DEFAULT_PRESET)
     pr = models.PRESETS[preset]
     w, h = fit_size(int(meta["width"]), int(meta["height"]), REFINE_QUALITY[rquality])
     first = meta.get("start_image") if meta.get("start_image") and os.path.isfile(meta["start_image"]) else base + ".first.png"
@@ -989,6 +1176,10 @@ def add_sound(last_frame, fx_on, fx_prompt, fx_negative, fx_db, mode, text, lang
 
 
 def cancel():
+    if _FRAME_ACTIVE:
+        from modules import shared
+        _FRAME_STOP.set()
+        shared.state.interrupt()
     runner.cancel_current()
     sound.cancel_current()
     return status_html("cancelled", note="stopping after the current block")
@@ -1004,8 +1195,9 @@ def open_folder():
         subprocess.Popen(["xdg-open", target])
 
 
-def lora_choices():
-    return [NO_LORA] + [os.path.basename(p) for p in models.loras()]
+def lora_choices(preset=None):
+    paths = ltx.loras() if ltx.is_ltx(preset) else models.loras()
+    return [NO_LORA] + [os.path.basename(p) for p in paths]
 
 
 def sampler_names():
@@ -1020,6 +1212,8 @@ def build():
     presets = list(models.PRESETS)
     installed = models.installed_presets()
     default_preset = installed[0] if installed else models.DEFAULT_PRESET
+    initial_ltx = ltx.is_ltx(default_preset)
+    initial_settings = models.PRESETS[default_preset]
     # x1.5 turns 720x1280 into 1080x1920; the model enlarges x2 (or x4) and the frame is then scaled down.
     ups = [UPSCALE_OFF] + [f"x{s} {n}" for s in ("1.5", "2") for n in models.upscaler_models()]
     default_up = next((u for u in ups if u.startswith("x2 ") and "x2plus" in u), UPSCALE_OFF)
@@ -1027,6 +1221,11 @@ def build():
 
     with gr.Blocks(analytics_enabled=False) as tab:
         mode = gr.Textbox(value="t2v", visible=False, elem_id="vs_mode")
+        preset = gr.Dropdown(presets, value=default_preset, label="Video model", elem_id="vs_model")
+        gr.Markdown('Choose Wan or LTX. Model selection loads efficient defaults automatically. '
+                    'Character replacement and Phantom use their dedicated Wan models. '
+                    'Ingredients draws one first frame of all the pictures with an installed FLUX 3 Klein (the image checkpoint '
+                    'stays as chosen), then the chosen video model animates it; without FLUX 3 it uses Phantom.')
         with gr.Row(elem_id="vs_main"):
             with gr.Column(scale=5, elem_id="vs_tabs_column"):
                 # Shared by every sub-tab; style.css sets it on the right of the sub-tab buttons
@@ -1035,16 +1234,17 @@ def build():
                                              elem_id="vs_shape", min_width=124)
                     t2v_sampler = gr.Dropdown(samplers, value=samplers[0] if samplers else None,
                                               label="Sampler for the picture", elem_id="vs_picture_sampler",
-                                              min_width=152)
+                                              min_width=152, visible=not initial_ltx)
                 # ids let javascript/video-studio.js open a sub-tab by name (the 🎬 button, Continue)
                 with gr.Tabs(elem_id="vs_mode_tabs"):
                     with gr.Tab(MODES["t2v"], id="t2v", elem_id="vs_tab_t2v"):
-                        gr.Markdown("Forge draws the first frame from your prompt with the checkpoint selected at the top "
-                                    "of the page (and any LoRA tags in the picture prompt); then Wan animates it.")
-                        t2v_picture_prompt = gr.Textbox(label="Picture prompt (empty: the video prompt)", lines=2)
-                        with gr.Row():
-                            t2v_steps = gr.Slider(1, 60, value=25, step=1, label="Picture steps")
-                            t2v_cfg = gr.Slider(1, 15, value=6, step=0.5, label="Picture CFG")
+                        gr.Markdown('Wan: Forge draws the first frame with the image checkpoint, then Wan animates it. '
+                                    'LTX: generates video and optional synchronized sound directly from the video prompt.')
+                        with gr.Column(visible=not initial_ltx) as picture_controls:
+                            t2v_picture_prompt = gr.Textbox(label="Picture prompt (empty: the video prompt)", lines=2)
+                            with gr.Row():
+                                t2v_steps = gr.Slider(1, 60, value=25, step=1, label="Picture steps")
+                                t2v_cfg = gr.Slider(1, 15, value=6, step=0.5, label="Picture CFG")
                     with gr.Tab(MODES["i2v"], id="i2v", elem_id="vs_tab_i2v"):
                         # One picture starts the video; ➕ adds a last frame, then more pictures for a longer video.
                         # All six exist from the start and are shown as they are added.
@@ -1074,7 +1274,9 @@ def build():
                                     "keeps their looks (like Flow's Ingredients). Name them in the prompt: \"the woman "
                                     "(picture 1) pours coffee into the red cup (picture 2) in the kitchen (picture 3)\". "
                                     "The shape is the Shape at the top.")
-                        ing_method = gr.Radio(list(ING_METHODS), value=ING_FRAME, label="How the ingredients are used",
+                        ing_method = gr.Radio(ingredient_methods(initial_ltx), value=ING_AUTO,
+                                              interactive=True, label="How the ingredients are used",
+                                              info='Automatic can use an installed FLUX 3 model without changing your checkpoint. Native LTX is slower and needs more RAM; describe the references and target scene separately.',
                                               elem_id="vs_ingredients_method")
                         ingredients = []
                         with gr.Row():
@@ -1082,13 +1284,15 @@ def build():
                                 ingredients.append(gr.Image(label=f"Ingredient {k + 1}", type="filepath", height=240,
                                                             elem_id=f"vs_ingredient{k + 1}"))
                         with gr.Row():
-                            ing_models = gr.Markdown(ingredients_models_markdown())
-                            ing_download = gr.Button("Download the model (7.2 GB)", size="sm")
+                            ing_models = gr.Markdown(ingredients_models_markdown(default_preset))
+                            ing_download = gr.Button('Download missing Ingredients models', size="sm")
                     with gr.Tab(MODES["replace"], id="replace", elem_id="vs_tab_replace"):
                         gr.Markdown("The person in your video becomes the character in your picture: the motion, the "
                                     "face's expressions, the camera and the background stay (Wan 2.2 Animate). A picture "
                                     "of several people: choose one, or 'Everyone in the picture' (one pass per person). "
-                                    "Describe the character in the prompt (clothes, hair) for the best likeness.")
+                                    "Describe the character in the prompt (clothes, hair) for the best likeness, and "
+                                    "never a dance style or an occasion (waltz, wedding): the model dresses the "
+                                    "character for it.")
                         with gr.Row():
                             rep_video = gr.Video(label="Video", elem_id="vs_rep_video", height=360)
                             rep_char = gr.Image(label="The new character (best: whole body, plain background)",
@@ -1114,11 +1318,18 @@ def build():
                             rep_keep = gr.Checkbox(value=True, label="Keep the video's own sound")
                             rep_relight = gr.Checkbox(value=True, label="Light the character like the scene (relight LoRA)")
                             rep_steps = gr.Slider(4, 10, value=6, step=1, label="Steps of the replacement")
-                        rep_faces = gr.Checkbox(value=faceswap.available(), interactive=faceswap.available(),
+                        rep_faces = gr.Checkbox(value=False, interactive=faceswap.available(),
                                                 label="Make the faces like the picture (FaceFusion face swap, about "
-                                                      "1 min per person)")
+                                                      "1 min per person)", info='Optional for photographic faces; leave off for drawn or 3D characters.')
                         rep_models = gr.Markdown(replace_models_markdown())
                         rep_download = gr.Button("Download the missing files", size="sm")
+                    with gr.Tab(MODES['ltx_audio'], id='ltx_audio', elem_id='vs_tab_ltx_audio'):
+                        gr.Markdown('LTX: animate a picture to your audio. Speech and singing drive the video. '
+                                    'Choose an LTX model above, add the picture and recording, then describe the scene. '
+                                    'Length controls how much audio is used; the original audio is preserved in the result.')
+                        with gr.Row():
+                            ltx_picture = gr.Image(label='Talking picture', type='filepath', height=320, elem_id='vs_ltx_picture')
+                            ltx_recording = gr.Audio(label='Driving audio', type='filepath', elem_id='vs_ltx_audio')
                 prompt = gr.Textbox(label="Prompt: what happens in the video", lines=4, elem_id="vs_prompt",
                                     placeholder="Describe the motion and the camera, in English, e.g. 'The man stands up, "
                                                 "catches a suit thrown to him and walks into the next room.'")
@@ -1134,38 +1345,41 @@ def build():
                                 "`<lora:file name:1>, trigger words`. In Video Studio a tag that names a Wan LoRA loads it "
                                 "(both halves of a high/low pair); the trigger words stay in the prompt.")
                 with gr.Row():
-                    quality = gr.Dropdown(list(QUALITY), value=DEFAULT_QUALITY, label="Quality", elem_id="vs_quality")
+                    quality = gr.Dropdown(list(ltx.QUALITY if initial_ltx else QUALITY),
+                        value=ltx.default_quality(default_preset) if initial_ltx else DEFAULT_QUALITY, label="Quality", elem_id="vs_quality")
                     seconds = gr.Slider(1, 7.5, value=5, step=0.25, label="Length (seconds)", elem_id="vs_seconds")
                     seed = gr.Number(value=-1, label="Seed (-1 random)", precision=0)
                 with gr.Row():
-                    smooth = gr.Checkbox(value=True, label="Smooth motion: 32 fps (FILM)")
+                    smooth = gr.Checkbox(value=True, label='Smooth motion: 48 fps (FILM)' if initial_ltx else 'Smooth motion: 32 fps (FILM)')
                     upscale = gr.Dropdown(ups, value=default_up, label="Enlarge the finished video")
                 with gr.Row():
                     auto_sound = gr.Checkbox(value=True, label="Add AI sound automatically (MMAudio, about 1.5 min)")
                     sound_words = gr.Textbox(label="Sound: what is heard (plain English; empty: the prompt and the picture)",
                                              lines=1, scale=3, placeholder="explosions, fire roaring, debris falling")
+                native_audio = gr.Checkbox(value=True, visible=initial_ltx, label='LTX synchronized sound',
+                    info='Generate sound together with the video. This takes priority over automatic MMAudio.', elem_id='vs_ltx_native_audio')
                 with gr.Accordion("LoRA", open=False):
                     with gr.Row():
-                        lora1 = gr.Dropdown(lora_choices(), value=NO_LORA, label="LoRA 1")
+                        lora1 = gr.Dropdown(lora_choices(default_preset), value=NO_LORA, label="LoRA 1")
                         lora1_w = gr.Slider(-2, 2, value=1.0, step=0.05, label="Strength 1")
                     with gr.Row():
-                        lora2 = gr.Dropdown(lora_choices(), value=NO_LORA, label="LoRA 2")
+                        lora2 = gr.Dropdown(lora_choices(default_preset), value=NO_LORA, label="LoRA 2")
                         lora2_w = gr.Slider(-2, 2, value=1.0, step=0.05, label="Strength 2")
-                    gr.Markdown("Wan 2.2 LoRAs from models/VideoStudio/loras or models/Lora/wan. A file whose name says "
-                                "'high' or 'low' goes to that expert only, and its other half (same name, high/low) is "
-                                "loaded with it; any other goes to both. `<lora:name:1>` in the prompt or a style works too.")
+                    gr.Markdown('LoRAs follow the selected video model. Wan: models/VideoStudio/loras or models/Lora/wan. '
+                                'LTX: models/VideoStudio/ltx/loras or models/Lora/ltx. '
+                                'Wan high/low pairs are loaded together. `<lora:name:1>` in a prompt or style also works.')
                     lora_refresh = gr.Button("Refresh list", size="sm")
                 with gr.Accordion("Advanced", open=False):
-                    preset = gr.Dropdown(presets, value=default_preset, label="Model")
                     negative = gr.Textbox(label="Negative prompt (used only when CFG is above 1)", lines=2)
                     with gr.Row():
-                        steps = gr.Slider(2, 12, value=4, step=1, label="Steps")
-                        shift = gr.Slider(1, 12, value=5.0, step=0.5, label="Shift")
-                        cfg = gr.Slider(1, 6, value=1.0, step=0.1, label="CFG")
+                        steps = gr.Slider(2, 12, value=initial_settings['steps'], step=1, label="Steps", interactive=not initial_ltx)
+                        shift = gr.Slider(1, 12, value=initial_settings['shift'], step=0.5, label="Shift", interactive=not initial_ltx)
+                        cfg = gr.Slider(1, 6, value=initial_settings['cfg'], step=0.1, label="CFG", interactive=not initial_ltx)
                     with gr.Row():
-                        sampler = gr.Dropdown(["euler", "lcm"], value="euler", label="Sampler")
-                        attention = gr.Dropdown(["auto", "sage", "sdpa"], value="auto", label="Attention")
-                        int8 = gr.Checkbox(value=True, label="Fast int8 math (about 1.5x faster)")
+                        sampler = gr.Dropdown(["euler", "lcm", "euler_ancestral"], value='euler_ancestral' if initial_ltx else 'euler',
+                                               label="Sampler", interactive=not initial_ltx)
+                        attention = gr.Dropdown(["auto", "sage", "sdpa"], value="auto", label="Attention", visible=not initial_ltx)
+                        int8 = gr.Checkbox(value=True, label="Fast int8 math (about 1.5x faster)", visible=not initial_ltx)
                     with gr.Row():
                         width = gr.Number(value=0, label="Width (0: from quality)", precision=0)
                         height = gr.Number(value=0, label="Height (0: from quality)", precision=0)
@@ -1174,6 +1388,7 @@ def build():
                     with gr.Row():
                         download = gr.Button("Download the missing files of this model", size="sm")
                         engine = gr.Button("Set up the fast engine", size="sm")
+                        ltx_engine = gr.Button('Set up LTX engine', size='sm', elem_id='vs_ltx_setup')
                         refresh = gr.Button("Refresh", size="sm")
             with gr.Column(scale=4):
                 with gr.Row():
@@ -1190,7 +1405,8 @@ def build():
                     show = gr.Button("Show the last video", size="sm")
                 with gr.Accordion("Refine the last video: same motion, sharper", open=False):
                     with gr.Row():
-                        rquality = gr.Dropdown(list(REFINE_QUALITY), value=next(iter(REFINE_QUALITY)), label="Refine to")
+                        rquality = gr.Dropdown(list(REFINE_QUALITY)[:1] if initial_ltx else list(REFINE_QUALITY),
+                                              value=next(iter(REFINE_QUALITY)), label="Refine to")
                         rstrength = gr.Dropdown(list(REFINE_STRENGTH), value=next(iter(REFINE_STRENGTH)), label="Strength")
                     gr.Markdown("Make takes quickly at 480p; when you like one, refine it here. The clip is drawn again "
                                 "at the larger size from its own frames, keeping the motion.")
@@ -1227,12 +1443,13 @@ def build():
                   prompt, negative, quality, seconds, seed, preset, steps, shift, cfg, sampler, int8, attention,
                   width, height, smooth, upscale, lora1, lora1_w, lora2, lora2_w, styles, auto_sound, sound_words,
                   rep_video, rep_char, rep_person, rep_start, rep_seconds, rep_quality, rep_fps, rep_mask, rep_keep,
-                  rep_steps, rep_relight, rep_char_person, rep_who, rep_faces] + ingredients + [ing_method]
-        def start_ingredients_download():
+                  rep_steps, rep_relight, rep_char_person, rep_who, rep_faces] + ingredients + [ing_method, ltx_picture, ltx_recording, native_audio]
+        def start_ingredients_download(name):
             models.DOWNLOADS.start(models.ingredients_missing())
-            return ingredients_models_markdown() + " Downloading…"
+            error = models.DOWNLOADS.status().get('error')
+            return ingredients_models_markdown(name) + (' ' + error if error else " Downloading…")
 
-        ing_download.click(start_ingredients_download, outputs=[ing_models], queue=False)
+        ing_download.click(start_ingredients_download, inputs=[preset], outputs=[ing_models], queue=False)
         go.click(_guarded(generate), inputs=inputs, outputs=[status, preview, video, details, last_frame], _js="videoStudioSubmit")
         rgo.click(_guarded(refine), inputs=[last_frame, rquality, rstrength, smooth, upscale, int8, attention, preset],
                   outputs=[status, preview, video, details, last_frame])
@@ -1280,15 +1497,32 @@ def build():
         # a new clip from the last frame: one picture, the others cleared
         cont.click(lambda p: [p if p and os.path.isfile(p) else None] + [None] * (MAX_PICTURES - 1) + [1],
                    inputs=[last_frame], outputs=pictures + [picture_count], _js="videoStudioToImageTab", queue=False)
-        lora_refresh.click(lambda: (gr.update(choices=lora_choices()), gr.update(choices=lora_choices())),
+        lora_refresh.click(lambda name: (gr.update(choices=lora_choices(name)), gr.update(choices=lora_choices(name))), inputs=[preset],
                            outputs=[lora1, lora2], queue=False)
 
         def preset_defaults(name):
             pr = models.PRESETS[name]
-            return pr["steps"], pr["shift"], pr["cfg"], models_markdown()
+            is_ltx = ltx.is_ltx(name)
+            qualities = ltx.QUALITY if is_ltx else QUALITY
+            return (gr.update(value=pr['steps'], interactive=not is_ltx),
+                    gr.update(value=pr['shift'], interactive=not is_ltx),
+                    gr.update(value=pr['cfg'], interactive=not is_ltx), models_markdown(),
+                    gr.update(choices=list(qualities), value=ltx.default_quality(name) if is_ltx else DEFAULT_QUALITY),
+                    gr.update(value='euler_ancestral' if is_ltx else 'euler', interactive=not is_ltx),
+                    gr.update(visible=is_ltx), gr.update(visible=not is_ltx),
+                    gr.update(choices=lora_choices(name), value=NO_LORA), gr.update(choices=lora_choices(name), value=NO_LORA),
+                    gr.update(label='Smooth motion: 48 fps (FILM)' if is_ltx else 'Smooth motion: 32 fps (FILM)'),
+                    gr.update(visible=not is_ltx), gr.update(visible=not is_ltx),
+                    gr.update(choices=ingredient_methods(is_ltx), value=ING_AUTO, interactive=True),
+                    gr.update(visible=True, value=ingredients_models_markdown(name)), gr.update(visible=True),
+                    gr.update(choices=list(REFINE_QUALITY)[:1] if is_ltx else list(REFINE_QUALITY), value=next(iter(REFINE_QUALITY))),
+                    gr.update(visible=not is_ltx), gr.update(value=0), gr.update(value=0))
 
-        preset.change(preset_defaults, inputs=[preset], outputs=[steps, shift, cfg, models_md], queue=False)
+        preset.change(preset_defaults, inputs=[preset], outputs=[steps, shift, cfg, models_md, quality, sampler,
+                      native_audio, picture_controls, lora1, lora2, smooth, int8, attention,
+                      ing_method, ing_models, ing_download, rquality, t2v_sampler, width, height], queue=False)
         refresh.click(models_markdown, outputs=[models_md], queue=False)
+        refresh.click(ingredients_models_markdown, inputs=[preset], outputs=[ing_models], queue=False)
 
         def start_download(name):
             models.DOWNLOADS.start(models.missing(name))
@@ -1305,4 +1539,10 @@ def build():
         rep_download.click(start_replace_download, outputs=[rep_models], queue=False)
         refresh.click(replace_models_markdown, outputs=[rep_models], queue=False)
         engine.click(lambda: models_markdown() + "\n\n" + runner.setup_engine(), outputs=[models_md])
+        def setup_ltx_click():
+            try:
+                return runner.setup_ltx_engine() + '\n\n' + models_markdown()
+            except Exception as error:
+                return models_markdown() + '\n\nLTX setup failed: ' + html.escape(str(error))
+        ltx_engine.click(setup_ltx_click, outputs=[models_md])
     return tab

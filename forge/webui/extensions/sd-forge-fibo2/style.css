@@ -7,3 +7,12 @@ body:not(.fibo2-active) #txt2img_fibo2_panel,
 body:not(.fibo2-active) #img2img_fibo2_panel {
     display: none !important;
 }
+
+body:not(.fibo2-flux3) .fibo2-flux-note,
+body.fibo2-flux3 .fibo2-only,
+body.fibo2-flux3 #txt2img_fibo2_model_note,
+body.fibo2-flux3 #img2img_fibo2_model_note,
+body.fibo2-flux3 #txt2img_flux3_writer,
+body.fibo2-flux3 #img2img_flux3_writer {
+    display: none !important;
+}

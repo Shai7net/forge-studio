@@ -28,6 +28,9 @@ def apply_styles(prompt, negative, styles):
     if not styles:
         return prompt, negative
     from modules import shared
+    bridge = getattr(shared.prompt_styles, 'apply_styles_for_model', None)
+    if bridge:
+        return bridge(prompt, negative, styles, 'video')
     return (shared.prompt_styles.apply_styles_to_prompt(prompt, styles),
             shared.prompt_styles.apply_negative_styles_to_prompt(negative, styles))
 

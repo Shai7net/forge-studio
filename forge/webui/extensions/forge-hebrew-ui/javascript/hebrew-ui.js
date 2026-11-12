@@ -633,13 +633,9 @@
             else openMenu();
         }));
         box.appendChild(makeButton('▾', 'ui-lang-more', openMenu));
-        const quicksettings = root().querySelector('#quicksettings');
-        if (quicksettings) {
-            quicksettings.appendChild(box);
-        } else {
-            box.classList.add('hebrew-ui-floating');
-            document.body.appendChild(box);
-        }
+        // Keep the switch out of the wrapping settings row: it must never create another row.
+        box.classList.add('hebrew-ui-floating');
+        document.body.appendChild(box);
         updateToggle();
     }
 

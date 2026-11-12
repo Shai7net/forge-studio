@@ -47,6 +47,8 @@
         wan_t2v: "וידאו Wan מטקסט", wan_i2v: "וידאו Wan מתמונה", negative: "פרומפט שלילי",
         fibo: "FIBO 2.0 (JSON מובנה)", fibo_edit: "עריכה ב-FIBO 2.0",
         character: "דמות לגיליון דמות (JSON)", wan_ingredients: "וידאו Wan מתמונות רכיבים",
+        ltx_t2v: "וידאו LTX מטקסט (עם סאונד)", ltx_i2v: "וידאו LTX מתמונה (עם סאונד)",
+        ltx_ingredients: "וידאו LTX מתמונות רכיבים (עם סאונד)", wan_replace: "החלפת דמות (Wan Animate)",
     };
     // Material Icons "thumb_up" (Apache 2.0); thumb down is the same turned over
     const THUMB = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="currentColor" ' +
@@ -190,7 +192,13 @@
         say(field, t("writing"), "working");
         setBusy(field, true);
         try {
-            const video = typeof videoStudioMode === "function" ? videoStudioMode() : "";
+            // Video Studio's sub-tab, and "ltx:" before it when its video model is an LTX one (LTX reads a long
+            // chronological paragraph with the sound in it; Wan a short motion paragraph)
+            let video = typeof videoStudioMode === "function" ? videoStudioMode() : "";
+            const model = gradioApp().querySelector("#vs_model input");
+            if ((field.startsWith("vs_") || field === "ch_video") && model && /\bLTX\b/.test(model.value)) {
+                video = "ltx:" + (field === "ch_video" ? "ingredients" : video);
+            }
             const d = await call("/translator/write", {
                 text: source, field, video_mode: video, again: !!again, seed: Math.floor(Math.random() * 1e9),
             });

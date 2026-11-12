@@ -55,12 +55,26 @@ def generate(request: Generation, references=(), mask=None, loras=(), lora_weigh
     if not models.status()["runtime_installed"]:
         raise RuntimeError("Install the FIBO runtime using Setup in the FIBO tab")
     def run():
+        # The native FIBO path bypasses process_images_inner, which normally fills these.
+        # /internal/progress ignores sampling_step altogether while job_count is unknown.
+        shared.state.job_count = request.count
+        shared.state.job_no = 0
+        shared.state.sampling_step = 0
+        shared.state.sampling_steps = request.effective_steps
         release_forge_gpu()
 
         def update(progress):
             shared.state.textinfo = "FIBO 2.0: " + progress.get("stage", "starting")
-            shared.state.sampling_step = progress.get("step", 0)
-            shared.state.sampling_steps = progress.get("steps", request.effective_steps)
+            stage = progress.get("stage", "starting")
+            if "image" in progress:
+                shared.state.job_no = max(0, min(request.count - 1, int(progress["image"]) - 1))
+            if "step" in progress:
+                shared.state.sampling_step = progress["step"]
+            if "steps" in progress:
+                shared.state.sampling_steps = progress["steps"]
+            if stage == "done":
+                shared.state.job_no = request.count - 1
+                shared.state.sampling_step = shared.state.sampling_steps
             if shared.state.interrupted or shared.state.skipped or shared.state.stopping_generation:
                 runner.cancel()
             if on_progress:
