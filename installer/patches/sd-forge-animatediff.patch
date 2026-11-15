@@ -1,8 +1,8 @@
 diff --git a/scripts/animatediff.py b/scripts/animatediff.py
-index 9a6916b..1d1c36c 100644
+index 9a6916b..46a21dd 100644
 --- a/scripts/animatediff.py
 +++ b/scripts/animatediff.py
-@@ -57,6 +57,10 @@ class AnimateDiffScript(scripts.Script):
+@@ -57,6 +57,17 @@ class AnimateDiffScript(scripts.Script):
          params.apply_xyz()
          xyz_attrs.clear()
  
@@ -10,10 +10,17 @@ index 9a6916b..1d1c36c 100644
 +            from scripts.animatediff_dance import apply_dance_mode
 +            apply_dance_mode(params, p)
 +
++        if params.enable and isinstance(p.prompt, str):
++            # the same LoRA twice is twice its weight (the LCM LoRA twice burns every frame)
++            from scripts.animatediff_dance import single_loras
++            p.prompt, dropped = single_loras(p.prompt)
++            if dropped:
++                logger.warning(f"AnimateDiff: the prompt had {', '.join(dropped)} more than once; kept one.")
++
          if params.enable:
              logger.info("AnimateDiff process start.")
              motion_module.load(params.model)
-@@ -66,13 +70,22 @@ class AnimateDiffScript(scripts.Script):
+@@ -66,13 +77,22 @@ class AnimateDiffScript(scripts.Script):
  
  
      def before_process_batch(self, p: StableDiffusionProcessing, params: AnimateDiffProcess, **kwargs):
@@ -37,7 +44,7 @@ index 9a6916b..1d1c36c 100644
  
  
      def process_before_every_sampling(self, p, params: AnimateDiffProcess, **kwargs):
-@@ -80,6 +93,18 @@ class AnimateDiffScript(scripts.Script):
+@@ -80,6 +100,18 @@ class AnimateDiffScript(scripts.Script):
              motion_module.inject(p.sd_model, params.model)
  
  
@@ -58,10 +65,10 @@ index 9a6916b..1d1c36c 100644
              params.prompt_scheduler.save_infotext_img(p)
 diff --git a/scripts/animatediff_dance.py b/scripts/animatediff_dance.py
 new file mode 100644
-index 0000000..37fb720
+index 0000000..59f06d8
 --- /dev/null
 +++ b/scripts/animatediff_dance.py
-@@ -0,0 +1,987 @@
+@@ -0,0 +1,1057 @@
 +"""
 +Dance transfer: objects that dance like the people in a video.
 +
@@ -792,11 +799,15 @@ index 0000000..37fb720
 +    return seconds, fps, int(width), int(height)
 +
 +
++# SD 1.5 draws mush below about 408 x 720's pixels: his 288 x 512 dance (2026-11-12) came out smeared
++MIN_AREA = 408 * 720
++
++
 +def size_like_video(width: int, height: int, video_w: int, video_h: int):
-+    """Keep the chosen number of pixels, take the video's shape (multiples of 8)."""
++    """Keep the chosen number of pixels (at least MIN_AREA), take the video's shape (multiples of 8)."""
 +    if not video_w or not video_h:
 +        return width, height
-+    area, ratio = width * height, video_w / video_h
++    area, ratio = max(width * height, MIN_AREA), video_w / video_h
 +    new_w = int(round((area * ratio) ** 0.5 / 8)) * 8
 +    new_h = int(round(new_w / ratio / 8)) * 8
 +    return max(64, new_w), max(64, new_h)
@@ -845,7 +856,8 @@ index 0000000..37fb720
 +    qr = _find_cn_model(lambda n: "qrcode" in n or "monster" in n, prefer=("v20", "v2"))
 +    if qr:
 +        units.append(("shape", ControlNetUnit(enabled=True, module="None", model=qr, weight=float(params.dance_w_shape),
-+                                              guidance_end=0.9, resize_mode="Crop and Resize")))
++                                              guidance_end=float(getattr(params, "dance_shape_end", 0.9)),
++                                              resize_mode="Crop and Resize")))
 +    else:
 +        missing.append("QR Code Monster")
 +    if float(params.dance_w_pose) > 0:
@@ -906,6 +918,53 @@ index 0000000..37fb720
 +    return None
 +
 +
++# ---- what the dancers are: characters (a girl, a dog) or figures made of a material (spaghetti, water) ----
++import re  # noqa: E402
++
++LIVING = re.compile(
++    r"\b(girls?|boys?|wom[ae]n|m[ae]n|lady|ladies|gentlem[ae]n|guys?|child(?:ren)?|kids?|bab(?:y|ies)|toddlers?|"
++    r"humans?|persons?|people|couples?|ballerinas?|princess(?:es)?|princes?|kings?|queens?|knights?|wizards?|"
++    r"witch(?:es)?|detectives?|soldiers?|robots?|dogs?|pupp(?:y|ies)|cats?|kittens?|animals?|bears?|fox(?:es)?|"
++    r"horses?|monkeys?|rabbits?|bunn(?:y|ies)|lions?|tigers?|wol(?:f|ves)|birds?|pandas?|frogs?|elephants?)\b", re.I)
++LIVING_HE = ("ילד", "ילדה", "בחור", "בחורה", "אישה", "נשים", "גבר", "גברים", "איש", "אנשים", "זוג", "תינוק",
++             "כלב", "חתול", "חיה", "דוב", "שועל", "סוס", "קוף", "ארנב", "אריה", "נמר", "ציפור", "צפרדע")
++MATERIAL = re.compile(r"\b(made (?:entirely |completely |only )?(?:of|from)|sculpted (?:from|of|out of)|"
++                      r"formed (?:from|of)|composed of|built (?:from|of)|carved (?:from|of|out of)|figures? of)\b", re.I)
++LORA = re.compile(r"<lora:([^:>]+)(?::[^>]*)?>", re.I)
++# a character setup: its own shape only at first, its pose all along (the material numbers made real people
++# into neon cut-outs with smeared faces, 2026-11-15)
++LIVING_SHAPE, LIVING_SHAPE_END, LIVING_POSE = 0.55, 0.6, 0.8
++LIVING_NEGATIVE = ("deformed", "extra limbs", "extra fingers", "bad anatomy", "blurry", "lowres")
++
++
++def dance_kind(prompt: str) -> str:
++    """'living' (people, animals, characters with faces) or 'material' (figures made of something)."""
++    text = LORA.sub(" ", str(prompt or ""))
++    if MATERIAL.search(text):
++        return "material"
++    if LIVING.search(text) or any(word in text for word in LIVING_HE):
++        return "living"
++    return "material"
++
++
++def single_loras(prompt: str):
++    """The prompt with each LoRA once (the first one kept): the same LoRA twice is twice its weight, and the LCM
++    LoRA twice burns the picture (his 2026-11-12 dance had it twice). Returns (prompt, the dropped tags)."""
++    seen, dropped = set(), []
++
++    def keep(m):
++        name = m.group(1).strip().lower()
++        if name in seen:
++            dropped.append(m.group(0))
++            return ""
++        seen.add(name)
++        return m.group(0)
++    text = LORA.sub(keep, str(prompt or ""))
++    if dropped:
++        text = re.sub(r"(,\s*){2,}", ", ", text).strip().strip(",").strip()
++    return text, dropped
++
++
 +def apply_dance_mode(params, p):
 +    """Everything the dance video needs, set right before AnimateDiff starts."""
 +    video = _file_path(params.dance_video)
@@ -960,7 +1019,25 @@ index 0000000..37fb720
 +                p.prompt = f"{p.prompt}, {tag}"
 +                notes.append(f"added {tag}")
 +
-+    if params.dance_no_people:
++    # characters (a girl, a dog) want their pose and faces; figures of a material want their outline and no faces
++    kind = dance_kind(p.prompt)
++    params.dance_kind = kind
++    if kind == "living":
++        defaults = abs(float(params.dance_w_shape) - 1.0) < 1e-6 and abs(float(params.dance_w_pose) - 0.25) < 1e-6
++        if defaults:   # the user's own numbers always win
++            params.dance_w_shape, params.dance_w_pose = LIVING_SHAPE, LIVING_POSE
++            params.dance_shape_end = LIVING_SHAPE_END
++            notes.append(f"characters: shape {LIVING_SHAPE} until {int(LIVING_SHAPE_END * 100)}%, pose {LIVING_POSE}")
++        present = str(p.negative_prompt or "").lower()
++        extra = [w for w in LIVING_NEGATIVE if w not in present]
++        if extra:
++            p.negative_prompt = ", ".join(x for x in (p.negative_prompt, ", ".join(extra)) if x)
++    if isinstance(p.prompt, str):
++        p.prompt, dropped = single_loras(p.prompt)
++        if dropped:
++            notes.append(f"dropped repeated {', '.join(dropped)}")
++
++    if params.dance_no_people and kind == "material":
 +        present = str(p.negative_prompt or "").lower()
 +        extra = [w for w in NO_PEOPLE_WORDS if w not in present]
 +        if extra:
@@ -2173,7 +2250,7 @@ index 9b0f469..43b546a 100644
              {"minimum": 0, "maximum": 128, "step": 4},
              section=section,
 diff --git a/scripts/animatediff_ui.py b/scripts/animatediff_ui.py
-index 8873ee6..f021cf5 100644
+index 8873ee6..c3c8732 100644
 --- a/scripts/animatediff_ui.py
 +++ b/scripts/animatediff_ui.py
 @@ -4,6 +4,7 @@ import os
@@ -2197,7 +2274,7 @@ index 8873ee6..f021cf5 100644
  
 +DANCE_GUIDE = """Upload up to three things, write the prompt in the usual place and press **Generate**:
 +1. **Dance video**: real people dancing. Only their movement is taken, not how they look.
-+2. **The dancers**: pictures of what the dancers are made of (a water drop, glass, spaghetti). Close-ups of the material work best. In the prompt, describe them as the material: *two figures made entirely of spaghetti*, rather than *two dancers*.
++2. **The dancers**: pictures of what the dancers are made of (a water drop, glass, spaghetti). Close-ups of the material work best. In the prompt, describe them as the material: *two figures made entirely of spaghetti*, rather than *two dancers*. For real characters (*a girl and a dog dancing*) a picture of the character works, and the dance follows their pose and keeps their faces (people and animals in the prompt are recognized by themselves).
 +3. **The background** (optional): pictures of the place behind the dancers (a jungle, a beach, a stage). They give the background its atmosphere and colors; the picture itself is not copied. Without them the background comes only from the prompt. Pick a picture taken from the same angle as the dance video (a stage filmed from the side needs a side view; a picture from above turns the whole scene into a top view). A picture of the place without the dancers' material works best (a bowl with sauce on a table, not a bowl full of spaghetti), so the dancers stand out. When the dancers are small in the frame, keep the picture plain (an empty table and wall): objects in it get repeated around the empty space.
 +
 +Length, music, size and ControlNet are set automatically; the checkpoint is the usual one. Your own ControlNet units are switched off while this is on."""
@@ -2600,13 +2677,13 @@ index 8873ee6..f021cf5 100644
      setting_sd_model_checkpoint = None
      animatediff_ui_group = []
  
-@@ -259,8 +543,119 @@ class AnimateDiffUiGroup:
+@@ -259,10 +543,123 @@ class AnimateDiffUiGroup:
          return gr.Dropdown.update(choices=new_model_list, value=selected)
  
  
 +    def render_dance(self, is_img2img: bool):
 +        """
-+        💃 Dance video: a panel of its own in txt2img. The switch, the dance video and the pictures are all it
++        💃 Dance video: a panel inside the AnimateDiff card in txt2img. The switch, the dance video and the pictures are all it
 +        needs; AnimateDiff and ControlNet are set up from them when Generate is pressed (apply_dance_mode).
 +        In img2img the same components exist hidden, since the parameters are passed by position.
 +        """
@@ -2716,11 +2793,15 @@ index 8873ee6..f021cf5 100644
 +
      def render(self, is_img2img: bool, infotext_fields, paste_field_names):
          elemid_prefix = "img2img-ad-" if is_img2img else "txt2img-ad-"
-+        self.render_dance(is_img2img)
          with gr.Accordion("AnimateDiff", open=False):
              gr.Markdown(value="Please click [this link](https://github.com/continue-revolution/sd-webui-animatediff/blob/forge/master/docs/how-to-use.md#parameters) to read the documentation of each parameter.")
++            # 💃 Dance video is a part of AnimateDiff, inside its card (it stood above it as a card of its own,
++            # 2026-11-15). Built before the video source below, which reads its dance_sync switch.
++            self.render_dance(is_img2img)
              with gr.Row():
-@@ -347,28 +742,32 @@ class AnimateDiffUiGroup:
+                 with gr.Row():
+                     model_list = self.get_model_list()
+@@ -347,28 +744,32 @@ class AnimateDiffUiGroup:
                      value=self.params.interp_x, label="Interp X", precision=0, 
                      elem_id=f"{elemid_prefix}interp-x"
                  )
@@ -2771,7 +2852,7 @@ index 8873ee6..f021cf5 100644
              with gr.Row():
                  self.params.video_path = gr.Textbox(
                      value=self.params.video_path,
-@@ -380,6 +779,94 @@ class AnimateDiffUiGroup:
+@@ -380,6 +781,94 @@ class AnimateDiffUiGroup:
                      label="Mask path",
                      elem_id=f"{elemid_prefix}mask-path"
                  )
@@ -2866,7 +2947,7 @@ index 8873ee6..f021cf5 100644
              if is_img2img:
                  with gr.Accordion("I2V Traditional", open=False):
                      with gr.Row():
-@@ -417,6 +904,11 @@ class AnimateDiffUiGroup:
+@@ -417,6 +906,11 @@ class AnimateDiffUiGroup:
                          label="Optional last frame. Leave it blank if you do not need one.",
                          type="pil",
                      )
@@ -2878,7 +2959,7 @@ index 8873ee6..f021cf5 100644
  
          # Set up controls to be copy-pasted using infotext
          fields = self.params.get_param_names(is_img2img)
-@@ -449,10 +941,19 @@ class AnimateDiffUiGroup:
+@@ -449,10 +943,19 @@ class AnimateDiffUiGroup:
              AnimateDiffUiGroup.txt2img_submit_button = component
              return
  

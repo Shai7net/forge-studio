@@ -11,6 +11,7 @@ import os
 import subprocess
 
 from . import WEBUI_DIR
+from . import childguard
 
 
 def root():
@@ -52,8 +53,9 @@ def start(source, video, target, position, work):
     os.makedirs(work, exist_ok=True)
     cmd, folder = command(source, video, target, position, work)
     with open(log(work), "w", encoding="utf-8") as out:
-        return subprocess.Popen(cmd, cwd=folder, stdout=out, stderr=subprocess.STDOUT,
-                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        # ends with Forge (childguard.py)
+        return childguard.bind(subprocess.Popen(cmd, cwd=folder, stdout=out, stderr=subprocess.STDOUT,
+                                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)))
 
 
 def log(work):

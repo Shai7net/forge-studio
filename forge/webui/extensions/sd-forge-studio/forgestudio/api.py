@@ -20,6 +20,13 @@ mimetypes.add_type("text/javascript", ".js")
 inbox = []  # files sent from other tabs, waiting for the page to take them
 
 
+async def _off_loop(function):
+    """The work of an async route (after its upload is read) on a worker thread: on the event loop, a picture being
+    made or cut out held every other request of Forge until it was done, and the whole page froze (2026-11-15)."""
+    from starlette.concurrency import run_in_threadpool
+    return await run_in_threadpool(_guard, function)
+
+
 def _guard(function):
     try:
         return function()
@@ -63,8 +70,11 @@ def _with_urls(item):
 
 # ---- general ----
 
+# Forge's start: a page that sees a new one opens a new project (a reload in the same run keeps the open one)
+BOOT = f"{time.time():.0f}"
+
 def api_options():
-    return {"name": NAME, "version": VERSION, "presets": render.presets(), "loudness": sound.presets(), "library": library.state, "roots": paths.library_roots(),
+    return {"name": NAME, "version": VERSION, "boot": BOOT, "presets": render.presets(), "loudness": sound.presets(), "library": library.state, "roots": paths.library_roots(),
             "projects": paths.projects_dir(), "exports": paths.exports_dir(), "finish": render.finish_tools()}
 
 
@@ -121,12 +131,17 @@ def api_project_save(name: str = Body(...), doc: dict = Body(...)):
 
 
 def api_project_add(name: str = Body(...), id: int = Body(None), path: str = Body(None)):
+    """A library file (`id`) or a file on disk (`path`: a path or a page's '/file=' link) into the project. Files of
+    the temporary folders (Gradio's copies of results) are copied in, since Forge may clear those folders."""
     def add():
-        real = library.get(id)["path"] if id is not None else path
+        real = library.get(id)["path"] if id is not None else _path_from(path)
         if id is None and not paths.inside(real, _sendable_roots()):
             raise projects.ProjectError("that file is not in a folder Forge Studio may read", 403)
-        web = projects.add_media(name, real)
-        return {"web": web, "url": _project_media_url(name, web)}
+        if paths.inside(real, _temporary_roots()):
+            web = projects.store_copy(name, real)
+        else:
+            web = projects.add_media(name, real)
+        return {"web": web, "url": _project_media_url(name, web), "path": projects.media_path(name, web)}
     return _guard(add)
 
 
@@ -156,7 +171,7 @@ def api_frame_export(image: str = Body(...), filename: str = Body('frame.png')):
 
 async def api_project_upload(name: str, web: str, request: Request):
     data = await request.body()
-    return _guard(lambda: {"web": projects.store_upload(name, web, data)})
+    return await _off_loop(lambda: {"web": projects.store_upload(name, web, data)})
 
 
 # ---- what the timeline shows of a file ----
@@ -194,8 +209,8 @@ async def api_render_text(name: str, clip: str, request: Request, step: int = No
     if not re.match(r"^[A-Za-z0-9_-]{1,40}$", clip or ""):
         raise HTTPException(status_code=400, detail="not a clip id")
     if step is not None:
-        return _guard(lambda: {"path": render.store_typed(name, clip, int(step), int(steps or 0), data, bool(reset))})
-    return _guard(lambda: {"path": render.store_text(name, clip, data)})
+        return await _off_loop(lambda: {"path": render.store_typed(name, clip, int(step), int(steps or 0), data, bool(reset))})
+    return await _off_loop(lambda: {"path": render.store_text(name, clip, data)})
 
 
 def api_render_start(name: str = Body(...), doc: dict = Body(...), preset: str = Body("h264"),
@@ -351,7 +366,7 @@ async def api_image_save(request: Request):
     if flat is None:
         raise HTTPException(status_code=400, detail="the flattened picture is missing")
 
-    return _guard(lambda: imagedoc.save(form["name"], form["shot"], _json.loads(form["doc"]), files, flat))
+    return await _off_loop(lambda: imagedoc.save(form["name"], form["shot"], _json.loads(form["doc"]), files, flat))
 
 
 def api_image_genoptions():
@@ -376,7 +391,7 @@ async def api_image_generate(request: Request):
         if r:
             refs.append(r)
     flat, mask = await png("flat"), await png("mask")
-    return _guard(lambda: imagegen.generate(form["name"], form["shot"], form["mode"], _json.loads(form.get("params") or "{}"),
+    return await _off_loop(lambda: imagegen.generate(form["name"], form["shot"], form["mode"], _json.loads(form.get("params") or "{}"),
                                             flat, mask, units, refs))
 
 
@@ -393,7 +408,7 @@ async def api_image_subject(request: Request):
     """multipart: name, shot, picture (PNG)"""
     form, png = await _image_form(request)
     picture = await png("picture")
-    return _guard(lambda: imageai.subject(form["name"], form["shot"], picture))
+    return await _off_loop(lambda: imageai.subject(form["name"], form["shot"], picture))
 
 
 async def api_image_object(request: Request):
@@ -401,14 +416,14 @@ async def api_image_object(request: Request):
     import json as _json
     form, png = await _image_form(request)
     picture = await png("picture")
-    return _guard(lambda: imageai.object_at(form["name"], form["shot"], picture, _json.loads(form.get("points") or "[]")))
+    return await _off_loop(lambda: imageai.object_at(form["name"], form["shot"], picture, _json.loads(form.get("points") or "[]")))
 
 
 async def api_image_erase(request: Request):
     """multipart: name, shot, picture (PNG), mask (PNG, white = take away)"""
     form, png = await _image_form(request)
     picture, mask = await png("picture"), await png("mask")
-    return _guard(lambda: imageai.erase(form["name"], form["shot"], picture, mask))
+    return await _off_loop(lambda: imageai.erase(form["name"], form["shot"], picture, mask))
 
 
 def api_updates_check():
@@ -441,7 +456,7 @@ async def api_frame_draw(request: Request):
     form = await request.form()
     mask = form.get("mask")
     data = await mask.read() if mask is not None and hasattr(mask, "read") else None
-    return _guard(lambda: frames.draw(form["name"], form["frame"], data, form.get("prompt", ""), form.get("negative", ""),
+    return await _off_loop(lambda: frames.draw(form["name"], form["frame"], data, form.get("prompt", ""), form.get("negative", ""),
                                       float(form.get("strength", 0.75)), int(form.get("seed", -1))))
 
 
@@ -594,6 +609,13 @@ def api_task(id: str):
 
 def _sendable_roots():
     roots = list(paths.library_roots()) + [tempfile.gettempdir(), paths.projects_dir()]
+    if os.environ.get("GRADIO_TEMP_DIR"):
+        roots.append(os.environ["GRADIO_TEMP_DIR"])
+    return roots
+
+
+def _temporary_roots():
+    roots = [tempfile.gettempdir()]
     if os.environ.get("GRADIO_TEMP_DIR"):
         roots.append(os.environ["GRADIO_TEMP_DIR"])
     return roots

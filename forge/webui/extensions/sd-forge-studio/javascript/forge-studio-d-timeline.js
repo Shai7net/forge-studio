@@ -122,6 +122,11 @@
         const tracks = orderedTracks();
         const width = Math.max(TL.scroll.clientWidth, (FS.total() + 30) * TL.pps);
         TL.content.style.width = width + 'px';
+        // the strips of pictures and sound already on screen are moved into the new clips, not made again: a new
+        // element with a wide strip image blinked while the browser decoded it again, on every pointer move of a
+        // drag ("the screen flickers", 2026-11-15)
+        keep.clear();
+        for (const e of TL.content.querySelectorAll('[data-key]')) keep.set(e.dataset.key, e);
         TL.heads.innerHTML = '';
         TL.content.innerHTML = '';
         TL.lanes = [];
@@ -148,6 +153,13 @@
         TL.lanes.push({track: null, kind: 'audio', top: y, height: 22, el: bottomDrop, newTrack: 'bottom'});
         y += 22;
         for (const m of FS.markers()) TL.content.append(h('div', {class: 'ft-marker', title: m.name || FS.timecode(m.t), style: `left:${m.t * TL.pps}px;height:${y}px`}));
+        keep.clear();
+        // the lane a dragged clip is over stays lit through the redraws of the drag
+        const target = TL.dropLane;
+        if (target) {
+            const lit = TL.lanes.find((l) => (target.track ? l.track && l.track.id === target.track.id : l.newTrack === target.newTrack));
+            if (lit) lit.el.classList.add('ft-target');
+        }
         TL.content.style.height = y + 'px';
         TL.heads.style.height = y + 'px';
         TL.playhead.style.height = y + 'px';
@@ -166,6 +178,13 @@
                 h('span', {}, toggle('hidden', '👁', '◌', T('Hide')), toggle('muted', '🔊', '🔇', T('Mute'))));
     }
 
+    const keep = new Map();
+    function reused(key, className) {
+        const e = keep.get(key);
+        if (e) { keep.delete(key); if (e.className !== className) e.className = className; return e; }
+        return h('div', {class: className, 'data-key': key});
+    }
+
     function clipEl(c, hgt) {
         const sel = FS.linkedIds(S.selected).includes(c.id);
         const el = h('div', {class: `ft-clip ft-${c.kind}${sel ? ' sel' : ''}`, 'data-id': c.id,
@@ -173,7 +192,7 @@
         const info = S.info[c.media];
         const speed = val(c, 'speed');
         if ((c.kind === 'video' || c.kind === 'image') && c.media) {
-            const strip = h('div', {class: 'ft-strip'});
+            const strip = reused(`s|${c.id}|${c.media}`, 'ft-strip');
             if (c.kind === 'video' && info && info.duration) {
                 strip.style.backgroundImage = `url("${FS.stripUrl(c.media)}")`;
                 strip.style.backgroundSize = `${info.duration / speed * TL.pps}px 100%`;
@@ -186,7 +205,7 @@
             el.append(strip);
         }
         if ((c.kind === 'audio' || (c.kind === 'video' && info && info.audio)) && c.media) {
-            const wave = h('div', {class: 'ft-wave' + (c.kind === 'video' ? ' ft-wave-under' : '')});
+            const wave = reused(`w|${c.id}|${c.media}`, 'ft-wave' + (c.kind === 'video' ? ' ft-wave-under' : ''));
             if (info && info.duration) {
                 wave.style.backgroundImage = `url("${FS.waveUrl(c.media)}")`;
                 wave.style.backgroundSize = `${info.duration / speed * TL.pps}px 100%`;
@@ -735,17 +754,40 @@
         window.removeEventListener('pointerdown', TL.closeOnOutside);
     };
 
-    /* dropping a library file on the timeline */
+    /* dropping on the timeline: a library file, files from the disk, or a picture or video of another tab (its
+     * link: the timeline drawer under the results, forge-studio-s-peek.js) */
+    function droppedLinks(dt) {
+        const own = dt.getData('application/x-forge-studio-url');
+        if (own) return [own];
+        const list = (dt.getData('text/uri-list') || '').split(/\r?\n/).filter((l) => l && !l.startsWith('#'));
+        if (list.length) return list;
+        const html = dt.getData('text/html') || '';
+        const src = html.match(/<(?:img|video|source)[^>]+src="([^"]+)"/i);
+        if (src) return [src[1].replace(/&amp;/g, '&')];
+        const text = (dt.getData('text/plain') || '').trim();
+        return /^(https?:|\/file=|blob:)/.test(text) ? [text] : [];
+    }
+    TL.droppedLinks = droppedLinks;
     TL.acceptDrops = function () {
-        TL.content.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+        TL.content.addEventListener('dragover', (e) => {
+            e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; TL.content.classList.add('ft-dropping');
+            // (the editor's drop frame says where it goes: its own dragover runs after this one)
+        });
+        TL.content.addEventListener('dragleave', (e) => {
+            if (!TL.content.contains(e.relatedTarget)) TL.content.classList.remove('ft-dropping');
+        });
         TL.content.addEventListener('drop', FS.guard(async (e) => {
             e.preventDefault();
+            TL.content.classList.remove('ft-dropping');
+            // everything is read before the first await: the drop's data is gone after it
             const raw = e.dataTransfer.getData('application/x-forge-studio');
-            if (!raw) return;
-            const item = JSON.parse(raw);
+            const files = Array.from(e.dataTransfer.files || []).filter((f) => /^(image|video|audio)\//.test(f.type));
+            const urls = raw || files.length ? [] : droppedLinks(e.dataTransfer);
             const lane = laneAt(e.clientY);
             const time = FS.snapTime(snapped(timeAt(e.clientX)));
-            await FS.addFromLibrary(item, {lane, time});
+            if (raw) await FS.addFromLibrary(JSON.parse(raw), {lane, time});
+            else if (files.length || urls.length) await FS.addOutside({files, urls}, {lane, time});
+            else FS.message(T('Only pictures, videos and sounds can go on the timeline'), 'warn');
         }));
     };
 

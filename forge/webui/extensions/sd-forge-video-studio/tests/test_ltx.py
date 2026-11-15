@@ -203,6 +203,25 @@ class LtxContracts(unittest.TestCase):
         self.assertEqual(ui.ingredient_route(ui.ING_AUTO, True, False), 'phantom')
         self.assertEqual(ui.ingredient_route(ui.ING_LTX_FRAME, True, True), 'flux')
 
+    def test_text_to_video_first_frame_way(self):
+        """One prompt (2026-11-15): FLUX 3 draws the opening picture by default, for Wan and LTX; without it Wan uses
+        the selected checkpoint and LTX the words alone; Advanced can choose."""
+        with patch.object(ui, 'flux3_glue', return_value=object()):
+            self.assertEqual(ui.frame_way(None, False), 'flux')
+            self.assertEqual(ui.frame_way(ui.FRAME_FLUX, True), 'flux')
+            self.assertEqual(ui.frame_way(ui.FRAME_SELECTED, True), 'selected')
+            self.assertEqual(ui.frame_way(ui.FRAME_NONE, True), 'none')
+            self.assertEqual(ui.frame_way(ui.FRAME_NONE, False), 'flux')  # Wan needs a picture
+        with patch.object(ui, 'flux3_glue', return_value=None):
+            self.assertEqual(ui.frame_way(None, False), 'selected')
+            self.assertEqual(ui.frame_way(None, True), 'none')
+
+    def test_picture_prompt_falls_back_to_the_video_prompt(self):
+        import urllib.request
+        with patch.object(urllib.request, 'urlopen', side_effect=OSError('no writer')):
+            text = ui.picture_prompt_from_video('A dog runs on a beach.')
+        self.assertTrue(text.endswith('A dog runs on a beach.'))
+
     def test_installed_flux_discovery_skips_incomplete_models(self):
         bad = types.SimpleNamespace(filename='a-klein.safetensors')
         good = types.SimpleNamespace(filename='b-klein.safetensors')
@@ -367,7 +386,7 @@ class LtxContracts(unittest.TestCase):
         self.assertEqual(selected[0]['value'], 8)
         self.assertEqual(selected[4]['choices'], list(ltx.QUALITY))
         self.assertTrue(selected[6]['visible'])
-        self.assertFalse(selected[7]['visible'])
+        self.assertTrue(selected[7]['visible'])  # Advanced: the opening picture stays for LTX (FLUX 3 draws it)
         self.assertEqual([value['value'] for value in selected[-2:]], [0, 0])
         wan = callback(models.DEFAULT_PRESET)
         self.assertEqual(wan[0]['value'], 4)

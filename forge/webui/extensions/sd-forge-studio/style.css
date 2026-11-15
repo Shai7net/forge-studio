@@ -545,7 +545,7 @@ body.fx-noscroll { overflow: hidden !important; }
 .im-ai-btn { font-size: 12px; text-align: start; padding: 5px 7px; }
 
 /* ---- 🐸 Check for updates (forge-studio-r-updates.js), next to Language at the top of Forge ---- */
-#fs-update { position: fixed; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 1px; direction: ltr; }
+#fs-update { position: absolute; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 1px; direction: ltr; }
 .fs-upd-frog { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border-color-primary, #3a3f49);
     background: radial-gradient(circle at 35% 30%, #8fe08a, #2f8f3a); font-size: 17px; line-height: 1; padding: 0; cursor: pointer;
     box-shadow: 0 1px 3px rgba(0,0,0,.35); }
@@ -562,3 +562,43 @@ body.fx-noscroll { overflow: hidden !important; }
     color: inherit; cursor: pointer; }
 .fs-upd-btn.primary { background: #2f8f3a; border-color: #2f8f3a; color: #fff; }
 .fs-upd-panel a { color: #8fe08a; }
+
+/* ---- the timeline drawer under the results of the other tabs (forge-studio-s-peek.js) ---- */
+.fs-peek { margin-top: 6px; }
+.fs-peek-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 4px 6px; border-radius: 8px;
+    background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.35); font-size: 13px; }
+.fs-peek-toggle { display: inline-flex; align-items: center; gap: 7px; background: #16a34a; color: #fff; border: none;
+    border-radius: 999px; padding: 4px 14px 4px 6px; font-weight: 600; cursor: pointer; transition: background .15s; }
+.fs-peek-toggle:hover { background: #22c55e; }
+.fs-peek-arrow { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(255,255,255,.22); font-size: 11px; transition: transform .2s ease; }
+.fs-peek-toggle.fs-peek-open .fs-peek-arrow { transform: rotate(180deg); }
+/* the second way to close, at the drawer's bottom */
+.fs-peek-handle { display: block; margin: 0 auto; width: 64px; height: 18px; line-height: 16px; padding: 0; border: none;
+    border-radius: 0 0 10px 10px; background: #16a34a; color: #fff; font-size: 11px; cursor: pointer; }
+.fs-peek-handle:hover { background: #22c55e; }
+.fs-peek-handle[hidden] { display: none; }
+.fs-peek-drawer.fs-peek-opening { animation: fs-peek-in .2s ease-out; }
+@keyframes fs-peek-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.fs-peek-btn { background: transparent; color: var(--body-text-color); border: 1px solid var(--border-color-primary, #555);
+    border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+.fs-peek-btn:disabled { opacity: .45; cursor: default; }
+.fs-peek-project { opacity: .8; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fs-peek-chip { display: flex; align-items: center; gap: 6px; padding: 2px 8px 2px 2px; border-radius: 6px; cursor: grab;
+    border: 1px dashed #22c55e; user-select: none; }
+.fs-peek-chip img, .fs-peek-chip video { height: 34px; width: 54px; object-fit: cover; border-radius: 4px; pointer-events: none; }
+.fs-peek-chip.fs-peek-empty { cursor: default; opacity: .5; border-color: var(--border-color-primary, #555); }
+.fs-peek-note { opacity: .85; }
+.fs-peek-note.fs-peek-error { color: #f87171; } .fs-peek-note.fs-peek-warn { color: #f5a524; }
+/* the drawer carries the editor's look (.fx-app) without its layout */
+.fx-app.fs-peek-app { display: block; height: 280px; min-height: 140px; max-height: 80vh; margin-top: 6px; resize: vertical; overflow: hidden; }
+.fx-app.fs-peek-app[hidden] { display: none; }
+.fx-app.fs-peek-app > .fx-lower { height: 100%; }
+.ft-content.ft-dropping { outline: 2px dashed #22c55e; outline-offset: -2px; }
+
+/* files dragged into the editor from a folder: where they will go (forge-studio-e-shell.js acceptOutsideDrops) */
+.fx-dropzone { position: absolute; inset: 0; z-index: 60; pointer-events: none; border: 2px dashed #22c55e;
+    border-radius: inherit; background: rgba(34,197,94,.06); display: flex; align-items: flex-start; justify-content: center; }
+.fx-dropzone[hidden] { display: none !important; }
+.fx-dropzone-box { margin-top: 12px; padding: 6px 14px; border-radius: 999px; background: #16a34a; color: #fff;
+    font-weight: 600; font-size: 13px; box-shadow: 0 4px 18px rgba(0,0,0,.35); }

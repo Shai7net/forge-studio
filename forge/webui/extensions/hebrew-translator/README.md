@@ -18,6 +18,7 @@ the style.
 | txt2img / img2img negative prompt | a plain list of things to avoid (nothing added) |
 | Video Studio prompt, Wan model chosen | Wan 2.2: one continuous shot with motion and camera; from a picture (Image to Video), mostly the motion; Ingredients names "the ... from picture N" |
 | Video Studio prompt, LTX model chosen | LTX-2.3: one long chronological paragraph (action, gestures, looks, place, camera, light, changes) ending with the sound - ambience, effects, music and spoken lines in quotes - since LTX makes the sound too; per sub-tab (`ltx_t2v`, `ltx_i2v` also for Image + Audio, `ltx_ingredients`) |
+| Video Studio Text to Video, its opening picture (`first_frame`, asked by Video Studio itself) | FLUX: one still picture of the shot's first moment - who, looks, starting pose, place, light, framing from the camera words - without motion, camera moves or sound |
 | Video Studio part boxes | Wan 2.2 or LTX-2.3 between two of your pictures, by the chosen model |
 | Characters: character / video | the character as JSON for a sheet; the video idea for Ingredients, for the model chosen in Video Studio |
 | Forge Studio sound effects (`fs_effects`) | MMAudio: audible source, action, material, rhythm, distance and acoustic environment; no visual prompt |
@@ -112,6 +113,11 @@ const r = await (await fetch("/translator/write", {method: "POST", headers: {"Co
 | `GET /translator/learned` | | `entries`, `counts`, `targets` |
 | `POST /translator/forget` | `id` | `forgotten` |
 | `POST /translator/hebrew-to-english` | `text` | `translated_text` (the old route; now a prompt for txt2img's model) |
+
+From another extension's job that already holds Forge's queue (a Generate in progress), call
+`sys.modules["prompt_writer"].write_in_job(text, field, video_mode, seed)` instead of the route: over HTTP the
+writer waits for the queue that its own caller holds and answers "busy". It returns what the route returns, and the
+writer's server leaves the card right after, before the job's own models load.
 
 ## Files
 

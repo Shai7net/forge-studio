@@ -67,6 +67,7 @@ key = ("Upload up to three things, write the prompt in the usual place and press
        "Dance video: real people dancing. Only their movement is taken, not how they look. "
        "The dancers: pictures of what the dancers are made of (a water drop, glass, spaghetti). Close-ups of the material work best. "
        "In the prompt, describe them as the material: two figures made entirely of spaghetti, rather than two dancers. "
+       "For real characters (a girl and a dog dancing) a picture of the character works, and the dance follows their pose and keeps their faces (people and animals in the prompt are recognized by themselves). "
        "The background (optional): pictures of the place behind the dancers (a jungle, a beach, a stage). They give the background "
        "its atmosphere and colors; the picture itself is not copied. Without them the background comes only from the prompt. "
        "Pick a picture taken from the same angle as the dance video (a stage filmed from the side needs a side view; a picture from above turns the whole scene into a top view). "
@@ -76,7 +77,7 @@ key = ("Upload up to three things, write the prompt in the usual place and press
        "Your own ControlNet units are switched off while this is on.")
 he = ('<p>מעלים עד שלושה דברים, כותבים את הפרומפט במקום הרגיל ולוחצים <b>Generate</b>:</p><ol>'
       '<li><b>סרטון ריקוד</b>: אנשים אמיתיים רוקדים. לוקחים ממנו רק את התנועה, לא את המראה שלהם.</li>'
-      '<li><b>הרקדנים</b>: תמונות של ממה הרקדנים עשויים (טיפת מים, זכוכית, ספגטי). הכי טוב תקריב של החומר. בפרומפט כדאי לתאר אותם כחומר: <i>two figures made entirely of spaghetti</i>, ולא <i>two dancers</i>.</li>'
+      '<li><b>הרקדנים</b>: תמונות של ממה הרקדנים עשויים (טיפת מים, זכוכית, ספגטי). הכי טוב תקריב של החומר. בפרומפט כדאי לתאר אותם כחומר: <i>two figures made entirely of spaghetti</i>, ולא <i>two dancers</i>. לדמויות אמיתיות (<i>בחורה וכלב רוקדים</i>) מתאימה תמונה של הדמות, והריקוד שומר על התנוחה ועל הפנים שלהן (אנשים וחיות בפרומפט מזוהים לבד).</li>'
       '<li><b>הרקע</b> (לא חובה): תמונות של המקום שמאחורי הרקדנים (ג׳ונגל, חוף, במה). הן נותנות לרקע את האווירה והצבעים; '
       'התמונה עצמה לא מועתקת. בלעדיהן הרקע מגיע רק מהפרומפט. כדאי לבחור תמונה מאותה זווית כמו סרטון הריקוד (במה שצולמה מהצד צריכה תמונה מהצד; תמונה מלמעלה הופכת את כל הסצנה למבט מלמעלה). הכי טוב תמונה של המקום בלי החומר של הרקדנים (קערה עם רוטב על שולחן, לא קערה מלאה בספגטי), כדי שהרקדנים יבלטו. כשהרקדנים קטנים בפריים, עדיף תמונה נקייה (שולחן וקיר ריקים): חפצים שבתמונה חוזרים ומופיעים בשטח הריק.</li></ol>'
       '<p>האורך, המוזיקה, הגודל וה-ControlNet נקבעים אוטומטית; ה-checkpoint הוא הרגיל. '

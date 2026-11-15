@@ -12,6 +12,7 @@ from dataclasses import asdict
 
 from . import EXT_DIR, HOME_DIR, OUTPUT_DIR, python_executable
 from . import models
+from . import childguard
 
 
 class Cancelled(RuntimeError):
@@ -66,7 +67,9 @@ class Runner:
                 maskpath = str(jobdir / "mask.png")
                 mask.convert("L").save(maskpath)
             job = {"request": asdict(request), "seed": seed, "references": paths, "mask": maskpath,
-                   "loras": list(loras), "components": components, "output_dir": str(OUTPUT_DIR)}
+                   # the worker's pictures are the job's own; Forge saves them where every generation goes
+                   # (service.keep_like_forge)
+                   "loras": list(loras), "components": components, "output_dir": str(jobdir / "out")}
             jobpath = jobdir / "request.json"
             jobpath.write_text(json.dumps(job, ensure_ascii=False), encoding="utf-8")
             env = os.environ.copy()
@@ -78,6 +81,7 @@ class Runner:
                 self.process = subprocess.Popen(args, cwd=str(HOME_DIR), env=env, stdout=logfile,
                                                 stderr=subprocess.STDOUT,
                                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                childguard.bind(self.process)  # ends with Forge (childguard.py)
                 while self.process.poll() is None:
                     if self.cancel_event.wait(0.25):
                         self.process.terminate()

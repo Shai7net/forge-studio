@@ -21,6 +21,7 @@ import types
 import uuid
 
 from . import frames, library, media, paths, projects
+from . import childguard
 
 SD_ROOT = os.path.normpath(os.path.join(paths.WEBUI, "..", ".."))
 WHISPER_PY = os.path.join(SD_ROOT, "auto-subtitle-main", "venv", "Scripts", "python.exe")
@@ -93,6 +94,7 @@ def _run(command, cwd, env, task, log):
     with open(log, "w", encoding="utf-8", errors="replace") as out:
         proc = subprocess.Popen(command, cwd=cwd, env=env, stdout=out, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL, creationflags=flags)
+        childguard.bind(proc)  # ends with Forge (childguard.py)
         while proc.poll() is None:
             time.sleep(1)
             try:

@@ -25,9 +25,11 @@
         const lang = document.getElementById('hebrew-ui-toggle');
         if (!box) return;
         if (lang) {
+            // in page coordinates: the button belongs to the top of the page and scrolls away with it (it stayed
+            // on screen over the settings while scrolling, 2026-11-15)
             const r = lang.getBoundingClientRect();
-            box.style.right = Math.max(8, window.innerWidth - r.left + 10) + 'px';
-            box.style.top = Math.max(2, r.top - 2) + 'px';
+            box.style.right = Math.max(8, document.documentElement.clientWidth - r.left + 10) + 'px';
+            box.style.top = Math.max(2, r.top + window.scrollY - 2) + 'px';
         } else {
             box.style.right = '140px';
             box.style.top = '2px';

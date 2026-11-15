@@ -60,6 +60,8 @@ async function charactersSendToSim360(payload) {
     }
     charactersOpenTab("tabs", "sim360");
     try {
+        // Simulation 360 opens its worlds when its tab is first shown: wait for them (at most 30 s)
+        if (window.Sim360.ready) await Promise.race([window.Sim360.ready, new Promise((r) => setTimeout(r, 30000))]);
         await E.library();
         const world = E.name && E.world ? E.world() : null;
         if (world && world.file && !(E.jobs && E.jobs.size)) {
@@ -134,7 +136,8 @@ async function charactersSendToVideo(payload) {
         return [];
     }
     const prompt = app.querySelector("#vs_prompt textarea");
-    if (prompt && data.prompt) {
+    // a prompt made without the user's words never replaces one they already wrote in Video Studio
+    if (prompt && data.prompt && !(data.prompt_is_default && prompt.value.trim())) {
         prompt.value = data.prompt;
         prompt.dispatchEvent(new Event("input", {bubbles: true}));
     }

@@ -96,7 +96,10 @@ def architecture():
 # ---------------------------------------------------------------------- sharing the card
 
 def _take_queue(wait=3.0):
-    """Forge's own lock (renders and Video Studio jobs hold it): the writer needs part of the card."""
+    """Forge's own lock (renders and Video Studio jobs hold it): the writer needs part of the card. A job that holds
+    it already and asks for a prompt itself (write_in_job) is not made to wait for itself."""
+    if getattr(_local, "held", False):
+        return None
     from modules.call_queue import queue_lock
     end = time.time() + wait
     while not queue_lock.acquire(blocking=False):
@@ -164,7 +167,8 @@ def _generate(name, system, turns, user, temperature, seed):
             _free_card(pmodel.Writer.card_bytes(QWEN.te))
             return QWEN.write(devices.device, system, user, turns, temperature, seed)
     finally:
-        lock.release()
+        if lock is not None:
+            lock.release()
 
 
 def _idle_watch():
@@ -231,6 +235,22 @@ def write(text, field="txt2img_prompt", video_mode="", again=False, seed=0):
     return {"prompt": prompt, "meaning": meaning, "target": target, "target_label": styles.TARGETS[target],
             "engine": name.split(" (")[0], "seconds": round(time.time() - t0, 1), "examples": learned,
             "counts": MEMORY.counts()}
+
+
+def write_in_job(text, field="txt2img_prompt", video_mode="", seed=0):
+    """A prompt written for an extension's job that already holds Forge's queue (Video Studio's Text to Video writes
+    its opening picture inside Generate). Over HTTP it waited 3 s for the queue its own caller held and gave up as
+    "busy", so the picture was drawn from the whole video prompt: two cats, one per moment (2026-11-15). The queue is
+    not taken again, and Gemma leaves the card at once, before the job's own models need it."""
+    _local.held = True
+    try:
+        return write(text, field, video_mode, False, seed)
+    finally:
+        _local.held = False
+        _stop_gemma("the job goes on")
+
+
+prompt_writer.write_in_job = write_in_job   # other extensions find it as sys.modules["prompt_writer"].write_in_job
 
 
 # ---------------------------------------------------------------------- routes

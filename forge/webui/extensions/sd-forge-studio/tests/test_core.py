@@ -90,6 +90,15 @@ class Projects(unittest.TestCase):
         projects.save_doc(name, doc)
         self.assertEqual(projects.load(name)["doc"]["clips"][0]["duration"], 2)
         self.assertEqual(len(os.listdir(os.path.join(projects._folder(name), "history"))), 1)
+        # a temporary file (Gradio's copy of a result dropped on the timeline) is copied in, once
+        temp = os.path.join(src, "gradio", "result.mp4")
+        make_video(temp, color="blue")
+        copied = projects.store_copy(name, temp)
+        self.assertEqual(projects.store_copy(name, temp), copied)
+        kept = projects.media_path(name, copied)
+        self.assertTrue(kept.startswith(projects._folder(name)))
+        os.remove(temp)
+        self.assertTrue(os.path.isfile(kept))
         with self.assertRaises(projects.ProjectError):
             projects.create("a/b")
         with self.assertRaises(projects.ProjectError):

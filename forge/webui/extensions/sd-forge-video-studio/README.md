@@ -7,7 +7,7 @@ Five sub-tabs, one **Generate video** button, and a visible **Video model** sele
 
 | Sub-tab | What you give | What the video engine does |
 |---|---|---|
-| **Text to Video** | a prompt | Wan: Forge draws a first frame with the image checkpoint, then animates it. LTX: generates video directly, optionally with synchronized sound |
+| **Text to Video** | a prompt | Only the video prompt. Behind the scenes the 🌐 writer turns it into the prompt of the opening picture (target `first_frame`), FLUX 3 Klein draws that picture (8 steps, even when another image checkpoint is selected), and Wan or LTX animates it; LTX adds synchronized sound. **Advanced: the opening picture** chooses who draws it (FLUX 3 Klein, the selected checkpoint with its own steps/CFG/sampler, or for LTX no picture at all), and takes a picture prompt of your own. Without FLUX 3 Klein installed, Wan uses the selected checkpoint and LTX the words alone |
 | **Image to Video** | one picture and a prompt | a clip that starts on the picture |
 | | **➕ Last frame**: a second picture | a clip that starts on the first picture and ends on the last, doing what the prompt says in between |
 | | **➕ Another picture**: up to six | one part per pair of pictures (1→2, 2→3, …), all made in one run and joined into one video; each part can have its own description, and Length is per part |

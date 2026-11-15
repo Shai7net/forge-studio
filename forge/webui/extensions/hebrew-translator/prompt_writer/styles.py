@@ -19,6 +19,7 @@ TARGETS = {
     "negative": "Negative prompt",
     "character": "Character for a reference sheet (JSON)",
     "wan_replace": "Wan Animate: replace a character",
+    "first_frame": "The first frame of a video (FLUX)",
     "ltx_t2v": "LTX video, from text",
     "ltx_i2v": "LTX video, from a picture",
     "ltx_ingredients": "LTX video from ingredient pictures",
@@ -31,7 +32,8 @@ TARGETS = {
 FAMILY = {"sd15": "tags", "sdxl": "mixed", "pony": "booru", "booru": "booru", "flux": "prose",
           "wan_t2v": "video", "wan_i2v": "video", "fibo": "json", "fibo_edit": "edit", "negative": "negative",
           "character": "character", "wan_ingredients": "video", "mmaudio": "sound", "ace_music": "music",
-          "ltx_t2v": "ltx", "ltx_i2v": "ltx", "ltx_ingredients": "ltx", "wan_replace": "replace"}
+          "ltx_t2v": "ltx", "ltx_i2v": "ltx", "ltx_ingredients": "ltx", "wan_replace": "replace",
+          "first_frame": "prose"}
 
 CREATIVITY = {
     "Faithful": "Add as little as possible: translate the idea into clear prompt English and add only the words "
@@ -87,6 +89,9 @@ Only when the user asks for written words in the picture, add "text_render": a l
 "appearance": 3 to 5 sentences that start with "a" or "an": age, gender, build, skin, face, eyes, hair and its style, the usual expression, then EVERY piece of clothing and accessory with its exact color and material, and how the personality shows in the face and posture. Concrete, visual words only; everything must be drawable from the front, the side and the back;
 "style": the rendering style: keep the user's (anime, realistic photo, Pixar, clay...); if they name none, "Premium stylized 3D animation, polished cinematic rendering";
 "avoid": comma-separated things that must not appear, always including: different faces, inconsistent clothing, extra limbs, distorted anatomy, skeleton overlays, text, cropped body.""",
+    # Video Studio's Text to Video: the video prompt becomes the picture of its opening moment, which FLUX 3 draws
+    # before the video model animates it (asked by Video Studio itself, field "vs_first_frame")
+    "first_frame": """The user gives the description of a video shot (in any language). Write the prompt for ONE still picture: the very first moment of that shot, which an image model (FLUX) draws and a video model then animates. 40 to 90 words of flowing English: who and what is in the frame, how they look (faces, hair, clothes, colors, materials), their pose at the very start of the action (about to move, not mid-blur; nothing that happens later, no "then", "begins to" or "toward the camera"), each subject exactly once, the place and the background, the light and the time of day, the framing taken from the camera words (wide, medium, close-up, low angle...) and the style. No motion over time, no camera moves, no sound, no cuts, no quality tags.""",
     # Video Studio's Replace a character (Wan 2.2 Animate, with either video model chosen): the motion comes from the
     # video, so the words only describe who appears. "Dance a waltz" drew a flowing white gown on a girl in trousers
     # (2026-11-11); describing her real clothes, with "no dress", removed it.
@@ -153,6 +158,12 @@ EXAMPLES = {
                   'loose, every bit the charming street-smart guy.", "style": "Premium stylized 3D animation, polished '
                   'cinematic rendering", "avoid": "different faces, inconsistent clothing, aggressive expression, '
                   'weapons, extra limbs, distorted anatomy, skeleton overlays, text, cropped body"}'),
+    # a shot with a sequence: only its first moment is drawn (what comes after is left to the video model)
+    "first_frame": ("בחורה בשמלה אדומה יושבת על ספסל בחוף, קמה ורצה לעבר הים, המצלמה עוקבת אחריה",
+                    "A single young woman in a flowing red summer dress sits on a weathered wooden bench on a sandy "
+                    "beach, hands resting on the edge of the seat, leaning slightly forward as if about to stand. "
+                    "Behind her the calm turquoise sea stretches to the horizon under a clear sky. Warm late-afternoon "
+                    "sun, soft long shadows, a medium shot at eye level, realistic photograph."),
     "wan_replace": ("הבחורה עם הכובע הצהוב והכלב הדלמטי רוקדים ואלס במקום הזוג",
                     "A young woman with curly brown hair in a mustard-yellow beanie, a light-blue denim jacket over a "
                     "purple hoodie, dark cargo trousers and white sneakers - trousers, no dress, no skirt - and an "
@@ -198,6 +209,8 @@ EXAMPLES = {
 MEANINGS = {
     "ילדה ג'ינג'ית רצה בשדה חמניות בשקיעה": "A red-haired girl runs in a sunflower field at sunset.",
     "איש עושה עמידת ידיים על החוף": "A man does a handstand on the beach.",
+    "בחורה בשמלה אדומה יושבת על ספסל בחוף, קמה ורצה לעבר הים, המצלמה עוקבת אחריה":
+        "A girl in a red dress sits on a bench on the beach, gets up and runs toward the sea, the camera follows her.",
     "הילדה מסתובבת אל המצלמה ומחייכת, הרוח מזיזה לה את השיער":
         "The girl turns to the camera and smiles; the wind moves her hair.",
     "ידיים מעוותות, מטושטש, טקסט, סימן מים": "Deformed hands, blurry, text, watermark.",
@@ -245,6 +258,21 @@ def system_prompt(target, creativity="Rich", notes=(), avoid=(), words=()):
                 "Preserve the user's intent and write only audible details. Never turn the request into an image or video prompt.\n"
                 "Answer in exactly two lines:\nMeaning: a literal English translation.\nPrompt: the English audio prompt.\n"
                 f"Target model: {TARGETS[target]}\n{GUIDES[target]}")
+    if target == "first_frame":
+        # the base rule "keep the action, never drop a detail" (and Rich's "what exactly happens") made the writer
+        # retell the whole shot - sits, stretches, leaps, walks to the camera - and FLUX drew one cat per moment, two
+        # cats in one picture (2026-11-15). Here the later moments must be dropped.
+        text = text.replace(
+            "- Keep everything the user asked for: the subject, the action, how many, colors, mood, place, style. "
+            "Never drop a detail and never change the meaning.",
+            "- Keep the subject, how many there are, colors, mood, place and style exactly. Of the action keep ONLY its "
+            "first moment, the pose just before it starts: leave out everything that happens after it (later moves, "
+            "where the subject goes, what it lands on, walking toward the camera). A still picture that mentions two "
+            "moments shows the subject twice. Each person or animal appears exactly once: say how many (a single cat, "
+            "two women).")
+        text = text.replace(CREATIVITY.get(creativity, CREATIVITY["Rich"]),
+                            "Make the opening moment concrete and visual: how the subject looks, its starting pose, "
+                            "where, the light, the framing and the style. No new characters, objects or story.")
     if target == "negative":
         # a list of things to avoid has nothing to enrich
         text = text.replace(CREATIVITY.get(creativity, CREATIVITY["Rich"]), CREATIVITY["Faithful"])
@@ -282,6 +310,8 @@ def target_for(field, architecture="", checkpoint="", video_mode=""):
     if field == "ch_video":
         # sd-forge-characters: what the character does in a video (it goes to Ingredients)
         return "ltx_ingredients" if ltx else "wan_ingredients"
+    if field == "vs_first_frame":
+        return "first_frame"
     if field.startswith("vs_") and mode == "replace":
         return "wan_replace"  # Replace a character is Wan Animate whichever video model is chosen
     if field.startswith("vs_"):

@@ -605,5 +605,15 @@
         'H.265 MP4 (NVENC)': 'H.265 MP4 (כרטיס מסך)',
         'ProRes 422 HQ (for more editing)': 'ProRes 422 HQ (להמשך עריכה)',
         'Quick check: half size': 'בדיקה מהירה: חצי גודל',
+        // the timeline drawer under the results of the other tabs (forge-studio-s-peek.js)
+        'Timeline': 'ציר זמן', 'Close the timeline': 'סגור את ציר הזמן',
+        'Open the Forge Studio timeline here: drag the result onto it': 'פתח כאן את ציר הזמן של Forge Studio: גרור אליו את התוצאה',
+        'Drag this onto the timeline': 'גרור את זה לציר הזמן', 'Nothing to drag yet: make a result first': 'אין עדיין מה לגרור: צור תוצאה קודם',
+        'Drag': 'גרור', 'Add at the end': 'הוסף בסוף', 'Open Forge Studio': 'פתח את Forge Studio',
+        'Only pictures, videos and sounds can go on the timeline': 'רק תמונות, סרטונים וצלילים נכנסים לציר הזמן',
+        'Could not read {0}': 'לא ניתן לקרוא את {0}',
+        'Drop: here on the timeline': 'שחרר: כאן על ציר הזמן', "Drop: into the project's media": 'שחרר: למדיה של הפרויקט',
+        'Drop: at the end of the edit': 'שחרר: בסוף העריכה', "{0} added to the project's media": '{0} נוספו למדיה של הפרויקט',
+        'Close the timeline (▲)': 'סגור את ציר הזמן (▲)', 'Drag the video onto the timeline': 'גרור את הווידאו לציר הזמן',
     };
 })();

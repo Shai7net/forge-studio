@@ -183,7 +183,9 @@ def api_export_start(project: str = Body(""), name: str = Body("flight"), width:
 async def api_export_frame(request: Request, id: str, jpeg: bool = False):
     session = _guard(lambda: export.get(id))
     data = await request.body()
-    _guard(lambda: session.frame(data, jpeg))
+    # the frame goes to ffmpeg on a worker thread: on the event loop a slow encoder held all of Forge's requests
+    from starlette.concurrency import run_in_threadpool
+    await run_in_threadpool(_guard, lambda: session.frame(data, jpeg))
     return {"frames": session.frames}
 
 

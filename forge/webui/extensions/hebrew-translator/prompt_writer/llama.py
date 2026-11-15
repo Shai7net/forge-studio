@@ -23,6 +23,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from . import childguard
 
 _THINK = re.compile(r"<think>.*?</think>", re.S)
 MODEL_PATTERNS = ("gemma-4-E4B*.gguf",)
@@ -106,6 +107,7 @@ class LlamaWriter:
             t0 = time.time()
             self.proc = subprocess.Popen(args, stdout=log, stderr=subprocess.STDOUT,
                                          creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            childguard.bind(self.proc)  # ends with Forge (childguard.py)
             while time.time() - t0 < timeout:
                 if self.proc.poll() is not None:
                     self.proc = None

@@ -151,7 +151,7 @@
  },
  {
   "i": 30,
-  "en": "What the character does in the video (any language; it is written as a Wan prompt)",
+  "en": "What the character does in the video - optional (any language; it is written as a video prompt)",
   "ctx": "[t] Characters tab (sd-forge-characters, forgecharacters/ui.py)"
  },
  {

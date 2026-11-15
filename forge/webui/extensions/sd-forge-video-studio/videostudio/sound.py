@@ -18,6 +18,7 @@ import threading
 import time
 
 from . import HOME_DIR, MODELS_DIR, WEBUI_DIR
+from . import childguard
 
 HELPERS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "helpers")
 VOICES_DIR = os.path.join(MODELS_DIR, "voices")
@@ -102,6 +103,7 @@ def _run_helper(task, stage, command, cwd, env, span):
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     proc = subprocess.Popen(command, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                             encoding="utf-8", errors="replace", creationflags=flags)
+    childguard.bind(proc)  # ends with Forge (childguard.py)
     task.proc = proc
     result = None
     for line in proc.stdout:

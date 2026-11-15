@@ -26,6 +26,7 @@
     FS.h = h;
 
     FS.message = function (text, kind) {
+        FS.emit('message', {text, kind});
         if (!UI.toast) return;
         UI.toast.textContent = text || '';
         UI.toast.className = 'fx-toast' + (text ? ' show' : '') + (kind ? ' fx-' + kind : '');
@@ -35,7 +36,7 @@
     FS.guard = (fn) => async (...args) => {
         try { return await fn(...args); } catch (e) { console.error(e); FS.message(e.message || String(e), 'error'); }
     };
-    FS.busy = function (text) { if (UI.busy) { UI.busy.textContent = text || ''; UI.busy.hidden = !text; } };
+    FS.busy = function (text) { FS.emit('busy', text || ''); if (UI.busy) { UI.busy.textContent = text || ''; UI.busy.hidden = !text; } };
 
     FS.panels = FS.panels || [];
 
@@ -396,6 +397,96 @@
         await refreshLibrary();
     }
 
+    /* files from the user's disk and pictures or videos of other tabs (their /file= links), dropped on the
+     * timeline: at the drop point one after another. A file of Forge's own folders joins the project where it is
+     * (a temporary file is copied in); anything else is downloaded by the page and uploaded. */
+    FS.addOutside = async function (got, opts) {
+        opts = Object.assign({}, opts || {});
+        await FS.begin();
+        if (!S.project) await FS.newProject(FS.defaultProjectName());
+        const project = S.project;
+        let added = 0;
+        const put = async (web, path) => {
+            if (project !== S.project) throw Error(T('The project changed; add this file again'));
+            S.media[web] = {path: path || web, missing: false};
+            if (opts.bin) { added++; return; }
+            const clip = await FS.addFromLibrary({web, project}, opts);
+            if (clip && opts.time != null) opts.time = FS.end(clip);
+            added++;
+        };
+        const upload = async (blob, name) => {
+            FS.busy(T('Bringing in {0}…', name));
+            const r = await FS.api(`project/upload?name=${q(project)}&web=${q(name)}`, blob, true);
+            await put(r.web, r.web);
+        };
+        try {
+            for (const f of got.files || []) await upload(f, f.name);
+            for (const url of got.urls || []) {
+                let r = null;
+                if (!url.startsWith('blob:') && !url.startsWith('data:')) {
+                    let shown = url.split('?')[0].split(/[\\/=]/).pop();
+                    try { shown = decodeURIComponent(shown); } catch (e) { /* shown as it is */ }
+                    FS.busy(T('Bringing in {0}…', shown));
+                    try { r = await FS.api('project/add', {name: project, path: url}); } catch (e) { r = null; }
+                }
+                if (r) { await put(r.web, r.path); continue; }
+                const res = await fetch(url);
+                if (!res.ok) throw Error(T('Could not read {0}', url));
+                const blob = await res.blob();
+                const ext = (blob.type.split('/')[1] || 'bin').replace('jpeg', 'jpg').replace(/[^a-z0-9]/g, '');
+                await upload(blob, `dropped-${Date.now()}.${ext}`);
+            }
+        } finally { FS.busy(null); }
+        if (added) { FS.message(T(opts.bin ? '{0} added to the project\'s media' : '{0} added to the timeline', added)); refreshLibrary(); }
+        return added;
+    };
+
+    /* files dragged in from a folder of the computer (or a picture or video of another tab), like CapCut: anywhere
+     * on the editor. A green frame says where they go while they are dragged: on the timeline at the drop point (the
+     * timeline's own drop), on the media panel into the project only, anywhere else at the end of the edit. Before
+     * this only the timeline's clip area took them, and a file dropped elsewhere could be opened by the browser in
+     * place of Forge (2026-11-15). Also used by the timeline drawer under the other tabs' results. */
+    function isOutside(dt) {
+        const types = Array.from((dt && dt.types) || []);
+        return !types.includes('application/x-forge-studio') &&
+            (types.includes('Files') || types.includes('text/uri-list') || types.includes('application/x-forge-studio-url'));
+    }
+    FS.acceptOutsideDrops = function (el) {
+        if (!el || el.dataset.fsDrops) return;
+        el.dataset.fsDrops = '1';
+        const hint = h('span', {class: 'fx-dropzone-hint'});
+        const zone = h('div', {class: 'fx-dropzone', hidden: true}, h('div', {class: 'fx-dropzone-box'}, hint));
+        el.append(zone);
+        let leaveTimer = null;
+        const where = (target) => (target.closest('.ft-content') ? 'timeline' : target.closest('.fx-side') ? 'bin' : 'end');
+        el.addEventListener('dragover', (e) => {
+            if (!isOutside(e.dataTransfer)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            clearTimeout(leaveTimer);
+            const w = where(e.target);
+            hint.textContent = w === 'timeline' ? T('Drop: here on the timeline') : w === 'bin' ? T('Drop: into the project\'s media')
+                : T('Drop: at the end of the edit');
+            zone.hidden = false;
+        });
+        const hide = () => { zone.hidden = true; };
+        el.addEventListener('dragleave', () => { clearTimeout(leaveTimer); leaveTimer = setTimeout(hide, 80); });
+        el.addEventListener('drop', FS.guard(async (e) => {
+            hide();
+            if (e.defaultPrevented || !isOutside(e.dataTransfer)) return;   // the timeline took it itself
+            e.preventDefault();
+            const files = Array.from(e.dataTransfer.files || []).filter((f) => /^(image|video|audio)\//.test(f.type))
+                .sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
+            const urls = files.length ? [] : FS.timeline.droppedLinks(e.dataTransfer);
+            if (!files.length && !urls.length) return FS.message(T('Only pictures, videos and sounds can go on the timeline'), 'warn');
+            const w = where(e.target);
+            await FS.begin();
+            await FS.addOutside({files, urls}, w === 'bin' ? {bin: true} : {time: FS.total()});
+        }));
+        window.addEventListener('drop', hide);
+        window.addEventListener('dragend', hide);
+    };
+
     /* a library file into the edit: at the playhead on the main track, as a layer, or where it was dropped */
     FS.addFromLibrary = async function (item, opts) {
         opts = opts || {};
@@ -542,6 +633,7 @@
             UI.toast);
         mount.append(UI.root);
         FS.timeline.acceptDrops();
+        FS.acceptOutsideDrops(UI.root);
         FS.player.attach(UI.canvas);
         splitter();
         let lowerH = 300;
@@ -582,8 +674,17 @@
         try { last = localStorage.getItem('forgeStudio.project'); full = !!localStorage.getItem('forgeStudio.full'); } catch (e) { /* storage off */ }
         if (full) setFull(true);
         try { if (localStorage.getItem('forgeStudio.wide')) setWide(true); } catch (e) { /* storage off */ }
-        const names = (await FS.api('projects')).projects.map((p) => p.name);
-        if (last && names.includes(last)) await FS.openProject(last);
+        const listed = (await FS.api('projects')).projects, names = listed.map((p) => p.name);
+        // Forge was started (not this page reloaded): a new project, as Forge opens on fresh tabs (2026-11-15). The
+        // newest empty project is reused, so starts do not pile up empty projects.
+        let boot = null;
+        try { boot = localStorage.getItem('forgeStudio.boot'); localStorage.setItem('forgeStudio.boot', UI.options.boot || ''); } catch (e) { /* storage off */ }
+        const freshStart = !!UI.options.boot && boot !== UI.options.boot;
+        const empty = listed.find((p) => p.empty);
+        if (freshStart) {
+            if (empty) await FS.openProject(empty.name);
+            else await FS.newProject(FS.defaultProjectName());
+        } else if (last && names.includes(last)) await FS.openProject(last);
         else if (names.length) await FS.openProject(names[0]);
         else await FS.newProject(FS.defaultProjectName());
         readyResolve();
@@ -677,11 +778,12 @@
         setTimeout(addSendButtons, 3000);
         // starts the first time the tab is seen (hidden, it has no size to lay itself out in)
         const host = document.getElementById('fstudio_host');
-        const watch = setInterval(() => {
-            if (host.offsetParent === null) return;
-            clearInterval(watch);
-            FS.guard(start)();
-        }, 300);
+        let started = false;
+        FS.begin = function () {
+            if (!started) { started = true; clearInterval(watch); FS.guard(start)(); }
+            return FS.ready;
+        };
+        const watch = setInterval(() => { if (host.offsetParent !== null) FS.begin(); }, 300);
         // shown again after another tab: lay out for the space it has now
         new IntersectionObserver((entries) => {
             if (entries.some((en) => en.isIntersecting)) { fitHeight(); FS.player.resize(); FS.timeline.render(); }

@@ -1,0 +1,32 @@
+[
+ {
+  "i": 0,
+  "en": "UI Skins",
+  "ctx": "[t] Settings -> UI Skins (forge-ui-skins, scripts/ui_skins.py)"
+ },
+ {
+  "i": 1,
+  "en": "Skin (how Forge's buttons, tabs and cards look; Classic = Forge as it is)",
+  "ctx": "[t] Settings -> UI Skins (forge-ui-skins, scripts/ui_skins.py)"
+ },
+ {
+  "i": 2,
+  "en": "Hold the mouse on a button, tab or card title to edit its look",
+  "ctx": "[t] Settings -> UI Skins (forge-ui-skins, scripts/ui_skins.py)"
+ },
+ {
+  "i": 3,
+  "en": "How long to hold (milliseconds)",
+  "ctx": "[t] Settings -> UI Skins (forge-ui-skins, scripts/ui_skins.py)"
+ },
+ {
+  "i": 4,
+  "en": "Extension cards in txt2img and img2img start closed",
+  "ctx": "[t] Settings -> UI Skins (forge-ui-skins, scripts/ui_skins.py)"
+ },
+ {
+  "i": 5,
+  "en": "Extension cards can be dragged into another order and moved into \"More\"",
+  "ctx": "[t] Settings -> UI Skins (forge-ui-skins, scripts/ui_skins.py)"
+ }
+]

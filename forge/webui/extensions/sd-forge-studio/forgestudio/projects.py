@@ -69,8 +69,20 @@ def list_projects():
         if os.path.isdir(folder):
             saved = [os.path.getmtime(os.path.join(folder, f)) for f in ("project.json", "project.fcproj")
                      if os.path.isfile(os.path.join(folder, f))]
-            out.append({"name": name, "saved": max(saved) if saved else os.path.getmtime(folder)})
+            out.append({"name": name, "saved": max(saved) if saved else os.path.getmtime(folder),
+                        "empty": _is_empty(folder)})
     return sorted(out, key=lambda p: -p["saved"])
+
+
+def _is_empty(folder):
+    """True for a project with nothing on its timeline and nothing in its media (a fresh start's project)."""
+    try:
+        with open(os.path.join(folder, "project.json"), encoding="utf-8") as f:
+            if json.load(f).get("clips"):
+                return False
+        return not _studio(folder).get("media")
+    except (OSError, ValueError):
+        return False
 
 
 def empty_doc(width=1080, height=1920, fps=30):
@@ -150,6 +162,29 @@ def add_media(name, path):
     return web
 
 
+def store_copy(name, path):
+    """A file that may not stay where it is (a temporary copy of a result): copied into the project's media folder
+    (the same file brought in twice keeps its first copy)."""
+    folder = _folder(name)
+    path = os.path.normpath(path)
+    if not os.path.isfile(path):
+        raise ProjectError(f"no such file: {path}", 404)
+    studio = _studio(folder)
+    for web, m in studio["media"].items():
+        if os.path.normcase(m.get("from", "")) == os.path.normcase(path) and os.path.isfile(m["path"]):
+            return web
+    os.makedirs(os.path.join(folder, "media"), exist_ok=True)
+    stem, ext = os.path.splitext(BAD.sub("_", os.path.basename(path)) or "media")
+    target, n = os.path.join(folder, "media", stem + ext), 2
+    while os.path.exists(target):
+        target, n = os.path.join(folder, "media", f"{stem}-{n}{ext}"), n + 1
+    shutil.copy2(path, target)
+    web = _unique(studio, target)
+    studio["media"][web] = {"path": target, "added": time.time(), "uploaded": True, "from": path}
+    _save_studio(folder, studio)
+    return web
+
+
 def media_path(name, web):
     m = _studio(_folder(name))["media"].get(web)
     if not m:
@@ -164,6 +199,7 @@ def store_upload(name, web, data):
     if web in studio["media"] and os.path.isfile(studio["media"][web]["path"]):
         return web
     safe = BAD.sub("_", os.path.basename(web)) or "media"
+    os.makedirs(os.path.join(folder, "media"), exist_ok=True)   # (a project whose media folder was removed)
     target = os.path.join(folder, "media", safe)
     with open(target + ".tmp", "wb") as f:
         f.write(data)

@@ -25,6 +25,7 @@ from PIL import Image
 
 from . import jobs, objects, runner, solid_home, store
 from .runner import JobError
+from . import childguard
 
 IDLE_MINUTES = 4            # a Hunyuan3D that was started from here is stopped after this long without work:
                             # it holds 15 GB of memory, and starting it again takes under a minute
@@ -238,6 +239,7 @@ def _start(app, job):
     log.flush()
     process = subprocess.Popen(command, cwd=app, env=environment, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    childguard.bind(process)  # ends with Forge (childguard.py)
     _own = {"process": process, "base": f"http://127.0.0.1:{port}", "log": log}
     job.stage = "starting Hunyuan3D"
     started = time.time()

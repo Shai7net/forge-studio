@@ -24,6 +24,25 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
 
 ## The editor
 
+- **A new project each time Forge starts:** when Forge itself was started (not when the page is only reloaded),
+  Forge Studio opens a new project, reusing the newest empty one so starts do not pile up empty projects. Reloading
+  the page keeps the project you were in. Your earlier projects stay in the Projects list.
+- **The timeline under every result:** txt2img, img2img, Extras, Video Studio, Deforum, Infinite Zoom and Time
+  Strata have a green bar under their result. **▼ Timeline** opens a drawer there with Forge Studio's own timeline
+  of the open project (the real one, moved over while the drawer is open: everything in it works). Drag the result
+  from the bar's ✋ tile onto it (or drag a gallery picture itself), or press **➕ Add at the end**; **↗ Open Forge
+  Studio** goes to the editor. The drawer can be made taller by its corner. Files from the computer and pictures or
+  videos dragged from other pages can be dropped on the timeline too: a file of Forge's own folders joins the
+  project where it is, a temporary copy of a result is copied into the project, anything else is uploaded.
+- **Files from a folder, like CapCut:** drag videos, pictures or sounds from Explorer onto any part of the editor. A
+  green frame says where they go: on the timeline at the drop point, on the media panel into the project's media
+  only, anywhere else (the player, the track names) at the end of the edit. Several files keep their names' order.
+- **The drawer's arrow:** one round arrow turns down (open) and up (close); a second ▲ at the drawer's bottom closes
+  it too. The result itself drags: a video by its picture (its controls still play and seek), a gallery picture as
+  it is; starting the drag opens the drawer, and a file from a folder brought over the green bar opens it as well.
+- **Workers end with Forge:** sound, export and finishing jobs are tied to Forge's process (`childguard.py`), so a
+  Forge that is closed or restarted mid-job does not leave them holding the graphics card.
+
 - **Mouse ranges and selection:** drag a rectangle from empty space on a timeline lane, just as when selecting
   files. Every intersecting clip is selected (Ctrl/Shift adds to the selection), and the time range stays blue
   even when it contains no clips. Dragging selected clips moves them together. The ruler still scrubs normally.

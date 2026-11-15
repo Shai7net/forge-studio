@@ -1120,7 +1120,14 @@
         window.addEventListener('keydown', keyboardSteering);
         window.addEventListener('keyup', keyboardSteering);
         window.addEventListener('blur', () => { held.clear(); E.steering.input.turn = 0; E.steering.input.climb = 0; });
-        E.start().then(() => { renderPanel(); }).catch(e => say(String(e.message || e), 'error'));
+        // the project opens when the tab is first shown: opening it with the page fetched all its frames (hundreds) while
+        // Forge's own page was starting, and held up everything else, the Lora cards among them (2026-11-15)
+        const begin = () => E.start().then(() => { renderPanel(); }).catch(e => say(String(e.message || e), 'error'));
+        // (checked, not observed: an IntersectionObserver missed the tab being shown)
+        if (UI.root.offsetParent !== null) begin();
+        else {
+            const seen = setInterval(() => { if (UI.root.offsetParent !== null) { clearInterval(seen); begin(); } }, 700);
+        }
         new ResizeObserver(() => fit()).observe(UI.view);
         new MutationObserver(() => {
             const dir = S.hebrew() ? 'rtl' : 'ltr';

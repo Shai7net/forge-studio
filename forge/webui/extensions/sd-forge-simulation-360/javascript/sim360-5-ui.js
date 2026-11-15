@@ -1739,6 +1739,10 @@
     let hadJobs = 0;
     E.on('jobs', () => { renderJobs(); renderStrip(); if ((E.jobs.size > 0) !== (hadJobs > 0)) renderPanel(); hadJobs = E.jobs.size; });
 
+    // resolved once the worlds are open (the tab's first showing): what other extensions wait for (Characters)
+    let readyResolve;
+    S.ready = new Promise((r) => { readyResolve = r; });
+
     async function start() {
         const host = document.getElementById('sim360_host');
         if (!host || UI.started) return;
@@ -1749,6 +1753,13 @@
         // outside Gradio's own text block: a value update of the block would wipe what is inside it
         if (prose) prose.insertAdjacentElement('afterend', place); else host.append(place);
         build(place);
+        // the worlds open when the tab is first shown: with the page they loaded panoramas and models while Forge's
+        // own page was starting and held up its other requests (the Lora cards, 2026-11-15)
+        await new Promise((resolve) => {
+            if (place.offsetParent !== null) return resolve();
+            // (checked, not observed: an IntersectionObserver missed the tab being shown)
+            const seen = setInterval(() => { if (place.offsetParent !== null) { clearInterval(seen); resolve(); } }, 700);
+        });
         try {
             await E.start(UI.gl);
             if (!E.projects.length) await E.createProject(T('My worlds'));      // the first visit starts ready to use
@@ -1758,6 +1769,7 @@
         }
         renderAll();
         requestAnimationFrame(frame);
+        readyResolve();
     }
     UI.start = start;
 

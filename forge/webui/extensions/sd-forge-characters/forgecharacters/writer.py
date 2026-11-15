@@ -43,6 +43,24 @@ def write(text, field, timeout=240, video_mode=""):
         raise WriterError(f"Could not reach the prompt writer: {e.reason}") from None
 
 
+def default_video_prompt(character, ltx=False):
+    """A plain English video prompt made of the character alone, for a send without words."""
+    look = (character.get("appearance") or character.get("summary") or "character").strip()
+    look = look.split(". ")[0].rstrip(".")
+    if look[:2].lower() == "a ":
+        look = look[2:]
+    elif look[:3].lower() == "an ":
+        look = look[3:]
+    style = (character.get("style") or "").strip().rstrip(".")
+    text = (f"The {look} from picture 1 stands in a fitting place, looks around, smiles and turns toward the camera, "
+            f"moving naturally. The camera slowly pushes in.")
+    if style:
+        text += f" {style}."
+    if ltx:
+        text += " Sound: a soft room tone and light footsteps."
+    return text
+
+
 def video_request(idea, character):
     """What the writer gets for a video: the user's words, and who picture 1 is."""
     who = character.get("name") or "the character"

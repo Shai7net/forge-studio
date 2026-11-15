@@ -41,6 +41,7 @@
 /forge/webui/time-strata/
 /forge/webui/video-studio/
 /forge/webui/fibo2/
+/forge/webui/ui-skins/
 /forge/webui/extensions/hebrew-translator/data/
 /forge/webui/extensions/sd-forge-characters/data/
 /forge/webui/extensions/forge-hebrew-ui/languages/*
@@ -56,6 +57,7 @@
 !/forge/webui/extensions/forge-navigation-bookmarks/
 !/forge/webui/extensions/forge-rtx-video-super-resolution/
 !/forge/webui/extensions/forge-tab-presets/
+!/forge/webui/extensions/forge-ui-skins/
 !/forge/webui/extensions/hebrew-translator/
 !/forge/webui/extensions/sd-forge-characters/
 !/forge/webui/extensions/sd-forge-deforum/

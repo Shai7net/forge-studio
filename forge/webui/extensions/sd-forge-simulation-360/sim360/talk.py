@@ -33,6 +33,7 @@ from PIL import Image
 
 from . import export, objects, runner, speech, store
 from .runner import JobError
+from . import childguard
 
 FPS = 25                    # Wav2Lip was taught at 25 frames a second
 LONGEST_SIDE = 1280         # the talking video is made no larger than this
@@ -422,6 +423,7 @@ def _musetalk(job, video, audio, target, folder):
     try:
         process = subprocess.Popen(command, cwd=os.path.join(home, "app"), env=environment, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    text=True, encoding="utf8", errors="replace", creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        childguard.bind(process)  # ends with Forge (childguard.py)
     except OSError as e:
         print(f"[Simulation 360] MuseTalk could not be started: {e}")
         return False
@@ -474,6 +476,7 @@ def lip_sync(job, video, audio, target, model, folder):
     try:
         process = subprocess.Popen(command, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                    encoding="utf8", errors="replace", creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        childguard.bind(process)  # ends with Forge (childguard.py)
     except OSError as e:
         print(f"[Simulation 360] FaceFusion could not be started: {e}")
         return False

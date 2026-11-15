@@ -43,8 +43,53 @@ def release_forge_gpu():
     devices.torch_gc()
 
 
+def keep_like_forge(response, request, p=None):
+    """FIBO's pictures into the folder of every other generation (Settings -> Paths for saving: <images folder>/<date>,
+    numbered, as txt2img / img2img save), through Forge's own save_image. They were only in outputs/fibo2 under job
+    names (2026-11-15). An edit (pictures in) goes where img2img saves, anything else where txt2img saves; a job that
+    asked not to save (the API, a script) keeps them in memory only. Each item's "path" becomes the saved file."""
+    from PIL import Image
+    try:
+        from modules import images, shared
+    except ImportError:          # outside Forge (the tests): the worker's own files are what there is
+        return response
+    opts = shared.opts
+    if p is not None and getattr(p, "do_not_save_samples", False):
+        return response
+    if not opts.samples_save:
+        return response
+    if p is not None and getattr(p, "outpath_samples", None):
+        folder = p.outpath_samples
+    else:
+        own = opts.outdir_img2img_samples if request.mode == "edit" else opts.outdir_txt2img_samples
+        folder = opts.outdir_samples or own
+    for item in response.get("images", []):
+        with Image.open(item["path"]) as opened:
+            image = opened.copy()
+            info = dict(opened.info)
+        parameters = info.pop("parameters", "")
+        extra = {k: v for k, v in info.items() if isinstance(v, str)}
+        seed = item.get("metadata", {}).get("seed")
+        saved, _ = images.save_image(image, folder, "", seed, request.prompt, opts.samples_format, info=parameters,
+                                     p=p, existing_info=extra)
+        item["worker_path"], item["path"] = item["path"], saved
+    return response
+
+
+def tidy_jobs(keep=30):
+    """The worker's job folders (its request, log and pictures): the newest `keep` stay."""
+    import shutil
+    from . import HOME_DIR
+    jobs = HOME_DIR / "jobs"
+    if not jobs.is_dir():
+        return
+    folders = sorted((f for f in jobs.iterdir() if f.is_dir()), key=lambda f: f.stat().st_mtime, reverse=True)
+    for old in folders[keep:]:
+        shutil.rmtree(old, ignore_errors=True)
+
+
 def generate(request: Generation, references=(), mask=None, loras=(), lora_weight=1.0, on_progress=None,
-             manage_forge_job=True):
+             manage_forge_job=True, p=None):
     from modules.call_queue import queue_lock
     from modules import shared
     from . import models
@@ -80,7 +125,12 @@ def generate(request: Generation, references=(), mask=None, loras=(), lora_weigh
             if on_progress:
                 on_progress(progress)
 
-        return runner.run(request, references, mask, resolved_loras, update)
+        response = runner.run(request, references, mask, resolved_loras, update)
+        try:
+            keep_like_forge(response, request, p)
+        finally:
+            tidy_jobs()
+        return response
 
     # txt2img/img2img already execute under Forge's FIFO lock and state lifecycle.
     # The standalone HTTP API does not, so it uses the managed path.

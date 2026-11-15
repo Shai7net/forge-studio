@@ -278,12 +278,18 @@ def prepare_video(cid, idea, slot, video_model=""):
         return keep, "", status("error", "Choose a character in the library first.")
     idea = (idea or "").strip()
     prompt = idea
+    ltx = " LTX " in f" {video_model or ''} "
     if not idea:
-        return keep, "", status("error", "Write what the character does in the video (any language).")
+        # The words are optional (2026-11-15): the sheet goes in, and Video Studio's prompt is kept when it already
+        # has one, else it gets a plain prompt made of the character (no writer, no wait)
+        payload = json.dumps({"sheet": web_path(c["sheet"]), "name": c.get("name", ""),
+                              "prompt": writer.default_video_prompt(c.get("character", {}), ltx),
+                              "prompt_is_default": True, "slot": slot, "nonce": time.time()})
+        return keep, payload, status("ok", "Sent to Video Studio → Ingredients to Video. No words were given: its "
+                                           "prompt is kept, or a simple one made of the character is put there.")
     if not sheet.is_english(idea):
         try:
             # an LTX model chosen in Video Studio gets an LTX prompt (with the sound in it)
-            ltx = " LTX " in f" {video_model or ''} "
             answer = writer.write(writer.video_request(idea, c.get("character", {})), "ch_video",
                                   video_mode="ltx:ingredients" if ltx else "")
         except writer.WriterError as e:
@@ -373,8 +379,8 @@ def build():
                 model_view = gr.Model3D(label="3D model", height=360, elem_id="ch_model", interactive=False)
                 sim_payload = gr.Textbox(elem_id="ch_sim_payload", elem_classes=["ch-hidden"], show_label=False)
                 gr.Markdown("### A video with this character")
-                video = gr.Textbox(label="What the character does in the video (any language; it is written as a Wan "
-                                         "prompt)", lines=4, elem_id="ch_video")
+                video = gr.Textbox(label="What the character does in the video - optional (any language; it is written "
+                                         "as a video prompt)", lines=4, elem_id="ch_video")
                 with gr.Row():
                     slot = gr.Dropdown(SLOTS, value=SLOTS[0], label="Ingredient slot", elem_id="ch_slot")
                     send_btn = gr.Button("🎬 Send to Ingredients to Video", variant="primary", elem_id="ch_send")

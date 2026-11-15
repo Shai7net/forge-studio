@@ -33,6 +33,7 @@ the same window.
 | **Faces** | Face swap (ReActor, the author's SFW edition with its NSFW filter), LivePortrait, and face swap in Video Studio's character replacement |
 | **Prompt writer** | 🌐 in every prompt box: write your idea in any language and get an English prompt written for the model you are on; 👍 / 👎 teach it |
 | **Sessions** | Tab Presets: save, load and reset a whole tab (ControlNet units and pictures, AnimateDiff, every option), with a list of recent ones |
+| **Your own interface** | **UI Skins**: hold the mouse on any button, tab or card title to give it colours, a picture or other words; save skins, switch them, share them as one file (Classic is always there). Extension cards start closed, drag into your order, and the ones you seldom use go into **More** |
 | **Interface language** | English, and a full Hebrew translation one click away. Any other language: give the translation kit to your AI (ChatGPT, Claude, Gemini...) and load what it returns |
 | **8 GB first** | Every new piece was written and measured on an 8 GB card: int8 engines, streaming of model blocks, tiled decoding |
 
@@ -165,6 +166,8 @@ environment (installed by the installer or the panel's button), so Forge's own p
   FLUX 3 Klein and animates it with Wan 2.2, so **FLUX 3 Klein must be the selected checkpoint**. The other way,
   Phantom-Wan 14B, puts them straight into the video; its model (7.2 GB) is downloaded with the button in the tab.
 - Sound for the video: AI sound effects and speech (optional tools, see below).
+- **Text to Video needs only words**: the opening picture is written from your prompt by the 🌐 writer and drawn
+  by FLUX 3 Klein behind the scenes; Advanced chooses who draws it.
 
 ### Characters
 Describe a character in any language, or upload a reference picture, and FLUX 3 Klein (selected at the top) draws a
@@ -180,6 +183,12 @@ A timeline editor inside Forge: media panel, layers, keyframes and ready-made mo
 dissolves, text and captions; generate a shot from words, continue or remake a clip, repaint a frame and carry it
 through the clip, join two shots with AI, separate a person onto a new background; narration, music and sound
 effects where they are needed; export in high quality.
+- **The timeline under every result**: txt2img, img2img, Extras, Video Studio, Deforum, Infinite Zoom and Time
+  Strata have a green bar under their result; ▼ opens Forge Studio's own timeline right there, and the result is
+  dragged onto it (or added at the end).
+- **Files from a folder, like CapCut**: drop videos, pictures and sounds from the computer anywhere on the editor:
+  on the timeline at that spot, on the media panel into the project, anywhere else at the end of the edit.
+- Each start of Forge opens a new project; your earlier ones stay in the list.
 
 ### Deforum (upgraded)
 - **Audio Keyframes**: music-driven camera and strength keyframes, with listening, marking and camera directing.

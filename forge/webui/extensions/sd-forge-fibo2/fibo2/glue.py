@@ -236,7 +236,7 @@ def process_images(p):
     request, references, mask = _fibo_request(p, info)
     response = service.generate(
         request, references, mask, getattr(p, "fibo2_loras", []) or [],
-        getattr(p, "fibo2_lora_weight", 1.0), manage_forge_job=False,
+        getattr(p, "fibo2_lora_weight", 1.0), manage_forge_job=False, p=p,
     )
 
     outputs, infotexts, seeds = [], [], []

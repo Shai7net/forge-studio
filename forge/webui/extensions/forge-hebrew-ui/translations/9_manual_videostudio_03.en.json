@@ -1,0 +1,62 @@
+[
+ {
+  "i": 0,
+  "en": "Write what happens in the prompt below and press Generate. Behind the scenes the opening picture is written from your words and drawn by FLUX 3 Klein, then the video model (Wan or LTX) animates it.",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 1,
+  "en": "Advanced: the opening picture",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 2,
+  "en": "Who draws it",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 3,
+  "en": "FLUX 3 Klein (best; used even when another image checkpoint is selected)",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 4,
+  "en": "The image checkpoint selected at the top of the page",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 5,
+  "en": "No picture: LTX makes the video from the words alone (Wan still needs a picture: FLUX 3)",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 6,
+  "en": "Picture prompt (empty: written from the video prompt)",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 7,
+  "en": "Picture steps (the selected checkpoint)",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 8,
+  "en": "Picture CFG (the selected checkpoint)",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 9,
+  "en": "writing the opening picture from the video prompt",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 10,
+  "en": "FLUX 3 Klein draws the first frame",
+  "ctx": "[t] Video Studio, Text to Video's opening picture (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 11,
+  "en": "Sent to Video Studio → Ingredients to Video. No words were given: its prompt is kept, or a simple one made of the character is put there.",
+  "ctx": "[t] Characters, sending to Ingredients to Video (sd-forge-characters, forgecharacters/ui.py)"
+ }
+]

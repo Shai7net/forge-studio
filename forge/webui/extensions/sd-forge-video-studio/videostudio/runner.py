@@ -9,6 +9,7 @@ import threading
 import time
 
 from . import ENV_DIR, JOBS_DIR, WORKER
+from . import childguard
 
 _current = {"job": None}
 _lock = threading.Lock()
@@ -103,6 +104,7 @@ class Job:
         self.proc = subprocess.Popen(
             [worker_python(self.spec), "-u", WORKER, self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             env=env, cwd=self.dir, creationflags=flags, text=True, encoding="utf-8", errors="replace", bufsize=1)
+        childguard.bind(self.proc)  # ends with Forge (childguard.py)
         threading.Thread(target=self._read, name=f"video-studio-{self.id}", daemon=True).start()
 
     def _push(self, event):

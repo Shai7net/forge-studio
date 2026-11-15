@@ -1,6 +1,6 @@
 {
  "forge_studio_translation": 1,
- "part": "9 of 18",
+ "part": "9 of 19",
  "area": "Forge Studio tabs",
  "language": "",
  "code": "",
@@ -89,7 +89,7 @@
   "🗑 Delete": "🗑 Delete",
   "Sheet": "Sheet",
   "A video with this character": "A video with this character",
-  "What the character does in the video (any language; it is written as a Wan prompt)": "What the character does in the video (any language; it is written as a Wan prompt)",
+  "What the character does in the video - optional (any language; it is written as a video prompt)": "What the character does in the video - optional (any language; it is written as a video prompt)",
   "Ingredient slot": "Ingredient slot",
   "First empty": "First empty",
   "🎬 Send to Ingredients to Video": "🎬 Send to Ingredients to Video",

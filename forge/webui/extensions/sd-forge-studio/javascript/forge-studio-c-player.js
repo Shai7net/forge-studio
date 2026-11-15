@@ -391,8 +391,11 @@
             }
         }
         if (animating && !S.playing) {
+            // the "being made" placeholder moves at 12 frames a second: at the screen's rate it redrew the whole
+            // picture 60 times a second for as long as a clip was being made (minutes), and the page lagged
             cancelAnimationFrame(P.raf);
-            P.raf = requestAnimationFrame(() => P.draw());
+            clearTimeout(P.animTimer);
+            P.animTimer = setTimeout(() => { if (!S.playing) P.raf = requestAnimationFrame(() => P.draw()); }, 80);
         }
         FS.emit('drawn', t);
     };
@@ -512,6 +515,7 @@
         if (S.playing || !S.doc) return;
         if (S.time >= FS.total() - 1 / FS.fps()) S.time = 0;
         S.playing = true;
+        clearTimeout(P.animTimer);
         P.clock = {t0: S.time, at: performance.now()};
         P.sync(false);
         FS.emit('playing', true);

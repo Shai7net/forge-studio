@@ -48,7 +48,7 @@
         fibo: "FIBO 2.0 (JSON מובנה)", fibo_edit: "עריכה ב-FIBO 2.0",
         character: "דמות לגיליון דמות (JSON)", wan_ingredients: "וידאו Wan מתמונות רכיבים",
         ltx_t2v: "וידאו LTX מטקסט (עם סאונד)", ltx_i2v: "וידאו LTX מתמונה (עם סאונד)",
-        ltx_ingredients: "וידאו LTX מתמונות רכיבים (עם סאונד)", wan_replace: "החלפת דמות (Wan Animate)",
+        ltx_ingredients: "וידאו LTX מתמונות רכיבים (עם סאונד)", wan_replace: "החלפת דמות (Wan Animate)", first_frame: "הפריים הראשון של וידאו (FLUX)",
     };
     // Material Icons "thumb_up" (Apache 2.0); thumb down is the same turned over
     const THUMB = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="currentColor" ' +

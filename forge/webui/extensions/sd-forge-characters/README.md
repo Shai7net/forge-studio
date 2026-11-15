@@ -21,8 +21,10 @@ send one to Video Studio's **Ingredients to Video** with a Wan prompt written fo
 6. **My characters**: all projects or one, search by name or words. Click a character to rename it, move it to
    another project, draw new versions of it (✏️ puts it back in the create column) or delete it (it moves to
    `output/characters/_trash`, nothing is erased).
-7. **A video with this character**: write what it does, in any language, and press **🎬 Send to Ingredients to
-   Video**. Words that are not English are written as a Wan prompt that names the character as "the ... from
+7. **A video with this character**: write what it does, in any language (optional), and press **🎬 Send to
+   Ingredients to Video**. Without words, Video Studio's prompt is kept when it has one, or a plain prompt is made
+   of the character ("The ... from picture 1 stands in a fitting place, looks around, smiles and turns toward the
+   camera...", with a sound line for LTX). Words that are not English are written as a Wan prompt that names the character as "the ... from
    picture 1" (writer target `wan_ingredients`); the sheet goes into the first empty ingredient slot (or the one you
    choose), the prompt into Video Studio's prompt, and the way "First frame by FLUX 3 Klein, then Wan 2.2" is chosen.
    Press Generate there.

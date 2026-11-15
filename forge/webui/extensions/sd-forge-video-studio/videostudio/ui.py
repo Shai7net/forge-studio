@@ -60,6 +60,11 @@ ING_AUTO = 'Automatic: use the best available reference workflow'
 # FLUX 3 Klein (flow map) at 8 steps drew the two-character first frame as well as at 16, in 42 s instead of 83
 # (1376x768 with two references, 2026-11-11)
 FIRST_FRAME_STEPS = 8
+# Text to Video: who draws the opening picture that the video model animates (Advanced; FLUX 3 by default)
+FRAME_FLUX = "FLUX 3 Klein (best; used even when another image checkpoint is selected)"
+FRAME_SELECTED = "The image checkpoint selected at the top of the page"
+FRAME_NONE = "No picture: LTX makes the video from the words alone (Wan still needs a picture: FLUX 3)"
+FRAME_CHOICES = (FRAME_FLUX, FRAME_SELECTED, FRAME_NONE)
 ING_METHODS = (ING_AUTO, ING_FRAME, ING_PHANTOM)
 
 
@@ -344,6 +349,81 @@ def draw_with_installed_flux(glue, prompt, references, width, height, seed):
         engine.unload()
 
 
+def frame_way(choice, is_ltx):
+    """Who draws Text to Video's first frame: "flux", "selected" or "none" (LTX from the words alone). FLUX 3 is the
+    default; without an installed Klein, Wan uses the selected checkpoint and LTX the words alone."""
+    has_flux = flux3_glue() is not None
+    if choice == FRAME_SELECTED:
+        return "selected"
+    if choice == FRAME_NONE and is_ltx:
+        return "none"
+    if has_flux:
+        return "flux"
+    return "none" if is_ltx else "selected"
+
+
+def picture_prompt_from_video(prompt):
+    """The opening picture's prompt, written from the video prompt by the 🌐 prompt writer (hebrew-translator):
+    the subjects, their looks and starting pose, the place, the light and the framing, without motion or camera
+    moves. Without the writer, the video prompt itself with a still-frame lead."""
+    import sys
+    import urllib.request
+    writer = getattr(sys.modules.get("prompt_writer"), "write_in_job", None)
+    if writer is not None:
+        # here, in Generate's thread, which holds Forge's queue: over HTTP the writer waited for that same queue and
+        # gave up as busy, and the picture showed every moment of the video at once (two cats, 2026-11-15)
+        try:
+            written = (writer(prompt, "vs_first_frame", "", random.randint(0, 10 ** 9)).get("prompt") or "").strip()
+            if written:
+                print(f"[Video Studio] the opening picture: {written}")
+                return written
+        except Exception as e:  # noqa: BLE001 - the picture is still drawn
+            print(f"[Video Studio] the opening picture was not written ({type(e).__name__}: {e}); using the prompt")
+        return "A single still frame, the opening moment of this shot: " + prompt
+    try:
+        shared = sys.modules.get("modules.shared")  # (imported fresh outside Forge, it parses argv and exits)
+        port = getattr(getattr(shared, "cmd_opts", None), "port", None) or 7860
+        body = json.dumps({"text": prompt, "field": "vs_first_frame", "video_mode": "",
+                           "seed": random.randint(0, 10 ** 9)}).encode()
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/translator/write", body,
+                                     {"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=120) as r:
+            written = (json.load(r).get("prompt") or "").strip()
+        if written:
+            return written
+    except Exception as e:  # noqa: BLE001 - the picture is still drawn
+        print(f"[Video Studio] the opening picture was not written ({type(e).__name__}: {e}); using the prompt")
+    return "A single still frame, the opening moment of this shot: " + prompt
+
+
+@frame_task
+def draw_flux_frame(prompt, aspect, seed, folder):
+    """Text to Video's first frame by FLUX 3 Klein: the selected checkpoint when it is FLUX 3, else Klein's own
+    engine for this one picture (the selected checkpoint and its options stay)."""
+    from modules import processing, shared
+    glue = flux3_glue()
+    if glue is None:
+        raise RuntimeError("FLUX 3 Klein is not installed: choose another way in Advanced.")
+    aw, ah = ASPECTS.get(aspect, (9, 16))
+    w, h = fit_size(aw, ah, 1024 * 1024, 16)
+    clean = prompting.LORA_TAG.sub("", prompt).strip()
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, "first_frame_drawn.png")
+    if not glue.active(shared.sd_model):
+        draw_with_installed_flux(glue, clean, [], w, h, seed).save(path)
+        return path
+    p = processing.StableDiffusionProcessingTxt2Img(
+        sd_model=shared.sd_model, prompt=clean, negative_prompt="", width=w, height=h, steps=FIRST_FRAME_STEPS,
+        cfg_scale=1.0, sampler_name="Euler", seed=int(seed), do_not_save_samples=True, do_not_save_grid=True)
+    p.flux3_writer = "Off"  # the picture's words are written already
+    try:
+        res = processing.process_images(p)
+    finally:
+        p.close()
+    res.images[0].save(path)
+    return path
+
+
 def build_job(kind, start, end, prompt, negative, quality, seconds, seed, preset, steps, shift, cfg, sampler, int8,
               attention, width, height, smooth, upscale, loras, aspect, parts=None):
     """`kind`: t2v, i2v (one picture), flf (first and last frame) or multi (`parts`, one per pair of pictures)."""
@@ -429,7 +509,9 @@ def generate(mode, count, *args):
     ingredients = rest[42:42 + MAX_INGREDIENTS]
     method = rest[42 + MAX_INGREDIENTS] if len(rest) > 42 + MAX_INGREDIENTS else ING_AUTO
     ltx_inputs = rest[43 + MAX_INGREDIENTS:]
-    audio_picture, audio_file, native_audio = (list(ltx_inputs) + [None, None, True])[:3] if ltx_inputs else (None, None, True)
+    audio_picture, audio_file, native_audio, frame_by = (list(ltx_inputs) + [None, None, True, None])[:4]
+    if native_audio is None:
+        native_audio = True
     mode = mode if mode in MODES else "i2v"
     nothing = gr.update()
 
@@ -525,18 +607,36 @@ def generate(mode, count, *args):
                 yield out(status_html("error", error=f"Drawing the first frame failed: {type(e).__name__}: {e}"))
                 return
             yield out(status_html("picture", 1.0), preview=start)
-        elif not is_ltx:
-            yield out(status_html("picture", 0.5, note="Forge draws the first frame with the selected checkpoint"))
-            try:
-                start = draw_first_frame((t2v_picture_prompt or "").strip() or styled, negative, t2v_aspect,
-                                         t2v_steps, t2v_cfg, t2v_sampler, seed, stage_dir)
-            except FrameCancelled:
-                yield out(status_html('cancelled', note='first-frame generation stopped'))
-                return
-            except Exception as e:
-                yield out(status_html("error", error=f"Drawing the first frame failed: {type(e).__name__}: {e}"))
-                return
-            yield out(status_html("picture", 1.0), preview=start)
+        else:
+            how = frame_way(frame_by, is_ltx)
+            if how != "none":
+                picture_words = (t2v_picture_prompt or "").strip()
+                if not picture_words:
+                    # the user wrote the video; its opening picture is written from it behind the scenes
+                    yield out(status_html("picture", 0.2, note="writing the opening picture from the video prompt"))
+                    picture_words = picture_prompt_from_video(styled)
+                try:  # kept beside the picture: what it was drawn from
+                    os.makedirs(stage_dir, exist_ok=True)
+                    with open(os.path.join(stage_dir, "first_frame_prompt.txt"), "w", encoding="utf-8") as f:
+                        f.write(picture_words)
+                except OSError:
+                    pass
+                note = ("FLUX 3 Klein draws the first frame" if how == "flux"
+                        else "Forge draws the first frame with the selected checkpoint")
+                yield out(status_html("picture", 0.5, note=note))
+                try:
+                    if how == "flux":
+                        start = draw_flux_frame(picture_words, t2v_aspect, seed, stage_dir)
+                    else:
+                        start = draw_first_frame(picture_words, negative, t2v_aspect, t2v_steps, t2v_cfg, t2v_sampler,
+                                                 seed, stage_dir)
+                except FrameCancelled:
+                    yield out(status_html('cancelled', note='first-frame generation stopped'))
+                    return
+                except Exception as e:
+                    yield out(status_html("error", error=f"Drawing the first frame failed: {type(e).__name__}: {e}"))
+                    return
+                yield out(status_html("picture", 1.0), preview=start)
 
         spec = build_job(kind, start, end, wan_prompt, negative, quality, seconds, seed, preset, steps, shift, cfg,
                          sampler, int8, attention, width, height, smooth, upscale, loras, t2v_aspect, parts)
@@ -1234,17 +1334,22 @@ def build():
                                              elem_id="vs_shape", min_width=124)
                     t2v_sampler = gr.Dropdown(samplers, value=samplers[0] if samplers else None,
                                               label="Sampler for the picture", elem_id="vs_picture_sampler",
-                                              min_width=152, visible=not initial_ltx)
+                                              min_width=152)
                 # ids let javascript/video-studio.js open a sub-tab by name (the 🎬 button, Continue)
                 with gr.Tabs(elem_id="vs_mode_tabs"):
                     with gr.Tab(MODES["t2v"], id="t2v", elem_id="vs_tab_t2v"):
-                        gr.Markdown('Wan: Forge draws the first frame with the image checkpoint, then Wan animates it. '
-                                    'LTX: generates video and optional synchronized sound directly from the video prompt.')
-                        with gr.Column(visible=not initial_ltx) as picture_controls:
-                            t2v_picture_prompt = gr.Textbox(label="Picture prompt (empty: the video prompt)", lines=2)
+                        gr.Markdown("Write what happens in the prompt below and press Generate. Behind the scenes the "
+                                    "opening picture is written from your words and drawn by FLUX 3 Klein, then the "
+                                    "video model (Wan or LTX) animates it.")
+                        with gr.Accordion("Advanced: the opening picture", open=False) as picture_controls:
+                            frame_by = gr.Dropdown(list(FRAME_CHOICES), value=FRAME_FLUX, label="Who draws it",
+                                                   elem_id="vs_frame_by")
+                            t2v_picture_prompt = gr.Textbox(label="Picture prompt (empty: written from the video prompt)",
+                                                            lines=2)
                             with gr.Row():
-                                t2v_steps = gr.Slider(1, 60, value=25, step=1, label="Picture steps")
-                                t2v_cfg = gr.Slider(1, 15, value=6, step=0.5, label="Picture CFG")
+                                t2v_steps = gr.Slider(1, 60, value=25, step=1,
+                                                      label="Picture steps (the selected checkpoint)")
+                                t2v_cfg = gr.Slider(1, 15, value=6, step=0.5, label="Picture CFG (the selected checkpoint)")
                     with gr.Tab(MODES["i2v"], id="i2v", elem_id="vs_tab_i2v"):
                         # One picture starts the video; ➕ adds a last frame, then more pictures for a longer video.
                         # All six exist from the start and are shown as they are added.
@@ -1443,7 +1548,7 @@ def build():
                   prompt, negative, quality, seconds, seed, preset, steps, shift, cfg, sampler, int8, attention,
                   width, height, smooth, upscale, lora1, lora1_w, lora2, lora2_w, styles, auto_sound, sound_words,
                   rep_video, rep_char, rep_person, rep_start, rep_seconds, rep_quality, rep_fps, rep_mask, rep_keep,
-                  rep_steps, rep_relight, rep_char_person, rep_who, rep_faces] + ingredients + [ing_method, ltx_picture, ltx_recording, native_audio]
+                  rep_steps, rep_relight, rep_char_person, rep_who, rep_faces] + ingredients + [ing_method, ltx_picture, ltx_recording, native_audio, frame_by]
         def start_ingredients_download(name):
             models.DOWNLOADS.start(models.ingredients_missing())
             error = models.DOWNLOADS.status().get('error')
@@ -1509,14 +1614,14 @@ def build():
                     gr.update(value=pr['cfg'], interactive=not is_ltx), models_markdown(),
                     gr.update(choices=list(qualities), value=ltx.default_quality(name) if is_ltx else DEFAULT_QUALITY),
                     gr.update(value='euler_ancestral' if is_ltx else 'euler', interactive=not is_ltx),
-                    gr.update(visible=is_ltx), gr.update(visible=not is_ltx),
+                    gr.update(visible=is_ltx), gr.update(visible=True),
                     gr.update(choices=lora_choices(name), value=NO_LORA), gr.update(choices=lora_choices(name), value=NO_LORA),
                     gr.update(label='Smooth motion: 48 fps (FILM)' if is_ltx else 'Smooth motion: 32 fps (FILM)'),
                     gr.update(visible=not is_ltx), gr.update(visible=not is_ltx),
                     gr.update(choices=ingredient_methods(is_ltx), value=ING_AUTO, interactive=True),
                     gr.update(visible=True, value=ingredients_models_markdown(name)), gr.update(visible=True),
                     gr.update(choices=list(REFINE_QUALITY)[:1] if is_ltx else list(REFINE_QUALITY), value=next(iter(REFINE_QUALITY))),
-                    gr.update(visible=not is_ltx), gr.update(value=0), gr.update(value=0))
+                    gr.update(visible=True), gr.update(value=0), gr.update(value=0))
 
         preset.change(preset_defaults, inputs=[preset], outputs=[steps, shift, cfg, models_md, quality, sampler,
                       native_audio, picture_controls, lora1, lora2, smooth, int8, attention,

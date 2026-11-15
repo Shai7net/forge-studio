@@ -497,6 +497,11 @@
     "prompt_writer_keep_minutes": 10,
     "forge_studio_library_extra": "",
     "fibo2_auto_defaults": true,
+    "ui_skins_active": "Classic",
+    "ui_skins_long_press": true,
+    "ui_skins_long_press_ms": 650,
+    "ui_cards_closed": true,
+    "ui_cards_organize": true,
     "sd_vae": "Automatic",
     "outdir_samples": "",
     "outdir_grids": ""

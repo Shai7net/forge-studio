@@ -25,6 +25,7 @@ import time
 import uuid
 
 from . import duck, library, media, paths, projects
+from . import childguard
 
 PRESETS = {
     "h264": {"label": "H.264 MP4 (NVENC)", "ext": "mp4",
@@ -862,6 +863,7 @@ def _run_ffmpeg(job, args, graph, total, out, extra_out, work):
     with open(log, "w", encoding="utf-8", errors="replace") as logf:
         proc = subprocess.Popen(cmd, stdout=logf, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        childguard.bind(proc)  # ends with Forge (childguard.py)
         job["process"] = proc
         while proc.poll() is None:
             time.sleep(0.5)
@@ -956,6 +958,7 @@ def _finish(job, src, out, steps, preset):
     proc = subprocess.Popen([sys.executable, "-u", os.path.join(os.path.dirname(__file__), "finish.py"), spec_path],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
                             errors="replace", creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    childguard.bind(proc)  # ends with Forge
     job["process"] = proc
     parts = (["picture"] if steps.get("fps_x") or steps.get("upscale") else []) + (["hdr"] if steps.get("hdr") else [])
     last, tail = {}, []

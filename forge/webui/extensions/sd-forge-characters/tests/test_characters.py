@@ -126,6 +126,16 @@ class SheetPrompt(unittest.TestCase):
         self.assertTrue(text.startswith("היא קופצת"))
         self.assertIn("Picture 1 is Luna", text)
 
+    def test_sending_without_words_makes_a_plain_prompt(self):
+        """The video words are optional (2026-11-15): a prompt is made of the character itself."""
+        text = writer.default_video_prompt(CHARACTER)
+        self.assertTrue(text.startswith('The young woman in a "mustard" beanie'))
+        self.assertIn("from picture 1", text)
+        self.assertIn("Premium stylized 3D animation.", text)
+        self.assertNotIn("Sound:", text)
+        self.assertIn("Sound:", writer.default_video_prompt(CHARACTER, ltx=True))
+        self.assertIn("The character from picture 1", writer.default_video_prompt({}))
+
 
 if __name__ == "__main__":
     unittest.main()
