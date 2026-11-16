@@ -1,16 +1,18 @@
 # Forge Studio
 
 **An all-in-one AI image and video studio for Windows PCs with 8 GB graphics cards.**
-Built on Stable Diffusion WebUI Forge (A1111), with FLUX 3, FIBO 2.0, SDXL and SD 1.5, Wan 2.2 video, a video
-editor, consistent characters, Deforum and AnimateDiff upgrades, world-building tabs and a prompt writer that takes
-any language, all under one roof.
+Built on Stable Diffusion WebUI Forge (A1111), with FLUX 3, FIBO 2.0, SDXL and SD 1.5, Wan 2.2 and LTX 2.3 video,
+a video editor with its own image workspace, consistent characters, Deforum and AnimateDiff upgrades, world-building
+tabs and a prompt writer that takes any language, all under one roof.
 
 > **First version.** Forge Studio is still experimental, but it is a working machine: everything here is used
 > every day on an RTX 3070 Laptop (8 GB VRAM). Expect rough edges and please report them.
 
 ![Forge Studio](docs/screenshot.png)
 
-[עברית](README.he.md)
+[עברית](README.he.md) · **▶ [The film](https://github.com/Shai7net/forge-studio-pinokio/blob/main/media/forge-studio-film.mp4)**
+(23 s: every shot, and the music, made in Forge Studio) · **Install with one click in
+[Pinokio](https://github.com/Shai7net/forge-studio-pinokio)**
 
 ## Why
 
@@ -24,10 +26,10 @@ the same window.
 | | |
 |---|---|
 | **Newest image models** | FLUX 3 Image Klein and FIBO 2.0, picked from the normal checkpoint list next to SDXL and SD 1.5; the sampler, steps and CFG follow the model you choose |
-| **Video generation** | **Video Studio**: Wan 2.2 14B text/image/first-and-last-frame video, longer videos from up to six pictures, *Ingredients to Video* (your characters and objects together in one video) and *Replace a character* (Wan 2.2 Animate) |
+| **Video generation** | **Video Studio** with two engines. **Wan 2.2 14B**: text/image/first-and-last-frame video, longer videos from up to six pictures, *Ingredients to Video* (your characters and objects together in one video) and *Replace a character* (Wan 2.2 Animate). **LTX 2.3**: fast video with its own sound, video from words alone, and *Image + Audio to Video* (a picture that speaks or moves to your sound) |
 | **Characters** | Describe a character in any language, or give a reference picture, and FLUX 3 Klein draws a consistent character sheet over a pose template. Keep them in projects, send one to Ingredients to Video, make a 3D model of it, or stand it in a Simulation 360 world |
-| **Video editor** | **Forge Studio** tab: a timeline editor in the spirit of CapCut, where generating, extending and repainting shots is part of the edit; captions, narration, music and effects; exports in high quality |
-| **Animation** | Deforum with music-driven keyframes, a drawn timeline + 3D camera path editor and DeforumationQT live control; AnimateDiff with music, dance transfer and per-frame inpainting masks |
+| **Video editor** | **Forge Studio** tab: a timeline editor in the spirit of CapCut, where generating, extending and repainting shots is part of the edit; an image workspace with layers and AI tools inside it (edit a picture, then animate it, without leaving the edit); captions, narration, music and effects; exports in high quality. Its timeline opens under the result of every tab, so a good result is dragged straight into the edit |
+| **Animation** | Deforum with music-driven keyframes, a drawn timeline + 3D camera path editor and DeforumationQT live control; AnimateDiff with music, dance transfer (now inside AnimateDiff, with a setup for living characters) and per-frame inpainting masks; Infinite Zoom |
 | **World building** | **Simulation 360**: 360° worlds with portals, 3D objects, a recorded route and talking characters. **Time Strata**: turn a video into a sculpture of time |
 | **Upscaling** | Extras for video with a before/after viewer, Hires. fix in Extras, Real-ESRGAN, and NVIDIA RTX Video Super Resolution as an upscaler |
 | **Faces** | Face swap (ReActor, the author's SFW edition with its NSFW filter), LivePortrait, and face swap in Video Studio's character replacement |
@@ -50,6 +52,12 @@ Nothing else: the installer brings its own Python, git and package manager into 
 nothing system-wide.
 
 ## Install
+
+**The easiest way: [Pinokio](https://pinokio.co).** Search for *Forge Studio* in Pinokio (or open
+[the launcher](https://github.com/Shai7net/forge-studio-pinokio)), press **Install**, choose the models, then **Start**.
+It runs this same installer for you.
+
+**Or by hand:**
 
 1. Download Forge Studio: **Code → Download ZIP** on GitHub (or `git clone https://github.com/Shai7net/forge-studio`),
    and put it in a short path without non-English letters, for example `C:\AI\ForgeStudio`.
@@ -76,7 +84,7 @@ Everything is logged to `installer\install.log`.
 
 | Choice | Size | What you get |
 |---|---|---|
-| Minimal | ~0.6 GB | The LCM LoRAs for SD 1.5 and SDXL and the 360° panorama LoRA (always downloaded). Bring your own checkpoints (with none at all, Forge fetches Realistic Vision 5.1, 2 GB, at the first start) |
+| Minimal | ~0.6 GB | The LCM LoRAs for SD 1.5 and SDXL and the 360° panorama LoRA (always downloaded). Bring your own checkpoints |
 | **Recommended** | ~21 GB | Minimal + SD 1.5 (DreamShaper 8 and its inpainting model), AnimateDiff (AnimateLCM, v3), ControlNet essentials (fp16) + QR Monster + IP-Adapter, upscalers, the prompt writer |
 | Video | ~50 GB | Recommended + Wan 2.2 image-to-video and character replacement |
 | Everything | ~92 GB | All of the above + SDXL (Juggernaut XL), more AnimateDiff and ControlNet (SDXL Union), FIBO 2.0, FLUX 3 |
@@ -118,6 +126,7 @@ Studio. To open the window again while it runs, start the shortcut again. The ad
 | **FLUX 3 Image Klein** | txt2img, img2img (editing with the picture as a reference), FLUX 3 LoRAs |
 | **FIBO 2.0** (Dev, Edit Turbo) | txt2img and img2img: generation and editing by instruction with up to four references |
 | **Wan 2.2** | Video Studio |
+| **LTX 2.3** | Video Studio (set up from its Models section) |
 
 **AnimateDiff and Deforum work with the previous generation of models (SD 1.5, and SDXL for Deforum).** Choose
 an SD 1.5 checkpoint for them; with FLUX 3 or FIBO selected they do not run (FIBO tells you so).
@@ -153,7 +162,13 @@ Bria's model for generating and, above all, editing pictures by instruction: in 
 reference pictures in the FIBO panel), an optional exact mask, and JSON captions for fine control. It runs in its own
 environment (installed by the installer or the panel's button), so Forge's own packages stay untouched.
 
-### Video Studio (Wan 2.2)
+### Video Studio (Wan 2.2 and LTX 2.3)
+- Two engines, chosen in the model list: **Wan 2.2 14B** for the most faithful motion, and **LTX 2.3** (22B
+  distilled, GGUF: Q3 is the one for 8 GB, Q2 for 6 GB, Q4 for 12 GB and more) for fast video **with its own sound**,
+  video from words alone with no opening picture, LTX LoRAs, and **Image + Audio to Video**: a picture and a sound
+  file become a video that moves (and speaks) to it. LTX runs in its own environment: in the Models section,
+  *Set up LTX engine* installs it and *Download the missing files of this model* brings its weights (about 21 GB
+  for Q3).
 - Text to video, image to video, first + last frame, and up to six pictures joined into one longer video, each
   part with its own description.
 - *Replace a character*: the person in a video becomes the character in your picture; motion, expressions and
@@ -183,6 +198,10 @@ A timeline editor inside Forge: media panel, layers, keyframes and ready-made mo
 dissolves, text and captions; generate a shot from words, continue or remake a clip, repaint a frame and carry it
 through the clip, join two shots with AI, separate a person onto a new background; narration, music and sound
 effects where they are needed; export in high quality.
+- **The image workspace**: any picture in the edit (or a new empty image shot, 🖼＋) opens like in a photo editor:
+  selections, brush, text, crop, layers with blend modes, and generation with the checkpoint chosen at the top
+  (SD with ControlNet, FLUX 3, FIBO 2.0). AI tools select the subject or an object with a click, remove the
+  background, or take away what is selected. When done, save it into the shot or make a video from it.
 - **The timeline under every result**: txt2img, img2img, Extras, Video Studio, Deforum, Infinite Zoom and Time
   Strata have a green bar under their result; ▼ opens Forge Studio's own timeline right there, and the result is
   dragged onto it (or added at the end).
@@ -199,8 +218,9 @@ effects where they are needed; export in high quality.
   steadier zoom and motion.
 
 ### AnimateDiff (upgraded)
-🎵 Music (motion to the beat), 💃 Dance transfer (a dance video's movement onto your characters through
-silhouettes and OpenPose), a mask per frame for inpainting a static picture, ControlNet per context window (much less
+🎵 Music (motion to the beat), 💃 Dance transfer inside the AnimateDiff panel (a dance video's movement onto your
+characters through silhouettes and OpenPose; when the prompt is a person or animal it sets itself up for a living
+body: a lighter shape, a firmer pose, a larger size), a mask per frame for inpainting a static picture, ControlNet per context window (much less
 memory), and a choice of 8/12/24 FPS.
 
 ### Simulation 360
