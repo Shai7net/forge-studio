@@ -11,5 +11,6 @@ if not "%CODE%"=="0" (
     echo Setup did not finish. The log is in installer\install.log
 )
 echo.
-echo %* | find /i "-Yes" >nul || pause
+rem Windows' own find: in a shell that puts a Unix find first on PATH (Pinokio, Git Bash) "find /i" failed and paused
+echo %* | "%SystemRoot%\System32\find.exe" /i "-Yes" >nul || pause
 exit /b %CODE%
