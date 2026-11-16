@@ -92,7 +92,10 @@ def generate(request: Generation, references=(), mask=None, loras=(), lora_weigh
              manage_forge_job=True, p=None):
     from modules.call_queue import queue_lock
     from modules import shared
-    from . import models
+    from . import fit, models
+    if request.mode == "edit" and references:
+        # the API and FIBO's panel too: references take the requested size (txt2img/img2img already did this)
+        references, mask, _ = fit.fit(references, mask, fit.size16(request.width), fit.size16(request.height))
     # Invalid input or missing models must not evict the user's working model.
     request = request.validated(references, mask)
     resolved_loras = resolve_loras(loras, lora_weight)
@@ -150,7 +153,8 @@ def ui_generate(variant, mode, prompt, negative, width, height, steps, cfg, seed
     from PIL import Image, ImageOps
     references = [ImageOps.exif_transpose(im).convert("RGB") for im in (reference1, reference2, reference3, reference4) if im is not None]
     if keep_source_size and mode == "edit" and len(references) == 1:
-        width, height = [max(64, n // 16 * 16) for n in references[0].size]
+        from . import fit
+        width, height = fit.shape_like(references[0].size, int(width) * int(height))
     request = Generation(variant, mode, prompt, negative, width, height, steps, cfg, seed, count, precision, prompt_writer)
     response = generate(request, references, mask, loras or [], lora_weight)
     # Return independent PIL images, preserving their PNG infotext for Send to img2img/Extras.

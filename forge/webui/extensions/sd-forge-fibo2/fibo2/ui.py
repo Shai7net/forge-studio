@@ -70,7 +70,7 @@ def build():
                 with gr.Row():
                     width = gr.Number(value=1024, precision=0, label="Width (multiple of 16)")
                     height = gr.Number(value=1024, precision=0, label="Height (multiple of 16)")
-                    keep_size = gr.Checkbox(value=True, label="Single-image edits: keep source size (rounded down to /16)")
+                    keep_size = gr.Checkbox(value=False, label="Single-image edits: the reference's shape instead of Width x Height (same area)")
                 with gr.Row():
                     steps = gr.Slider(0, 100, value=0, step=1, label="Steps (0 = model default)")
                     cfg = gr.Slider(0, 20, value=0, step=0.1, label="CFG (0 = model default)")

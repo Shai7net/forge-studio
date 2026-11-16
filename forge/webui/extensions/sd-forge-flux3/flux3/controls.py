@@ -28,14 +28,24 @@ def prepare(p):
         raise ValueError("FLUX 3 supports up to four ordered references in this panel")
     if mask is not None:
         mask = ImageOps.exif_transpose(mask).convert("L")
-        if len(refs) != 1 or mask.size != refs[0].size:
-            raise ValueError("An exact mask needs one source reference and the same dimensions")
+        if len(refs) != 1:
+            raise ValueError("An exact mask needs exactly one source reference")
+    # The size chosen in Forge wins (a square reference forced a square result, 2026-11-16); the checkbox only
+    # borrows the reference's shape at the chosen area. A single txt2img reference is cropped to the result's
+    # frame around its faces, so the edit lines up with it and a large picture costs nothing extra.
+    from . import fit
     if mode == "edit" and len(refs) == 1 and p.fibo2_keep_source_size:
-        p.width, p.height = (max(64, n // 16 * 16) for n in refs[0].size)
+        p.width, p.height = fit.shape_like(refs[0].size, int(p.width) * int(p.height))
         # txt2img calculated these before scripts.process.
         for attr, value in (("hr_upscale_to_x", p.width), ("hr_upscale_to_y", p.height)):
             if hasattr(p, attr) and not getattr(p, "enable_hr", False):
                 setattr(p, attr, value)
+    if mode == "edit" and refs and not img2img:
+        refs, mask, note = fit.fit(refs, mask, fit.size16(p.width), fit.size16(p.height))
+        if note:
+            p.extra_generation_params["FLUX 3 reference fitted"] = note
+    elif mask is not None and mask.size != refs[0].size:
+        mask = mask.resize(refs[0].size, Image.Resampling.NEAREST)
     p.flux3_panel_writer = getattr(p, "fibo2_prompt_writer", "off").title()
     p.flux3_references = refs
     p.flux3_panel_edit = mode == "edit"

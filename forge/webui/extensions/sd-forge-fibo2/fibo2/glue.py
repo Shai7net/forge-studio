@@ -203,9 +203,17 @@ def _fibo_request(p, info):
             mask = ImageOps.invert(mask.convert("L"))
     mask = _clean_image(mask, "L")
 
-    width, height = int(p.width), int(p.height)
-    if getattr(p, "fibo2_keep_source_size", True) and mode == "edit" and len(references) == 1:
-        width, height = (max(64, int(x) // 16 * 16) for x in references[0].size)
+    # The size chosen in Forge wins; the references are fitted to it (a 1920x2880 reference made FIBO refuse with
+    # "at most four megapixels", and a square one forced a square result, 2026-11-16). The checkbox only borrows
+    # the reference's shape, at the chosen area.
+    from . import fit
+    width, height = fit.size16(p.width), fit.size16(p.height)
+    if getattr(p, "fibo2_keep_source_size", False) and mode == "edit" and len(references) == 1:
+        width, height = fit.shape_like(references[0].size, width * height)
+    if mode == "edit":
+        references, mask, note = fit.fit(references, mask, width, height)
+        if note:
+            p.extra_generation_params["FIBO reference fitted"] = note
 
     count = int(p.batch_size) * int(p.n_iter)
     prompt, negative = p.prompt or "", p.negative_prompt or ""

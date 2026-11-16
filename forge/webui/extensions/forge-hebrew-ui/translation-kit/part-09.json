@@ -135,7 +135,7 @@
   "FIBO 2.0 · native controls": "FIBO 2.0 · native controls",
   "Task (Auto edits when references are supplied)": "Task (Auto edits when references are supplied)",
   "Local Qwen3-VL prompt writer · any language → VGL": "Local Qwen3-VL prompt writer · any language → VGL",
-  "Single-image edit: keep source size (rounded to /16)": "Single-image edit: keep source size (rounded to /16)",
+  "Single-image edit: use the reference's shape instead of Width × Height (same area)": "Single-image edit: use the reference's shape instead of Width × Height (same area)",
   "Reference 1": "Reference 1",
   "Reference 2": "Reference 2",
   "Reference 3": "Reference 3",

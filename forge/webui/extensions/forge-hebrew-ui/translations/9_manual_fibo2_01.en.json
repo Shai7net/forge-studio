@@ -16,7 +16,7 @@
  },
  {
   "i": 3,
-  "en": "Single-image edit: keep source size (rounded to /16)",
+  "en": "Single-image edit: use the reference's shape instead of Width × Height (same area)",
   "ctx": "[t] FIBO 2.0 panel in txt2img/img2img (sd-forge-fibo2/scripts/fibo2_forge.py)"
  },
  {

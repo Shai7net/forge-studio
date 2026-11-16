@@ -19,7 +19,8 @@ class Controls(unittest.TestCase):
         first, second = Image.new("RGB", (131, 99), "red"), Image.new("RGB", (64, 64), "blue")
         p = self.request(fibo2_references=[first], fibo2_prompt_writer="always")
         prepare(p)
-        self.assertEqual((p.width, p.height), (128, 96))
+        self.assertEqual((p.width, p.height), (576, 432))  # the reference's shape at the chosen area
+        self.assertEqual(p.flux3_references[0].size, (576, 432))
         self.assertEqual(p.flux3_panel_writer, "Always")
         self.assertTrue(p.flux3_panel_edit)
         p = self.request(init_images=[first], fibo2_references=[second])
@@ -32,10 +33,24 @@ class Controls(unittest.TestCase):
         p = self.request(); prepare(p)
         self.assertFalse(p.flux3_panel_edit)
         for values in [dict(fibo2_mode="edit"), dict(fibo2_mask=Image.new("L", (64, 64))),
-                       dict(fibo2_mode="generate", fibo2_references=[Image.new("RGB", (64, 64))]),
-                       dict(fibo2_references=[Image.new("RGB", (64, 64))], fibo2_mask=Image.new("L", (32, 32)))]:
+                       dict(fibo2_mode="generate", fibo2_references=[Image.new("RGB", (64, 64))])]:
             with self.subTest(values=values), self.assertRaises(ValueError):
                 prepare(self.request(**values))
+
+    def test_chosen_size_wins_and_the_reference_is_fitted(self):
+        big = Image.new("RGB", (1920, 2880), "green")
+        mask = Image.new("L", (960, 1440), 255)  # a mask at another size is scaled to the reference
+        p = self.request(fibo2_keep_source_size=False, fibo2_references=[big], fibo2_mask=mask, width=1024, height=576)
+        prepare(p)
+        self.assertEqual((p.width, p.height), (1024, 576))
+        self.assertEqual(p.flux3_references[0].size, (1024, 576))
+        self.assertEqual(p.flux3_exact_mask.size, (1024, 576))
+        self.assertIn("1920x2880 -> 1024x576", p.extra_generation_params["FLUX 3 reference fitted"])
+        square = Image.new("RGB", (1024, 1024), "green")
+        p = self.request(fibo2_keep_source_size=False, fibo2_references=[square, square], width=576, height=1024)
+        prepare(p)
+        self.assertEqual((p.width, p.height), (576, 1024))  # several references keep their shape; the result does not
+        self.assertEqual([r.size for r in p.flux3_references], [(1024, 1024)] * 2)
 
     def test_mask_black_pixels_survive_exactly(self):
         source = Image.new("RGB", (64, 64), (17, 49, 231))

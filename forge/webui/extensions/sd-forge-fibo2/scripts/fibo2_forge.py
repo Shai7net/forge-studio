@@ -42,8 +42,11 @@ class Fibo2Script(scripts.Script):
                 writer = gr.Radio(["off", "auto", "always"], value="off",
                                   label="Local Qwen3-VL prompt writer · any language → VGL",
                                   elem_id=f"{tab}_fibo2_writer")
-                keep_size = gr.Checkbox(True, label="Single-image edit: keep source size (rounded to /16)",
-                                        elem_id=f"{tab}_fibo2_keep_size")
+                # Off: the result is Width x Height and the reference is fitted to it (cropped around faces). On: the
+                # result takes the reference's shape at the same area. It used to keep the reference's pixel size,
+                # which refused big pictures and ignored the chosen ratio (2026-11-16).
+                keep_size = gr.Checkbox(False, label="Single-image edit: use the reference's shape instead of Width × Height (same area)",
+                                        elem_id=f"{tab}_fibo2_keep_shape")
                 if is_img2img:
                     gr.Markdown("The main img2img image is `<image_1>`. Add up to three more references below.")
                     labels = ["Reference 2", "Reference 3", "Reference 4"]
