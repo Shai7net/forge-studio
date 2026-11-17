@@ -313,6 +313,9 @@ def generate_replace(job, emit):
     del model, vae
     free_memory()
     frames_u8 = np.concatenate(out)[:n]
+    if job.get("layer_out"):
+        # one character of several: its frames, the area it redrew and the person's outline, for compose()
+        np.savez(job["layer_out"], frames=frames_u8, region=prep["mask"][:n] > 0, person=prep["person"][:n] > 0)
     frames_u8 = finish(job, frames_u8, device, report)
     job = dict(job, frames=int(frames_u8.shape[0]), fps=int(job.get("fps", 16)))
     result = write_outputs(job, frames_u8, report)
@@ -323,6 +326,59 @@ def generate_replace(job, emit):
     if job.get("keep_sound", True):
         with_sound = result["video"][:-4] + "-sound.mp4"
         if mux_sound(result["video"], job["driving_video"], job.get("start", 0.0), n / prep["fps"], with_sound):
+            os.replace(with_sound, result["video"])
+    report("done", 1.0, **result)
+    return result
+
+
+def _soft(mask, px):
+    """A mask [N, H, W] bool -> float with a soft edge of about `px` pixels (each frame blurred on its own)."""
+    import cv2
+    k = max(3, (int(px) // 2) * 2 + 1)
+    return np.stack([cv2.GaussianBlur(m.astype(np.float32), (k, k), 0) for m in mask])
+
+
+def _dilate(mask, px):
+    import cv2
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * px + 1, 2 * px + 1))
+    return np.stack([cv2.dilate(m.astype(np.uint8), kernel) > 0 for m in mask])
+
+
+@torch.inference_mode()
+def compose(job, emit):
+    """Several characters in one video (2026-11-17). Every pass replaced its own person in the ORIGINAL video: chained
+    passes drew from the previous pass's picture, and a wizard became a second copy of the girl drawn one pass
+    before (the model copies a character it sees in the frame). Each pass's redrawn area goes over the original
+    here, except where another person's body is, so neighbours do not erase each other; then FILM, enlargement and
+    the sound, once."""
+    from . import animate_prep
+    report, device, _ = start(job, emit)
+    width, height, fps = int(job["width"]), int(job["height"]), int(job.get("fps", 16))
+    report("writing", 0.0, note="putting the characters together")
+    base = animate_prep.read_frames(job["driving_video"], width, height, fps, job.get("start", 0.0), job.get("seconds"))
+    layers = [np.load(path) for path in job["layers"]]
+    n = min([len(base)] + [len(l["frames"]) for l in layers])
+    out = base[:n].astype(np.float32)
+    bodies = [_dilate(l["person"][:n], max(4, width // 48)) for l in layers]
+    for i, layer in enumerate(layers):
+        alpha = _soft(layer["region"][:n], max(5, width // 40))
+        others = np.zeros_like(bodies[i])
+        for j, body in enumerate(bodies):
+            if j != i:
+                others |= body
+        keep_out = others & ~bodies[i]  # another person's body, not this one's
+        alpha *= 1.0 - _soft(keep_out, max(3, width // 80))
+        out = out * (1.0 - alpha[..., None]) + layer["frames"][:n].astype(np.float32) * alpha[..., None]
+        report("writing", 0.1 + 0.3 * (i + 1) / len(layers), note=f"character {i + 1} of {len(layers)} in place")
+    del layers
+    frames_u8 = np.clip(out + 0.5, 0, 255).astype(np.uint8)
+    del out
+    frames_u8 = finish(job, frames_u8, device, report)
+    job = dict(job, frames=int(frames_u8.shape[0]), fps=int(job.get("fps", fps)))
+    result = write_outputs(job, frames_u8, report)
+    if job.get("keep_sound", True):
+        with_sound = result["video"][:-4] + "-sound.mp4"
+        if mux_sound(result["video"], job["driving_video"], job.get("start", 0.0), n / fps, with_sound):
             os.replace(with_sound, result["video"])
     report("done", 1.0, **result)
     return result

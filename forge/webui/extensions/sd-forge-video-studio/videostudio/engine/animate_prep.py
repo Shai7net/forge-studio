@@ -195,8 +195,10 @@ def masks(frames, kps, others, sam_dir, device, threshold, report):
     start = 0
     while True:
         part = frames[start:start + SAM_WINDOW]
+        # the frames are resized and normalized on the CPU: on the card a 200-frame window took 2.3 GB in one tensor
+        # and a 10-second video ran out of memory before tracking began (2026-11-16)
         session = processor.init_video_session(video=list(part), inference_device=device, video_storage_device="cpu",
-                                               dtype=dtype)
+                                               processing_device="cpu", dtype=dtype)
         if start == 0:
             pos = _body_points(kps, threshold, w, h)
             if not pos:
@@ -368,4 +370,5 @@ def prepare(job, device, report):
             report("prepare", 1.0, note="prepared", prepared=path)
         except Exception as e:
             report("prepare", 1.0, note=f"prepared (no preview: {e})")
-    return {"frames": frames, "pose": skel, "face": face, "bg": bg, "mask": grown, "fps": fps, "lost": lost}
+    return {"frames": frames, "pose": skel, "face": face, "bg": bg, "mask": grown, "fps": fps, "lost": lost,
+            "person": raw}

@@ -84,6 +84,7 @@ def ingredient_route(method, is_ltx, flux_available):
 # pair, all made in one run and joined.
 MAX_PICTURES = 6
 REPLACE_QUALITY = {"480p - fast (about 6 min per 5 s)": 480 * 832, "576p - sharper (about 10 min per 5 s)": 576 * 1024}
+MORE_CHARACTERS = 3  # pictures for other people of the video in Replace, besides the main one
 WHO = ["Only the chosen person (with the chosen person of the picture)",
        "Everyone in the picture, in the same order from the left",
        "Everyone in the picture, in reverse order"]
@@ -510,6 +511,8 @@ def generate(mode, count, *args):
     method = rest[42 + MAX_INGREDIENTS] if len(rest) > 42 + MAX_INGREDIENTS else ING_AUTO
     ltx_inputs = rest[43 + MAX_INGREDIENTS:]
     audio_picture, audio_file, native_audio, frame_by = (list(ltx_inputs) + [None, None, True, None])[:4]
+    more = list(ltx_inputs[4:4 + 3 * MORE_CHARACTERS])
+    extra_characters = list(zip(more[0::3], more[1::3], more[2::3]))
     if native_audio is None:
         native_audio = True
     mode = mode if mode in MODES else "i2v"
@@ -547,7 +550,7 @@ def generate(mode, count, *args):
         return
     if mode == "replace":
         yield from generate_replace(prompt, negative, seed, smooth, upscale, int8, attention, lora1, lora1_w, lora2,
-                                    lora2_w, styles, auto_sound, sound_words, *replace)
+                                    lora2_w, styles, auto_sound, sound_words, *replace, extra=extra_characters)
         return
 
     n = max(1, min(MAX_PICTURES, int(count or 1))) if mode == "i2v" else 0
@@ -841,10 +844,11 @@ def ingredients_models_markdown(preset=None):
 
 def generate_replace(prompt, negative, seed, smooth, upscale, int8, attention, lora1, lora1_w, lora2, lora2_w, styles,
                      auto_sound, sound_words, video, character, person, start, seconds, rquality, fps, mask_shape,
-                     keep_sound, steps, relight, char_person="1", who=None, faces=False):
+                     keep_sound, steps, relight, char_person="1", who=None, faces=False, extra=()):
     """Replace a character: the person in a video becomes the one in a picture (Wan 2.2 Animate). With 'Everyone in
     the picture', each person of the picture replaces one person of the video, a pass each, every pass working on
-    the one before."""
+    the one before. `extra` holds (picture, person in the video[, description]) for More characters: one pass each
+    too, every pass on the original video, then put together (compose)."""
     nothing = gr.update()
 
     def out(status, preview=nothing, video=nothing, details=nothing, last=nothing):
@@ -875,8 +879,27 @@ def generate_replace(prompt, negative, seed, smooth, upscale, int8, attention, l
     if relight:
         base_loras.append({"path": models.file_path("animate_relight"), "strength": 1.0})
 
-    # (person in the picture, person in the video) per pass, 0-based
-    passes = [(max(0, int(char_person or 1) - 1), max(0, int(person or 1) - 1))]
+    # (picture, person in the picture, person in the video) per pass, 0-based; words: a pass's own prompt
+    passes = [(character, max(0, int(char_person or 1) - 1), max(0, int(person or 1) - 1))]
+    words = {}
+    chosen = []
+    for item in extra or ():
+        pic, v, text = (tuple(item) + ("",))[:3]
+        if pic and str(v or "").isdigit() and int(v) > 0:
+            chosen.append((pic, int(v) - 1, (text or "").strip()))
+    if chosen:
+        if who in WHO[1:]:
+            yield out(status_html("error", error="Use either 'Everyone in the picture' or More characters, not both."))
+            return
+        for pic, v, text in chosen:
+            if text:
+                words[len(passes)] = text
+            passes.append((pic, 0, v))
+        taken = [v for _, _, v in passes]
+        if len(set(taken)) < len(taken):
+            yield out(status_html("error", error="Each character needs a different person in the video (press Find "
+                                                 "the people to see their numbers)."))
+            return
     if who in WHO[1:]:
         m = _count_picture_people(character)
         if m < 2:
@@ -884,7 +907,7 @@ def generate_replace(prompt, negative, seed, smooth, upscale, int8, attention, l
                                                  "(press Find the people to see who is found)."))
             return
         order = list(range(m)) if who == WHO[1] else list(range(m))[::-1]
-        passes = [(c, v) for v, c in enumerate(order)]
+        passes = [(character, c, v) for v, c in enumerate(order)]
 
     from modules.call_queue import queue_lock
     yield out(status_html("start", 0, note="waiting for Forge to be free"))
@@ -897,7 +920,7 @@ def generate_replace(prompt, negative, seed, smooth, upscale, int8, attention, l
             "mode": "replace", "prompt": wan_prompt.strip(), "negative": (negative or "").strip(),
             "driving_video": _copy_input(video, stage_dir, "video"),
             "character_image": _copy_input(character, stage_dir, "character"),
-            "person": passes[0][1], "character_person": passes[0][0], "start": start, "seconds": seconds,
+            "person": passes[0][2], "character_person": passes[0][1], "start": start, "seconds": seconds,
             "width": width, "height": height, "fps": int(fps), "steps": int(steps), "shift": 5.0, "cfg": 1.0,
             "seed": seed, "int8": bool(int8), "attention": attention, "mask_shape": MASK_SHAPES.get(mask_shape, "box"),
             "keep_sound": bool(keep_sound),
@@ -919,26 +942,47 @@ def generate_replace(prompt, negative, seed, smooth, upscale, int8, attention, l
             details += "\nLoRA: " + ", ".join(f"{os.path.splitext(os.path.basename(l['path']))[0]} {l['strength']:g}" for l in loras)
         if not_wan:
             details += "\nNot Wan LoRAs (not used): " + ", ".join(not_wan)
+        if len(passes) > 1:
+            details += "\n" + ", ".join(f"picture {n + 1} -> person {v + 1}" if picture != character else
+                                        f"picture person {c + 1} -> person {v + 1}" for n, (picture, c, v) in enumerate(passes))
         made, first_base = None, spec["basename"]
-        for i, (pic, vid) in enumerate(passes):
-            last = i == len(passes) - 1
-            step = dict(spec, person=vid, character_person=pic, basename=step_base(first_base, i, len(passes)))
-            if i:
-                # The next pass works on the last one's result, which already starts at `start` at the chosen rate.
-                step.update(driving_video=made, start=0.0, seconds=frames / int(fps))
-            if not last:
-                step.update(interpolate=False, upscale=None)
-            note = details + (f"\nPass {i + 1} of {len(passes)}: picture person {pic + 1} -> video person {vid + 1}"
-                              if len(passes) > 1 else "")
+        several = len(passes) > 1
+        layers = []
+        for i, (picture, pic, vid) in enumerate(passes):
+            name = f"{first_base}-pass{i + 1}" if several else first_base
+            step = dict(spec, person=vid, character_person=pic, basename=name)
+            if picture != character:
+                step["character_image"] = _copy_input(picture, stage_dir, f"character{i + 1}")
+            if words.get(i):
+                # the character's own words: with only the scene's prompt a wizard came out as another dancer
+                step["prompt"] = words[i]
+            if several:
+                # Every pass replaces its person in the ORIGINAL video and leaves its layer for the compose job:
+                # chained on the previous pass's picture, the model copied the character it already saw there
+                # (a wizard came out as a second girl, 2026-11-17).
+                layers.append(os.path.join(stage_dir, f"layer{i + 1}.npz"))
+                step.update(interpolate=False, upscale=None, keep_sound=False, layer_out=layers[-1])
+            note = details + (f"\nPass {i + 1} of {len(passes)}: " + (f"picture person {pic + 1}" if picture == character else f"character {i + 1}") + f" -> video person {vid + 1}"
+                              if several else "")
             made = yield from _run_job(step, note, out, nothing)
             if not made:
                 return
+        if several:
+            whole = dict(spec, mode="compose", layers=layers, basename=first_base)
+            made = yield from _run_job(whole, details + "\nPutting the characters together", out, nothing)
+            for path in layers:
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+            if not made:
+                return
         if faces and faceswap.available():
-            pictures = [os.path.join(out_dir, step_base(first_base, i, len(passes)) + ".character.png")
+            pictures = [os.path.join(out_dir, (f"{first_base}-pass{i + 1}" if several else first_base) + ".character.png")
                         for i in range(len(passes))]
             pictures = [p.replace(".character.png", ".character-face.png")
                         if os.path.isfile(p.replace(".character.png", ".character-face.png")) else p for p in pictures]
-            made = yield from _match_faces(made, [(pic, vid) for pic, (_, vid) in zip(pictures, passes)], out, details)
+            made = yield from _match_faces(made, [(pic, vid) for pic, (_, _, vid) in zip(pictures, passes)], out, details)
     # With the video's own sound kept, MMAudio is only asked when the video had none.
     if made and auto_sound and not (keep_sound and has_sound):
         words = (sound_words or "").strip() or wan_prompt or "ambient sound of the scene"
@@ -1417,6 +1461,28 @@ def build():
                                                           label="Quality of the replacement")
                                 rep_fps = gr.Dropdown(["16", "24"], value="16", label="Frames per second")
                         rep_who = gr.Radio(WHO, value=WHO[0], label="Who becomes whom")
+                        # More characters (2026-11-16): a picture each, for another person of the video; one pass each,
+                        # every pass working on the one before, like 'Everyone in the picture'.
+                        rep_more = []
+                        with gr.Accordion("More characters: replace several people of the video", open=False,
+                                          elem_id="vs_rep_more"):
+                            gr.Markdown("The picture above replaces *Person to replace*, described by the main prompt. "
+                                        "Add a picture for each other person (press **Find the people** for their "
+                                        "numbers) and **describe how it looks**: hair, face, clothes, colours. Without "
+                                        "words the model may copy another person of the video instead. Each character "
+                                        "takes one more pass of the same length.")
+                            with gr.Row():
+                                for k in range(MORE_CHARACTERS):
+                                    with gr.Column(min_width=160):
+                                        rep_more.append(gr.Image(label=f"Character {k + 2}", type="filepath", height=220,
+                                                                 elem_id=f"vs_rep_char{k + 2}"))
+                                        rep_more.append(gr.Dropdown(["-"] + [str(i) for i in range(1, 9)], value="-",
+                                                                    label=f"Character {k + 2} becomes person",
+                                                                    elem_id=f"vs_rep_char{k + 2}_person"))
+                                        rep_more.append(gr.Textbox(label=f"Describe character {k + 2}", lines=3,
+                                                                   elem_id=f"vs_rep_char{k + 2}_words",
+                                                                   placeholder="e.g. a green furry wizard with a long "
+                                                                               "beard, a purple pointed hat and a brown robe"))
                         with gr.Row():
                             rep_mask = gr.Radio(list(MASK_SHAPES), value=next(iter(MASK_SHAPES)), label="Area redrawn")
                         with gr.Row():
@@ -1548,7 +1614,7 @@ def build():
                   prompt, negative, quality, seconds, seed, preset, steps, shift, cfg, sampler, int8, attention,
                   width, height, smooth, upscale, lora1, lora1_w, lora2, lora2_w, styles, auto_sound, sound_words,
                   rep_video, rep_char, rep_person, rep_start, rep_seconds, rep_quality, rep_fps, rep_mask, rep_keep,
-                  rep_steps, rep_relight, rep_char_person, rep_who, rep_faces] + ingredients + [ing_method, ltx_picture, ltx_recording, native_audio, frame_by]
+                  rep_steps, rep_relight, rep_char_person, rep_who, rep_faces] + ingredients + [ing_method, ltx_picture, ltx_recording, native_audio, frame_by] + rep_more
         def start_ingredients_download(name):
             models.DOWNLOADS.start(models.ingredients_missing())
             error = models.DOWNLOADS.status().get('error')

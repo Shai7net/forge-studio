@@ -58,5 +58,75 @@
   "i": 11,
   "en": "Sent to Video Studio → Ingredients to Video. No words were given: its prompt is kept, or a simple one made of the character is put there.",
   "ctx": "[t] Characters, sending to Ingredients to Video (sd-forge-characters, forgecharacters/ui.py)"
+ },
+ {
+  "i": 12,
+  "en": "More characters: replace several people of the video",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 13,
+  "en": "The picture above replaces *Person to replace*, described by the main prompt. Add a picture for each other person (press **Find the people** for their numbers) and **describe how it looks**: hair, face, clothes, colours. Without words the model may copy another person of the video instead. Each character takes one more pass of the same length.",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 14,
+  "en": "Character 2",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 15,
+  "en": "Character 3",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 16,
+  "en": "Character 4",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 17,
+  "en": "Character 2 becomes person",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 18,
+  "en": "Character 3 becomes person",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 19,
+  "en": "Character 4 becomes person",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 20,
+  "en": "Use either 'Everyone in the picture' or More characters, not both.",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 21,
+  "en": "Each character needs a different person in the video (press Find the people to see their numbers).",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 22,
+  "en": "Describe character 2",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 23,
+  "en": "Describe character 3",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 24,
+  "en": "Describe character 4",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
+ },
+ {
+  "i": 25,
+  "en": "e.g. a green furry wizard with a long beard, a purple pointed hat and a brown robe",
+  "ctx": "[t] Video Studio, Replace a character, More characters (sd-forge-video-studio, videostudio/ui.py)"
  }
 ]

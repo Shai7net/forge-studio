@@ -321,6 +321,9 @@ def generate(job, emit):
     if job.get("mode") == "replace":
         from .animate import generate_replace
         return generate_replace(job, emit)
+    if job.get("mode") == "compose":
+        from .animate import compose
+        return compose(job, emit)
     report, device, dtype = start(job, emit)
     out_dir = job["output_dir"]
 

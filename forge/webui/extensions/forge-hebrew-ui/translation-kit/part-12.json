@@ -16,6 +16,15 @@
   "Return the complete file as valid JSON with the same structure and nothing before or after it."
  ],
  "texts": {
+  "Lips to a sound file": "Lips to a sound file",
+  "A recording, a song, speech made elsewhere: it becomes a line of this character, and its lips move to it": "A recording, a song, speech made elsewhere: it becomes a line of this character, and its lips move to it",
+  "It says the file now: see the Dialogue tab": "It says the file now: see the Dialogue tab",
+  "Its face": "Its face",
+  "From its picture while it speaks": "From its picture while it speaks",
+  "Always from its picture": "Always from its picture",
+  "As the model was painted": "As the model was painted",
+  "A model is made of the object's picture, so that picture fits the front of its head. While it says a line, the video of the line is laid there and its lips move; \"always\" keeps the picture's sharper face on the model all the time": "A model is made of the object's picture, so that picture fits the front of its head. While it says a line, the video of the line is laid there and its lips move; \"always\" keeps the picture's sharper face on the model all the time",
+  "Hunyuan3D-2 is a part of this Forge: its program, its Python and its models are in the models folder (sim360-hunyuan3d). It is started when a model is asked for and closed a few minutes after the last one.": "Hunyuan3D-2 is a part of this Forge: its program, its Python and its models are in the models folder (sim360-hunyuan3d). It is started when a model is asked for and closed a few minutes after the last one.",
   "Hunyuan3D-2 is used from where another program (Pinokio) installed it. It can be made a part of Forge: its program, its Python and its models are linked into Forge's models folder. Nothing is copied and no disk space is taken, and afterwards Pinokio is not needed.": "Hunyuan3D-2 is used from where another program (Pinokio) installed it. It can be made a part of Forge: its program, its Python and its models are linked into Forge's models folder. Nothing is copied and no disk space is taken, and afterwards Pinokio is not needed.",
   "Make Hunyuan3D a part of Forge": "Make Hunyuan3D a part of Forge",
   "Hunyuan3D-2 is a part of this Forge now": "Hunyuan3D-2 is a part of this Forge now",
@@ -323,20 +332,6 @@
   "Goes where it goes": "Goes where it goes",
   "Its way over the ground becomes its path (turned to its heading, sized to it). Off: it moves in place": "Its way over the ground becomes its path (turned to its heading, sized to it). Off: it moves in place",
   "Use it": "Use it",
-  "Off: what it did before": "Off: what it did before",
-  "{0} seconds of motion": "{0} seconds of motion",
-  "{0} seconds of motion (the T-pose at its start, {1} s, left out)": "{0} seconds of motion (the T-pose at its start, {1} s, left out)",
-  "a motion is a .bvh, .glb, .npz or .fbx file": "a motion is a .bvh, .glb, .npz or .fbx file",
-  "Real steps (AI4Animation)": "Real steps (AI4Animation)",
-  "A neural network that learnt from motion capture walks it along its path: it starts, slows down, turns into a corner and stops the way people do. Made once for the path; make it again after the path changes": "A neural network that learnt from motion capture walks it along its path: it starts, slows down, turns into a corner and stops the way people do. Made once for the path; make it again after the path changes",
-  "Walk it again": "Walk it again",
-  "Give it real steps": "Give it real steps",
-  "Use the real steps": "Use the real steps",
-  "Off: the formula walk, as before": "Off: the formula walk, as before",
-  "The path changed since the steps were made: walk it again": "The path changed since the steps were made: walk it again",
-  "It needs a path of its own (Movement above): the network walks it along that path.": "It needs a path of its own (Movement above): the network walks it along that path.",
-  "Give it a path first: the network walks it along its path": "Give it a path first: the network walks it along its path",
-  "Ordinary": "Ordinary",
-  "Big steps": "Big steps"
+  "Off: what it did before": "Off: what it did before"
  }
 }

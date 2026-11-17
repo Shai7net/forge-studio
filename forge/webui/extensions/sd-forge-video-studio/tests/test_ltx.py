@@ -173,7 +173,7 @@ class LtxContracts(unittest.TestCase):
 
     def test_character_replacement_stays_on_dedicated_wan_backend(self):
         called = []
-        def replace(*args):
+        def replace(*args, **kwargs):
             called.append(args)
             yield ('replacement stays available', None, None, None, None)
         with patch.object(ltx, 'runtime_ready', return_value=False), patch.object(ui, 'generate_replace', side_effect=replace):

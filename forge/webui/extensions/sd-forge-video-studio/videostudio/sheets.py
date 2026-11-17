@@ -151,8 +151,12 @@ def one_character(small, mask, boxes, front):
     call a picture a sheet."""
     if len(boxes) < MIN_VIEWS:
         return False
-    top = max(b[3] - b[1] for b in boxes)
-    tall = [b for b in boxes if b[3] - b[1] >= 0.85 * top]
+    # the full-body views, as pick_views() takes them: a close-up cut by the bottom of the picture is not one. A
+    # wizard's close-up, taller than its three full views, left only itself 'tall' and the sheet was taken for six
+    # people (2026-11-17)
+    whole = [b for b in boxes if b[3] < 0.985 * mask.shape[0]] or boxes
+    top = max(b[3] - b[1] for b in whole)
+    tall = [b for b in whole if b[3] - b[1] >= 0.85 * top]
     if len(tall) < 2:
         return False
     ref = colours(small, mask, front)
