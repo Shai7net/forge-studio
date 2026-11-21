@@ -63,10 +63,37 @@ def digest(path):
     return h.hexdigest()
 
 
+def find_aria2():
+    """aria2c on PATH, or the one Forge Studio's installer keeps in <Forge Studio>/system/aria2."""
+    own = Path(WEBUI_DIR).resolve().parent.parent / "system" / "aria2" / "aria2c.exe"
+    return shutil.which("aria2c") or (str(own) if own.is_file() else None)
+
+
+def fetch_plain(url, part, size):
+    """Without aria2c: one stream into `part`, resuming after a break (slower, but it gets there)."""
+    import time
+    import urllib.request
+    for attempt in range(1, 21):
+        have = part.stat().st_size if part.exists() else 0
+        if have >= size:
+            return
+        try:
+            request = urllib.request.Request(url, headers={"Range": f"bytes={have}-", "User-Agent": "ForgeStudio"})
+            with urllib.request.urlopen(request, timeout=60) as response, part.open("ab") as out:
+                while True:
+                    block = response.read(8 * 1024 * 1024)
+                    if not block:
+                        break
+                    out.write(block)
+        except OSError as error:
+            print(f"Connection broke ({error}); retrying ({attempt}/20)", flush=True)
+            time.sleep(min(30, 3 * attempt))
+    if not part.exists() or part.stat().st_size < size:
+        raise RuntimeError(f"The download of {part.name} kept failing; press the button again to resume")
+
+
 def download_file(folder, remote_folder, name):
-    aria2 = shutil.which("aria2c")
-    if not aria2:
-        raise RuntimeError("aria2c was not found on PATH")
+    aria2 = find_aria2()
     folder.mkdir(parents=True, exist_ok=True)
     destination = folder / name
     size, sha256 = FILES[name]
@@ -79,12 +106,20 @@ def download_file(folder, remote_folder, name):
     remaining = max(0, size - (destination.stat().st_size if destination.exists() else 0))
     if shutil.disk_usage(folder).free < remaining + 2 * 1024**3:
         raise RuntimeError("Not enough free disk space for this model plus 2 GB working space")
-    command([aria2, "--continue=true", "--max-connection-per-server=8", "--split=8", "--min-split-size=4M",
-             "--file-allocation=none", "--auto-file-renaming=false", "--allow-overwrite=false",
-             "--connect-timeout=15", "--timeout=30", "--max-tries=5", "--retry-wait=3",
-             "--summary-interval=30", "--enable-color=false", "--show-console-readout=false",
-             f"--checksum=sha-256={sha256}", f"--dir={folder}", f"--out={name}",
-             f"https://huggingface.co/Comfy-Org/Fibo-2.0/resolve/{MODEL_REVISION}/{remote_folder}/{name}"])
+    url = f"https://huggingface.co/Comfy-Org/Fibo-2.0/resolve/{MODEL_REVISION}/{remote_folder}/{name}"
+    if not aria2:
+        # a .part file until it is whole, so an unfinished download is never taken for the model
+        print("aria2c was not found: downloading in one stream (slower). Updating Forge Studio installs aria2c.",
+              flush=True)
+        part = Path(str(destination) + ".part")
+        fetch_plain(url, part, size)
+        os.replace(part, destination)
+    else:
+        command([aria2, "--continue=true", "--max-connection-per-server=8", "--split=8", "--min-split-size=4M",
+                 "--file-allocation=none", "--auto-file-renaming=false", "--allow-overwrite=false",
+                 "--connect-timeout=15", "--timeout=30", "--max-tries=5", "--retry-wait=3",
+                 "--summary-interval=30", "--enable-color=false", "--show-console-readout=false",
+                 f"--checksum=sha-256={sha256}", f"--dir={folder}", f"--out={name}", url])
     if destination.stat().st_size != size or digest(destination) != sha256:
         raise RuntimeError(f"Downloaded file failed verification: {destination}")
 

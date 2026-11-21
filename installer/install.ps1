@@ -51,6 +51,10 @@ $DeforumationQT = @{ url = "https://github.com/Rakile/DeforumationQT.git"; commi
 # Forge Studio need ffprobe, which the ffmpeg bundled in the Python packages does not have
 $FfmpegUrl = "https://github.com/GyanD/codexffmpeg/releases/download/7.1.1/ffmpeg-7.1.1-essentials_build.zip"
 $FfmpegSha256 = "04861d3339c5ebe38b56c19a15cf2c0cc97f5de4fa8910e4d47e5e6404e4a2d4"
+# aria2c: big model files come in 8 connections at once and resume where they stopped (a single long stream breaks
+# on many home lines). The official release; the same file Chocolatey installs.
+$Aria2Url = "https://github.com/aria2/aria2/releases/download/release-1.37.0/aria2-1.37.0-win-64bit-build1.zip"
+$Aria2Sha256 = "67d015301eef0b612191212d564c5bb0a14b5b9c4796b76454276a4d28d9b288"
 
 New-Item -ItemType Directory -Force -Path $System | Out-Null
 try { Start-Transcript -Path (Join-Path $Installer "install.log") -Append | Out-Null } catch {}
@@ -60,7 +64,7 @@ $env:UV_CACHE_DIR = Join-Path $System "uv-cache"
 $env:UV_PYTHON_INSTALL_DIR = Join-Path $System "python"
 $env:UV_LINK_MODE = "hardlink"
 $env:PIP_CACHE_DIR = Join-Path $System "pip-cache"
-$env:PATH = "$System\uv;$System\git\cmd;$System\llama.cpp;$System\ffmpeg;$env:PATH"
+$env:PATH = "$System\uv;$System\git\cmd;$System\llama.cpp;$System\ffmpeg;$System\aria2;$env:PATH"
 
 function Step($text) { Write-Host ""; Write-Host "== $text" -ForegroundColor Cyan }
 function Info($text) { Write-Host "   $text" }
@@ -179,6 +183,20 @@ if (-not $ModelsOnly) {
         Remove-Item -Recurse -Force $tmp
     }
     Info "ffmpeg + ffprobe: $System\ffmpeg"
+    if (-not (Test-Path "$System\aria2\aria2c.exe")) {
+        $zip = Join-Path $System "aria2.zip"
+        Get-File $Aria2Url $zip
+        if ((Get-FileHash -Algorithm SHA256 $zip).Hash.ToLower() -ne $Aria2Sha256) { Remove-Item -Force $zip; Fail "the aria2 download is damaged (sha256 differs); run install.bat again" }
+        $tmp = Join-Path $System "aria2.tmp"
+        Expand-Into $zip $tmp
+        New-Item -ItemType Directory -Force -Path "$System\aria2" | Out-Null
+        $exe = Get-ChildItem -Path $tmp -Recurse -File -Filter aria2c.exe | Select-Object -First 1
+        Copy-Item -Force $exe.FullName "$System\aria2\aria2c.exe"
+        $lic = Get-ChildItem -Path $tmp -Recurse -File -Filter COPYING | Select-Object -First 1
+        if ($lic) { Copy-Item -Force $lic.FullName "$System\aria2\COPYING.txt" }
+        Remove-Item -Recurse -Force $tmp
+    }
+    Info "aria2c (fast model downloads): $System\aria2"
 
     # --------------------------------------------------------------------------------------- extensions
     Step "Extensions by other authors (fetched at the exact versions Forge Studio uses)"

@@ -3,5 +3,10 @@
  {"i":2,"en":"LTX: animate a picture to your audio. Speech and singing drive the video. An LTX model is selected automatically. Add the picture and recording, then describe the scene. The recording sets the video length; longer recordings use consecutive short parts. The picture sets the shape within the selected quality. The original audio is preserved in the result.","ctx":"[t] Video Studio Image + Audio to Video"},
  {"i":3,"en":"The recording has no readable duration.","ctx":"[t] Video Studio source metadata error"},
  {"i":4,"en":"Use an audio recording of up to four minutes per video.","ctx":"[t] Video Studio audio length limit"},
- {"i":5,"en":"The source has no readable picture dimensions.","ctx":"[t] Video Studio source metadata error"}
+ {"i":5,"en":"The source has no readable picture dimensions.","ctx":"[t] Video Studio source metadata error"},
+ {"i":6,"en":"Download and set up this model","ctx":"[t] Video Studio Models: one click downloads and sets up the chosen model"},
+ {"i":7,"en":"not set up (choose an LTX model and press Download and set up this model)","ctx":"[t] Video Studio Models status"},
+ {"i":8,"en":"not set up (choose MiniMax-H3 and press Download and set up this model)","ctx":"[t] Video Studio Models status"},
+ {"i":9,"en":"(press Refresh to follow it; you can keep working meanwhile)","ctx":"[t] Video Studio Models status"},
+ {"i":10,"en":"Engine ready.","ctx":"[t] Video Studio Models status"}
 ]

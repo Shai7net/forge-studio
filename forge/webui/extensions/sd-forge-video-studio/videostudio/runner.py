@@ -3,6 +3,7 @@
 import importlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import threading
@@ -210,7 +211,89 @@ def setup_ltx_engine():
     return 'LTX engine ready.'
 
 
+def fibo_runtime_ready():
+    """FIBO 2.0's ComfyUI + Python 3.11 environment, which MiniMax-H3 runs in, set up at the shared revision."""
+    from . import WEBUI_DIR, h3
+    try:
+        with open(os.path.join(WEBUI_DIR, 'fibo2', 'runtime-ready.json'), encoding='utf-8') as f:
+            ready = json.load(f)
+    except (OSError, ValueError):
+        return False
+    return isinstance(ready, dict) and ready.get('comfy_revision') == h3.COMFY_REVISION and h3.python_executable().is_file()
+
+
+def _python311():
+    """A Python 3.11 to build FIBO's environment with: the py launcher's, else uv's (Forge Studio puts uv on PATH and
+    keeps its Pythons in its own folder; uv fetches 3.11 once). Forge's own 3.10 is never used for it."""
+    flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+    py = shutil.which('py')
+    if py and subprocess.run([py, '-3.11', '-c', 'pass'], capture_output=True, creationflags=flags).returncode == 0:
+        return subprocess.check_output([py, '-3.11', '-c', 'import sys; print(sys.executable)'], text=True,
+                                       creationflags=flags).strip()
+    uv = shutil.which('uv')
+    if not uv:
+        raise RuntimeError('Python 3.11 is needed once to build the engine: install it, or update Forge Studio (it brings uv).')
+    found = subprocess.run([uv, 'python', 'find', '3.11'], capture_output=True, text=True, creationflags=flags)
+    if found.returncode != 0:
+        subprocess.run([uv, 'python', 'install', '3.11', '--no-bin', '--no-registry'], capture_output=True, creationflags=flags)
+        found = subprocess.run([uv, 'python', 'find', '3.11'], capture_output=True, text=True, creationflags=flags)
+    if found.returncode != 0 or not found.stdout.strip():
+        raise RuntimeError('Could not get Python 3.11 through uv: ' + (found.stderr or '')[-300:])
+    return found.stdout.strip()
+
+
+def setup_fibo_runtime():
+    """FIBO 2.0's own 'Install FIBO runtime': ComfyUI at the pinned revision and its Python 3.11 environment."""
+    from . import WEBUI_DIR
+    tool = os.path.join(WEBUI_DIR, 'extensions', 'sd-forge-fibo2', 'fibo2', 'setup_runtime.py')
+    if not os.path.isfile(tool):
+        raise RuntimeError('The FIBO 2.0 extension (sd-forge-fibo2) is not installed; MiniMax-H3 runs in its environment.')
+    env = os.environ.copy()
+    for key in ('PYTHONPATH', 'PYTHONHOME'):
+        env.pop(key, None)
+    env['PYTHONUTF8'] = '1'
+    result = subprocess.run([_python311(), '-u', tool, 'install'], capture_output=True, text=True, env=env,
+                            cwd=WEBUI_DIR,
+                            encoding='utf-8', errors='replace', creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    if result.returncode:
+        raise RuntimeError('Setting up FIBO 2.0\'s engine failed: ' + (result.stderr or result.stdout)[-1500:])
+
+
+# "Download and set up this model": the downloads run in models.DOWNLOADS; the engine setup here, beside them
+SETUP = {'running': False, 'text': '', 'error': ''}
+
+
+def start_setup(preset):
+    """In the background: what the chosen model needs before it can run (LTX: its engine; MiniMax-H3: FIBO 2.0's
+    engine if missing, then its own nodes). Nothing for Wan."""
+    from . import h3, ltx
+    steps = []
+    if ltx.is_ltx(preset) and not ltx.runtime_ready():
+        steps.append(('LTX engine', setup_ltx_engine))
+    if h3.is_h3(preset) and not h3.runtime_ready():
+        if not fibo_runtime_ready():
+            steps.append(("FIBO 2.0's engine (MiniMax-H3 runs in it; a few GB, several minutes)", setup_fibo_runtime))
+        steps.append(('MiniMax-H3 engine', setup_h3_engine))  # it finds FIBO's engine ready by then
+    if not steps or SETUP['running']:
+        return
+
+    def run():
+        SETUP.update(running=True, error='')
+        try:
+            for label, step in steps:
+                SETUP['text'] = 'Setting up ' + label + '…'
+                step()
+            SETUP['text'] = 'Engine ready.'
+        except Exception as error:  # noqa: BLE001 - shown in the Models section
+            SETUP.update(text='', error=str(error)[-1500:])
+        finally:
+            SETUP['running'] = False
+    threading.Thread(target=run, daemon=True, name='video-studio-setup').start()
+
+
 def setup_h3_engine():
+    if not fibo_runtime_ready():  # MiniMax-H3 runs in FIBO 2.0's environment: build it first if it is not there
+        setup_fibo_runtime()
     tool = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tools', 'setup_h3.py')
     result = subprocess.run([sys.executable, '-u', tool], capture_output=True, text=True,
                             encoding='utf-8', errors='replace', creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))

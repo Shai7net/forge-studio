@@ -126,8 +126,8 @@ Studio. To open the window again while it runs, start the shortcut again. The ad
 | **FLUX 3 Image Klein** | txt2img, img2img (editing with the picture as a reference), FLUX 3 LoRAs |
 | **FIBO 2.0** (Dev, Edit Turbo) | txt2img and img2img: generation and editing by instruction with up to four references |
 | **Wan 2.2** | Video Studio |
-| **LTX 2.3** | Video Studio (set up from its Models section) |
-| **MiniMax-H3 FL2V · W4A8** | Video Studio (set up from its Models section, after FIBO 2.0's engine) |
+| **LTX 2.3** | Video Studio (Models: *Download and set up this model*) |
+| **MiniMax-H3 FL2V · W4A8** | Video Studio (Models: *Download and set up this model*) |
 
 **AnimateDiff and Deforum work with the previous generation of models (SD 1.5, and SDXL for Deforum).** Choose
 an SD 1.5 checkpoint for them; with FLUX 3 or FIBO selected they do not run (FIBO tells you so).
@@ -168,13 +168,15 @@ environment (installed by the installer or the panel's button), so Forge's own p
   distilled, GGUF: Q3 is the one for 8 GB, Q2 for 6 GB, Q4 for 12 GB and more) for fast video **with its own sound**,
   video from words alone with no opening picture, LTX LoRAs, and **Image + Audio to Video**: a picture and a sound
   file become a video that moves (and speaks) to it. LTX runs in its own environment: in the Models section,
-  *Set up LTX engine* installs it and *Download the missing files of this model* brings its weights (about 21 GB
-  for Q3). A recording longer than 8 seconds is made in 8-second parts that continue each other, each with its own
+  choose it and press *Download and set up this model*, which brings its weights (about 21 GB for Q3) and installs
+  its engine in one click. A recording longer than 8 seconds is made in 8-second parts that continue each other, each with its own
   stretch of the sound, so the whole recording becomes one video.
 - **MiniMax-H3 FL2V · W4A8 · 8 GB**: text to video, image to video, first + last frame and chains of pictures, at
   608×352 or 480×864, 24 fps, about 5 s per video (measured on an 8 GB laptop card: 3.5 minutes, 5.4 GB VRAM). In
-  Models: download its four files (21.6 GB, checked by size and SHA-256) and press *Set up MiniMax-H3 engine* once;
-  it uses FIBO 2.0's engine, so set that up first.
+  Models: choose it and press *Download and set up this model*. One click brings its four files (21.6 GB, checked by
+  size and SHA-256) and sets up its engine, FIBO 2.0's included when it is not there yet.
+- **Fast downloads**: the installer brings aria2c, so big model files come in 8 connections at once and resume
+  where they stopped (Video Studio, FIBO 2.0 and the model downloader all use it).
 - **The media decides for you**: in Image + Audio to Video the length comes from the recording and LTX is chosen by
   itself (the only engine that really listens to sound); in Image to Video the shape comes from the first picture;
   in Replace a character the length and shape come from the video, and a video at another frame rate (29.97, 30,

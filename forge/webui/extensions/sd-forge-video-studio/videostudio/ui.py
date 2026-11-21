@@ -209,14 +209,20 @@ def models_markdown():
                        ("effects", "Sound effects (MMAudio)"), ("lips", "Lip sync (MuseTalk)")):
         lines.append(f"- {label}: {'ready' if have[key] else 'not installed'}")
     py = runner.engine_python()
-    lines.append('- LTX engine: ' + ('ready' if ltx.runtime_ready() else 'not set up (Set up LTX engine below)'))
-    lines.append('- MiniMax-H3 engine: ' + ('ready' if h3.runtime_ready() else 'not set up (Set up MiniMax-H3 engine below)'))
+    lines.append('- LTX engine: ' + ('ready' if ltx.runtime_ready() else 'not set up (choose an LTX model and press Download and set up this model)'))
+    lines.append('- MiniMax-H3 engine: ' + ('ready' if h3.runtime_ready() else 'not set up (choose MiniMax-H3 and press Download and set up this model)'))
     lines.append(f"- Engine: `{'Video Studio engine (PyTorch 2.9, SageAttention)' if 'video-studio' in py else 'Forge Python (slower: no SageAttention)'}`")
     st = models.DOWNLOADS.status()
     if st["active"]:
         lines.append(f"- Downloading {st['text']}: {st['done'] / 1e9:.1f} / {st['total'] / 1e9:.1f} GB")
     if st["error"]:
         lines.append(f"- Download problem: {st['error']}")
+    if runner.SETUP['running'] or runner.SETUP['text']:
+        lines.append('- ' + runner.SETUP['text'])
+    if runner.SETUP['error']:
+        lines.append('- Setup problem: ' + runner.SETUP['error'].replace('\n', ' '))
+    if st["active"] or runner.SETUP['running']:
+        lines.append('- (press Refresh to follow it; you can keep working meanwhile)')
     return "\n".join(lines)
 
 
@@ -1702,7 +1708,8 @@ def build():
                 with gr.Accordion("Models", open=not installed):
                     models_md = gr.Markdown(models_markdown())
                     with gr.Row():
-                        download = gr.Button("Download the missing files of this model", size="sm")
+                        download = gr.Button("Download and set up this model", size="sm", variant="primary",
+                                             elem_id="vs_model_setup")
                         engine = gr.Button("Set up the fast engine", size="sm")
                         ltx_engine = gr.Button('Set up LTX engine', size='sm', elem_id='vs_ltx_setup')
                         h3_engine = gr.Button('Set up MiniMax-H3 engine', size='sm', elem_id='vs_h3_setup')
@@ -1847,7 +1854,9 @@ def build():
         refresh.click(ingredients_models_markdown, inputs=[preset], outputs=[ing_models], queue=False)
 
         def start_download(name):
+            # one click: the files (aria2c, 8 connections, resume) and, beside them, the engine the model needs
             models.DOWNLOADS.start(models.missing(name))
+            runner.start_setup(name)
             return models_markdown()
 
         download.click(start_download, inputs=[preset], outputs=[models_md], queue=False)

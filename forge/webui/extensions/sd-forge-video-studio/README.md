@@ -31,8 +31,11 @@ downloads use aria2c when available, resume partial files, and verify exact size
 SHA-256. Wan/LTX assets and settings are not replaced. Model-family LoRAs are kept
 out of H3 because the referenced workflow does not load them.
 
-Under **Models**, download the selected model and press **Set up MiniMax-H3 engine**
-once. The worker reuses the compatible pinned FIBO ComfyUI/Python runtime and keeps
+Under **Models**, choose it and press **Download and set up this model**: one click downloads
+the four files (with aria2c, 8 connections, resuming) and, beside them, sets the engine up; when FIBO 2.0's
+engine is not there yet it is built first (its ComfyUI at the shared revision and its Python 3.11 environment,
+with a Python 3.11 from the py launcher or fetched by uv), then MiniMax-H3's nodes. Press **Refresh** to follow
+it. (**Set up MiniMax-H3 engine** alone does the engine part, FIBO's included.) The worker reuses the compatible pinned FIBO ComfyUI/Python runtime and keeps
 ClipProj and Spectrum in `video-studio/h3/runtime`; it does not install into Forge or
 edit the shared ComfyUI tree. No ComfyUI server needs to run.
 
@@ -67,7 +70,7 @@ VRAM. A 3-second audio-driven portrait, FILM to 48 fps and x2 enlargement to
 832×1408 completed in about 186 seconds, at 6.07 GB allocated VRAM. Cold text
 encoding adds time; timings vary with the scene, resolution and available memory.
 
-Under **Models**, download the missing files and press **Set up LTX engine** once.
+Under **Models**, choose an LTX model and press **Download and set up this model**: its files and its engine in one click.
 The LTX worker has its own environment under `video-studio/ltx/env`. Setup can
 reference an already installed compatible FIBO or Video Studio environment
 read-only, avoiding duplicate CUDA installations. Additional packages install in

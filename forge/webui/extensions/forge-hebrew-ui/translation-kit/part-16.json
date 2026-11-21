@@ -16,6 +16,11 @@
   "Return the complete file as valid JSON with the same structure and nothing before or after it."
  ],
  "texts": {
+  "Deforum draws a new figure over the motion of a chain: every frame is drawn where the motion has its figure, on a flat backdrop, with a still camera and the same seed, held by ControlNet. Each frame appears in the 3D view as soon as it is drawn (🎮 Steer moves it through space while it grows); at the end the new chain is cut cleanly and stands where the motion stood.": "Deforum draws a new figure over the motion of a chain: every frame is drawn where the motion has its figure, on a flat backdrop, with a still camera and the same seed, held by ControlNet. Each frame appears in the 3D view as soon as it is drawn (🎮 Steer moves it through space while it grows); at the end the new chain is cut cleanly and stands where the motion stood.",
+  "The motion": "The motion",
+  "Or a new motion from a video": "Or a new motion from a video",
+  "A moving figure (a video)": "A moving figure (a video)",
+  "A video of a moving figure: it is cut out into a motion chain first (as in the Chains tab), then drawn": "A video of a moving figure: it is cut out into a motion chain first (as in the Chains tab), then drawn",
   "Give a video of a moving figure (one person, the whole body): it becomes the motion.": "Give a video of a moving figure (one person, the whole body): it becomes the motion.",
   "Choose a video of a moving figure first": "Choose a video of a moving figure first",
   "e.g. a dancer made of glowing glass, full body": "e.g. a dancer made of glowing glass, full body",

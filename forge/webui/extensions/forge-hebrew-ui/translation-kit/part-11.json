@@ -25,6 +25,11 @@
   "The recording has no readable duration.": "The recording has no readable duration.",
   "Use an audio recording of up to four minutes per video.": "Use an audio recording of up to four minutes per video.",
   "The source has no readable picture dimensions.": "The source has no readable picture dimensions.",
+  "Download and set up this model": "Download and set up this model",
+  "not set up (choose an LTX model and press Download and set up this model)": "not set up (choose an LTX model and press Download and set up this model)",
+  "not set up (choose MiniMax-H3 and press Download and set up this model)": "not set up (choose MiniMax-H3 and press Download and set up this model)",
+  "(press Refresh to follow it; you can keep working meanwhile)": "(press Refresh to follow it; you can keep working meanwhile)",
+  "Engine ready.": "Engine ready.",
   "Project": "Project",
   "New project": "New project",
   "Name of the new project:": "Name of the new project:",
@@ -427,13 +432,6 @@
   "Nothing is kept yet.": "Nothing is kept yet.",
   "What it is made of": "What it is made of",
   "Its colour, or a material that Forge draws and wraps round it: old red bricks, rough bark, rusty iron, roof tiles. The material repeats without a seam.": "Its colour, or a material that Forge draws and wraps round it: old red bricks, rough bark, rusty iron, roof tiles. The material repeats without a seam.",
-  "The material repeats": "The material repeats",
-  "How many times the drawn material goes round the object": "How many times the drawn material goes round the object",
-  "Material": "Material",
-  "Old red bricks, rough bark, rusty iron, roof tiles…": "Old red bricks, rough bark, rusty iron, roof tiles…",
-  "Draw the material": "Draw the material",
-  "Take the material off": "Take the material off",
-  "Keep it in my objects": "Keep it in my objects",
-  "It is kept: \"Plain shapes and my objects\", in every project": "It is kept: \"Plain shapes and my objects\", in every project"
+  "The material repeats": "The material repeats"
  }
 }

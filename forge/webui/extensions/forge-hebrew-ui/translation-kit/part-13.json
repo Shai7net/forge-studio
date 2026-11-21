@@ -16,6 +16,10 @@
   "Return the complete file as valid JSON with the same structure and nothing before or after it."
  ],
  "texts": {
+  "This shot's lens, in degrees: wide to see more of a small room, narrow to come close (0: as its way says)": "This shot's lens, in degrees: wide to see more of a small room, narrow to come close (0: as its way says)",
+  "A motion from a file": "A motion from a file",
+  "Feet stay where they step": "Feet stay where they step",
+  "While a foot is on the ground it stays where it stepped: the leg bends to keep it there. Off: it may slide a little": "While a foot is on the ground it stays where it stepped: the leg bends to keep it there. Off: it may slide a little",
   "BVH, GLB or NPZ: a dance, a fight, any motion capture": "BVH, GLB or NPZ: a dance, a fight, any motion capture",
   "Motion capture of any skeleton (Mixamo, LaFan, CMU, AI4Animation's): its joints are matched to this figure's by their names and laid onto its bones": "Motion capture of any skeleton (Mixamo, LaFan, CMU, AI4Animation's): its joints are matched to this figure's by their names and laid onto its bones",
   "Another file": "Another file",
@@ -392,20 +396,6 @@
   "Drop here for a new layer": "Drop here for a new layer",
   "Drop here for a new sound track": "Drop here for a new sound track",
   "Takes: click to switch": "Takes: click to switch",
-  "Take {0} of {1}": "Take {0} of {1}",
-  "AI at this cut": "AI at this cut",
-  "AI: what comes next": "AI: what comes next",
-  "Back to the start value": "Back to the start value",
-  "Picture": "Picture",
-  "Time": "Time",
-  "Up / down": "Up / down",
-  "Turn": "Turn",
-  "Fade in (s)": "Fade in (s)",
-  "Fade out (s)": "Fade out (s)",
-  "Length (s)": "Length (s)",
-  "Mute this clip": "Mute this clip",
-  "The video": "The video",
-  "{0} clips · {1}": "{0} clips · {1}",
-  "Frames a second": "Frames a second"
+  "Take {0} of {1}": "Take {0} of {1}"
  }
 }

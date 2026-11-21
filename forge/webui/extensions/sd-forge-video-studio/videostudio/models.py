@@ -213,7 +213,9 @@ class Download:
 
 
 def _aria2c():
-    for p in (shutil.which("aria2c"), r"C:\ProgramData\chocolatey\bin\aria2c.exe"):
+    # Forge Studio's installer keeps its own in <Forge Studio>\system\aria2 (on PATH through installer\env.bat)
+    own = os.path.join(os.path.dirname(os.path.dirname(WEBUI_DIR)), "system", "aria2", "aria2c.exe")
+    for p in (shutil.which("aria2c"), own, r"C:\ProgramData\chocolatey\bin\aria2c.exe"):
         if p and os.path.isfile(p):
             return p
     return None

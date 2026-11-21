@@ -30,6 +30,7 @@
   מספיק לכתוב מה קורה: התמונה הפותחת נכתבת ומצוירת ב-FLUX 3 Klein מאחורי הקלעים. ולצידו **LTX 2.3**: וידאו מהיר
   עם סאונד משלו, וידאו ממילים בלבד, LoRA של LTX, ו-Image + Audio to Video (תמונה וקובץ קול הופכים לסרטון שזז ומדבר לפיו, גם הקלטות ארוכות). ו-**MiniMax-H3 FL2V**
   ‏(W4A8, ל-8GB): וידאו מטקסט, מתמונה ומפריים ראשון ואחרון.
+- **הורדות מהירות:** ההתקנה מביאה את aria2c, וכל קובץ מודל גדול יורד ב-8 חיבורים במקביל וממשיך מאיפה שנעצר.
 - **המדיה קובעת בשבילך:** ב-Image + Audio האורך נקבע לפי ההקלטה ו-LTX נבחר לבד; ב-Image to Video הצורה לפי התמונה
   הראשונה; בהחלפת דמות האורך והצורה לפי הסרטון, וסרטון בקצב פריימים אחר מומר קודם לקצב שבחרת.
 - **דמויות (לשונית Characters):** מתארים דמות בכל שפה, או נותנים תמונת רפרנס, ו-FLUX 3 Klein מצייר גיליון דמות עקבי
@@ -134,8 +135,8 @@ install.bat -Yes -Models all -HfToken hf_xxxxxxxx
 | **FLUX 3** | ‏txt2img, ‏img2img (עריכה עם התמונה כרפרנס), ‏LoRA של FLUX 3 |
 | **FIBO 2.0** | ‏txt2img ו-img2img: יצירה ועריכה לפי הוראה עם עד ארבע תמונות רפרנס |
 | **Wan 2.2** | ‏Video Studio |
-| **LTX 2.3** | ‏Video Studio (מכינים אותו בחלק Models: ‏*Set up LTX engine* ואז *Download the missing files of this model*, כ-21GB ל-Q3 שמתאים ל-8GB) |
-| **MiniMax-H3 FL2V · W4A8** | ‏Video Studio (בחלק Models: מורידים את ארבעת הקבצים, 21.6GB, ולוחצים *Set up MiniMax-H3 engine*; קודם מכינים את המנוע של FIBO 2.0) |
+| **LTX 2.3** | ‏Video Studio (בחלק Models בוחרים אותו ולוחצים *Download and set up this model*: הקבצים, כ-21GB ל-Q3 שמתאים ל-8GB, והמנוע בלחיצה אחת) |
+| **MiniMax-H3 FL2V · W4A8** | ‏Video Studio (בחלק Models בוחרים אותו ולוחצים *Download and set up this model*: ארבעת הקבצים, 21.6GB, והמנוע, כולל זה של FIBO 2.0 אם עוד אין) |
 
 **בשביל לג'נרט ב-AnimateDiff וב-Deforum צריך להשתמש במודלים מהדור הקודם (SD 1.5, ו-SDXL גם ל-Deforum).**
 

@@ -20,6 +20,29 @@ def status():
     return json.dumps({**models.status(), "job": runner.status()}, indent=2, ensure_ascii=False)
 
 
+def setup_python():
+    """A Python 3.11 to set the runtime up with: the py launcher's, else uv's (Forge Studio's installer puts uv on
+    PATH and keeps its Pythons in its own folder; uv fetches 3.11 once if it has none). Forge's 3.10 is never used."""
+    if os.name == "nt":
+        py = shutil.which("py")
+        if py and subprocess.run([py, "-3.11", "-c", "pass"], capture_output=True).returncode == 0:
+            return subprocess.check_output([py, "-3.11", "-c", "import sys; print(sys.executable)"], text=True).strip()
+    else:
+        py = shutil.which("python3.11")
+        if py:
+            return py
+    uv = shutil.which("uv")
+    if not uv:
+        return None
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    found = subprocess.run([uv, "python", "find", "3.11"], capture_output=True, text=True, creationflags=flags)
+    if found.returncode != 0:
+        subprocess.run([uv, "python", "install", "3.11", "--no-bin", "--no-registry"], capture_output=True,
+                       creationflags=flags)
+        found = subprocess.run([uv, "python", "find", "3.11"], capture_output=True, text=True, creationflags=flags)
+    return found.stdout.strip() if found.returncode == 0 and found.stdout.strip() else None
+
+
 def setup(action, variant="edit-turbo", precision="int8"):
     """Use a modern Python only for setup; never pip-install into Forge."""
     if not _setup_lock.acquire(blocking=False):
@@ -28,12 +51,8 @@ def setup(action, variant="edit-turbo", precision="int8"):
         HOME_DIR.mkdir(parents=True, exist_ok=True)
         log = HOME_DIR / "logs" / "setup-latest.log"
         log.parent.mkdir(parents=True, exist_ok=True)
-        if os.name == "nt":
-            py = shutil.which("py")
-            command = [py, "-3.11"] if py else []
-        else:
-            py = shutil.which("python3.11") or shutil.which("python3")
-            command = [py] if py else []
+        py = setup_python()
+        command = [py] if py else []
         if not command:
             raise gr.Error("Install Python 3.11+ for FIBO setup; Forge's Python is kept unchanged")
         command += [str(EXT_DIR / "fibo2/setup_runtime.py"), action, "--variant", variant, "--precision", precision]

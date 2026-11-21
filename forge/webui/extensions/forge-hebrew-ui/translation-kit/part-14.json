@@ -16,6 +16,20 @@
   "Return the complete file as valid JSON with the same structure and nothing before or after it."
  ],
  "texts": {
+  "AI at this cut": "AI at this cut",
+  "AI: what comes next": "AI: what comes next",
+  "Back to the start value": "Back to the start value",
+  "Picture": "Picture",
+  "Time": "Time",
+  "Up / down": "Up / down",
+  "Turn": "Turn",
+  "Fade in (s)": "Fade in (s)",
+  "Fade out (s)": "Fade out (s)",
+  "Length (s)": "Length (s)",
+  "Mute this clip": "Mute this clip",
+  "The video": "The video",
+  "{0} clips · {1}": "{0} clips · {1}",
+  "Frames a second": "Frames a second",
   "Background colour": "Background colour",
   "Keys": "Keys",
   "Undo / redo": "Undo / redo",
@@ -471,15 +485,6 @@
   "Cancelled": "Cancelled",
   "How sharp the view is drawn while working (recording always draws at full size)": "How sharp the view is drawn while working (recording always draws at full size)",
   "View: fast": "View: fast",
-  "View: good": "View: good",
-  "View: sharp": "View: sharp",
-  "Back to the keys": "Back to the keys",
-  "Leave looking around and see what the camera keys show": "Leave looking around and see what the camera keys show",
-  "Loading frames {0} of {1}": "Loading frames {0} of {1}",
-  "{0} frames drawn": "{0} frames drawn",
-  "frames on the card: {0}×{1}": "frames on the card: {0}×{1}",
-  "sharp up close: {0} at {1}×{2}": "sharp up close: {0} at {1}×{2}",
-  "{0} frames pass a second": "{0} frames pass a second",
-  "looking around": "looking around"
+  "View: good": "View: good"
  }
 }

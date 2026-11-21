@@ -16,6 +16,13 @@
   "Return the complete file as valid JSON with the same structure and nothing before or after it."
  ],
  "texts": {
+  "How many times the drawn material goes round the object": "How many times the drawn material goes round the object",
+  "Material": "Material",
+  "Old red bricks, rough bark, rusty iron, roof tiles…": "Old red bricks, rough bark, rusty iron, roof tiles…",
+  "Draw the material": "Draw the material",
+  "Take the material off": "Take the material off",
+  "Keep it in my objects": "Keep it in my objects",
+  "It is kept: \"Plain shapes and my objects\", in every project": "It is kept: \"Plain shapes and my objects\", in every project",
   "Its picture, its model and everything it is are copied to your own collection, to be stood in other worlds and other projects": "Its picture, its model and everything it is are copied to your own collection, to be stood in other worlds and other projects",
   "Write what it is made of first": "Write what it is made of first",
   "There is no such shape": "There is no such shape",
@@ -325,10 +332,6 @@
   "A portal into its own world cannot lead back": "A portal into its own world cannot lead back",
   "The portal has no shape yet": "The portal has no shape yet",
   "Until second": "Until second",
-  "When in the scene it stops, and the figure stands or does its act again (0: it does not stop)": "When in the scene it stops, and the figure stands or does its act again (0: it does not stop)",
-  "This shot's lens, in degrees: wide to see more of a small room, narrow to come close (0: as its way says)": "This shot's lens, in degrees: wide to see more of a small room, narrow to come close (0: as its way says)",
-  "A motion from a file": "A motion from a file",
-  "Feet stay where they step": "Feet stay where they step",
-  "While a foot is on the ground it stays where it stepped: the leg bends to keep it there. Off: it may slide a little": "While a foot is on the ground it stays where it stepped: the leg bends to keep it there. Off: it may slide a little"
+  "When in the scene it stops, and the figure stands or does its act again (0: it does not stop)": "When in the scene it stops, and the figure stands or does its act again (0: it does not stop)"
  }
 }

@@ -16,6 +16,15 @@
   "Return the complete file as valid JSON with the same structure and nothing before or after it."
  ],
  "texts": {
+  "View: sharp": "View: sharp",
+  "Back to the keys": "Back to the keys",
+  "Leave looking around and see what the camera keys show": "Leave looking around and see what the camera keys show",
+  "Loading frames {0} of {1}": "Loading frames {0} of {1}",
+  "{0} frames drawn": "{0} frames drawn",
+  "frames on the card: {0}×{1}": "frames on the card: {0}×{1}",
+  "sharp up close: {0} at {1}×{2}": "sharp up close: {0} at {1}×{2}",
+  "{0} frames pass a second": "{0} frames pass a second",
+  "looking around": "looking around",
   "Chains": "Chains",
   "Knife": "Knife",
   "+ Add a chain": "+ Add a chain",
@@ -349,11 +358,6 @@
   "Its pan left/right turns the trail and up/down makes it climb; its rotation turns the camera around the figure and its zoom brings it closer. Only read: DeforumationQT and its renders are left as they are": "Its pan left/right turns the trail and up/down makes it climb; its rotation turns the camera around the figure and its zoom brings it closer. Only read: DeforumationQT and its renders are left as they are",
   "Its rotation and zoom move the camera": "Its rotation and zoom move the camera",
   "Full turn at pan": "Full turn at pan",
-  "The pan value in DeforumationQT that turns the trail as much as the stick fully over": "The pan value in DeforumationQT that turns the trail as much as the stick fully over",
-  "Deforum draws a new figure over the motion of a chain: every frame is drawn where the motion has its figure, on a flat backdrop, with a still camera and the same seed, held by ControlNet. Each frame appears in the 3D view as soon as it is drawn (🎮 Steer moves it through space while it grows); at the end the new chain is cut cleanly and stands where the motion stood.": "Deforum draws a new figure over the motion of a chain: every frame is drawn where the motion has its figure, on a flat backdrop, with a still camera and the same seed, held by ControlNet. Each frame appears in the 3D view as soon as it is drawn (🎮 Steer moves it through space while it grows); at the end the new chain is cut cleanly and stands where the motion stood.",
-  "The motion": "The motion",
-  "Or a new motion from a video": "Or a new motion from a video",
-  "A moving figure (a video)": "A moving figure (a video)",
-  "A video of a moving figure: it is cut out into a motion chain first (as in the Chains tab), then drawn": "A video of a moving figure: it is cut out into a motion chain first (as in the Chains tab), then drawn"
+  "The pan value in DeforumationQT that turns the trail as much as the stick fully over": "The pan value in DeforumationQT that turns the trail as much as the stick fully over"
  }
 }

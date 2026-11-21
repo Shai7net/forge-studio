@@ -1,7 +1,7 @@
 # Forge Studio translation kit
 
 Forge Studio comes in English and Hebrew. This kit lets any AI translate it into another language:
-19 files with 5580 interface texts and 63 help texts, in English.
+19 files with 5585 interface texts and 63 help texts, in English.
 
 1. Give your AI (ChatGPT, Claude, Gemini, ...) one or more of the `part-*.json` files at a time, with this request:
 
