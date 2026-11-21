@@ -14,9 +14,11 @@
     const P = FS.player = {canvas: null, ctx: null, scale: 1, sources: {}, images: {}, texts: {}, raf: 0, clock: null};
 
     P.attach = function (canvas) {
+        if (P.observer) P.observer.disconnect();
         P.canvas = canvas;
         P.ctx = canvas.getContext('2d');
-        new ResizeObserver(() => P.resize()).observe(canvas.parentElement);
+        P.observer = new ResizeObserver(() => P.resize());
+        P.observer.observe(canvas.parentElement);
         P.resize();
     };
 
@@ -25,14 +27,39 @@
         if (!P.canvas || !S.doc) return;
         const box = P.canvas.parentElement.getBoundingClientRect();
         const {width: W, height: H} = S.doc.settings;
+        if (!box.width || !box.height) return;
         const fit = Math.min(box.width / W, box.height / H);
         P.canvas.style.width = Math.max(10, Math.floor(W * fit)) + 'px';
         P.canvas.style.height = Math.max(10, Math.floor(H * fit)) + 'px';
         P.scale = Math.min(1, fit * (window.devicePixelRatio || 1));
-        P.canvas.width = Math.max(2, Math.round(W * P.scale));
-        P.canvas.height = Math.max(2, Math.round(H * P.scale));
+        const w = Math.max(2, Math.round(W * P.scale)), h = Math.max(2, Math.round(H * P.scale));
+        if (P.canvas.width !== w || P.canvas.height !== h) {
+            P.canvas.width = w;
+            P.canvas.height = h;
+            P.lastGood = null;
+        }
         P.draw();
     };
+
+    // One scrub update per display frame; never restart a decoder while its preceding seek is still running.
+    P.requestDraw = function (sync = false) {
+        P.syncRequested = P.syncRequested || sync;
+        if (P.drawRaf) return;
+        P.drawRaf = requestAnimationFrame(() => {
+            P.drawRaf = 0;
+            const seek = P.syncRequested;
+            P.syncRequested = false;
+            if (S.playing) return;
+            if (seek) P.sync(true);
+            P.draw();
+        });
+    };
+    const transports = new WeakMap();
+    function seekTo(el, target, tolerance = 0.002) {
+        transports.get(el).seek(target, tolerance);
+    }
+    function startMedia(el) { transports.get(el).play(); }
+    function pauseMedia(el) { transports.get(el).pause(); }
 
     /* ---- sources ---- */
 
@@ -41,7 +68,8 @@
             let img = P.images[clip.media];
             if (!img) {
                 img = P.images[clip.media] = new Image();
-                img.onload = () => P.draw();
+                img.onload = () => P.requestDraw();
+                img.onerror = () => { img.fsFailed = true; P.requestDraw(); };
                 img.src = FS.mediaUrl(clip.media);
             }
             return img;
@@ -54,10 +82,10 @@
             el.preload = 'auto';
             el.playsInline = true;
             el.crossOrigin = 'anonymous';
-            el.src = FS.mediaUrl(clip.media);
-            el.addEventListener('seeked', () => { if (!S.playing) P.draw(); });
-            el.addEventListener('loadeddata', () => { if (!S.playing) P.sync(true); });
-            s = P.sources[clip.id] = {el, media: clip.media};
+            const transport = new FS.MediaTransport(el, () => { if (!S.playing) P.requestDraw(); });
+            transports.set(el, transport);
+            s = P.sources[clip.id] = {el, media: clip.media, transport};
+            transport.source(FS.mediaUrl(clip.media));
         }
         return s.el;
     }
@@ -65,9 +93,8 @@
     function release(id) {
         const s = P.sources[id];
         if (!s) return;
-        s.el.pause();
-        s.el.removeAttribute('src');
-        s.el.load();
+        s.transport.dispose();
+        transports.delete(s.el);
         delete P.sources[id];
     }
 
@@ -145,7 +172,9 @@
     const scratch = document.createElement('canvas');
     function masked(b) {
         const k = P.scale;  // the player canvas's pixels per pixel of the edit
-        const w = Math.max(2, Math.round(b.w * k)), h = Math.max(2, Math.round(b.h * k));
+        // Off-screen scale/keyframes must not allocate gigabyte scratch textures.
+        const cap = Math.min(1, 4096 / Math.max(b.w * k, b.h * k), Math.sqrt(4194304 / Math.max(1, b.w * b.h * k * k)));
+        const w = Math.max(2, Math.round(b.w * k * cap)), h = Math.max(2, Math.round(b.h * k * cap));
         if (scratch.width !== w || scratch.height !== h) { scratch.width = w; scratch.height = h; }
         const ctx = scratch.getContext('2d');
         ctx.clearRect(0, 0, w, h);
@@ -156,7 +185,13 @@
         const key = `${m.shape}|${m.round}|${m.soft}|${w}x${h}`;
         let cv = maskCache.get(key);
         if (cv) return cv;
-        if (maskCache.size > 24) maskCache.clear();
+        let pixels = w * h;
+        for (const item of maskCache.values()) pixels += item.width * item.height;
+        while (maskCache.size && (maskCache.size >= 16 || pixels > 8388608)) {
+            const oldest = maskCache.keys().next().value, item = maskCache.get(oldest);
+            pixels -= item.width * item.height;
+            maskCache.delete(oldest);
+        }
         cv = document.createElement('canvas');
         cv.width = w;
         cv.height = h;
@@ -251,33 +286,33 @@
         const {width: W, height: H, background} = S.doc.settings;
         x.setTransform(P.scale, 0, 0, P.scale, 0, 0);
         x.globalAlpha = 1;
-        x.fillStyle = background || '#000';
-        x.fillRect(0, 0, W, H);
         const order = FS.visualTracks().filter((tr) => !tr.hidden).map((tr) => tr.id);
         const clips = S.doc.clips.filter((c) => order.includes(c.track) && (active(c, t) || heldUnder(c, t)))
             .sort((a, b) => order.indexOf(a.track) - order.indexOf(b.track) || a.start - b.start);
         // a shot whose frame the browser is still finding (scrubbing, or the next shot at a cut) would be a black hole:
-        // the last whole picture stays up instead, for up to 1.5 s, and the picture is drawn again as soon as it is there
+        // Keep the complete composite until its replacement is ready. Never flash a half-loaded set of layers.
         const loading = P.holdWhileLoading !== false && !P.clean && clips.some((c) => {
             if (c.kind !== 'video' && c.kind !== 'image') return false;
             const src = sourceOf(c);
             // a seeking video counts too: Chrome hands back an empty picture for it until 'seeked', though it says it is ready
-            return !(src && (src.tagName === 'IMG' ? src.complete && src.naturalWidth : src.readyState >= 2 && !src.seeking));
+            return src && !src.error && !src.fsFailed && !(src.tagName === 'IMG' ? src.complete && src.naturalWidth : src.readyState >= 2 && !src.seeking);
         });
         P.loadingDraws = (P.loadingDraws || 0) + (loading ? 1 : 0);
         if (loading) {
             const now = performance.now();
             if (!P.waitSince) P.waitSince = now;
-            if (P.lastGood && now - P.waitSince < 1500) {
+            if (P.lastGood) {
                 x.setTransform(1, 0, 0, 1, 0, 0);
                 x.drawImage(P.lastGood, 0, 0);
                 clearTimeout(P.retry);
-                P.retry = setTimeout(() => P.draw(), 50);
+                if (!S.playing) P.retry = setTimeout(() => P.requestDraw(), 80);
                 P.heldDraws = (P.heldDraws || 0) + 1;
                 FS.emit('drawn', t);
                 return;
             }
         } else P.waitSince = 0;
+        x.fillStyle = background || '#000';
+        x.fillRect(0, 0, W, H);
         let animating = false;
         for (const c of clips) {
             const b = P.box(c, t);
@@ -404,9 +439,18 @@
      * the media are seeked there first */
     P.fullFrame = async function () {
         P.sync(true);
-        const videos = Object.values(P.sources).map((s) => s.el).filter((el) => el.tagName === 'VIDEO');
+        const videos = S.doc.clips.filter((c) => c.kind === 'video' && (active(c, S.time) || heldUnder(c, S.time)))
+            .map(sourceOf);
         await Promise.all(videos.map((el) => (el.seeking || el.readyState < 2
-            ? new Promise((r) => { const done = () => r(); el.addEventListener('seeked', done, {once: true}); el.addEventListener('loadeddata', done, {once: true}); setTimeout(done, 3000); })
+            ? new Promise((resolve, reject) => {
+                let timer;
+                const done = () => {
+                    if (el.seeking || el.readyState < 2) return;
+                    clearTimeout(timer); el.removeEventListener('seeked', done); el.removeEventListener('loadeddata', done); resolve();
+                };
+                el.addEventListener('seeked', done); el.addEventListener('loadeddata', done);
+                timer = setTimeout(() => { el.removeEventListener('seeked', done); el.removeEventListener('loadeddata', done); reject(new Error(FS.T('The video frame is still loading. Try again.'))); }, 5000);
+            })
             : null)));
         const {width: W, height: H} = S.doc.settings;
         const cv = document.createElement('canvas');
@@ -436,6 +480,11 @@
         const mutedTracks = new Set(S.doc.tracks.filter((tr) => tr.muted).map((tr) => tr.id));
         const hiddenTracks = new Set(S.doc.tracks.filter((tr) => tr.hidden).map((tr) => tr.id));
         const talk = S.doc.clips.some((c) => c.duck > 0) ? FS.duckRanges() : [];
+        // Titles and PNG overlays need the same look-ahead as video. Loading them only at their first visible
+        // frame held the entire composite at each caption even though the underlying movie was already playing.
+        for (const c of S.doc.clips) {
+            if (c.kind === 'image' && !hiddenTracks.has(c.track) && c.start < t + 2 && FS.end(c) > t) sourceOf(c);
+        }
         for (const c of S.doc.clips) {
             if (c.kind !== 'video' && c.kind !== 'audio') continue;
             const soon = c.start - t < 2.0 && FS.end(c) - t > -1.0;
@@ -449,13 +498,11 @@
             el.volume = Math.max(0, Math.min(1, Math.max(0, FS.at(c, 'volume', t)) *(on ? fade(c, t, true) * FS.duckGain(c, t, talk) * FS.soundGain(c, t) : 1)));
             if (S.playing && on) {
                 el.playbackRate = Math.max(0.0625, Math.min(16, FS.ramped(c) ? FS.at(c, 'speed', t) : val(c, 'speed')));
-                if (Math.abs(el.currentTime - target) > (el.paused ? 0.05 : 0.25)) el.currentTime = target;
-                if (el.paused) el.play().catch(() => null);
+                if (!el.seeking && Math.abs(el.currentTime - target) > (el.paused ? 0.05 : 0.25)) seekTo(el, target);
+                startMedia(el);
             } else {
-                if (!el.paused) el.pause();
-                if (exact || Math.abs(el.currentTime - target) > 0.02) {
-                    if (el.readyState >= 1) el.currentTime = target;
-                }
+                pauseMedia(el);
+                seekTo(el, target, exact ? 0.002 : 0.02);
             }
         }
         // a soft cut: the clip before goes on under the new sound from its own file, in a sound element of its own
@@ -476,20 +523,36 @@
                 * (val(c, 'fadeOut') > 0 ? 0 : 1)));
             if (S.playing && inTail) {
                 el.playbackRate = Math.max(0.0625, Math.min(16, val(c, 'speed')));
-                if (Math.abs(el.currentTime - target) > (el.paused ? 0.05 : 0.25)) el.currentTime = target;
-                if (el.paused) el.play().catch(() => null);
+                if (!el.seeking && Math.abs(el.currentTime - target) > (el.paused ? 0.05 : 0.25)) seekTo(el, target);
+                startMedia(el);
             } else {
-                if (!el.paused) el.pause();
-                if (Math.abs(el.currentTime - target) > 0.02 && el.readyState >= 1) el.currentTime = target;
+                pauseMedia(el);
+                seekTo(el, target, 0.02);
             }
         }
         for (const id of Object.keys(P.sources)) {
             const c = FS.clip(id.replace(/~tail$/, ''));
             if (!c || !keep.has(id)) {
-                if (!c || Math.abs(c.start - t) > 30) release(id);
-                else if (!P.sources[id].el.paused) P.sources[id].el.pause();
+                if (!c || FS.end(c) < t - 3 || c.start > t + 4) release(id);
+                else pauseMedia(P.sources[id].el);
             }
         }
+        // Images and text canvases are decoded pixel buffers too, not just their small compressed files.
+        const nearby = S.doc.clips.filter((c) => c.start < t + 4 && FS.end(c) > t - 3);
+        const images = new Set(nearby.filter((c) => c.kind === 'image').map((c) => c.media));
+        let bytes = 0;
+        for (const [web, img] of Object.entries(P.images)) {
+            if (images.has(web)) bytes += (img.naturalWidth || 0) * (img.naturalHeight || 0) * 4;
+        }
+        for (const [web, img] of Object.entries(P.images)) {
+            if (!images.has(web)) {
+                const size = (img.naturalWidth || 0) * (img.naturalHeight || 0) * 4;
+                if (bytes + size <= 64 * 1024 * 1024) { bytes += size; continue; }
+                img.onload = img.onerror = null; img.removeAttribute('src'); delete P.images[web];
+            }
+        }
+        const textIds = new Set(nearby.filter((c) => c.kind === 'text').map((c) => c.id));
+        for (const id of Object.keys(P.texts)) if (!textIds.has(id.replace(/~typed$/, ''))) delete P.texts[id];
     };
 
     /* ---- playing ---- */
@@ -497,6 +560,24 @@
     function tick() {
         if (!S.playing) return;
         const now = performance.now();
+        // Composite at the sequence's rate, rather than redrawing a 24 fps shot 60/144 times per second.
+        if (P.lastTick != null && now - P.lastTick < 1000 / FS.fps() - 1) { P.raf = requestAnimationFrame(tick); return; }
+        const interval = 1000 / FS.fps();
+        P.lastTick = P.lastTick == null ? now : P.lastTick + Math.max(1, Math.floor((now - P.lastTick + 1) / interval)) * interval;
+        if (P.startUntil) {
+            // play() is asynchronous. Starting the timeline clock before the browser actually plays left the
+            // first shot permanently 100-200 ms behind, especially after Forge updated its Play button.
+            const waiting = Object.entries(P.sources).some(([id, s]) => {
+                const c = FS.clip(id);
+                return c && active(c, S.time) && !FS.track(c.track)?.hidden &&
+                    s.transport.busy;
+            });
+            P.clock.at = now;
+            if (waiting && now < P.startUntil) {
+                P.sync(false); P.draw(); P.raf = requestAnimationFrame(tick); return;
+            }
+            P.startUntil = 0;
+        }
         S.time = P.clock.t0 + (now - P.clock.at) / 1000;
         const end = FS.total();
         if (S.time >= end) {
@@ -517,6 +598,8 @@
         S.playing = true;
         clearTimeout(P.animTimer);
         P.clock = {t0: S.time, at: performance.now()};
+        P.startUntil = P.clock.at + 2000;
+        P.lastTick = null;
         P.sync(false);
         FS.emit('playing', true);
         cancelAnimationFrame(P.raf);
@@ -535,11 +618,18 @@
 
     P.toggle = () => (S.playing ? P.pause() : P.play());
 
-    FS.on('time', () => { if (!S.playing) { P.sync(true); P.draw(); } });
+    FS.on('time', () => { if (!S.playing) P.requestDraw(true); });
     FS.on('doc', () => { if (!S.playing) { P.sync(false); P.draw(); } });
     FS.on('select', () => P.draw());
     FS.on('project', () => {
+        if (S.playing) P.pause();
+        cancelAnimationFrame(P.raf);
+        cancelAnimationFrame(P.drawRaf); P.drawRaf = 0; P.syncRequested = false;
+        clearTimeout(P.retry); clearTimeout(P.animTimer);
+        P.lastGood = null; P.waitSince = 0; maskCache.clear();
+        scratch.width = scratch.height = 2;
         for (const id of Object.keys(P.sources)) release(id);
+        for (const img of Object.values(P.images)) { img.onload = img.onerror = null; img.removeAttribute('src'); }
         P.images = {};
         P.texts = {};
         P.resize();

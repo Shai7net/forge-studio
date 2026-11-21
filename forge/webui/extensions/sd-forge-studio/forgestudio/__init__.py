@@ -4,5 +4,5 @@ The editor (player, timeline, inspector) is drawn by the page; exports are rende
 with the graphics card's encoder (render.py).
 """
 
-NAME = "Forge Studio"
+NAME = "Forge Studio Editor"
 VERSION = "2.0.0"

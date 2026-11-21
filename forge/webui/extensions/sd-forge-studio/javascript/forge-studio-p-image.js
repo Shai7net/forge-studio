@@ -1053,7 +1053,7 @@
         if (!c) throw new Error(T('Save the shot into the edit first'));
         if (!FS.gen || !FS.gen.request) throw new Error(T('Video making is not available'));
         const words = await FS.ask(T('Make a video from the shot'), T('What happens in the video? (empty: natural, gentle motion)'), '',
-            T('Wan starts from this picture; the new clip goes right after the shot.'));
+            T('Wan starts from this picture; the new clip goes right after the shot.'), null, {video: 'i2v'});
         if (words == null) return;
         await IM.close();
         await FS.gen.request({kind: 'picture', prompt: String(words || '').trim() || 'natural, gentle motion, the same scene',

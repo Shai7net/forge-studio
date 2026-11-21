@@ -17,6 +17,13 @@ function videoStudioSubmit(...args) {
     return args;
 }
 
+// Metadata callbacks use the visible tab, just as Generate does, including rapid tab switches.
+function videoStudioMediaInputs(...args) {
+    args[0] = videoStudioMode();
+    videoStudioSyncControls();
+    return args;
+}
+
 // Opens a tab of a gr.Tabs by its id. The tab buttons are not a safe way in: the navigation bookmarks extension
 // moves the top-level ones into folders, so their order says nothing.
 function videoStudioOpen(tabsId, id) {
@@ -108,11 +115,8 @@ function videoStudioTranslate() {
 
 // Replace a character has its own length and quality: the shared ones are hidden while it is open.
 function videoStudioSyncControls() {
-    const replace = videoStudioMode() === "replace";
-    for (const id of ["vs_quality", "vs_seconds"]) {
-        const el = gradioApp().getElementById(id);
-        if (el) el.style.display = replace ? "none" : "";
-    }
+    const main = gradioApp().getElementById('vs_main'), mode = videoStudioMode();
+    if (main && main.dataset.vsMode !== mode) main.dataset.vsMode = mode;
 }
 
 document.addEventListener("click", (e) => {

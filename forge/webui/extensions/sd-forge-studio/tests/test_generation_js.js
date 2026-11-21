@@ -17,6 +17,7 @@ function fresh(clips) {
 const initial = () => [{id: 'v', kind: 'video', track: 'v1', media: 'v.mp4', start: 0, duration: 2},
     {id: 'a', kind: 'audio', track: 'a1', media: 'a.wav', start: 1, duration: 2}];
 async function main() {
+    F.gen.poll=()=>{};
     let passed = 0;
     for (const state of ['error', 'cancelled']) {
         fresh(initial());
@@ -82,6 +83,56 @@ async function main() {
     assert.equal(F.clip('linked'),undefined);assert.ok(F.clip('audio'));
     assert.ok(!F.clip('v').muted);F.undo();assert.equal(JSON.stringify(S.doc),linkedBefore);
     console.log('ok combine bakes linked audio and keeps independent sound; Undo restores the linked pair');passed++;
+    fresh(initial()); F.gen.records=[];
+    const beforeCancel=JSON.stringify(S.doc);let submitted=null,resolveSubmit;
+    const cancellations=[];
+    F.api=async(url,body)=>{if(url==='generate'){submitted=body;return new Promise(r=>resolveSubmit=r);}cancellations.push([url,body]);return {};};
+    const pending=F.gen.request({kind:'continue',seconds:1,prompt:'Continue the shot'},{time:0,track:'v1',exact:true,shift:1});
+    for(let i=0;i<10&&!submitted;i++)await Promise.resolve();
+    await F.gen.cancelClip(submitted.placeholder.clip);
+    assert.equal(JSON.stringify(S.doc),beforeCancel);
+    resolveSubmit({id:'late-submit',placeholder:submitted.placeholder,state:'waiting'});await pending;
+    assert(cancellations.some(([url,b])=>url==='generate/cancel'&&b.id==='late-submit'));
+    assert.equal(JSON.stringify(S.doc),beforeCancel);
+    F.undo(); assert(!S.doc.clips.some(c=>c.kind==='gen')); F.redo(); assert(!S.doc.clips.some(c=>c.kind==='gen'));
+    console.log('ok cancellation before submission returns restores pre-roll and cancels the eventual worker');passed++;
+
+    fresh(initial()); F.gen.records=[];let resolveAdd,adding=false,probes=0;
+    S.doc.clips.push({id:'pending-picture',kind:'gen',track:'v1',start:2,duration:1,gen:{id:'late-result'}});
+    const late={id:'late-result',state:'done',video:'late.mp4',placeholder:{clip:'pending-picture',exact:true}};
+    F.api=async(url,body)=>{if(url.startsWith('generations?'))return {generations:[late]};if(url==='generate/result'){adding=true;return new Promise(r=>resolveAdd=r);}return {};};
+    F.probe=async()=>{probes++;return {duration:1};};
+    const refresh=F.gen.refresh();for(let i=0;i<10&&!adding;i++)await Promise.resolve();
+    await F.gen.cancelClip('pending-picture');resolveAdd({web:'late.mp4'});await refresh;
+    assert.equal(F.clip('pending-picture'),undefined);assert.equal(F.clip('v').media,'v.mp4');assert.equal(probes,0);
+    console.log('ok cancelling while a completed result is being imported cannot resurrect the clip');passed++;
+
+    fresh(initial());F.clip('v').pendingTake='take-stop';F.gen.records=[{id:'take-stop',state:'running',placeholder:{clip:'v',take:true}}];F.api=async()=>({});
+    await F.gen.cancelClip('v');assert.equal(F.clip('v').pendingTake,undefined);assert.equal(F.clip('v').media,'v.mp4');
+    console.log('ok Stop on a take clears pending state while preserving the original');passed++;
+    fresh(initial());let asked=0;F.ask=async()=>null;F.api=async()=>{asked++;};
+    const beforeReview=JSON.stringify(S.doc);await F.gen.extendClip(F.clip('v'),'r',2);
+    assert.equal(asked,0);assert.equal(JSON.stringify(S.doc),beforeReview);
+    console.log('ok cancelling extension review never submits generation or changes the shot');passed++;
+
+    F.ask=async()=>({text:'Continue the shot',choice:'fast',number:2,sound:false});let payload;
+    F.api=async(url,body)=>{if(url==='generate'){payload=body;return {id:'reviewed-job',placeholder:body.placeholder};}return {};};
+    await F.gen.extendClip(F.clip('v'),'r',2);
+    assert.equal(payload.fast,true);assert.equal(payload.sound,false);assert.equal(payload.seconds,2);assert.equal(F.clip('v').duration,2);
+    console.log('ok only an approved review submits the chosen duration, fast mode and optional sound');passed++;
+
+    fresh(initial());S.doc.clips.push({id:'ready-placeholder',kind:'gen',track:'v1',start:2,duration:1,gen:{id:'recover-import'}});
+    const finished={id:'recover-import',state:'done',video:'finished.mp4',placeholder:{clip:'ready-placeholder',exact:true}};
+    let polls=0;F.gen.poll=()=>polls++;F.api=async url=>{if(url.startsWith('generations?'))return {generations:[finished]};if(url==='generate/result')throw Error('temporary import failure');return {};};
+    await F.gen.refresh();assert(polls>0);assert.equal(F.clip('ready-placeholder').gen.resultReady,true);assert(finished.importError);
+    F.api=async url=>url.startsWith('generations?')?{generations:[finished]}:url==='generate/result'?{web:'finished.mp4'}:{};
+    F.probe=async()=>({duration:1});await F.gen.retryResult('ready-placeholder');
+    assert.equal(F.clip('ready-placeholder').kind,'video');assert.equal(F.clip('ready-placeholder').media,'finished.mp4');
+    console.log('ok a completed-result import failure keeps polling, exposes Retry and recovers without regenerating');passed++;
+
+    fresh(initial());F.api=async()=>{throw Error('connection lost');};polls=0;
+    await F.gen.refresh();assert(polls>0);
+    console.log('ok a status request failure schedules another poll instead of stranding the UI');passed++;
     console.log(`${passed} passed`);
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

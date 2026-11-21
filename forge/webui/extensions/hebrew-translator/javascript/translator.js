@@ -4,8 +4,12 @@
 // new elements, and these texts change in place.
 (function() {
     const FIELDS = ["txt2img_prompt", "txt2img_neg_prompt", "img2img_prompt", "img2img_neg_prompt", "vs_prompt",
-        "vs_part1", "vs_part2", "vs_part3", "vs_part4", "vs_part5", "ch_character", "ch_video"];
+        "vs_part1", "vs_part2", "vs_part3", "vs_part4", "vs_part5", "vs_first_frame",
+        "vs_rep_char2_words", "vs_rep_char3_words", "vs_rep_char4_words", "ch_character", "ch_video"];
     const state = {}; // per field: {source, written, target, label, id, rated, dislikedId}
+    // text boxes outside Gradio (Forge Studio's editor): field -> {box, as: the field the server writes for,
+    // video: the Video Studio mode it is for, or a function giving it}
+    const EXTRA = {};
 
     const TEXT = {
         write: ["Write an English prompt for this model from what you wrote (any language)",
@@ -74,6 +78,7 @@
     }
 
     function textarea(field) {
+        if (EXTRA[field]) return EXTRA[field].box.isConnected ? EXTRA[field].box : null;
         const el = gradioApp().getElementById(field);
         return el && el.querySelector("textarea");
     }
@@ -126,7 +131,8 @@
             }
         });
         // inside the field's block, under the textarea: next to it, a flex row (txt2img's prompt row) puts it beside
-        gradioApp().getElementById(field).appendChild(el);
+        if (EXTRA[field]) EXTRA[field].box.parentElement.after(el);
+        else gradioApp().getElementById(field).appendChild(el);
         paint(el);
         return el;
     }
@@ -194,13 +200,16 @@
         try {
             // Video Studio's sub-tab, and "ltx:" before it when its video model is an LTX one (LTX reads a long
             // chronological paragraph with the sound in it; Wan a short motion paragraph)
-            let video = typeof videoStudioMode === "function" ? videoStudioMode() : "";
+            const extra = EXTRA[field];
+            const as = extra ? extra.as : field;
+            let video = extra ? (typeof extra.video === "function" ? extra.video() : extra.video || "")
+                : typeof videoStudioMode === "function" ? videoStudioMode() : "";
             const model = gradioApp().querySelector("#vs_model input");
-            if ((field.startsWith("vs_") || field === "ch_video") && model && /\bLTX\b/.test(model.value)) {
-                video = "ltx:" + (field === "ch_video" ? "ingredients" : video);
+            if ((as.startsWith("vs_") || as === "ch_video") && model && /\bLTX\b/.test(model.value)) {
+                video = "ltx:" + (as === "ch_video" ? "ingredients" : video);
             }
             const d = await call("/translator/write", {
-                text: source, field, video_mode: video, again: !!again, seed: Math.floor(Math.random() * 1e9),
+                text: source, field: as, video_mode: video, again: !!again, seed: Math.floor(Math.random() * 1e9),
             });
             const keep = s && again ? s.dislikedId : null;
             state[field] = {source, written: d.prompt, meaning: d.meaning || "", target: d.target, label: d.target_label,
@@ -327,24 +336,44 @@
 
     // ------------------------------------------------------------------ the 🌐 buttons
 
+    function addButton(field, box) {
+        // the 🌐 is drawn by style.css: as text, A1111's hints.js would give it panorama viewer's "🌐" tooltip
+        const button = make("button", {type: "button", id: `pw_write_${field}`, class: "pw-write hebrew-ui-skip"});
+        button.dataset.tip = "write";
+        button.title = t("write");
+        button.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            write(field, false);
+        });
+        // in the textarea's own wrapper, so the bar below does not move it
+        const holder = box.parentElement;
+        holder.classList.add("pw-field");
+        holder.appendChild(button);
+    }
+
     function attach() {
         for (const field of FIELDS) {
             const el = gradioApp().getElementById(field);
             if (!el || document.getElementById(`pw_write_${field}`) || !el.querySelector("textarea")) continue;
-            // the 🌐 is drawn by style.css: as text, A1111's hints.js would give it panorama viewer's "🌐" tooltip
-            const button = make("button", {type: "button", id: `pw_write_${field}`, class: "pw-write hebrew-ui-skip"});
-            button.dataset.tip = "write";
-            button.title = t("write");
-            button.addEventListener("click", (e) => {
-                e.preventDefault();
-                write(field, false);
-            });
-            // in the textarea's own wrapper, so the bar below does not move it
-            const holder = el.querySelector("textarea").parentElement;
-            holder.classList.add("pw-field");
-            holder.appendChild(button);
+            addButton(field, el.querySelector("textarea"));
         }
     }
+
+    /* 🌐 on a text box of another extension (Forge Studio's editor). The box should sit in a wrapper of its own
+     * (the button is placed in it, the bar after it). `field`: a name for this box, the same each time the box is
+     * drawn again; opts.as: the field the prompt is written for ("vs_prompt", "img2img_prompt", "fs_effects"...),
+     * opts.video: "t2v" / "i2v" (or a function returning it) for a video prompt. */
+    window.promptWriter = {
+        add(box, field, opts) {
+            if (!box || !box.parentElement) return;
+            opts = opts || {};
+            document.getElementById(`pw_write_${field}`)?.remove();
+            document.getElementById(`pw_bar_${field}`)?.remove();
+            EXTRA[field] = {box, as: opts.as || "vs_prompt", video: opts.video || ""};
+            addButton(field, box);
+        },
+    };
 
     onUiLoaded(() => {
         attach();

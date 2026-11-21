@@ -205,7 +205,7 @@
 
         box.append(h('div', {class: 'fx-group im-gen'},
             h('div', {class: 'fx-group-title'}, '✨ ' + T('Generate with Forge')),
-            model, modeRow, note, prompt, negative,
+            model, modeRow, note, FS.withWriter(prompt, 'fs_image_prompt', {as: 'img2img_prompt'}), negative,
             h('div', {class: 'im-grid'}, row('Steps', steps), row('CFG', cfg), row('Sampler', sampler), row('Schedule', scheduler),
                 row('Seed', seed), row('Variations', count)),
             strengthRow, inpaintBox, cnBox, nativeBox, go, status, results));

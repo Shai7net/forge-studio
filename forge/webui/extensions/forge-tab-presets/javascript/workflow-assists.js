@@ -53,7 +53,9 @@
             if (!host) continue;
             let el = host.querySelector('.fw-model-note');
             if (!el) { el = document.createElement('div'); el.className = 'fw-model-note'; el.setAttribute('role', 'status'); host.prepend(el); }
-            el.textContent = message;
+            // An unchanged status must not retrigger Forge's global childList observer on every poll.
+            // Remember the source text too: the language extension may have translated the visible text.
+            if (el.dataset.fwMessage !== message) { el.textContent = message; el.dataset.fwMessage = message; }
             el.hidden = !message;
         }
     }

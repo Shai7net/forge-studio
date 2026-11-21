@@ -54,12 +54,22 @@ def unload(comfy, torch):
 
 def read_audio(path, seconds, torch):
     import numpy as np
-    command = [ffmpeg_exe(), '-v', 'error', '-i', path, '-t', str(seconds), '-af', 'apad',
+    command = [ffmpeg_exe(), '-v', 'error', '-i', path, '-t', str(seconds), '-af', f'apad=whole_dur={seconds:.9f}',
                '-ar', '44100', '-ac', '2', '-f', 'f32le', '-']
-    result = subprocess.run(command, capture_output=True, check=True,
+    result = subprocess.run(command, capture_output=True, check=True, timeout=60,
                             creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
     values = np.frombuffer(result.stdout, dtype=np.float32).copy().reshape(-1, 2).T
     return {'waveform': torch.from_numpy(values)[None], 'sample_rate': 44100}
+
+
+def audio_window(source, start, seconds, torch):
+    """Condition each video part on its corresponding audio interval, padding only the final window."""
+    rate = source['sample_rate']
+    at, count = round(start * rate), round(seconds * rate)
+    waveform = source['waveform'][..., at:at + count]
+    if waveform.shape[-1] < count:
+        waveform = torch.nn.functional.pad(waveform, (0, count - waveform.shape[-1]))
+    return dict(source, waveform=waveform)
 
 
 def mux_audio(path, waveform, sample_rate, frames, fps):
@@ -74,10 +84,10 @@ def mux_audio(path, waveform, sample_rate, frames, fps):
         audio = audio[None]
     command = [ffmpeg_exe(), '-y', '-v', 'error', '-i', str(destination), '-f', 'f32le',
         '-ar', str(sample_rate), '-ac', str(audio.shape[0]), '-i', '-', '-map', '0:v:0', '-map', '1:a:0',
-        '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-af', f'apad,atrim=duration={frames / fps:.8f}',
+        '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-af', f'apad=whole_dur={frames / fps:.8f},atrim=duration={frames / fps:.8f}',
         '-map_metadata', '0', '-movflags', '+faststart', str(temporary)]
     try:
-        subprocess.run(command, input=audio.T.copy().tobytes(), capture_output=True, check=True,
+        subprocess.run(command, input=audio.T.copy().tobytes(), capture_output=True, check=True, timeout=180,
                        creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         os.replace(temporary, destination)
     finally:
@@ -136,7 +146,7 @@ def run(job, torch, comfy, loaders, report):
 
     parts = job.get('parts') or [dict(start_image=job.get('start_image'), end_image=job.get('end_image'),
                                      prompt=job['prompt'])]
-    if len(parts) > 5:
+    if len(parts) > 5 and not job.get('source_audio'):
         raise ValueError('LTX supports at most six pictures per job.')
     base_report, last_overall, index = report, [0.0], 0
 
@@ -204,12 +214,12 @@ def run(job, torch, comfy, loaders, report):
     audio_vae = load_vae(job['audio_vae'], torch.float32)
     audio_source = None
     if job.get('source_audio'):
-        audio_source = read_audio(job['source_audio'], (job['frames'] - 1) / job['fps'], torch)
+        audio_source = read_audio(job['source_audio'], job.get('source_audio_seconds', (job['frames'] - 1) / job['fps']), torch)
     pieces, sounds = [], []
-    model = None
+    model, previous_frame = None, None
     for index, part in enumerate(parts):
         report('condition', 0, note=f'part {index + 1} of {len(parts)}')
-        width, height, frames = job['width'], job['height'], job['frames']
+        width, height, frames = job['width'], job['height'], part.get('frames', job['frames'])
         positive, negative = video_nodes.LTXVConditioning.execute(conditions[index], conditions[-1], job['fps']).result
         latent = video_nodes.EmptyLTXVLatentVideo.execute(width, height, frames, 1).result[0]
 
@@ -237,9 +247,13 @@ def run(job, torch, comfy, loaders, report):
                         positive, negative, vae, latent, pixels(path), frame_idx, 1.0).result
         elif part.get('start_image'):
             latent = video_nodes.LTXVImgToVideoInplace.execute(vae, pixels(part['start_image']), latent, 1.0).result[0]
+        elif audio_source and previous_frame is not None:
+            guide = torch.from_numpy(previous_frame.copy()).float()[None] / 255
+            latent = video_nodes.LTXVImgToVideoInplace.execute(vae, guide, latent, 1.0).result[0]
 
         if audio_source:
-            audio_latent = audio_nodes.LTXVAudioVAEEncode.execute(audio_source, audio_vae).result[0]
+            interval = audio_window(audio_source, part.get('audio_start', 0), (frames - 1) / job['fps'], torch)
+            audio_latent = audio_nodes.LTXVAudioVAEEncode.execute(interval, audio_vae).result[0]
             audio_latent['noise_mask'] = torch.zeros_like(audio_latent['samples'])
         else:
             audio_latent = audio_nodes.LTXVEmptyLatentAudio.execute(frames, job['fps'], 1, audio_vae).result[0]
@@ -294,7 +308,8 @@ def run(job, torch, comfy, loaders, report):
         decoded_preview = Path(job.get('work_dir') or job['output_dir']) / 'ltx-decoded-preview.png'
         Image.fromarray(array[len(array) // 2]).save(decoded_preview)
         report('decode', (index + 1) / len(parts), preview=str(decoded_preview), preview_key=100 + index)
-        piece = array[:job.get('requested_frames', frames)]
+        piece = array[:part.get('requested_frames', job.get('requested_frames', frames))]
+        previous_frame = piece[-1]
         pieces.append(piece if index == 0 else piece[1:])
         if job.get('native_audio', True) and not audio_source:
             decoded = audio_nodes.LTXVAudioVAEDecode.execute(generated_audio, audio_vae).result[0]
@@ -307,7 +322,7 @@ def run(job, torch, comfy, loaders, report):
             if waveform.shape[-1] < samples:
                 waveform = np.pad(waveform, [(0, 0)] * (waveform.ndim - 1) + [(0, samples - waveform.shape[-1])])
             sounds.append((waveform, rate))
-        del sampled, video_latent, generated_audio, images
+        del sampled, video_latent, generated_audio, images, array
         unload(comfy, torch)
     del model, vae, audio_vae, conditions
     unload(comfy, torch)

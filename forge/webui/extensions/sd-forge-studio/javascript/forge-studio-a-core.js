@@ -18,6 +18,85 @@
     FS.on = (event, fn) => (listeners[event] = listeners[event] || []).push(fn);
     FS.emit = (event, data) => (listeners[event] || []).slice().forEach((fn) => { try { fn(data); } catch (e) { console.error(e); } });
 
+    // Keep high-frequency labels out of Forge's childList observer, which runs every extension's UI callbacks.
+    FS.updateText = function (el, value) {
+        if (!el) return;
+        const text = String(value), node = el.firstChild;
+        if (node && node.nodeType === 3 && el.childNodes.length === 1) {
+            if (node.data !== text) node.data = text;
+        } else if (el.textContent !== text) el.textContent = text;
+    };
+
+    /* Shared by the timeline and local preview dialogs. Own every asynchronous operation on one decoder:
+     * the latest queued seek wins; completed seeks cannot rewind playback; closing/pausing cancels late play(). */
+    FS.MediaTransport = class {
+        constructor(el, onReady) {
+            this.el = el; this.onReady = onReady; this.target = null; this.pending = null;
+            this.wanted = false; this.dead = false; this.epoch = 0; this.error = null; this.url = null;
+            this.events = ['loadedmetadata', 'loadeddata', 'canplay', 'seeked', 'error'];
+            this.ready = () => {
+                if (this.dead) return;
+                if (el.error) { this.error = el.error; this.wanted = false; this.target = null; }
+                else {
+                    const target = this.target;
+                    if (target) this.seek(target.time, target.tolerance);
+                    if (this.wanted) this.play();
+                }
+                if (this.onReady) this.onReady(this);
+            };
+            this.events.forEach(event => el.addEventListener(event, this.ready));
+        }
+        seek(time, tolerance = 0.002) {
+            if (this.dead || !Number.isFinite(time)) return false;
+            if (Number.isFinite(this.el.duration)) time = Math.min(time, Math.max(0, this.el.duration - 0.001));
+            time = Math.max(0, time);
+            if (this.el.readyState < 1 || this.el.seeking) { this.target = {time, tolerance}; return false; }
+            this.target = null;
+            if (Math.abs(this.el.currentTime - time) <= tolerance) return true;
+            try { this.el.currentTime = time; } catch (error) { this.error = error; return false; }
+            return false;
+        }
+        play() {
+            if (this.dead) return Promise.resolve(false);
+            this.wanted = true;
+            if (this.pending) return this.pending;
+            if (this.el.error) { this.error = this.el.error; return Promise.resolve(false); }
+            if (this.el.seeking || this.el.readyState < 2) return Promise.resolve(false);
+            if (!this.el.paused) return Promise.resolve(true);
+            this.error = null;
+            const epoch = this.epoch;
+            let request;
+            try { request = this.el.play(); } catch (error) { request = Promise.reject(error); }
+            const pending = Promise.resolve(request).then(() => {
+                if (this.dead || !this.wanted || epoch !== this.epoch) {
+                    if (this.dead || !this.wanted) this.el.pause();
+                    return false;
+                }
+                return true;
+            }, error => {
+                if (epoch === this.epoch && !this.dead) { this.error = error; this.wanted = false; }
+                return false;
+            }).finally(() => { if (this.pending === pending) this.pending = null; });
+            this.pending = pending;
+            return pending;
+        }
+        pause() { this.wanted = false; ++this.epoch; this.el.pause(); }
+        source(url) {
+            if (this.dead || this.url === url) return;
+            this.pause(); this.target = null; this.error = null; this.pending = null; this.url = url;
+            if (url) this.el.src = url; else this.el.removeAttribute('src');
+            this.el.load();
+        }
+        get busy() { return !!(this.target || this.pending || this.el.seeking || this.el.readyState < 2); }
+        get running() { return this.wanted && !this.busy && !this.el.paused; }
+        dispose() {
+            if (this.dead) return;
+            this.pause(); this.dead = true; this.target = null; this.onReady = null;
+            this.events.forEach(event => this.el.removeEventListener(event, this.ready));
+            this.el.removeAttribute('src'); this.el.load(); this.url = null;
+        }
+    };
+
     FS.api = async function (path, body, raw) {
         const options = body === undefined ? {} : raw
             ? {method: 'POST', body}
@@ -63,6 +142,17 @@
         } finally {
             FS.busy && FS.busy(null);
         }
+    };
+
+    /* 🌐 of Forge's prompt writer on one of the studio's text boxes (as in every prompt field of Forge): it writes an
+     * English prompt for the model from what was written in any language, and 👍 / 👎 teach it. Returns the box in a
+     * wrapper of its own (the button sits in it, the writer's bar under it). opts: {as: 'vs_prompt' | 'img2img_prompt'
+     * | 'fs_effects' | 'fs_music', video: 't2v' | 'i2v'}. Without the writer, the box as it is. */
+    FS.withWriter = function (box, field, opts) {
+        if (!window.promptWriter) return box;
+        const wrap = FS.h('div', {class: 'fx-writer'}, box);
+        window.promptWriter.add(box, field, opts);
+        return wrap;
     };
 
     /* ---- state ---- */
@@ -531,6 +621,13 @@
     /* a drag: the document changes live while the pointer moves, and becomes one undo step when it is let go */
     let pending = null, linkBaseline = null;
     FS.beginEdit = () => { pending = JSON.stringify(S.doc); linkBaseline = pending; };
+    // A cancelled external job cannot be resumed by Undo. Preserve surrounding edits while removing its stale
+    // placeholder from history snapshots as well as the current document.
+    FS.rewriteHistory = function (transform) {
+        for (const stack of [history.undo, history.redo]) for (const entry of stack) {
+            const doc = JSON.parse(entry.doc); transform(doc); entry.doc = JSON.stringify(doc);
+        }
+    };
     FS.cancelEdit = () => { if (pending != null) { S.doc = JSON.parse(pending); pending = null; linkBaseline = null; FS.liveEdit(); } };
     FS.liveEdit = () => {
         if (FS.reconcileAudioLinks) FS.reconcileAudioLinks(linkBaseline ? JSON.parse(linkBaseline) : null);
@@ -588,6 +685,7 @@
     let opening = 0;
     FS.openProject = async function (name) {
         const mine = ++opening;
+        if (S.playing) FS.player?.pause?.();
         if (S.project && S.dirty) await FS.save().catch(() => null);
         const p = await FS.api('project?name=' + q(name));
         if (mine !== opening) return;

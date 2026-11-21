@@ -12,13 +12,14 @@
             if(!t&&!active)return null;
             if(!t){t={id:task.id,kind:task.kind,samples:[],seen:now,notified:false};this.tasks.set(t.id,t);}
             const previous=t.state;t.state=task.state;t.updated=now;
-            for(const key of ['scope','gallery','hidden'])if(key in task)t[key]=task[key];
-            const p=Number.isFinite(task.progress)?Math.max(0,Math.min(1,task.progress)):null;
+            for(const key of ['scope','gallery','hidden'])if(key in task&&!(key==='hidden'&&t.dismissed))t[key]=task[key];
+            const p=Number.isFinite(task.progress)?Math.max(0,Math.min(active ? .99 : 1,task.progress)):null;
             if(p!=null&&active){
                 if(t.progress!=null&&p<t.progress-.02)t.samples=[];
                 if(!t.samples.length||p>t.samples.at(-1).p+1e-6){t.samples.push({p,time:now});t.lastProgress=now;t.samples=t.samples.filter(s=>now-s.time<120000).slice(-12);}
                 t.progress=p;
             }
+            else if(active)t.progress=null;
             if(task.state==='done')t.progress=1;
             t.complete=task.state==='done'&&previous!=='done'&&!t.notified;
             if(t.complete)t.notified=true;
@@ -26,11 +27,12 @@
             return t;
         }
         eta(t,now=Date.now()){
-            if(t.state!=='running'||t.samples.length<3||now-t.lastProgress>15000)return null;
+            if(t.state!=='running'||t.progress==null||t.samples.length<3||now-t.lastProgress>15000)return null;
             const a=t.samples[0],b=t.samples.at(-1),dt=(b.time-a.time)/1000,dp=b.p-a.p;
             if(dt<4||dp<.025||t.progress>=1)return null;
             return Math.max(1,Math.min(86400,(1-b.p)*dt/dp-(now-b.time)/1000));
         }
+        dismiss(id){const t=this.tasks.get(id);if(t){t.dismissed=true;t.hidden=true;}}
         current(now=Date.now()){
             for(const [id,t] of this.tasks)if(t.ended&&now-t.ended>120000)this.tasks.delete(id);
             const all=[...this.tasks.values()].filter(t=>!t.hidden);
@@ -66,8 +68,15 @@
         art.innerHTML='<svg viewBox="0 0 96 80" xmlns="http://www.w3.org/2000/svg"><ellipse cx="48" cy="69" rx="31" ry="5" fill="#071c12" opacity=".4"/><path d="M23 55Q6 64 19 69M73 55Q90 64 77 69" fill="none" stroke="#3fdc82" stroke-width="9" stroke-linecap="round"/><ellipse cx="48" cy="46" rx="34" ry="25" fill="#42df86"/><circle cx="29" cy="24" r="15" fill="#42df86"/><circle cx="67" cy="24" r="15" fill="#42df86"/><circle cx="29" cy="24" r="10" fill="#effff3"/><circle cx="67" cy="24" r="10" fill="#effff3"/><circle cx="31" cy="25" r="5" fill="#102c21"/><circle cx="65" cy="25" r="5" fill="#102c21"/><circle cx="33" cy="23" r="1.8" fill="white"/><circle cx="67" cy="23" r="1.8" fill="white"/><path d="M33 49Q48 61 63 49" fill="none" stroke="#0b6440" stroke-width="3" stroke-linecap="round"/><ellipse cx="25" cy="46" rx="5" ry="3" fill="#a1ef98"/><ellipse cx="71" cy="46" rx="5" ry="3" fill="#a1ef98"/></svg>';
         const ring=h('div',{class:'fx-frog-ring'},art),headline=h('div',{class:'fx-frog-title',role:'status','aria-live':'polite'}),percent=h('div',{class:'fx-frog-percent','aria-live':'off'}),eta=h('div',{class:'fx-frog-eta','aria-live':'off'});
         const button=h('button',{class:'fx-frog-sound',onclick:()=>{sound=!sound;try{localStorage.setItem('forgeStudio.frogSound',sound?'on':'off');}catch{}if(sound)unlock();render();}},'🔊');
-        panel=h('div',{class:'fx-frog-progress hebrew-ui-skip',hidden:true},ring,h('div',{class:'fx-frog-copy'},headline,percent,eta),button);
-        panel.parts={headline,percent,eta,button,ring};document.body.append(panel);return true;
+        const close=h('button',{class:'fx-frog-close',title:T('Hide progress'),'aria-label':T('Hide progress'),onclick:()=>{const t=model.current();if(t)model.dismiss(t.id);render();}},'×');
+        const stop=h('button',{class:'fx-frog-stop',title:T('Stop generation'),onclick:F.guard(async()=>{
+            const t=model.current(),prefix='video:'+F.state.project+':';
+            if(!t||!t.id.startsWith(prefix))return;
+            const id=t.id.slice(prefix.length),record=F.gen.records.find(g=>g.id===id);
+            stop.disabled=true;try{await F.gen.cancelClip(record?.placeholder?.clip,id);model.dismiss(t.id);render();}finally{stop.disabled=false;}
+        })},'■ '+T('Stop'));
+        panel=h('div',{class:'fx-frog-progress hebrew-ui-skip',hidden:true},ring,h('div',{class:'fx-frog-copy'},headline,percent,eta),button,close,stop);
+        panel.parts={headline,percent,eta,button,ring,stop};document.body.append(panel);return true;
     }
     function time(seconds){const n=Math.ceil(seconds);return n<60?T('About {0}s remaining',n):T('About {0}m {1}s remaining',Math.floor(n/60),n%60);}
     function render(){
@@ -79,14 +88,16 @@
         if(panel.parentNode!==host)host.append(panel);
         panel.classList.toggle('fx-frog-global',global);
         panel.hidden=false;panel.classList.toggle('done',t.state==='done');panel.classList.toggle('failed',t.state==='error'||t.state==='cancelled');
+        const canStop=(t.state==='running'||t.state==='waiting')&&t.kind==='video'&&t.id.startsWith('video:'+F.state?.project+':');
+        parts.stop.hidden=!canStop;panel.classList.toggle('has-stop',canStop);
         const title=t.state==='done'?T('Ready!'):t.state==='error'?T('Generation failed'):t.state==='cancelled'?T('Generation stopped'):T(labels[t.kind]||'Generating…');
-        if(parts.headline.textContent!==title)parts.headline.textContent=title;
-        parts.percent.textContent=t.progress==null?'…':Math.round(t.progress*100)+'%';
+        F.updateText(parts.headline,title);
+        F.updateText(parts.percent,t.progress==null?'…':Math.round(t.progress*100)+'%');
         const remaining=model.eta(t);
-        parts.eta.textContent=t.state==='waiting'?T('Waiting for the graphics card'):t.state==='done'?T('Your result is ready'):t.state==='running'?(remaining==null?T('Estimating remaining time…'):time(remaining)):'';
+        F.updateText(parts.eta,t.state==='waiting'?T('Waiting for the graphics card'):t.state==='done'?T('Your result is ready'):t.state==='running'?(remaining==null?T('Estimating remaining time…'):time(remaining)):'');
         parts.ring.style.setProperty('--frog-progress',(t.progress==null?15:t.progress*100)+'%');
         parts.ring.classList.toggle('indeterminate',t.progress==null||t.state==='waiting');
-        parts.button.textContent=sound?'🔊':'🔇';parts.button.title=sound?T('Completion sound on'):T('Completion sound off');parts.button.setAttribute('aria-label',parts.button.title);
+        F.updateText(parts.button,sound?'🔊':'🔇');parts.button.title=sound?T('Completion sound on'):T('Completion sound off');parts.button.setAttribute('aria-label',parts.button.title);
     }
     function report(task){const t=model.update(task);if(!t)return;if(t.complete&&!t.hidden)croak();render();if(!timer)timer=setInterval(render,500);}
     F.on('task-progress',report);

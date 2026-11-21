@@ -104,6 +104,21 @@ def frames_for(seconds, fps=24):
     return 1 + 8 * max(1, round(float(seconds) * fps / 8))
 
 
+def audio_parts(seconds):
+    """Cover the recording in <=8-second windows, including its tail, at the native 24 fps."""
+    seconds = float(seconds)
+    if not math.isfinite(seconds) or not 0 < seconds <= 240:
+        raise ValueError('Use an audio recording of up to four minutes per video.')
+    remaining, offset, parts = max(1, math.ceil(seconds * 24 - 1e-9)), 0, []
+    while remaining:
+        count = min(192, remaining)
+        parts.append(dict(frames=1 + 8 * math.ceil(count / 8), requested_frames=count + 1,
+                          audio_start=offset / 24))
+        offset += count
+        remaining -= count
+    return parts
+
+
 def adapt_job(job, preset, quality, seconds):
     """Use the distilled schedule and model family; never pass Wan experts or LoRAs."""
     if any(item.get('family') != 'ltx' for item in job.get('loras', [])):

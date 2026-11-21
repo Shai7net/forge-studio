@@ -7,12 +7,34 @@ import subprocess
 import sys
 import threading
 import time
+from contextlib import contextmanager
 
 from . import ENV_DIR, JOBS_DIR, WORKER
 from . import childguard
 
 _current = {"job": None}
 _lock = threading.Lock()
+
+
+@contextmanager
+def generation_queue(lock, cancelled=None):
+    """A caller with a cancellation token can leave Forge's queue without interrupting its current owner."""
+    if cancelled is None:
+        with lock:
+            yield
+        return
+    # Forge's FIFOLock accepts blocking=False but has no timeout argument. Do not leave a blocked helper
+    # thread behind when a queued request is cancelled.
+    while not lock.acquire(False):
+        if cancelled():
+            raise RuntimeError("cancelled")
+        time.sleep(0.05)
+    try:
+        if cancelled():
+            raise RuntimeError("cancelled")
+        yield
+    finally:
+        lock.release()
 
 
 def engine_python():
@@ -171,6 +193,11 @@ def worker_python(spec):
         if not ltx.runtime_ready():
             raise RuntimeError('Set up the LTX engine in Models before generating with LTX.')
         return str(ltx.python_executable())
+    if spec.get('backend') == 'h3':
+        from . import h3
+        if not h3.runtime_ready():
+            raise RuntimeError('Set up the MiniMax-H3 engine in Models before generating with MiniMax-H3.')
+        return str(h3.python_executable())
     return engine_python()
 
 
@@ -181,6 +208,15 @@ def setup_ltx_engine():
     if result.returncode:
         raise RuntimeError('LTX setup failed: ' + (result.stderr or result.stdout)[-1800:])
     return 'LTX engine ready.'
+
+
+def setup_h3_engine():
+    tool = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tools', 'setup_h3.py')
+    result = subprocess.run([sys.executable, '-u', tool], capture_output=True, text=True,
+                            encoding='utf-8', errors='replace', creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    if result.returncode:
+        raise RuntimeError('MiniMax-H3 setup failed: ' + (result.stderr or result.stdout)[-1800:])
+    return 'MiniMax-H3 engine ready.'
 
 
 def start(spec):

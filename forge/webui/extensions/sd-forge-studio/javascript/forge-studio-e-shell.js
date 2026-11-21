@@ -719,8 +719,9 @@
         const d = new Date(at), p = (n) => String(n).padStart(2, '0');
         UI.saved.textContent = T('Saved {0}', `${p(d.getHours())}:${p(d.getMinutes())}`);
     });
-    FS.on('time', () => { UI.time.textContent = `${FS.timecode(S.time)} / ${FS.timecode(FS.total())}`; });
-    FS.on('drawn', () => { UI.time.textContent = `${FS.timecode(S.time)} / ${FS.timecode(FS.total())}`; });
+    const updateTime = () => FS.updateText(UI.time, `${FS.timecode(S.time)} / ${FS.timecode(FS.total())}`);
+    FS.on('time', updateTime);
+    FS.on('drawn', updateTime);
     FS.on('playing', (on) => { UI.playBtn.textContent = on ? '❚❚' : '▶'; });
 
     /* ---- 🎞️ in the other tabs ---- */
@@ -759,7 +760,7 @@
         for (const tab of ['txt2img', 'img2img', 'extras']) {
             const row = gradioApp().getElementById('image_buttons_' + tab);
             if (!row || row.querySelector('.fs-send')) continue;
-            row.append(h('button', {class: 'lg secondary gradio-button tool fs-send hebrew-ui-skip', title: T('Send to Forge Studio'),
+            row.append(h('button', {class: 'lg secondary gradio-button tool fs-send hebrew-ui-skip', title: T('Send to Forge Studio Editor'),
                 onclick: (e) => { e.preventDefault(); FS.send(galleryUrls(tab + '_gallery')); }}, '🎞️'));
         }
         const video = gradioApp().getElementById('vs_video');
@@ -768,7 +769,7 @@
                 e.preventDefault();
                 const v = video.querySelector('video');
                 FS.send([v && (v.currentSrc || v.src)]);
-            }}, '🎞️ ' + T('Send to Forge Studio')));
+            }}, '🎞️ ' + T('Send to Forge Studio Editor')));
         }
     }
 

@@ -12,6 +12,7 @@ import tempfile
 import time
 import types
 import unittest
+from unittest.mock import patch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
@@ -20,7 +21,7 @@ os.environ["FORGE_STUDIO_ROOT"] = os.path.join(TMP, "data")
 os.environ["FORGE_STUDIO_LIBRARY"] = os.path.join(TMP, "out")
 os.environ["FORGE_STUDIO_EXPORTS"] = os.path.join(TMP, "exports")
 
-from forgestudio import generate, library, projects  # noqa: E402
+from forgestudio import generate, library, media, projects  # noqa: E402
 
 FFMPEG = library.ffmpeg()
 CALLS = []
@@ -50,7 +51,7 @@ def fake_vs():
     vs.models = types.SimpleNamespace(PRESETS={"Wan Q3": {}}, DEFAULT_PRESET="Wan Q3", missing=lambda p: [])
     vs.runner = types.SimpleNamespace(current=lambda: None, cancel_current=lambda: True)
 
-    def gen(mode, count, *args):
+    def gen(mode, count, *args, **kwargs):
         CALLS.append((mode, count, args))
         yield "<b>Making the video</b>", None, None, None, None
         out = os.path.join(os.environ["FORGE_STUDIO_LIBRARY"], "video-studio", f"made-{len(CALLS)}.mp4")
@@ -71,6 +72,31 @@ def wait(name, gen_id, timeout=60):
 
 
 class Generate(unittest.TestCase):
+    def test_fitting_short_audio_finishes_at_the_requested_frame_count(self):
+        source=os.path.join(TMP,'src','short-audio.mp4')
+        subprocess.run([FFMPEG,'-v','error','-y','-f','lavfi','-i','color=blue:s=64x64:r=24:d=2',
+                        '-f','lavfi','-i','sine=frequency=440:duration=0.3','-c:v','libx264','-c:a','aac',source],
+                       check=True,capture_output=True,timeout=15)
+        record={'id':'audio-fit','kind':'text','engine':'wan','prompt':'blue','seconds':44/24,'fps':24}
+        real_run=generate._run_command
+        with patch.object(generate,'_make_segment',return_value=source), \
+             patch.object(generate,'_run_command',side_effect=lambda job,command,timeout:real_run(job,command,15)):
+            result=generate._make('gen',record)
+        info=media.probe(result)
+        self.assertTrue(info['audio'])
+        self.assertAlmostEqual(info['duration'],44/24,delta=1/24)
+        self.assertIsNone(generate.live[record['id']]['progress'])
+
+    def test_fast_extension_ignores_expensive_postprocessing_defaults(self):
+        settings={'Quality':'720p - best','Smooth motion: 32 fps (FILM)':True,'Enlarge the finished video':'4x'}
+        with patch.object(generate,'_ui_defaults',return_value=lambda label,default:settings.get(label,default)):
+            request=generate.submit('gen','continue',prompt='Continue the shot',seconds=1.25,fast=True,sound=False,
+                                    start={'web':self.web,'seconds':.5},width=1920,height=1080,fps=24)
+            result=wait('gen',request['id'])
+        self.assertEqual(result['state'],'done',result)
+        rest=CALLS[-1][2][11:]
+        self.assertEqual(rest[7],'480p - fast')
+        self.assertFalse(rest[19]);self.assertEqual(rest[20],'Off');self.assertFalse(rest[26])
     @classmethod
     def setUpClass(cls):
         generate._vs = fake_vs

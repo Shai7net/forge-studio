@@ -11,7 +11,7 @@ import wave
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PIL import Image
-from videostudio import ltx, models, runner, ui
+from videostudio import h3, ltx, models, runner, ui
 
 
 class LtxContracts(unittest.TestCase):
@@ -127,14 +127,17 @@ class LtxContracts(unittest.TestCase):
         rest += [None] * 14 + [None] * ui.MAX_INGREDIENTS + [ui.ING_FRAME, picture, audio, True]
         return [mode, 1] + [None] * ui.MAX_PICTURES + [''] * (ui.MAX_PICTURES - 1) + rest
 
-    def run_generator(self, args):
+    def run_generator(self, args, **controls):
         recorded = []
         modules = types.ModuleType('modules')
         queue = types.ModuleType('modules.call_queue')
         queue.queue_lock = threading.RLock()
         modules.call_queue = queue
 
-        def run(spec, details, out, nothing):
+        def run(spec, details, out, nothing, **received):
+            self.assertEqual(received, controls)
+            if received.get('on_job'):
+                received['on_job'](types.SimpleNamespace(cancel=lambda: None))
             recorded.append(spec)
             yield out(ui.status_html('done', 1))
             return 'test.mp4'
@@ -145,7 +148,7 @@ class LtxContracts(unittest.TestCase):
              patch.object(ui, 'draw_first_frame', side_effect=AssertionError('LTX native T2V must not draw a Forge image')), \
              patch.object(ui, '_sound_after', side_effect=AssertionError('Do not overwrite native audio with MMAudio')), \
              patch.object(ui, 'JOBS_DIR', str(self.root / 'jobs')):
-            result = list(ui.generate(*args))
+            result = list(ui.generate(*args, **controls))
         self.assertTrue(result)
         return recorded
 
@@ -155,6 +158,16 @@ class LtxContracts(unittest.TestCase):
         self.assertEqual(jobs[0]['mode'], 't2v')
         self.assertIsNone(jobs[0]['start_image'])
         self.assertTrue(jobs[0]['native_audio'])
+
+    def test_editor_cancellation_callbacks_reach_the_selected_engine(self):
+        owned = []
+        jobs = self.run_generator(self.args(), cancelled=lambda: False, on_job=owned.append)
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(len(owned), 1)
+
+    def test_editor_request_cancelled_before_queue_entry_never_starts_a_job(self):
+        with self.assertRaisesRegex(RuntimeError, 'cancelled'):
+            self.run_generator(self.args(), cancelled=lambda: True)
 
     def test_audio_driven_mode_stages_picture_and_original_audio(self):
         picture, audio = self.root / 'face.png', self.root / 'speech.wav'
@@ -170,6 +183,26 @@ class LtxContracts(unittest.TestCase):
     def test_audio_mode_rejects_missing_audio_before_starting_job(self):
         outputs = list(ui.generate(*self.args('ltx_audio')))
         self.assertIn('add a picture and an audio file', outputs[-1][0])
+
+    def test_audio_mode_uses_the_whole_recording_and_switches_a_wan_selection_to_ltx(self):
+        picture, audio = self.root / 'wide.png', self.root / 'long.wav'
+        Image.new('RGB',(640,320),'blue').save(picture)
+        with wave.open(str(audio),'wb') as target:
+            target.setparams((1,2,16000,0,'NONE','not compressed'))
+            target.writeframes(b'\0\0'*148000)  # 9.25 seconds; the manual length in args is only one second.
+        args=self.args('ltx_audio',str(picture),str(audio))
+        rest_start=2+ui.MAX_PICTURES+ui.MAX_PICTURES-1
+        args[rest_start+10]=models.DEFAULT_PRESET
+        with patch.object(models,'installed_presets',return_value=[ltx.DEFAULT_PRESET]):
+            jobs=self.run_generator(args)
+        job=jobs[0]
+        self.assertEqual(job['backend'],'ltx')
+        self.assertAlmostEqual(job['source_audio_seconds'],9.25,places=2)
+        self.assertEqual(len(job['parts']),2)
+        self.assertEqual(job['parts'][1]['audio_start'],8)
+        self.assertIsNone(job['parts'][1]['start_image'])
+        self.assertEqual(sum(p['requested_frames']-1 for p in job['parts']),222)
+        self.assertGreater(job['width'],job['height'])
 
     def test_character_replacement_stays_on_dedicated_wan_backend(self):
         called = []
@@ -380,8 +413,10 @@ class LtxContracts(unittest.TestCase):
         self.addCleanup(tab.close)
         config = tab.get_config_file()
         ids = {c['props'].get('elem_id') for c in config['components']}
-        self.assertTrue({'vs_model', 'vs_tab_ltx_audio', 'vs_ltx_picture', 'vs_ltx_audio', 'vs_ltx_setup'} <= ids)
-        callback = next(f.fn for f in tab.fns if getattr(f.fn, '__name__', '') == 'preset_defaults')
+        self.assertTrue({'vs_model', 'vs_tab_ltx_audio', 'vs_ltx_picture', 'vs_ltx_audio', 'vs_ltx_setup',
+                         'vs_h3_setup'} <= ids)
+        functions = tab.fns.values() if isinstance(tab.fns, dict) else tab.fns
+        callback = next(f.fn for f in functions if getattr(f.fn, '__name__', '') == 'preset_defaults')
         selected = callback(ltx.DEFAULT_PRESET)
         self.assertEqual(selected[0]['value'], 8)
         self.assertEqual(selected[4]['choices'], list(ltx.QUALITY))
@@ -392,6 +427,11 @@ class LtxContracts(unittest.TestCase):
         self.assertEqual(wan[0]['value'], 4)
         self.assertFalse(wan[6]['visible'])
         self.assertTrue(wan[7]['visible'])
+        minimax = callback(h3.DEFAULT_PRESET)
+        self.assertEqual([minimax[i]['value'] for i in (0, 1, 2, 5)], [20, 12.0, 1.0, 'euler'])
+        self.assertEqual(minimax[4]['choices'], list(h3.QUALITY))
+        self.assertFalse(minimax[0]['interactive'])
+        self.assertFalse(minimax[11]['visible'])
 
 
 if __name__ == '__main__':

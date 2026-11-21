@@ -10,7 +10,7 @@ import time
 import urllib.request
 
 from . import MODELS_DIR, WEBUI_DIR
-from . import ltx
+from . import h3, ltx
 
 HF = "https://huggingface.co/"
 COMFY = HF + "Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/"
@@ -93,7 +93,9 @@ PRESETS = {
 }
 DEFAULT_PRESET = next(iter(PRESETS))
 FILES.update(ltx.ASSETS)
+FILES.update(h3.ASSETS)
 PRESETS.update(ltx.PRESETS)
+PRESETS.update(h3.PRESETS)
 
 
 def file_path(key):
@@ -108,6 +110,8 @@ def present(key):
 def preset_files(name):
     if ltx.is_ltx(name):
         return ltx.asset_keys(name)
+    if h3.is_h3(name):
+        return h3.asset_keys(name)
     pr = PRESETS[name]
     return [k for k, _, _ in pr["experts"]] + [pr["text_encoder"], pr["vae"]]
 

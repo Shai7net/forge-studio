@@ -1,7 +1,7 @@
 # Forge Studio
 
 **An all-in-one AI image and video studio for Windows PCs with 8 GB graphics cards.**
-Built on Stable Diffusion WebUI Forge (A1111), with FLUX 3, FIBO 2.0, SDXL and SD 1.5, Wan 2.2 and LTX 2.3 video,
+Built on Stable Diffusion WebUI Forge (A1111), with FLUX 3, FIBO 2.0, SDXL and SD 1.5, Wan 2.2, LTX 2.3 and MiniMax-H3 video,
 a video editor with its own image workspace, consistent characters, Deforum and AnimateDiff upgrades, world-building
 tabs and a prompt writer that takes any language, all under one roof.
 
@@ -26,9 +26,9 @@ the same window.
 | | |
 |---|---|
 | **Newest image models** | FLUX 3 Image Klein and FIBO 2.0, picked from the normal checkpoint list next to SDXL and SD 1.5; the sampler, steps and CFG follow the model you choose |
-| **Video generation** | **Video Studio** with two engines. **Wan 2.2 14B**: text/image/first-and-last-frame video, longer videos from up to six pictures, *Ingredients to Video* (your characters and objects together in one video) and *Replace a character* (Wan 2.2 Animate). **LTX 2.3**: fast video with its own sound, video from words alone, and *Image + Audio to Video* (a picture that speaks or moves to your sound) |
+| **Video generation** | **Video Studio** with three engines. **Wan 2.2 14B**: text/image/first-and-last-frame video, longer videos from up to six pictures, *Ingredients to Video* (your characters and objects together in one video) and *Replace a character* (Wan 2.2 Animate). **LTX 2.3**: fast video with its own sound, video from words alone, and *Image + Audio to Video* (a picture that speaks or moves to your sound, recordings of any length). **MiniMax-H3 FL2V** (W4A8, 8 GB): text, image and first-and-last-frame video |
 | **Characters** | Describe a character in any language, or give a reference picture, and FLUX 3 Klein draws a consistent character sheet over a pose template. Keep them in projects, send one to Ingredients to Video, make a 3D model of it, or stand it in a Simulation 360 world |
-| **Video editor** | **Forge Studio** tab: a timeline editor in the spirit of CapCut, where generating, extending and repainting shots is part of the edit; an image workspace with layers and AI tools inside it (edit a picture, then animate it, without leaving the edit); captions, narration, music and effects; exports in high quality. Its timeline opens under the result of every tab, so a good result is dragged straight into the edit |
+| **Video editor** | **Forge Studio Editor** tab: a timeline editor in the spirit of CapCut, where generating, extending and repainting shots is part of the edit; an image workspace with layers and AI tools inside it (edit a picture, then animate it, without leaving the edit); captions, narration, music and effects; exports in high quality. Its timeline opens under the result of every tab, so a good result is dragged straight into the edit |
 | **Animation** | Deforum with music-driven keyframes, a drawn timeline + 3D camera path editor and DeforumationQT live control; AnimateDiff with music, dance transfer (now inside AnimateDiff, with a setup for living characters) and per-frame inpainting masks; Infinite Zoom |
 | **World building** | **Simulation 360**: 360° worlds with portals, 3D objects, a recorded route and talking characters. **Time Strata**: turn a video into a sculpture of time |
 | **Upscaling** | Extras for video with a before/after viewer, Hires. fix in Extras, Real-ESRGAN, and NVIDIA RTX Video Super Resolution as an upscaler |
@@ -127,6 +127,7 @@ Studio. To open the window again while it runs, start the shortcut again. The ad
 | **FIBO 2.0** (Dev, Edit Turbo) | txt2img and img2img: generation and editing by instruction with up to four references |
 | **Wan 2.2** | Video Studio |
 | **LTX 2.3** | Video Studio (set up from its Models section) |
+| **MiniMax-H3 FL2V · W4A8** | Video Studio (set up from its Models section, after FIBO 2.0's engine) |
 
 **AnimateDiff and Deforum work with the previous generation of models (SD 1.5, and SDXL for Deforum).** Choose
 an SD 1.5 checkpoint for them; with FLUX 3 or FIBO selected they do not run (FIBO tells you so).
@@ -136,7 +137,7 @@ an ordinary checkpoint, your own values return (they are kept even across a page
 
 ### The tabs
 
-`txt2img` · `img2img` · `Video Studio` · `Characters` · `Forge Studio` · `Deforum` · `Simulation 360` · `Infinite Zoom` ·
+`txt2img` · `img2img` · `Video Studio` · `Characters` · `Forge Studio Editor` · `Deforum` · `Simulation 360` · `Infinite Zoom` ·
 `Time Strata` · `Live Portrait` · `PNG Info` · `Extras` · `Settings` · `Extensions`, and an **Other** folder with
 the rest. Drag tabs between the bar and folders with **Organize…** (Navigation Bookmarks).
 
@@ -162,13 +163,22 @@ Bria's model for generating and, above all, editing pictures by instruction: in 
 reference pictures in the FIBO panel), an optional exact mask, and JSON captions for fine control. It runs in its own
 environment (installed by the installer or the panel's button), so Forge's own packages stay untouched.
 
-### Video Studio (Wan 2.2 and LTX 2.3)
-- Two engines, chosen in the model list: **Wan 2.2 14B** for the most faithful motion, and **LTX 2.3** (22B
+### Video Studio (Wan 2.2, LTX 2.3 and MiniMax-H3)
+- Three engines, chosen in the model list: **Wan 2.2 14B** for the most faithful motion, and **LTX 2.3** (22B
   distilled, GGUF: Q3 is the one for 8 GB, Q2 for 6 GB, Q4 for 12 GB and more) for fast video **with its own sound**,
   video from words alone with no opening picture, LTX LoRAs, and **Image + Audio to Video**: a picture and a sound
   file become a video that moves (and speaks) to it. LTX runs in its own environment: in the Models section,
   *Set up LTX engine* installs it and *Download the missing files of this model* brings its weights (about 21 GB
-  for Q3).
+  for Q3). A recording longer than 8 seconds is made in 8-second parts that continue each other, each with its own
+  stretch of the sound, so the whole recording becomes one video.
+- **MiniMax-H3 FL2V · W4A8 · 8 GB**: text to video, image to video, first + last frame and chains of pictures, at
+  608×352 or 480×864, 24 fps, about 5 s per video (measured on an 8 GB laptop card: 3.5 minutes, 5.4 GB VRAM). In
+  Models: download its four files (21.6 GB, checked by size and SHA-256) and press *Set up MiniMax-H3 engine* once;
+  it uses FIBO 2.0's engine, so set that up first.
+- **The media decides for you**: in Image + Audio to Video the length comes from the recording and LTX is chosen by
+  itself (the only engine that really listens to sound); in Image to Video the shape comes from the first picture;
+  in Replace a character the length and shape come from the video, and a video at another frame rate (29.97, 30,
+  60...) is converted to the frame rate you chose first, so speed and length are kept.
 - Text to video, image to video, first + last frame, and up to six pictures joined into one longer video, each
   part with its own description.
 - *Replace a character*: the person in a video becomes the character in your picture; motion, expressions and
@@ -193,7 +203,7 @@ projects (show all, search, rename, move, delete to a bin), and each one can go:
 - to a **3D model** (🧊, through Hunyuan3D-2: the same optional tool Simulation 360 uses for its 3D objects);
 - into a **Simulation 360** world (🌍), where the model stands, walks and is lit by the world.
 
-### Forge Studio (video editor)
+### Forge Studio Editor (video editor)
 A timeline editor inside Forge: media panel, layers, keyframes and ready-made moves, speed changes, fades and
 dissolves, text and captions; generate a shot from words, continue or remake a clip, repaint a frame and carry it
 through the clip, join two shots with AI, separate a person onto a new background; narration, music and sound
@@ -207,6 +217,16 @@ effects where they are needed; export in high quality.
   dragged onto it (or added at the end).
 - **Files from a folder, like CapCut**: drop videos, pictures and sounds from the computer anywhere on the editor:
   on the timeline at that spot, on the media panel into the project, anywhere else at the end of the edit.
+- **Reverse**: right-click a video clip → *⏪ Reverse (play backwards)*, for every picked clip at once (its sound
+  plays backwards too); *⏩ Reverse back* returns it.
+- **Join two shots with AI** (right-click → *Join to the next clip*, frame to frame): the join goes between the two
+  shots, and on the main track everything after the cut on the other tracks (overlays, titles, dialogue) moves with
+  its shot, so nothing ends up over the wrong shot.
+- **🌐 in every prompt box of the editor** (shots, joins, continuations, the frame and image tools, music and
+  effects), like in Forge's own prompt fields: write in Hebrew or any language, press 🌐 to see the English prompt
+  written for the model, edit it, and teach the writer with 👍 / 👎.
+- Smoother playback and scrubbing, a Lip sync window that plays without stutter, and Stop that really stops an AI
+  job (the shot, its worker and the queue).
 - Each start of Forge opens a new project; your earlier ones stay in the list.
 
 ### Deforum (upgraded)

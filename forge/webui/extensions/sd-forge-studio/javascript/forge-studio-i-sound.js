@@ -56,7 +56,8 @@
             {web: clip.media, start: FS.val(clip, 'in'), speed: FS.spanOf(clip) / clip.duration}),
         inRegion: async function (kind, region) {
             const at = destination(region);
-            const words = await FS.ask(T(kind === 'music' ? 'Music for the selected range' : 'Sound effects for the selected range'), T('Describe what is heard in any language'));
+            const words = await FS.ask(T(kind === 'music' ? 'Music for the selected range' : 'Sound effects for the selected range'), T('Describe what is heard in any language'),
+                '', null, null, {as: kind === 'music' ? 'fs_music' : 'fs_effects'});
             if (words) await generate(kind, words, at);
         },
         refresh: async function () { const r = await FS.api('sound/library'); UI.items = r.items || []; renderLibrary(); },
@@ -134,14 +135,14 @@
         FS.sound.refresh().catch((e) => packStatus(e.message)); renderRecent();
         return h('div', {class: 'fx-panel-body'}, UI.note, UI.range,
             h('div', {class: 'fx-group'}, h('div', {class: 'fx-group-title'}, '🗣 ' + T('Narration')), UI.voiceText, h('div', {class: 'fx-row'}, UI.voiceLang, UI.voiceName), voiceGo, voiceStatusEl),
-            h('div', {class: 'fx-group'}, h('div', {class: 'fx-group-title'}, '🎵 ' + T('Music')), UI.musicWords, h('div', {class: 'fx-row'}, h('span', {class: 'fx-dim'}, T('Seconds')), UI.musicSeconds), musicGo, musicStatusEl),
-            h('div', {class: 'fx-group'}, h('div', {class: 'fx-group-title'}, '🔊 ' + T('Sound effects')), UI.fxWords, fxGo, fxStatusEl),
+            h('div', {class: 'fx-group'}, h('div', {class: 'fx-group-title'}, '🎵 ' + T('Music')), FS.withWriter(UI.musicWords, 'fs_music_words', {as: 'fs_music'}), h('div', {class: 'fx-row'}, h('span', {class: 'fx-dim'}, T('Seconds')), UI.musicSeconds), musicGo, musicStatusEl),
+            h('div', {class: 'fx-group'}, h('div', {class: 'fx-group-title'}, '🔊 ' + T('Sound effects')), FS.withWriter(UI.fxWords, 'fs_fx_words', {as: 'fs_effects'}), fxGo, fxStatusEl),
             h('label', {class: 'fx-check'}, UI.keep, ' ', T('Save generated sounds for reuse')), UI.recent,
             h('div', {class: 'fx-group'}, h('div', {class: 'fx-group-title'}, '📚 ' + T('Sound library')), UI.search, UI.filter, pack, packStatusEl, UI.count, UI.library),
             h('div', {class: 'fx-dim'}, T('Audio prompts are written in English for the sound model. Each generation waits its turn for the graphics card.')));
     }
     FS.clipActions.push({id: 'sound', label: '🔊 ' + T('Sound effects for this clip (MMAudio)'), when: (c) => c.kind === 'video' && c.media,
-        run: async (c) => { const words = await FS.ask(T('Sound effects for this clip'), T('Describe what is heard in any language'), ''); if (words !== null) await FS.sound.effectsFor(c, words); }});
+        run: async (c) => { const words = await FS.ask(T('Sound effects for this clip'), T('Describe what is heard in any language'), '', null, null, {as: 'fs_effects'}); if (words !== null) await FS.sound.effectsFor(c, words); }});
     FS.clipActions.push({id: 'save-sound', label: '💾 ' + T('Save sound for reuse'), when: (c) => c.kind === 'audio' && c.media,
         run: async (c) => { const project = S.project, label = await FS.ask(T('Save sound for reuse'), T('Name this sound'), c.label || c.media); if (label) await saveSound({project, web: c.media, label, kind: 'effects'}); }});
     FS.panels.push({id: 'sound', icon: '♪', label: 'Sound', build});

@@ -107,7 +107,7 @@
         const isOpen = open === b.spot.id;
         setText(b.word, T('Timeline'));
         if (b.toggle.classList.contains('fs-peek-open') !== isOpen) b.toggle.classList.toggle('fs-peek-open', isOpen);
-        setTitle(b.toggle, isOpen ? T('Close the timeline') : T('Open the Forge Studio timeline here: drag the result onto it'));
+        setTitle(b.toggle, isOpen ? T('Close the timeline') : T('Open the Forge Studio Editor timeline here: drag the result onto it'));
         setTitle(b.handle, T('Close the timeline (▲)'));
         if (b.handle.hidden === isOpen) b.handle.hidden = !isOpen;
         setText(b.project, FS.state && FS.state.project ? '🎞️ ' + FS.state.project : '');
@@ -124,7 +124,7 @@
         } else if (b.chip.lastChild) setText(b.chip.lastChild, m ? '✋ ' + T('Drag') : '—');
         setText(b.add, '➕ ' + T('Add at the end'));
         if (b.add.disabled !== !m) b.add.disabled = !m;
-        setText(b.go, '↗ ' + T('Open Forge Studio'));
+        setText(b.go, '↗ ' + T('Open Forge Studio Editor'));
     }
 
     async function show(id) {

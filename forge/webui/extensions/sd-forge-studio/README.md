@@ -1,4 +1,36 @@
-# Forge Studio
+# Forge Studio Editor
+
+The editor tab is named **Forge Studio Editor** to distinguish it from the Forge Studio suite.
+Existing projects, settings and `/forge-studio/` API URLs keep working.
+
+Preview playback composites at the sequence frame rate. Scrubbing coalesces pointer events and keeps only
+the latest pending seek per decoder; time labels update without triggering Forge's global UI callbacks.
+Playback starts its clock after asynchronous media startup, and loads image overlays ahead of their cuts.
+The player retains the complete previous frame while the next is decoding, releases distant media decoders,
+limits reusable image/mask buffers and resets caches on project changes. Media range responses stream in
+256 KiB chunks instead of buffering a whole movie in server memory. The browser handles video decoding and
+Canvas2D acceleration; CUDA is not required for the editor UI. Exports retain their existing hardware encoder.
+
+The lip-sync workspace uses the same media transport as the main player: one in-flight seek per decoder,
+latest-target scrubbing, cancellable asynchronous playback and explicit decoder cleanup on close/source changes.
+Speech auditions follow the audio clock; rendered lips play their embedded sound as one video. Playback labels
+keep their Text nodes, speech pieces keep their DOM nodes while moving/trimming, and voice samples load on demand.
+Only the preview being auditioned plays. Progress indicators also avoid repeated global UI updates.
+
+**Drag an edge normally to trim. Hold Ctrl before dragging a video edge outwards to extend it with AI.**
+The shot stays unchanged while choosing the AI duration. Release Ctrl or press Escape to abandon the gesture.
+Releasing the mouse opens a review of the duration, continuation prompt and quality; only **Generate extension**
+starts work. Cancel, Escape or the review's close button starts nothing. Extensions default to fast 480p without
+motion smoothing, upscaling or AI sound; choose Video Studio settings or enable sound when needed.
+Stop a submitted extension with **Stop** on its striped timeline clip, the **■** timeline toolbar button,
+its right-click menu, or the AI Requests list. Cancellation restores pre-roll placement, removes temporary
+tracks/placeholders, cannot be resurrected by a late result or Undo, and cancels the request's own queued work,
+video/sound worker and local fitting processes. Video Studio cancellation targets the request's own worker,
+leaving other running jobs alone.
+
+Completed videos are registered against the selected project's resolved storage, including projects linked to
+an external drive. A temporary import/status failure keeps polling alive and offers **Retry adding result** or
+removal of the pending clip. Reopening the project recovers a completed result without another AI run.
 
 Lip-sync results play their embedded speech as part of the video. Moving, trimming,
 splitting or changing speed keeps speech synchronized. Unchanged older automatic speech
@@ -16,6 +48,8 @@ synthesized croak signals success after a user gesture enables browser audio; th
 button mutes it. Reduced-motion preferences are respected. Image generation uses this
 feedback for FIBO and when a normal bar is missing or stalled at zero. A new gallery result
 is required before playing the completion sound.
+The frog's **×** hides its card; video jobs also offer **Stop** on the card. Active work never displays 100%:
+that value is reserved for a completed result, and an unknown stage clears the previous percentage.
 
 A video editor inside Forge, in the spirit of CapCut and Higgsfield, where everything Forge can make is part of
 the edit: a shot made from words drops into the timeline, a clip is continued or made again with a click, a frame
@@ -129,7 +163,8 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
   there and puts the frame on screen between the halves as a still (same size, place and colour; 2 s, or the
   seconds next to it), pushing the rest of the track along; one undo takes it all back. "Play it backwards" makes
   the part of the file the clip uses, backwards with its sound, and the clip plays that ("Play it forwards again"
-  returns to the original). `forgestudio/clipkit.py`: the still is the exact frame the player shows (transparent
+  returns to the original). The same is in the clip's right-click menu: **⏪ Reverse (play backwards)** /
+  **⏩ Reverse back**, for every picked video clip at once; ⏪ on the clip marks it. `forgestudio/clipkit.py`: the still is the exact frame the player shows (transparent
   WebMs stay transparent); backwards is done in 5 s pieces, since ffmpeg's reverse keeps all it reverses in memory.
 - **Animation in and out (✨):** any picture, video or text can come in and go out with a fade, a rise (up from 6%
   of the frame lower), a pop (grows from 60% with a small overshoot) or a wipe from the right (for Hebrew) or the
@@ -229,7 +264,10 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
   Declining, a render failure or edits made while rendering leave the pieces in place.
 
 - **Prompts in Hebrew:** every prompt box takes Hebrew or English; the 🌐 prompt writer (Gemma) writes the
-  English prompt for the model before the request goes out, and the request shows what it wrote.
+  English prompt for the model before the request goes out, and the request shows what it wrote. Every prompt box
+  of the studio (the AI boxes, the shot boxes of the clip menu, Edit the frame, the image workspace, music and
+  effects) also has the 🌐 button of Forge's prompt fields: press it to see and edit the English prompt first, with
+  👍 / 👎 to teach the writer (`FS.withWriter`, `window.promptWriter.add` of hebrew-translator).
 - **Shots (Video Studio, Wan 2.2):** a new shot at the playhead from words, from the frame under the playhead, a
   continuation of the shot before it, a transition between two shots at a cut, another take of a clip. A striped
   clip of the right length goes on the timeline at once, shows its progress, and becomes the clip when it is ready
@@ -248,7 +286,9 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
   to the first frame of the second, by Wan (first + last frame) or by AnimateDiff (image-to-video with a first and a
   last picture, in the AnimateDiff clip's own settings) - AnimateDiff when either clip is AnimateDiff's. The box sets
   the join's length (1-7.5 s, 2 s first, remembered). Its first and last half seconds fade from and into the two
-  frames, so both cuts are seamless. The join goes right after the first shot.
+  frames, so both cuts are seamless. The join goes right after the first shot, between the two, on their own track;
+  on the main track everything after the cut on the other tracks (overlays, titles, linked sound) moves along with
+  the shot it belongs to, and stopping the request puts it all back (`placeholder` in `forge-studio-g-ai.js`).
 - **Edit the frame:** paint where to change it and Forge draws there (the checkpoint chosen at the top; FLUX 3 gets
   Euler / 16 steps / CFG 1), or the whole frame again. Back into the video: carried through the clip along the
   optical flow (the clip gets the result as a new take, same trim), made again by Wan from it, or as a still.
@@ -441,6 +481,20 @@ await ForgeStudio.exportNow('h264', -14);
 ```
 
 ## Tests
+
+`test_media_transport_js.js` covers delayed metadata, latest seeks, pending play cancellation, close/source-change
+races and decoder disposal. `test_extend_gesture_js.js` exercises normal trimming, Ctrl gestures on both edges,
+modifier release and Escape. `test_cancel_generation.py` checks queue ownership, terminal cancellation,
+real subprocess cleanup and the worker cancellation-file handshake. Generation tests also cancel before a
+submission returns and during result import, preserve takes, and ensure Undo cannot revive a cancelled request.
+`test_generation_results.py` reproduces external project storage with a real Windows junction, tests idempotent
+result registration, missing/cancelled/foreign files and legacy import compatibility. Generation UI tests cover
+review approval/cancellation, import retry and status polling recovery. Progress tests reserve 100% for completion
+and keep a dismissed card closed across later updates. Fast-generation tests override expensive saved settings.
+
+`node tests/test_player_js.js` checks scrub coalescing, latest-target seeks, no duplicate seeks/play calls,
+decoder and oversized-image release, sequence-rate composition, persistent timecode nodes and no timeout flashes.
+`tests/test_streaming.py` checks exact range/suffix delivery, 256 KiB chunk bounds, invalid ranges and early closure.
 
 From this folder with Forge's Python (`..\..\venv\Scripts\python.exe tests\test_<name>.py`):
 `test_core` (library, projects with a Hebrew name), `test_render` (exports checked by pixels and loudness,

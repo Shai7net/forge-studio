@@ -1,0 +1,7 @@
+[
+ {"i":1,"en":"Length (from audio)","ctx":"[t] Video Studio automatic recording length"},
+ {"i":2,"en":"LTX: animate a picture to your audio. Speech and singing drive the video. An LTX model is selected automatically. Add the picture and recording, then describe the scene. The recording sets the video length; longer recordings use consecutive short parts. The picture sets the shape within the selected quality. The original audio is preserved in the result.","ctx":"[t] Video Studio Image + Audio to Video"},
+ {"i":3,"en":"The recording has no readable duration.","ctx":"[t] Video Studio source metadata error"},
+ {"i":4,"en":"Use an audio recording of up to four minutes per video.","ctx":"[t] Video Studio audio length limit"},
+ {"i":5,"en":"The source has no readable picture dimensions.","ctx":"[t] Video Studio source metadata error"}
+]

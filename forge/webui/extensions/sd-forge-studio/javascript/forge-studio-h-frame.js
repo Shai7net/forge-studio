@@ -72,7 +72,7 @@
                         h('button', {class: 'fx-btn', onclick: () => { X.mask.getContext('2d').clearRect(0, 0, X.W, X.H); draw(); }}, T('Clear'))),
                     h('label', {class: 'fx-field'}, T('Brush size'), UI.size)),
                 h('div', {class: 'fx-group'}, h('div', {class: 'fx-group-title'}, T('2. Ask Forge to draw')),
-                    UI.prompt, UI.negative,
+                    FS.withWriter(UI.prompt, 'fs_frame_prompt', {as: 'img2img_prompt'}), UI.negative,
                     h('label', {class: 'fx-field'}, h('span', {}, T('How much to change'), ' ', UI.strengthText), UI.strength),
                     h('button', {class: 'fx-primary', onclick: FS.guard(() => drawWithForge(true))}, '✨ ' + T('Draw in the painted area')),
                     h('button', {class: 'fx-btn', onclick: FS.guard(() => drawWithForge(false))}, T('Draw the whole frame again')),

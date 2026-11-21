@@ -1,6 +1,6 @@
 # Video Studio (סטודיו וידאו)
 
-Wan 2.2 and LTX-2.3 video generation inside Forge, built for 8 GB graphics cards (written and measured on an RTX 3070 Laptop,
+Wan 2.2, LTX-2.3, and MiniMax-H3 video generation inside Forge, built for 8 GB graphics cards (written and measured on an RTX 3070 Laptop,
 8 GB, with 48 GB of system memory).
 
 Five sub-tabs, one **Generate video** button, and a visible **Video model** selector:
@@ -14,6 +14,34 @@ Five sub-tabs, one **Generate video** button, and a visible **Video model** sele
 | **Ingredients to Video** | up to four pictures (people, a pet, an object, a place) and a prompt | a video with them in it, keeping their looks, doing what the prompt says (like Flow's Ingredients) |
 | **Replace a character** | a video and a picture of a character | the person in the video becomes the character: motion, expressions, camera and background stay |
 | **Image + Audio to Video** | a picture, an audio recording and a scene prompt | LTX animates the picture to the recording and preserves the source audio in the output |
+
+## MiniMax-H3 FL2V on 8 GB
+
+Choose **MiniMax-H3 FL2V · W4A8 · 8 GB** in **Video model**. The selector fixes the
+linked workflow's settings automatically: 20 steps, Euler + Simple, CFG 1,
+video/audio sigma shifts 12/3, Comfy Kitchen attention, Spectrum history in system
+RAM, 24 fps, and a valid 17n+5 frame count. **608×352** is the source workflow's
+default; **480×864** is the tested portrait profile. A five-second request becomes
+124 frames (5.167 seconds), as required by H3.
+
+MiniMax-H3 works in Text to Video, Image to Video, first+last-frame FL2V, and
+multi-picture chains. It uses Qwen3-VL 4B INT8 plus the v3 MLP ClipProj, the W4A8
+FL2VA diffusion model, and the INT8 video VAE. The four pinned files total 21.59 GB;
+downloads use aria2c when available, resume partial files, and verify exact size and
+SHA-256. Wan/LTX assets and settings are not replaced. Model-family LoRAs are kept
+out of H3 because the referenced workflow does not load them.
+
+Under **Models**, download the selected model and press **Set up MiniMax-H3 engine**
+once. The worker reuses the compatible pinned FIBO ComfyUI/Python runtime and keeps
+ClipProj and Spectrum in `video-studio/h3/runtime`; it does not install into Forge or
+edit the shared ComfyUI tree. No ComfyUI server needs to run.
+
+Measured end-to-end on the RTX 3070 Laptop 8 GB: a real first+last-frame 608×352
+render completed 124 H.264 frames at 24 fps in 208.6 seconds, with 5.372 GB peak
+allocated VRAM. The linked workflow decodes video only, so normal Video Studio
+MMAudio/speech tools remain available afterwards. Its latent-video Refine path is
+not part of this FL2V workflow; choose the 480×864 profile directly for a larger H3
+render.
 
 ## LTX-2.3 on limited VRAM
 

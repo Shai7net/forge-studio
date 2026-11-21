@@ -48,11 +48,13 @@ def read_frames(path, width, height, fps, start=0.0, seconds=None):
     """RGB uint8 [N, H, W, 3] at `fps`, scaled to width x height."""
     cmd = [ffmpeg_exe(), "-loglevel", "error"]
     if start:
-        cmd += ["-ss", f"{float(start):.3f}"]
+        cmd += ["-ss", f"{float(start):.9f}"]
     cmd += ["-i", path]
     if seconds:
-        cmd += ["-t", f"{float(seconds):.3f}"]
-    cmd += ["-vf", f"fps={fps},scale={width}:{height}:flags=lanczos", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]
+        cmd += ["-t", f"{float(seconds):.9f}"]
+    # Resample timestamps before pose, masks and model inference; never reinterpret the source frame count.
+    cmd += ["-vf", f"fps=fps={fps}:round=near,setpts=PTS-STARTPTS,scale={width}:{height}:flags=lanczos",
+            "-fps_mode", "passthrough", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]
     raw = subprocess.run(cmd, capture_output=True, check=True).stdout
     frames = np.frombuffer(raw, dtype=np.uint8).reshape(-1, height, width, 3)
     if not len(frames):
@@ -339,7 +341,7 @@ def preview(path, frames, pose, mask, fps):
 def prepare(job, device, report):
     """Returns frames, pose pictures, face crops, background and mask (all uint8, N frames) for the job."""
     width, height, fps = int(job["width"]), int(job["height"]), int(job.get("fps", 16))
-    report("prepare", 0.0, note="reading the video")
+    report("prepare", 0.0, note=f"resampling the source video to {fps} fps before motion analysis")
     frames = read_frames(job["driving_video"], width, height, fps, job.get("start", 0.0), job.get("seconds"))
     threshold = float(job.get("pose_threshold", 0.4))
     pose = Pose(job["pose_detector"], job["pose_model"], gpu=device.type == "cuda")

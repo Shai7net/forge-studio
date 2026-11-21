@@ -23,6 +23,14 @@ the style.
 | Characters: character / video | the character as JSON for a sheet; the video idea for Ingredients, for the model chosen in Video Studio |
 | Forge Studio sound effects (`fs_effects`) | MMAudio: audible source, action, material, rhythm, distance and acoustic environment; no visual prompt |
 | Forge Studio music (`fs_music`) | ACE-Step: genre, instruments, tempo, mood and arrangement; instrumental music |
+| Video Studio "Picture prompt" of Text to Video (`vs_first_frame`) | the opening picture, as above |
+| Replace a character: "Describe character 2-4" | Wan Animate: how that character looks (as the main prompt of Replace) |
+| Forge Studio editor: AI box, shot boxes of the clip menu (new shot, continue, join, extend) | Wan 2.2 / LTX-2.3 from a picture, by the model chosen in Video Studio |
+| Forge Studio editor: Edit the frame, image workspace | the selected checkpoint, as img2img |
+
+Another extension puts 🌐 on its own text box with `window.promptWriter.add(box, field, {as, video})`: `as` is the
+field it is written for (`vs_prompt`, `img2img_prompt`, `fs_effects`...), `video` the Video Studio mode (`t2v` /
+`i2v`). The box needs a wrapper of its own; the bar goes after it.
 
 Forge Studio invokes these two audio targets automatically before generating sound, for input in any language,
 including English. The resulting English prompt is shown in the sound request status. These targets use audio

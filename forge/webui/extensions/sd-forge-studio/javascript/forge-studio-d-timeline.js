@@ -66,6 +66,11 @@
         TL.regionButton = btn('▧', T('Generate in the selected range'), (e) => {
             const r = TL.regionButton.getBoundingClientRect(); TL.regionMenu(r.left, r.bottom);
         });
+        TL.stopGeneration = btn('■', T('Stop generation'), () => {
+            const clip = S.doc.clips.find(c => c.kind === 'gen' && S.selected.includes(c.id)) || S.doc.clips.filter(c => c.kind === 'gen').at(-1);
+            if (clip) return FS.gen.cancelClip(clip.id);
+        });
+        TL.stopGeneration.hidden = true;
         return h('div', {class: 'ft-toolbar'},
             btn('↶', T('Undo (Ctrl+Z)'), () => FS.undo()),
             btn('↷', T('Redo (Ctrl+Y)'), () => FS.redo()),
@@ -76,7 +81,7 @@
             h('span', {class: 'ft-sep'}),
             btn('🖼＋', T('New image shot at the playhead: an empty picture to draw, generate or put pictures on'), () => FS.imageShop.create()),
             h('span', {class: 'ft-sep'}),
-            TL.magnetBtn, TL.snapBtn, TL.regionButton,
+            TL.magnetBtn, TL.snapBtn, TL.regionButton, TL.stopGeneration,
             h('span', {class: 'ft-spacer'}),
             btn('－', T('Zoom out'), () => zoomAt(1 / 1.4)),
             TL.zoom,
@@ -119,6 +124,7 @@
 
     TL.render = function () {
         if (!TL.el || !S.doc) return;
+        if (TL.stopGeneration) TL.stopGeneration.hidden = !S.doc.clips.some(c => c.kind === 'gen');
         const tracks = orderedTracks();
         const width = Math.max(TL.scroll.clientWidth, (FS.total() + 30) * TL.pps);
         TL.content.style.width = width + 'px';
@@ -292,6 +298,19 @@
         if (val(c, 'fadeOut') > 0) el.append(h('div', {class: 'ft-fade ft-fade-out', style: `width:${val(c, 'fadeOut') * TL.pps}px`}));
         el.append(h('div', {class: 'ft-label', dir: 'auto'}, ...badges, h('span', {class: 'ft-name'}, label)),
             h('div', {class: 'ft-handle ft-l'}), h('div', {class: 'ft-handle ft-r'}));
+        for (const edge of el.querySelectorAll('.ft-handle')) if (c.kind === 'video') edge.title = T('Trim. Hold Ctrl and drag outwards to extend with AI.');
+        if (c.kind === 'gen') {
+            if (c.gen?.resultReady) {
+                const retry=h('button',{class:'ft-stop-generation',style:'bottom:29px',title:T('Retry adding result')},'↻');
+                retry.addEventListener('pointerdown',e=>e.stopPropagation());
+                retry.addEventListener('click',FS.guard(async e=>{e.stopPropagation();await FS.gen.retryResult(c.id);}));
+                el.append(retry);
+            }
+            const stop = h('button', {class:'ft-stop-generation', title:T('Stop generation'), 'aria-label':T('Stop generation')}, '■ ' + T('Stop'));
+            stop.addEventListener('pointerdown', e => e.stopPropagation());
+            stop.addEventListener('click', FS.guard(async e => { e.stopPropagation(); stop.disabled = true; try { await FS.gen.cancelClip(c.id); } catch (error) { stop.disabled = false; throw error; } }));
+            el.append(stop);
+        }
         el.addEventListener('pointerdown', (e) => clipPointer(e, c));
         el.addEventListener('contextmenu', (e) => { e.preventDefault(); if (!S.selected.includes(c.id)) FS.select([c.id]); TL.menu(e.clientX, e.clientY, c); });
         el.addEventListener('dblclick', () => FS.emit('inspect', c.id));
@@ -376,11 +395,12 @@
 
     function placePlayhead() {
         if (!TL.playhead) return;
-        TL.playhead.style.left = (S.time * TL.pps) + 'px';
-        if (TL.timecodeEl) TL.timecodeEl.textContent = FS.timecode(S.time);
+        const left = TL.scroll.scrollLeft, width = TL.scroll.clientWidth;
+        TL.playhead.style.transform = `translate3d(${S.time * TL.pps}px,0,0)`;
+        FS.updateText(TL.timecodeEl, FS.timecode(S.time));
         if (S.playing) {
-            const x = S.time * TL.pps - TL.scroll.scrollLeft;
-            if (x > TL.scroll.clientWidth * 0.85 || x < 0) TL.scroll.scrollLeft = S.time * TL.pps - TL.scroll.clientWidth * 0.15;
+            const x = S.time * TL.pps - left;
+            if (x > width * 0.85 || x < 0) TL.scroll.scrollLeft = S.time * TL.pps - width * 0.15;
         }
     }
 
@@ -515,24 +535,37 @@
         const handle = e.target.classList.contains('ft-l') ? 'l' : e.target.classList.contains('ft-r') ? 'r' : null;
         if(handle&&FS.audioParent(c))c=FS.audioParent(c);
         // Ctrl-click picks clips one by one (again: leaves it out), Shift-click adds, as with files
-        if (e.ctrlKey || e.metaKey) { FS.select(S.selected.includes(c.id) ? S.selected.filter((id) => id !== c.id) : S.selected.concat(c.id)); return; }
+        if (!handle && (e.ctrlKey || e.metaKey)) { FS.select(S.selected.includes(c.id) ? S.selected.filter((id) => id !== c.id) : S.selected.concat(c.id)); return; }
         if (!S.selected.includes(c.id) || e.shiftKey) FS.select(e.shiftKey ? S.selected.concat(c.id) : [c.id]);
         const x0 = e.clientX, y0 = e.clientY;
         const orig = JSON.parse(JSON.stringify(c));
         const group = FS.linkedIds(S.selected).map((id) => FS.clip(id)).filter(Boolean).map((x) => JSON.parse(JSON.stringify(x)));
         const linkedGroup=group.length>1&&FS.linkedRoots(S.selected).length===1;
-        let moved = false, extension = 0, extensionClip = null;
+        const aiDrag = c.kind === 'video' && !!handle && !!e.ctrlKey;
+        let moved = false, extension = 0, extensionClip = null, ghost = null;
         const track = FS.track(c.track);
         const move = (ev) => {
             const dx = (ev.clientX - x0) / TL.pps;
             if (!moved && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 4) return;
-            if (!moved) { moved = true; FS.beginEdit(); }
+            if (!moved) { moved = true; if (!aiDrag) FS.beginEdit(); }
             const clip = FS.clip(c.id);
             extension = 0;
+            if (aiDrag) {
+                extension = ev.ctrlKey ? FS.snapTime(Math.max(0, handle === 'l' ? -dx : dx)) : 0;
+                extensionClip = orig;
+                if (extension >= 1 / FS.fps()) {
+                    const lane = TL.lanes.find(l => l.track?.id === orig.track);
+                    if (lane) {
+                        if (!ghost) { ghost = h('div', {class:'ft-extension'}); TL.content.append(ghost); }
+                        ghost.style.cssText = `left:${(handle === 'l' ? Math.max(0, orig.start - extension) : FS.end(orig)) * TL.pps}px;width:${extension * TL.pps}px;top:${lane.top + 3}px;height:${lane.height - 6}px`;
+                        FS.updateText(ghost, '✨ ' + T('Continue the shot') + ' · ' + extension.toFixed(2) + 's');
+                    }
+                } else if (ghost) { ghost.remove(); ghost = null; }
+                return;
+            }
             if (handle === 'l') {
                 const minIn = clip.kind === 'video' || clip.kind === 'audio' ? -val(orig, 'in') / val(orig, 'speed') : -Infinity;
                 let d = Math.max(minIn, Math.min(orig.duration - 1 / FS.fps(), dx));
-                extension = orig.kind === 'video' && Number.isFinite(minIn) ? Math.max(0, minIn - dx) : 0;
                 if (!(track.main && FS.magnet)) d = snapped(orig.start + d, c.id) - orig.start;
                 d = Math.max(minIn, Math.min(orig.duration - 1 / FS.fps(), d));
                 // the file second the new start shows (a ramp's own sums inside the clip; its first speed before it)
@@ -541,14 +574,11 @@
                 if (orig.keys) { clip.keys = JSON.parse(JSON.stringify(orig.keys)); FS.moveKeys(clip, d); }
                 if (!(track.main && FS.magnet)) clip.start = orig.start + d;
                 if (track.main && FS.magnet) FS.closeGaps();
-                extensionClip = JSON.parse(JSON.stringify(clip));
             } else if (handle === 'r') {
                 let end = orig.start + orig.duration + dx;
                 end = track.main && FS.magnet ? snapped(end, c.id, c.track) : snapped(end, c.id);
                 clip.duration = Math.max(1 / FS.fps(), Math.min(FS.room(orig), end - orig.start));
-                extension = orig.kind === 'video' && Number.isFinite(FS.room(orig)) ? Math.max(0, end - orig.start - FS.room(orig)) : 0;
                 if (track.main && FS.magnet) FS.closeGaps();
-                extensionClip = JSON.parse(JSON.stringify(clip));
             } else {
                 let start = Math.max(0, orig.start + dx);
                 const s1 = snapped(start, c.id), s2 = snapped(start + orig.duration, c.id) - orig.duration;
@@ -567,25 +597,25 @@
                 if (lane.track && lane.kind === (clip.kind === 'audio' ? 'audio' : 'video')) clip.track = lane.track.id;
             }
             FS.liveEdit();
-            if (extension >= 1 / FS.fps() && extensionClip) {
-                const lane = TL.lanes.find((l) => l.track && l.track.id === clip.track);
-                if (lane) TL.content.append(h('div', {class: 'ft-extension',
-                    style: `left:${(handle === 'l' ? Math.max(0, clip.start - extension) : FS.end(clip)) * TL.pps}px;width:${extension * TL.pps}px;top:${lane.top + 3}px;height:${lane.height - 6}px`},
-                    '✨ ' + T('Continue the shot') + ' · ' + FS.snapTime(extension).toFixed(2) + 's'));
-            }
         };
-        const cancel = () => { cleanup(); if (moved) FS.cancelEdit(); };
+        const cancel = () => { cleanup(); if (moved && !aiDrag) FS.cancelEdit(); };
         const key = (ev) => { if (ev.key === 'Escape') cancel(); };
         const cleanup = () => {
+            if (ghost) { ghost.remove(); ghost = null; }
             window.removeEventListener('pointermove', move);
             window.removeEventListener('pointerup', up);
             window.removeEventListener('pointercancel', cancel);
             window.removeEventListener('keydown', key);
             if (TL.cancelPointer === cancel) TL.cancelPointer = null;
         };
-        const up = () => {
+        const up = (ev) => {
             cleanup();
             if (!moved) { FS.emit('inspect', c.id); return; }
+            if (aiDrag) {
+                if (ev?.ctrlKey && extension >= 1 / FS.fps() && orig.kind === 'video' && FS.gen)
+                    FS.guard(() => FS.gen.extendClip(extensionClip, handle, extension))();
+                return;
+            }
             const clip = FS.clip(c.id);
             if (!handle && (group.length === 1||linkedGroup)) {
                 const lane = TL.dropLane;
@@ -608,9 +638,6 @@
             TL.lanes.forEach((l) => l.el.classList.remove('ft-target'));
             TL.dropLane = null;
             FS.commitEdit(handle ? 'trim' : 'move');
-            if (handle && extension >= 1 / FS.fps() && extensionClip && FS.gen) {
-                FS.guard(() => FS.gen.extendClip(extensionClip, handle, extension))();
-            }
         };
         window.addEventListener('pointermove', move);
         window.addEventListener('pointerup', up);
@@ -723,11 +750,32 @@
         return {label: '🔗 ' + T('Join these two shots (AI)'), run: () => FS.gen.transition(two[0], two[1])};
     }
 
+    /* ⏪ Reverse: the clip (or every picked video clip) plays backwards, its sound too; again: forwards. The badge ⏪ on
+     * the clip shows it. One undo step per clip (FS.reverseClip). */
+    function reverseItem(clip) {
+        if (clip.kind !== 'video' || !clip.media || !FS.reverseClip) return null;
+        const ids = (S.selected.includes(clip.id) ? S.selected : [clip.id])
+            .filter((id) => { const c = FS.clip(id); return c && c.kind === 'video' && c.media && !!c.reversed === !!clip.reversed; });
+        return {label: clip.reversed ? '⏩ ' + T('Reverse back (play forwards)') : '⏪ ' + T('Reverse (play backwards)'), run: async () => {
+            const project = S.project;
+            try {
+                for (let i = 0; i < ids.length; i++) {
+                    if (S.project !== project || !FS.clip(ids[i])) continue;
+                    const n = ids.length > 1 ? ` (${i + 1}/${ids.length})` : '';
+                    await FS.reverseClip(ids[i], (t) => FS.busy && FS.busy(T('Playing it backwards… {0}', (t.text || '') + n)));
+                }
+            } finally { FS.busy && FS.busy(null); }
+        }};
+    }
+
     TL.menu = function (x, y, clip, items) {
         TL.closeMenu();
         items = items || [
+            clip.kind==='gen' && clip.gen?.resultReady ? {label:'↻ '+T('Retry adding result'),run:()=>FS.gen.retryResult(clip.id)} : null,
+            clip.kind === 'gen' ? {label:'■ ' + T('Stop generation'), run:() => FS.gen.cancelClip(clip.id)} : null,
             joinItem(),
             clip.kind === 'video' || clip.kind === 'audio' ? speedRow(clip) : null,
+            reverseItem(clip),
             ...soundItems(clip),
             {label: '✂ ' + T('Split at the playhead'), run: () => FS.split([clip.id], FS.snapTime(S.time))},
             {label: '⧉ ' + T('Duplicate'), run: () => TL.duplicate()},

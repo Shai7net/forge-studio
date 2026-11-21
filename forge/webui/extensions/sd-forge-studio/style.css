@@ -160,7 +160,7 @@ body.fx-noscroll { overflow: hidden !important; }
 .ft-clip.ft-video, .ft-clip.ft-image { background: #23426b; }
 .ft-clip.ft-audio { background: #1f5144; }
 .ft-clip.ft-text { background: #5b3a86; }
-.ft-clip.ft-gen { background: repeating-linear-gradient(-45deg, #3a2709 0 10px, #4a320c 10px 20px); animation: ft-move 1s linear infinite; }
+.ft-clip.ft-gen { z-index: 3; background: repeating-linear-gradient(-45deg, #3a2709 0 10px, #4a320c 10px 20px); animation: ft-move 1s linear infinite; }
 @keyframes ft-move { from { background-position: 0 0; } to { background-position: 28px 0; } }
 .ft-clip.sel { border: 2px solid var(--fx-fg); box-shadow: 0 0 0 1px #000, 0 2px 10px rgba(0,0,0,.6); }
 .ft-strip { position: absolute; inset: 0; background-repeat: no-repeat; opacity: .9; }
@@ -189,8 +189,9 @@ body.fx-noscroll { overflow: hidden !important; }
 .ft-lane:hover .ft-cut, .ft-cut.ft-cut-end { opacity: 1; }
 .ft-cut.ft-cut-end { transform: translate(6px, 0); }
 .ft-cut:hover { background: var(--fx-ai); color: #241500; }
-.ft-playhead { position: absolute; top: 0; width: 2px; margin-left: -1px; background: #ff4d6d; pointer-events: none; z-index: 5; }
+.ft-playhead { position: absolute; left: 0; top: 0; width: 2px; margin-left: -1px; background: #ff4d6d; pointer-events: none; z-index: 5; }
 .ft-playhead-cap { position: absolute; top: -2px; left: -5px; width: 12px; height: 10px; background: #ff4d6d; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.ft-stop-generation { position: absolute; right: 7px; bottom: 5px; z-index: 8; padding: 2px 7px !important; min-width: 0 !important; border-radius: 5px; color: #fff; background: #963d4e; font-size: 11px; cursor: pointer; }
 .ft-menu { position: fixed; z-index: 10000; display: grid; min-width: 210px; padding: 5px; background: #1b1f27; border: 1px solid #323946;
     border-radius: 9px; box-shadow: 0 12px 30px rgba(0,0,0,.55); font: 13px "Segoe UI", sans-serif; color: #e8ebf1; }
 .ft-menu-item { text-align: start; background: none; border: 0; padding: 7px 10px; border-radius: 6px; color: inherit; cursor: pointer; font: inherit; }
@@ -419,7 +420,7 @@ body.fx-noscroll { overflow: hidden !important; }
 .fx-speech-name { position: absolute; top: 0; left: 10px; color: #e0fff8; font-size: 9px; background: #0c302a88; padding: 0 3px; pointer-events: none; }
 .fx-speech-edge { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; background: #9fffe21c; }
 .fx-speech-edge.left { left: 0; }.fx-speech-edge.right { right: 0; }
-.fx-speech-head { position: absolute; top: 18px; bottom: 0; border-left: 1px solid #ff7b88; pointer-events: none; z-index: 4; }
+.fx-speech-head { position: absolute; left: 0; top: 18px; bottom: 0; border-left: 1px solid #ff7b88; pointer-events: none; z-index: 4; }
 .fx-speech-head:before { content: ''; position: absolute; top: -2px; left: -4px; width: 7px; height: 7px; background: #ff7b88; transform: rotate(45deg); }
 .fx-speech-band { position: absolute; top: 65px; height: 46px; background: #479bff33; border: 1px solid #62aaff; pointer-events: none; z-index: 3; }
 .fx-speech-empty { color: #68788b; font-size: 11px; display: block; padding: 14px; text-align: center; }
@@ -437,7 +438,10 @@ body.fx-noscroll { overflow: hidden !important; }
 .fx-frog-title { font-size: 12px; font-weight: 600; color: #b9efcf; }
 .fx-frog-percent { font-size: 29px; line-height: 1.3; font-weight: 650; font-variant-numeric: tabular-nums; }
 .fx-frog-eta { font-size: 10px; color: #9ac1ab; line-height: 1.5; }
-.fx-frog-sound { position:absolute; inset-inline-end:7px; top:5px; background:transparent!important; border:0!important; font-size:12px; padding:2px!important; opacity:.7; cursor:pointer; pointer-events:auto; }
+.fx-frog-sound { position:absolute; inset-inline-end:30px; top:5px; background:transparent!important; border:0!important; font-size:12px; padding:2px!important; opacity:.7; cursor:pointer; pointer-events:auto; }
+.fx-frog-close { position:absolute; inset-inline-end:7px; top:3px; background:transparent!important; border:0!important; color:#cce5d9; padding:0 4px!important; font-size:18px; cursor:pointer; pointer-events:auto; }
+.fx-frog-stop { position:absolute; inset-inline-end:10px; bottom:7px; padding:2px 9px!important; border:1px solid #e9928055!important; border-radius:6px; color:#ffccbe; background:#552b2b!important; font-size:11px; pointer-events:auto; cursor:pointer; }
+.fx-frog-progress.has-stop { padding-bottom:35px; }
 .fx-frog-progress.done .fx-frog-art svg { animation: frog-finish .5s ease-out 2; }
 .fx-frog-progress.done .fx-frog-ring:after { animation:none; border-style:solid; }
 .fx-frog-progress.failed { border-color:#e99c7755; }.fx-frog-progress.failed .fx-frog-ring { background:#906a4f; }
@@ -585,8 +589,11 @@ body.fx-noscroll { overflow: hidden !important; }
 .fs-peek-btn:disabled { opacity: .45; cursor: default; }
 .fs-peek-project { opacity: .8; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fs-peek-chip { display: flex; align-items: center; gap: 6px; padding: 2px 8px 2px 2px; border-radius: 6px; cursor: grab;
-    border: 1px dashed #22c55e; user-select: none; }
-.fs-peek-chip img, .fs-peek-chip video { height: 34px; width: 54px; object-fit: cover; border-radius: 4px; pointer-events: none; }
+    flex: 0 0 auto; align-self: center; height: 34px !important; min-height: 0 !important; max-height: 34px !important;
+    border: 1px dashed #22c55e; user-select: none; overflow: hidden; }
+.fs-peek .fs-peek-chip img, .fs-peek .fs-peek-chip video { display: block; flex: 0 0 48px; height: 28px !important;
+    min-height: 0 !important; max-height: 28px !important; width: 48px !important; min-width: 48px !important;
+    max-width: 48px !important; object-fit: cover; border-radius: 4px; pointer-events: none; }
 .fs-peek-chip.fs-peek-empty { cursor: default; opacity: .5; border-color: var(--border-color-primary, #555); }
 .fs-peek-note { opacity: .85; }
 .fs-peek-note.fs-peek-error { color: #f87171; } .fs-peek-note.fs-peek-warn { color: #f5a524; }
@@ -602,3 +609,12 @@ body.fx-noscroll { overflow: hidden !important; }
 .fx-dropzone[hidden] { display: none !important; }
 .fx-dropzone-box { margin-top: 12px; padding: 6px 14px; border-radius: 999px; background: #16a34a; color: #fff;
     font-weight: 600; font-size: 13px; box-shadow: 0 4px 18px rgba(0,0,0,.35); }
+
+/* 🌐 of Forge's prompt writer on the studio's own text boxes (FS.withWriter): room for it at the box's end */
+.fx-writer { position: relative; }
+.fx-writer > textarea, .fx-writer > input { width: 100%; box-sizing: border-box; padding-inline-end: 44px; }
+.fx-writer > .pw-write { right: 18px; bottom: 6px; }
+[dir="rtl"] .fx-writer > .pw-write { right: auto; left: 18px; }
+.fx-writer > input + .pw-write { right: 6px; }
+[dir="rtl"] .fx-writer > input + .pw-write { left: 6px; }
+.fx-writer > input + .pw-write { width: 22px; height: 22px; line-height: 20px; font-size: 13px; bottom: 50%; transform: translateY(50%); }

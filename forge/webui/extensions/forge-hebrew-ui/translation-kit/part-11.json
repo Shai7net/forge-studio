@@ -20,6 +20,11 @@
   "Describe character 3": "Describe character 3",
   "Describe character 4": "Describe character 4",
   "e.g. a green furry wizard with a long beard, a purple pointed hat and a brown robe": "e.g. a green furry wizard with a long beard, a purple pointed hat and a brown robe",
+  "Length (from audio)": "Length (from audio)",
+  "LTX: animate a picture to your audio. Speech and singing drive the video. An LTX model is selected automatically. Add the picture and recording, then describe the scene. The recording sets the video length; longer recordings use consecutive short parts. The picture sets the shape within the selected quality. The original audio is preserved in the result.": "LTX: animate a picture to your audio. Speech and singing drive the video. An LTX model is selected automatically. Add the picture and recording, then describe the scene. The recording sets the video length; longer recordings use consecutive short parts. The picture sets the shape within the selected quality. The original audio is preserved in the result.",
+  "The recording has no readable duration.": "The recording has no readable duration.",
+  "Use an audio recording of up to four minutes per video.": "Use an audio recording of up to four minutes per video.",
+  "The source has no readable picture dimensions.": "The source has no readable picture dimensions.",
   "Project": "Project",
   "New project": "New project",
   "Name of the new project:": "Name of the new project:",
@@ -429,15 +434,6 @@
   "Draw the material": "Draw the material",
   "Take the material off": "Take the material off",
   "Keep it in my objects": "Keep it in my objects",
-  "It is kept: \"Plain shapes and my objects\", in every project": "It is kept: \"Plain shapes and my objects\", in every project",
-  "Its picture, its model and everything it is are copied to your own collection, to be stood in other worlds and other projects": "Its picture, its model and everything it is are copied to your own collection, to be stood in other worlds and other projects",
-  "Write what it is made of first": "Write what it is made of first",
-  "There is no such shape": "There is no such shape",
-  "Drawing the material": "Drawing the material",
-  "Its shape": "Its shape",
-  "The frame around the chosen object does the same by hand: a corner makes all of it larger or smaller, a side changes its width or its height, and the round handles turn it (above), tip it (right), turn it round (below) and bring it nearer or take it farther (left).": "The frame around the chosen object does the same by hand: a corner makes all of it larger or smaller, a side changes its width or its height, and the round handles turn it (above), tip it (right), turn it round (below) and bring it nearer or take it farther (left).",
-  "Tipped (°)": "Tipped (°)",
-  "Turned in its plane (°)": "Turned in its plane (°)",
-  "As it was made": "As it was made"
+  "It is kept: \"Plain shapes and my objects\", in every project": "It is kept: \"Plain shapes and my objects\", in every project"
  }
 }

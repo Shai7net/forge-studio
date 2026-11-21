@@ -12,29 +12,79 @@
     const val = (c, k) => FS.val(c, k);
     const q = encodeURIComponent;
     const G = FS.gen = {records: [], seconds: 5, quality: '', sound: true};
+    const submitting = new Map(), cancelledJobs = new Set();
+    const jobKey = (project, id) => project + ':' + id;
+    const isCancelled = (project, id) => cancelledJobs.has(jobKey(project, id));
+
+    function unplace(d, p) {
+        if (!d.clips.some(c => c.id === p.clip && c.kind === 'gen')) return;
+        d.clips = d.clips.filter(c => c.id !== p.clip);
+        if (p.shift) for (const c of d.clips) if ((p.shifted || []).includes(c.id)) c.start = Math.max(0, c.start - p.shift);
+        if (p.ripple) for (const c of d.clips) if ((p.rippled || []).includes(c.id)) c.start = Math.max(0, c.start - p.ripple);
+        d.tracks = d.tracks.filter(tr => !(p.createdTracks || []).includes(tr.id) || d.clips.some(c => c.track === tr.id));
+        if (!p.exact && FS.magnet) {
+            const main = d.tracks.find(tr => tr.main); let at = 0;
+            if (main) for (const c of d.clips.filter(c => c.track === main.id).sort((a,b) => a.start-b.start)) { c.start = c.fixedStart ? Math.max(at,c.start) : at; at = FS.end(c); }
+        }
+    }
+    function rollback(project, p) {
+        if (S.project !== project || !p) return;
+        if (FS.clip(p.clip)?.kind === 'gen') FS.change('cancel generation', d => unplace(d,p));
+        FS.rewriteHistory(d => unplace(d,p));
+    }
+    G.cancelClip = async function (clipId, recordId) {
+        const project = S.project, token = submitting.get(jobKey(project, clipId));
+        const record = G.records.find(g => recordId ? g.id === recordId : g.placeholder?.clip === clipId);
+        const id = recordId || token?.record?.id || record?.id || FS.clip(clipId)?.gen?.id;
+        if (token) token.cancelled = true;
+        if (id) cancelledJobs.add(jobKey(project, id));
+        rollback(project, token?.placeholder || record?.placeholder || {clip:clipId, exact:true});
+        if ((token?.placeholder || record?.placeholder)?.take && FS.clip(clipId)) {
+            FS.change('cancel take', () => { delete FS.clip(clipId).pendingTake; });
+            FS.rewriteHistory(d => { for (const c of d.clips) if (c.id === clipId && c.pendingTake === id) delete c.pendingTake; });
+        }
+        drawList();
+        if (id) {
+            FS.emit('task-progress', {id:'video:'+project+':'+id, kind:'video', state:'cancelled'});
+            await FS.api('generate/cancel', {name:project, id});
+            await FS.api('generate/placed', {name:project, id});
+            if (record) record.state = 'cancelled';
+            drawList();
+        }
+        G.poll(300);
+    };
 
     /* ---- asking for words, in a small box ---- */
 
     /* choice (optional): {label, options: [[value, text]], value, number?: {label, value, min, max, step}}; then the
      * answer is {text, choice, number} */
-    FS.ask = function (title, placeholder, value, note, choice) {
+    /* writer (optional): {field, as, video} puts 🌐 of the prompt writer on the box (FS.withWriter) */
+    FS.ask = function (title, placeholder, value, note, choice, writer) {
         return new Promise((resolve) => {
             const h = FS.h;
             const area = h('textarea', {class: 'fx-input fx-textarea', dir: 'auto', rows: 4, placeholder: placeholder || ''}, value || '');
             const select = choice ? h('select', {class: 'fx-select'}, ...choice.options.map(([v, t]) =>
                 h('option', {value: v, selected: v === choice.value ? '' : null}, t))) : null;
-            const num = choice && choice.number ? h('input', {class: 'fx-num', type: 'number', min: choice.number.min, max: choice.number.max,
+            const num = choice && choice.number ? h('input', {class: 'fx-num', type: 'number', required:true, min: choice.number.min, max: choice.number.max,
                 step: choice.number.step || 0.5, value: choice.number.value}) : null;
-            const done = (v) => { box.remove(); resolve(choice && v !== null ? {text: v, choice: select.value, number: num ? +num.value : null} : v); };
+            const sound = choice?.sound ? h('input', {type:'checkbox',checked:!!choice.sound.checked}) : null;
+            const done = (v) => {
+                if (v !== null && num && !num.reportValidity()) return;
+                if (v !== null && choice?.requireText && !v.trim()) { area.required=true; area.reportValidity(); return; }
+                box.remove(); resolve(choice && v !== null ? {text:v,choice:select.value,number:num?+num.value:null,...(sound?{sound:sound.checked}:{})} : v);
+            };
             const box = h('div', {class: 'fx-ask', dir: FS.hebrew() ? 'rtl' : 'ltr'},
                 h('div', {class: 'fx-group'},
-                    h('div', {class: 'fx-group-title'}, title), note ? h('div', {class: 'fx-dim'}, note) : null,
+                    h('div', {class:'fx-row'},h('div', {class:'fx-group-title'},title),h('span',{class:'fx-spacer'}),h('button',{class:'fx-icon',title:T('Close'),onclick:()=>done(null)},'×')), note ? h('div', {class: 'fx-dim'}, note) : null,
                     select ? h('label', {class: 'fx-row'}, h('span', {}, choice.label), select) : null,
-                    num ? h('label', {class: 'fx-row'}, h('span', {}, choice.number.label), num, h('span', {class: 'fx-dim'}, T('seconds'))) : null, area,
+                    num ? h('label', {class: 'fx-row'}, h('span', {}, choice.number.label), num, h('span', {class: 'fx-dim'}, T('seconds'))) : null,
+                    writer ? FS.withWriter(area, writer.field || 'fs_ask', writer) : area,
+                    sound ? h('label',{class:'fx-row'},sound,h('span',{},choice.sound.label)) : null,
                     h('div', {class: 'fx-row'},
-                        h('button', {class: 'fx-primary', onclick: () => done(area.value.trim())}, '✨ ' + T('Go')),
+                        h('button', {class: 'fx-primary', onclick: () => done(area.value.trim())}, '✨ ' + T(choice?.confirmLabel || 'Go')),
                         h('button', {class: 'fx-btn', onclick: () => done(null)}, T('Cancel')))));
-            area.addEventListener('keydown', (e) => {
+            box.addEventListener('keydown', (e) => {
+                e.stopPropagation();
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); e.stopPropagation(); done(area.value.trim()); }
                 if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); done(null); }
             });
@@ -62,15 +112,30 @@
 
     /* ---- placeholders ---- */
 
-    function placeholder(time, seconds, trackId, text, exact, shift) {
+    /* `between`: it goes between two clips of its track (a join), on any track. A clip put into the edit at a cut moves
+     * what comes after it on the other tracks too (overlays, titles, linked sound), so they stay on their shots; what
+     * it moved is kept in `rippled` (and moved back if the request is stopped). */
+    function placeholder(time, seconds, trackId, text, exact, shift, between) {
         return FS.change('generate', (d) => {
             if (shift) for (const c of d.clips) c.start += shift;
             const clip = {id: FS.newId('g'), track: trackId || FS.mainTrack().id, kind: 'gen', start: FS.snapTime(time),
                 duration: seconds, gen: {text: text || '', progress: 0}};
             d.clips.push(clip);
             if (exact) clip.fixedStart = true;
-            FS.place(clip, exact ? 'exact' : FS.track(clip.track).main ? 'insert' : 'free');
-            return clip;
+            const main = FS.track(clip.track).main, packed = main && FS.magnet;
+            FS.place(clip, exact ? 'exact' : main || between ? 'insert' : 'free');
+            const rippled = [];
+            if (!exact && (main || between)) {
+                const cut = clip.start, half = 0.5 / FS.fps();
+                for (const c of d.clips) {
+                    if (c.id === clip.id || c.start < cut - half) continue;
+                    if (c.track === clip.track) { if (!packed) rippled.push(c.id); continue; }  // moved by FS.place
+                    if (!main) continue;  // on a second track only its own clips make room
+                    c.start += clip.duration;
+                    rippled.push(c.id);
+                }
+            }
+            return {clip, rippled};
         });
     }
 
@@ -82,22 +147,37 @@
         if (S.project !== project) throw new Error(T('The project changed; request cancelled'));
         const seconds = FS.snapTime(body.seconds || G.seconds);
         const shifted = opts.shift ? S.doc.clips.map((c) => c.id) : [];
-        let clip = opts.take ? FS.clip(opts.take) : placeholder(opts.time != null ? opts.time : S.time, seconds, opts.track, body.prompt, opts.exact, opts.shift);
+        const tracksBefore = new Set(S.doc.tracks.map(tr => tr.id));
+        const made = opts.take ? null : placeholder(opts.time != null ? opts.time : S.time, seconds, opts.track, body.prompt, opts.exact, opts.shift, opts.between);
+        const clip = opts.take ? FS.clip(opts.take) : made.clip;
+        const rippled = made ? made.rippled : [];
         const payload = Object.assign({name: S.project, seconds, quality: G.quality || null, sound: G.sound,
             width: S.doc.settings.width, height: S.doc.settings.height, fps: FS.fps()}, body,
             {seconds, placeholder: {clip: clip.id, take: !!opts.take, exact: !!opts.exact, shift: opts.shift || 0, shifted,
-                extension:opts.extension || null}});
+                ripple: rippled.length ? clip.duration : 0, rippled,
+                extension:opts.extension || null, createdTracks:S.doc.tracks.filter(tr => !tracksBefore.has(tr.id)).map(tr => tr.id)}});
+        const token = {placeholder:payload.placeholder, cancelled:false, record:null};
+        const key = jobKey(project, clip.id);
+        submitting.set(key, token);
         let record;
         try {
             record = await FS.api('generate', payload);
+            token.record = record;
+            if (token.cancelled) {
+                cancelledJobs.add(jobKey(project, record.id));
+                FS.emit('task-progress', {id:'video:'+project+':'+record.id, kind:'video', state:'cancelled'});
+                await FS.api('generate/cancel', {name:project, id:record.id});
+                await FS.api('generate/placed', {name:project, id:record.id});
+                return {...record, state:'cancelled'};
+            }
         } catch (e) {
-            if (!opts.take && S.project === project) FS.change('generate', (d) => {
-                d.clips = d.clips.filter((c) => c.id !== clip.id);
-                if (opts.shift) for (const c of d.clips) if (shifted.includes(c.id)) c.start -= opts.shift;
-                FS.closeGaps();
-            });
+            if (!opts.take) rollback(project, payload.placeholder);
+            if (token.cancelled) {
+                if (record) { G.records.push(record); G.poll(300); FS.message(T('Could not stop generation. Retry Stop in AI requests.'), 'error'); }
+                return {state:'cancelled'};
+            }
             throw e;
-        }
+        } finally { submitting.delete(key); }
         if (S.project !== project) return record;
         if (opts.take) FS.change('take', () => { FS.clip(clip.id).pendingTake = record.id; });
         else FS.change('generate', () => { FS.clip(clip.id).gen = {id: record.id, text: T('Waiting'), progress: 0}; });
@@ -109,22 +189,34 @@
 
     /* ---- following the requests ---- */
 
-    let timer = null;
+    let timer = null, refreshing = false, pollError = '';
+    const importErrors = new Map();
     G.poll = function (delay) {
         clearTimeout(timer);
         timer = setTimeout(G.refresh, delay == null ? 2500 : delay);
     };
 
     G.refresh = FS.guard(async function () {
-        if (!S.project) return;
+        if (!S.project || refreshing) return;
         const project = S.project;
+        refreshing = true;
+        let busy = false;
+        try {
         const r = await FS.api('generations?name=' + q(S.project));
         if (S.project !== project) return;
+        pollError = '';
         G.records = r.generations;
-        let busy = false;
         for (const g of G.records) {
             const clipId = g.placeholder && g.placeholder.clip;
             const clip = clipId && FS.clip(clipId);
+            if (g.state === 'placed' && !g.web && clip?.kind === 'gen') { rollback(project,g.placeholder); continue; }
+            if (isCancelled(project, g.id)) {
+                FS.emit('task-progress', {id:'video:'+project+':'+g.id, kind:'video', state:'cancelled'});
+                if (g.state === 'running' || g.state === 'waiting') busy = true;
+                else g.state = 'cancelled';
+                rollback(project, g.placeholder);
+                continue;
+            }
             if (g.state === 'waiting' || g.state === 'running') {
                 busy = true;
                 FS.emit('task-progress',{id:'video:'+project+':'+g.id,kind:'video',state:g.state,progress:g.live?.progress,started:g.started||g.created});
@@ -133,39 +225,72 @@
                     clip.gen = {id: g.id, text: g.state === 'waiting' ? T('Waiting for the card') : (live.text || ''), progress: live.progress};
                     FS.liveEdit();
                 }
-            } else if (g.state === 'done' && g.video) {
-                await place(g, clip);
+            } else if ((g.state === 'done' || (g.state === 'placed' && clip?.kind === 'gen')) && g.video) {
+                const key=jobKey(project,g.id), previous=importErrors.get(key);
+                g.importError=previous?.message || '';
+                if (previous && Date.now()<previous.retryAt) { busy=true; continue; }
+                try {
+                    await place(g, clip);
+                    importErrors.delete(key);
+                } catch (error) {
+                    if (S.project!==project || isCancelled(project,g.id)) continue;
+                    const message=error.message || String(error),attempts=(previous?.attempts || 0)+1;
+                    importErrors.set(key,{message,attempts,retryAt:Date.now()+Math.min(30000,2500*attempts)});
+                    g.importError=message;busy=true;
+                    // Generation has finished. An import failure must not leave a misleading 100% spinner running.
+                    FS.emit('task-progress',{id:'video:'+project+':'+g.id,kind:'video',state:'error',hidden:true});
+                    if (clip?.kind==='gen') {
+                        const text=T('Video ready. Could not add it: {0}',message);
+                        if (clip.gen?.text!==text) { clip.gen={id:g.id,text,progress:null,resultReady:true,error:message};FS.liveEdit(); }
+                    }
+                    if (previous?.message!==message) FS.message(T('The video is ready. Retry adding it or remove the pending clip.'),'warn');
+                }
             } else if (g.state === 'error' || g.state === 'cancelled') {
                 FS.emit('task-progress',{id:'video:'+project+':'+g.id,kind:'video',state:g.state,text:g.message});
-                if (clip && clip.kind === 'gen') FS.change('generate', (d) => {
-                    d.clips = d.clips.filter((c) => c.id !== clip.id);
-                    const p = g.placeholder || {};
-                    if (p.shift) for (const c of d.clips) if ((p.shifted || []).includes(c.id)) c.start = Math.max(0, c.start - p.shift);
-                    FS.closeGaps();
-                });
+                if (clip && clip.kind === 'gen') rollback(project, g.placeholder);
                 else if (clip && clip.pendingTake === g.id) FS.change('take failed', () => { delete clip.pendingTake; });
-                if (g.state === 'error') FS.message(T('Making the clip failed: {0}', g.message || ''), 'error');
-                await FS.api('generate/placed', {name: S.project, id: g.id});
+                if (!g.acknowledged) {
+                    if (g.state === 'error') FS.message(T('Making the clip failed: {0}', g.message || ''), 'error');
+                    await FS.api('generate/placed', {name: S.project, id: g.id});
+                }
             }
         }
         drawList();
-        if (busy || S.doc.clips.some((c) => c.kind === 'gen')) G.poll();
+        } catch (error) {
+            busy=true;
+            const message=error.message || String(error);
+            if (pollError!==message) { pollError=message;FS.message(T('Could not check generation status. Retrying: {0}',message),'warn'); }
+        } finally {
+            refreshing=false;
+            if (S.project===project && (busy || S.doc.clips.some(c=>c.kind==='gen'))) G.poll();
+            else if (S.project && S.project!==project) G.poll(0);
+        }
     });
+
+    G.retryResult = function (clipId) {
+        const g=G.records.find(r=>r.placeholder?.clip===clipId);
+        if (g) importErrors.delete(jobKey(S.project,g.id));
+        return G.refresh();
+    };
 
     async function place(g, clip) {
         const project = S.project;
-        const added = await FS.api('project/add', {name: project, path: g.video});
-        if (S.project !== project) return;
+        if (isCancelled(project, g.id)) return;
+        const added = await FS.api('generate/result', {name: project, id: g.id});
+        if (S.project !== project || isCancelled(project, g.id)) return;
         S.media[added.web] = {path: g.video, missing: false};
         const info = await FS.probe(added.web);
-        if (S.project !== project) return;
+        if (S.project !== project || isCancelled(project, g.id)) return;
         FS.change('generated', () => {
             const c = clip && FS.clip(clip.id);
             if (c && c.kind === 'gen') {
+                const was = c.duration;
                 c.kind = 'video';
                 c.media = added.web;
                 c.in = 0;
                 c.duration = Math.min(c.duration, info.duration || c.duration);
+                const p = g.placeholder || {}, less = was - c.duration;
+                if (p.ripple && less > 1e-6) for (const x of S.doc.clips) if ((p.rippled || []).includes(x.id)) x.start = Math.max(0, x.start - less);
                 c.takes = [added.web];
                 c.generated = true;
                 delete c.gen;
@@ -180,11 +305,13 @@
                 FS.closeGaps();
             }
         });
+        await FS.save();
+        if (S.project!==project || isCancelled(project,g.id)) return;
         await FS.api('generate/placed', {name: project, id: g.id, web: added.web});
-        FS.emit('task-progress',{id:'video:'+project+':'+g.id,kind:'video',state:'done',progress:1});
+        FS.emit('task-progress',{id:'video:'+project+':'+g.id,kind:'video',state:'done',progress:1,hidden:false});
         FS.message(clip ? T('The new clip is on the timeline') : T('The new clip is in the project (its placeholder was removed)'));
         if (FS.refreshLibrary) FS.refreshLibrary();
-        if (clip && (g.placeholder || {}).extension) await G.offerMerge(g, clip.id);
+        if (clip && (g.placeholder || {}).extension) FS.guard(() => G.offerMerge(g, clip.id))();
     }
 
     G.combineClips = (sourceId, extensionId, result) => FS.change('combine extension', d => {
@@ -240,7 +367,7 @@
     G.newShot = async function (time, track, region) {
         const project = S.project;
         const prompt = await FS.ask(T('A new shot from words'), T('What happens in the shot (Hebrew or English)'), '',
-            T('Forge draws its first frame with the checkpoint chosen at the top, then Wan animates it.'));
+            T('Forge draws its first frame with the checkpoint chosen at the top, then Wan animates it.'), null, {video: 't2v'});
         if (!prompt) return;
         if (S.project !== project) throw new Error(T('The project changed; request cancelled'));
         if (region && !track) track = FS.change('track', () => FS.addTrack('video'));
@@ -257,17 +384,27 @@
     G.extendClip = async function (clip, edge, seconds) {
         seconds = FS.snapTime(seconds);
         if (seconds < 1 / FS.fps() - 1e-8) return;
+        const project=S.project, original=JSON.stringify(clip);
+        const answer=await FS.ask(T('Extend shot with AI'),T('Describe the continuation'),'Continue the shot',
+            T('Review the duration and prompt. Nothing starts until you choose Generate extension.'),
+            {label:T('Quality'),value:'fast',options:[['fast',T('Fast: 480p, no smoothing or upscaling')],['studio',T('Use Video Studio settings')]],
+                number:{label:T('Extension length'),value:seconds,min:1/FS.fps(),max:240,step:1/FS.fps()},
+                sound:{label:T('Add AI sound (takes longer)'),checked:false},confirmLabel:'Generate extension',requireText:true}, {video: 'i2v'});
+        if (!answer) return;
+        if (S.project!==project || JSON.stringify(FS.clip(clip.id))!==original) throw Error(T('The shot changed. Review the extension again.'));
+        seconds=FS.snapTime(answer.number);
+        if (!(seconds>=1/FS.fps() && seconds<=240)) throw Error(T('Choose an extension between one frame and 240 seconds.'));
         const before = edge === 'l';
         // At time zero, make room for pre-roll. All tracks move together to preserve sound sync.
         const shift = before ? Math.max(0, seconds - clip.start) : 0;
         const time = before ? clip.start + shift - seconds : FS.end(clip);
-        await G.request({kind: 'continue', prompt: 'Continue the shot', seconds, direction: before ? 'before' : 'after',
+        return G.request({kind:'continue',prompt:answer.text,seconds,sound:answer.sound,fast:answer.choice==='fast',direction:before?'before':'after',
             start: {web: clip.media, seconds: before ? val(clip, 'in') : lastFrame(clip)}}, {time, track: clip.track, exact: true, shift,
                 extension:{source:clip.id,edge}});
     };
 
     G.fromFrame = async function (clip, time) {
-        const prompt = await FS.ask(T('A new shot from this frame'), T('What happens next (Hebrew or English)'));
+        const prompt = await FS.ask(T('A new shot from this frame'), T('What happens next (Hebrew or English)'), '', null, null, {video: 'i2v'});
         if (!prompt) return;
         await G.request({kind: 'picture', prompt, start: {web: clip.media, seconds: G.sourceAt(clip, time)}},
             {time: FS.end(clip), track: clip.track});
@@ -283,7 +420,7 @@
             {label: T('Continue with'), value: engine, options: [
                 ['animatediff', 'AnimateDiff' + (engine === 'animatediff' ? ' ✓' : '')],
                 ['deforum', 'Deforum' + (engine === 'deforum' ? ' ✓' : '')],
-                ['wan', 'Wan (Video Studio)' + (engine === 'wan' ? ' ✓' : '')]]});
+                ['wan', 'Wan (Video Studio)' + (engine === 'wan' ? ' ✓' : '')]]}, {video: 'i2v'});
         if (!answer || !answer.text) return;
         await G.request({kind: 'continue', prompt: answer.text, engine: answer.choice,
             start: {web: clip.media, seconds: lastFrame(clip)}}, {time: FS.end(clip), track: clip.track,extension:{source:clip.id,edge:'r'}});
@@ -302,12 +439,12 @@
             {label: T('Make it with'), value: engine, options: [
                 ['animatediff', 'AnimateDiff' + (engine === 'animatediff' ? ' ✓' : '')],
                 ['wan', 'Wan (Video Studio)' + (engine === 'wan' ? ' ✓' : '')]],
-             number: {label: T('Length of the join'), value: G.joinSeconds || 2, min: 1, max: 7.5, step: 0.5}});
+             number: {label: T('Length of the join'), value: G.joinSeconds || 2, min: 1, max: 7.5, step: 0.5}}, {video: 'i2v'});
         if (!answer || !answer.text) return;
         G.joinSeconds = Math.max(1, Math.min(7.5, answer.number || 2));
         await G.request({kind: 'between', prompt: answer.text, engine: answer.choice, seconds: G.joinSeconds,
             start: {web: left.media, seconds: lastFrame(left)},
-            end: {web: right.media, seconds: val(right, 'in')}}, {time: FS.end(left), track: left.track});
+            end: {web: right.media, seconds: val(right, 'in')}}, {time: FS.end(left), track: left.track, between: true});
     };
     /* the clip right after `c` on its track (touching it or after a gap), if it is a picture or a video */
     G.nextOf = (c) => FS.clipsOn(c.track).filter((x) => x.id !== c.id && x.start >= FS.end(c) - 0.5 / FS.fps())
@@ -384,7 +521,7 @@
         return h('div', {class: 'fx-panel-body'},
             h('div', {class: 'fx-group'},
                 h('div', {class: 'fx-group-title'}, '✨ ' + T('Make a shot with Wan 2.2')),
-                UI.prompt,
+                FS.withWriter(UI.prompt, 'fs_ai_prompt', {video: 'i2v'}),
                 h('div', {class: 'fx-row'}, h('span', {class: 'fx-dim'}, T('Seconds')), UI.seconds, UI.quality),
                 h('label', {class: 'fx-check'}, UI.sound, ' ', T('With AI sound (MMAudio)')),
                 h('button', {class: 'fx-primary', onclick: go((p) => G.request({kind: 'text', prompt: p}))}, '✨ ' + T('New shot at the playhead')),
@@ -418,9 +555,12 @@
                 h('div', {class: 'fx-row'}, h('b', {}, T(STATE[g.state] || g.state)),
                     h('span', {class: 'fx-dim'}, `${g.seconds}s · seed ${g.seed}`), h('span', {class: 'fx-spacer'}),
                     (g.state === 'waiting' || g.state === 'running') ? h('button', {class: 'fx-btn', onclick: FS.guard(async () => {
-                        await FS.api('generate/cancel', {name: S.project, id: g.id});
-                        G.poll(500);
+                        await G.cancelClip(g.placeholder?.clip,g.id);
                     })}, T('Stop')) : null),
+                g.importError ? h('div',{class:'fx-row'},
+                    h('button',{class:'fx-btn',onclick:()=>G.retryResult(g.placeholder?.clip)},T('Retry adding result')),
+                    h('button',{class:'fx-btn',onclick:FS.guard(()=>G.cancelClip(g.placeholder?.clip))},T('Remove pending clip'))) : null,
+                g.importError ? h('div',{class:'fx-gen-error'},g.importError) : null,
                 g.state === 'running' ? h('div', {class: 'fx-bar'}, h('div', {style: `width:${pct || 2}%`})) : null,
                 g.state === 'running' && live.text ? h('div', {class: 'fx-dim'}, live.text) : null,
                 g.state === 'error' ? h('div', {class: 'fx-gen-error'}, g.message || '') : null,

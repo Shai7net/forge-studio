@@ -52,8 +52,9 @@
         const refresh = () => {
             const c = FS.clip(clipId);
             if (!c || editing) return;
-            range.value = get();
-            num.value = round(get(), opt.step);
+            const value = get(), rounded = String(round(value, opt.step));
+            if (+range.value !== value) range.value = value;
+            if (num.value !== rounded) num.value = rounded;
             if (diamond) diamond.className = 'fx-icon fx-key' + (FS.keyIndex(c, key) >= 0 ? ' fx-key-on' : FS.keysOf(c, key) ? ' fx-key-has' : '');
         };
         I.live.push(refresh);

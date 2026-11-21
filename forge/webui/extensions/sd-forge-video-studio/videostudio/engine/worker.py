@@ -32,6 +32,9 @@ def main():
         if job.get('backend') == 'ltx':
             from videostudio.engine import ltx_pipeline
             ltx_pipeline.generate(job, emit)
+        elif job.get('backend') == 'h3':
+            from videostudio.engine import h3_pipeline
+            h3_pipeline.generate(job, emit)
         else:
             pipeline.generate(job, emit)
     except pipeline.Cancelled:

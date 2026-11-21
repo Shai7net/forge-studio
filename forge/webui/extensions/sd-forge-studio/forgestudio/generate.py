@@ -32,6 +32,7 @@ _wake = threading.Condition(_lock)
 _thread = None
 live = {}  # id -> what the running request is doing now
 _cancelled = set()
+_jobs = {}  # this request's own Video Studio worker or sound task; never cancel an unrelated current job
 
 
 def _vs():
@@ -88,6 +89,10 @@ def _update(name, gen_id, **changes):
         records = _read(name)
         for r in records:
             if r["id"] == gen_id:
+                if r.get("state") in ("cancelled", "placed") and changes.get("state") in ("running", "done"):
+                    return
+                if r.get("state") == "placed" and changes.get("state") == "cancelled":
+                    return
                 r.update(changes)
         _write(name, records)
 
@@ -98,6 +103,32 @@ def records(name):
         if r["id"] in live:
             r["live"] = live[r["id"]]
     return out
+
+
+def result(name, gen_id):
+    """A completed output already belongs to this project; do not route it through a generic file import.
+
+    The selected project folder may itself be a junction to external storage. Validate against that folder's
+    resolved root, rather than only against the parent projects directory. Serializing registration makes retries
+    and multiple open tabs idempotent.
+    """
+    with _lock:
+        records = _read(name)
+        record = next((r for r in records if r["id"] == gen_id), None)
+        if not record:
+            raise projects.ProjectError("Generation not found in this project", 404)
+        if record.get("state") not in ("done", "placed") or gen_id in _cancelled:
+            raise projects.ProjectError("This generation has no completed result to add", 409)
+        video = record.get("video")
+        if not video or not os.path.isfile(video):
+            raise projects.ProjectError("The generated video file is missing", 404)
+        if not paths.inside(video, [projects._folder(name)] + paths.library_roots()):
+            raise projects.ProjectError("The result is outside this project's storage and Forge output folders", 403)
+        web = projects.add_media(name, video)
+        if record.get("web") != web:
+            record["web"] = web
+            _write(name, records)
+        return web
 
 
 # ---- frames out of clips ----
@@ -137,7 +168,7 @@ def _made_with(path):
 # ---- requests ----
 
 def submit(name, kind, prompt="", seconds=5.0, seed=-1, quality=None, sound=True, width=0, height=0,
-           start=None, end=None, take_of=None, placeholder=None, engine="auto", direction="after", fps=30):
+           start=None, end=None, take_of=None, placeholder=None, engine="auto", direction="after", fps=30, fast=False):
     """`start` / `end`: {web, seconds, last} of the frames to begin and end on; `take_of`: the web name of a clip
     to make again. Returns the record."""
     if kind not in KINDS:
@@ -171,7 +202,7 @@ def submit(name, kind, prompt="", seconds=5.0, seed=-1, quality=None, sound=True
               "quality": quality, "sound": bool(sound), "width": int(width or 0), "height": int(height or 0),
               "start": start, "end": end, "take_of": take_of, "placeholder": placeholder, "project": name,
               "engine": engine if engine in continuers.ENGINES else "auto",
-              "direction": direction, "fps": fps,
+              "direction": direction, "fps": fps, "fast": bool(fast),
               "state": "waiting", "asked": time.time()}
     with _lock:
         recs = _read(name)
@@ -185,27 +216,72 @@ def submit(name, kind, prompt="", seconds=5.0, seed=-1, quality=None, sound=True
 
 def placed(name, gen_id, web=None):
     """The page swapped the placeholder for the result."""
-    _update(name, gen_id, state="placed", web=web, placed=time.time())
+    record = next((r for r in _read(name) if r["id"] == gen_id), {})
+    state = "placed" if web else "error" if record.get("state") == "error" else "cancelled"
+    _update(name, gen_id, state=state, web=web, placed=time.time(), acknowledged=True)
     return {"ok": True}
 
 
 def cancel(name, gen_id):
     with _lock:
-        waiting = (name, gen_id) in _queue
-        if waiting:
+        records = _read(name)
+        record = next((r for r in records if r["id"] == gen_id), None)
+        if not record:
+            raise ValueError("Generation not found in this project")
+        if record.get("state") not in ("waiting", "running"):
+            return {"ok": True, "state": record.get("state")}
+        queued = (name, gen_id) in _queue
+        if queued:
             _queue.remove((name, gen_id))
-    if waiting:
-        _update(name, gen_id, state="cancelled")
-    elif gen_id in live:
-        _cancelled.add(gen_id)
+        else:
+            _cancelled.add(gen_id)
+        record.update(state="cancelled", ended=time.time())
+        _write(name, records)
+        job = _jobs.get(gen_id)
+    if job is not None:
+        job.cancel()
+    elif not queued and gen_id in live:
         if live[gen_id].get("engine") in ("animatediff", "deforum"):
             continuers.cancel_running()
-        else:
+    return {"ok": True, "state": "cancelled"}
+
+
+def _remember_job(gen_id, job):
+    with _lock:
+        _jobs[gen_id] = job
+        cancelled = gen_id in _cancelled
+    if cancelled:
+        job.cancel()
+
+
+def _run_command(gen_id, command, timeout):
+    """Fitting/concatenating is cancellable too; a cancelled render must not leave ffmpeg running."""
+    if gen_id in _cancelled:
+        raise RuntimeError("cancelled")
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    deadline = time.monotonic() + timeout
+    try:
+        while True:
+            if gen_id in _cancelled:
+                raise RuntimeError("cancelled")
+            if time.monotonic() >= deadline:
+                raise subprocess.TimeoutExpired(command, timeout)
             try:
-                _vs().runner.cancel_current()
-            except Exception:
-                pass
-    return {"ok": True}
+                stdout, stderr = process.communicate(timeout=0.1)
+                break
+            except subprocess.TimeoutExpired:
+                continue
+        if process.returncode:
+            raise subprocess.CalledProcessError(process.returncode, command, stdout, stderr)
+    finally:
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
 
 
 def _ensure_thread():
@@ -224,6 +300,7 @@ def _loop():
             name, gen_id = _queue.pop(0)
         record = next((r for r in _read(name) if r["id"] == gen_id), None)
         if not record or record["state"] != "waiting":
+            _cancelled.discard(gen_id)
             continue
         _update(name, gen_id, state="running", started=time.time())
         live[gen_id] = {"stage": "start", "text": "waiting for Forge to be free", "progress": 0.0}
@@ -231,13 +308,16 @@ def _loop():
             video = _make(name, record)
             if not video:
                 raise RuntimeError(live[gen_id].get("text") or "Video Studio made nothing")
+            if gen_id in _cancelled:
+                raise RuntimeError("cancelled")
             item = library.add_file(video)
             _update(name, gen_id, state="done", video=video, media=item["id"], ended=time.time())
         except Exception as e:
-            stopped = "cancel" in str(e).lower() or live.get(gen_id, {}).get("stage") == "cancelled"
+            stopped = gen_id in _cancelled or "cancel" in str(e).lower() or live.get(gen_id, {}).get("stage") == "cancelled"
             _update(name, gen_id, state="cancelled" if stopped else "error", message=str(e)[:600], ended=time.time())
         finally:
             live.pop(gen_id, None)
+            _jobs.pop(gen_id, None)
             _cancelled.discard(gen_id)
 
 
@@ -292,6 +372,7 @@ def _make(name, record):
         video = _make_segment(name, current)
         if not video:
             raise RuntimeError("Video generation returned no file")
+        live[record["id"]] = {"stage":"fitting","text":"Fitting the generated clip to the selected duration","progress":None}
         out = os.path.join(work, f"part-{len(parts)}.mp4")
         has_audio = bool(media.probe(video).get("audio"))
         reverse = record.get("direction") == "before"
@@ -301,14 +382,13 @@ def _make(name, record):
         cmd = [library.ffmpeg(), "-v", "error", "-y", "-i", video]
         if not has_audio:
             cmd += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"]
-        af = f"aresample=48000,apad,atrim=duration={length:.9f},asetpts=PTS-STARTPTS"
+        af = f"aresample=48000,apad=whole_dur={length:.9f},atrim=duration={length:.9f},asetpts=PTS-STARTPTS"
         if reverse:
             af += ",areverse,asetpts=PTS-STARTPTS"
         cmd += ["-map", "0:v:0", "-map", "0:a:0" if has_audio else "1:a:0", "-vf", vf, "-af", af,
                 "-t", str(length), "-c:v", "libx264", "-preset", "fast", "-crf", "18", "-pix_fmt", "yuv420p",
                 "-c:a", "aac", "-ac", "2", "-ar", "48000", "-movflags", "+faststart", out]
-        subprocess.run(cmd, check=True, capture_output=True, timeout=600,
-                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        _run_command(record["id"], cmd, 600)
         parts.append(out)
         remaining -= length
         if remaining > 1e-6:
@@ -325,9 +405,8 @@ def _make(name, record):
     with open(listing, "w", encoding="utf-8") as f:
         f.write("".join("file '" + os.path.basename(p) + "'\n" for p in parts))
     target = os.path.join(work, "shot.mp4")
-    subprocess.run([library.ffmpeg(), "-v", "error", "-y", "-f", "concat", "-safe", "1", "-i", listing,
-                    "-c", "copy", "-movflags", "+faststart", target], check=True, capture_output=True, timeout=300,
-                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    _run_command(record["id"], [library.ffmpeg(), "-v", "error", "-y", "-f", "concat", "-safe", "1", "-i", listing,
+                               "-c", "copy", "-movflags", "+faststart", target], 300)
     with open(os.path.splitext(target)[0] + ".json", "w", encoding="utf-8") as f:
         json.dump({"prompt": record["prompt"], "mode": "i2v" if record.get("start") else "t2v",
                    "frames": 1 + round(record["seconds"] * 16), "fps": fps, "seed": record.get("seed"),
@@ -372,6 +451,7 @@ def _with_sound(video, record, progress):
                "effects": {"on": True, "prompt": record["prompt"][:300], "negative": "music, speech, talking",
                            "seed": 0, "db": 0.0}}
         task = vs.sound.start(job, os.path.join(projects._folder(record["project"]), "sound-jobs"))
+        _remember_job(record["id"], task)
         for ev in task.run():
             progress("effects", ev.get("progress") or 0.0, "adding AI sound")
             if ev.get("stage") == "done":
@@ -395,6 +475,8 @@ def _make_wan(name, record):
             pictures[1] = _picture(name, record["end"])
             count = 2
     quality = record["quality"] if record["quality"] in vs.QUALITY else d("Quality", vs.DEFAULT_QUALITY)
+    if record.get("fast"):
+        quality = min(vs.QUALITY, key=vs.QUALITY.get)
     preset = d("Model", vs.models.DEFAULT_PRESET)
     if vs.models.missing(preset):
         preset = next((p for p in vs.models.PRESETS if not vs.models.missing(p)), preset)
@@ -409,14 +491,17 @@ def _make_wan(name, record):
             record["prompt"], d("Negative prompt (used only when CFG is above 1)", ""), quality,
             min(7.5, max(1.0, record["seconds"])), record["seed"], preset,
             d("Steps", 4), d("Shift", 5.0), d("CFG", 1.0), d("Sampler", "euler"), d("Fast int8 math (about 1.5x faster)", True),
-            d("Attention", "auto"), width, height, d("Smooth motion: 32 fps (FILM)", True),
-            d("Enlarge the finished video", vs.UPSCALE_OFF), d("LoRA 1", vs.NO_LORA), d("Strength 1", 1.0),
+            d("Attention", "auto"), width, height, False if record.get("fast") else d("Smooth motion: 32 fps (FILM)", True),
+            vs.UPSCALE_OFF if record.get("fast") else d("Enlarge the finished video", vs.UPSCALE_OFF), d("LoRA 1", vs.NO_LORA), d("Strength 1", 1.0),
             d("LoRA 2", vs.NO_LORA), d("Strength 2", 1.0), d("Styles", []), record["sound"],
             d("Sound: what is heard (plain English; empty: the prompt and the picture)", "")]
     args = pictures + [""] * (vs.MAX_PICTURES - 1) + rest
     video = None
     tags = re.compile(r"<[^>]+>")
-    for status, _preview, out_video, _details, _last in vs.generate(mode, count, *args):
+    for status, _preview, out_video, _details, _last in vs.generate(mode, count, *args,
+            cancelled=lambda: record["id"] in _cancelled, on_job=lambda job: _remember_job(record["id"], job)):
+        if record["id"] in _cancelled:
+            raise RuntimeError("cancelled")
         if isinstance(out_video, str) and out_video:
             video = out_video
         text = html.unescape(" ".join(tags.sub(" ", status or "").split()))

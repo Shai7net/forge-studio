@@ -13,10 +13,14 @@ for(const tab of ['txt2img','img2img']) {
     add(tab+'_controlnet_ControlNet-0_controlnet_enable_checkbox',true,'checkbox');
     add(tab+'-ad-enable',true,'checkbox'); add(tab+'-dance-enable',true,'checkbox');
 }
-let loaded;
+let loaded, noticeWrites = 0;
+const notes = Object.fromEntries(['txt2img', 'img2img'].map(tab => {
+    const node = {dataset: {}, _text: '', get textContent() { return this._text; }, set textContent(value) { noticeWrites++; this._text = value; }};
+    return ['tab_' + tab, {querySelector: () => node}];
+}));
 const window = {gradio_config:{components}, tabPresets:{settled:async()=>{}}};
 const catalog = {loras:[{name:'LCM_SD15',alias:'LCM_SD15',family:'sd1'}],styles:{'LCM shortcut':{prompt:'<lora:LCM_SD15:1>'}, Art:{prompt:'watercolor'}}};
-const ctx = {window, document:{getElementById:()=>null,querySelectorAll:()=>[]},
+const ctx = {window, document:{getElementById:id=>notes[id]||null,querySelectorAll:()=>[]},
     localStorage:{getItem:()=>null,setItem:()=>{}},console,Map,Set,Date,JSON,Array,Number,String,
     setTimeout:()=>{},setInterval:()=>{},onUiLoaded:fn=>{loaded=fn;},onUiUpdate:()=>{},
     fetch:async url=>({ok:true,json:async()=>url.includes('/family')?{family:url.endsWith('Flux')?'flux':url.endsWith('XL')?'sdxl':'sd1'}:catalog})};
@@ -26,6 +30,10 @@ vm.createContext(ctx); vm.runInContext(fs.readFileSync(path.join(__dirname,'../j
     api.set('txt2img_styles',['LCM shortcut','Art']); await api.tick();
     assert.equal(api.get('txt2img_sampling'),'LCM'); assert.equal(api.get('txt2img_steps'),8); assert.equal(api.get('txt2img_cfg_scale'),1.5);
     model.props.value='Flux'; await api.tick();
+    const writesBefore = noticeWrites;
+    notes.tab_txt2img.querySelector()._text = 'Translated model status';
+    for (let i=0; i<20; i++) await api.tick();
+    assert.equal(noticeWrites, writesBefore, 'model status polling must not trigger global UI mutations');
     assert.deepEqual(Array.from(api.get('txt2img_styles')),['Art']);
     assert.equal(api.get('txt2img-ad-enable'),false); assert.equal(api.get('txt2img-dance-enable'),false);
     assert.equal(api.get('txt2img_controlnet_ControlNet-0_controlnet_enable_checkbox'),false);

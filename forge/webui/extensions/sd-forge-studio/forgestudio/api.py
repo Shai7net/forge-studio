@@ -9,7 +9,7 @@ import time
 from urllib.parse import unquote, urlsplit
 
 from fastapi import Body, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, StreamingResponse
 
 from . import NAME, VERSION, beats, clipkit, continuers, duck, framefiles, frames, generate, imageai, imagedoc, imagegen, layers, updates, lipsync, lipspeech, library, media, paths, projectbin, projects, render, sound, soundbank
 
@@ -45,7 +45,7 @@ def _send(path, request: Request, mime=None, cache="no-cache"):
     mime = mime or mimetypes.guess_type(path)[0] or "application/octet-stream"
     size = os.path.getsize(path)
     headers = {"Accept-Ranges": "bytes", "Cache-Control": cache}
-    asked = _RANGE.match(request.headers.get("range") or "")
+    asked = _RANGE.fullmatch(request.headers.get("range") or "")
     if not asked or (not asked.group(1) and not asked.group(2)):
         return FileResponse(path, media_type=mime, headers=headers)
     start, end = asked.group(1), asked.group(2)
@@ -55,11 +55,25 @@ def _send(path, request: Request, mime=None, cache="no-cache"):
         start, end = max(0, size - int(end)), size - 1
     if start > end or start >= size:
         return Response(status_code=416, headers={"Content-Range": f"bytes */{size}"})
-    with open(path, "rb") as f:
-        f.seek(start)
-        data = f.read(end - start + 1)
     headers["Content-Range"] = f"bytes {start}-{end}/{size}"
-    return Response(content=data, status_code=206, media_type=mime, headers=headers)
+    headers["Content-Length"] = str(end - start + 1)
+    return StreamingResponse(_file_chunks(path, start, end), status_code=206, media_type=mime, headers=headers)
+
+
+def _file_chunks(path, start, end):
+    """Bound each seek request's memory even when the browser asks for the entire rest of a movie.
+
+    StreamingResponse iterates on a worker thread; cancellation closes the iterator/file.
+    """
+    with open(path, "rb") as source:
+        source.seek(start)
+        remaining = end - start + 1
+        while remaining > 0:
+            data = source.read(min(256 * 1024, remaining))
+            if not data:
+                return
+            remaining -= len(data)
+            yield data
 
 
 def _with_urls(item):
@@ -135,7 +149,7 @@ def api_project_add(name: str = Body(...), id: int = Body(None), path: str = Bod
     the temporary folders (Gradio's copies of results) are copied in, since Forge may clear those folders."""
     def add():
         real = library.get(id)["path"] if id is not None else _path_from(path)
-        if id is None and not paths.inside(real, _sendable_roots()):
+        if id is None and not paths.inside(real, _sendable_roots() + [projects._folder(name)]):
             raise projects.ProjectError("that file is not in a folder Forge Studio may read", 403)
         if paths.inside(real, _temporary_roots()):
             web = projects.store_copy(name, real)
@@ -269,13 +283,22 @@ def api_gen_options():
 def api_gen_submit(name: str = Body(...), kind: str = Body(...), prompt: str = Body(""), seconds: float = Body(5.0),
                    seed: int = Body(-1), quality: str = Body(None), sound: bool = Body(True), width: int = Body(0),
                    height: int = Body(0), start: dict = Body(None), end: dict = Body(None), take_of: str = Body(None),
-                   placeholder: dict = Body(None), engine: str = Body("auto"), direction: str = Body("after"), fps: float = Body(30)):
+                   placeholder: dict = Body(None), engine: str = Body("auto"), direction: str = Body("after"), fps: float = Body(30),
+                   fast: bool = Body(False)):
     return _guard(lambda: generate.submit(name, kind, prompt, seconds, seed, quality, sound, width, height, start, end,
-                                          take_of, placeholder, engine, direction, fps))
+                                          take_of, placeholder, engine, direction, fps, fast))
 
 
 def api_gen_list(name: str):
     return _guard(lambda: {"generations": generate.records(name)})
+
+
+def api_gen_result(name: str = Body(...), id: str = Body(...)):
+    """Idempotently register a completed request in its own project, including junction-backed projects."""
+    def result():
+        web = generate.result(name, id)
+        return {"web": web, "url": _project_media_url(name, web), "path": projects.media_path(name, web)}
+    return _guard(result)
 
 
 def api_gen_placed(name: str = Body(...), id: str = Body(...), web: str = Body(None)):
@@ -703,6 +726,7 @@ def register(app: FastAPI):
     route("/forge-studio/generate", api_gen_submit, methods=["POST"])
     route("/forge-studio/generations", api_gen_list, methods=["GET"])
     route("/forge-studio/generate/placed", api_gen_placed, methods=["POST"])
+    route("/forge-studio/generate/result", api_gen_result, methods=["POST"])
     route("/forge-studio/generate/cancel", api_gen_cancel, methods=["POST"])
     route("/forge-studio/generate/made-with", api_gen_made_with, methods=["GET"])
     route("/forge-studio/image/new", api_image_new, methods=["POST"])

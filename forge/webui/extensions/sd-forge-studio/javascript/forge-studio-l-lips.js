@@ -90,6 +90,7 @@
         });
     };
     FS.openLips = async function (clip) {
+        FS.player?.pause();
         const project=S.project, selected=FS.region() && JSON.parse(JSON.stringify(FS.region()));
         const opts=await FS.api('lips/options');
         if(S.project!==project || !FS.clip(clip.id))return;
@@ -182,14 +183,14 @@
         start.onchange=FS.guard(()=>{windowOf();if(editor.model.parts.length)editor.moveTo(+start.value);});
         const voiceName=h('span',{},voice.value),voiceButton=h('button',{id:'fx-lips-voice-button',class:'fx-btn fx-lip-voice-trigger','aria-expanded':'false','aria-haspopup':'listbox'},voiceName,h('span',{},'⌄'));
         const menu=h('div',{class:'fx-lip-voices',role:'listbox','aria-label':T('Voice'),hidden:true}),samples=[];
-        function stopSamples(){samples.forEach(a=>a.pause());}
+        function stopSamples(){samples.forEach(driver=>driver.pause());}
         function closeMenu(){menu.hidden=true;voiceButton.setAttribute('aria-expanded','false');stopSamples();}
         voiceButton.onclick=()=>{menu.hidden=!menu.hidden;voiceButton.setAttribute('aria-expanded',String(!menu.hidden));if(menu.hidden)stopSamples();};
         for(const item of opts.voice_samples||[]){
-            const a=h('audio',{preload:'metadata',hidden:true,src:item.sample?`/forge-studio/lips/voice-file?voice=${q(item.name)}`:null});samples.push(a);
+            const a=h('audio',{preload:'none',hidden:true}),driver=new FS.MediaTransport(a);samples.push(driver);
             const choose=h('button',{class:'fx-lip-voice-choice',role:'option','aria-selected':String(item.name===voice.value),'data-voice':item.name,onclick:()=>{voice.value=item.name;voiceChanged();closeMenu();voiceButton.focus();}},item.name);
             const audition=h('button',{class:'fx-btn fx-lip-audition','aria-label':T('Preview voice: {0}',item.name),title:T('Preview voice: {0}',item.name)},'▶');
-            audition.onclick=FS.guard(async()=>{if(!a.paused){a.pause();return;}stopSamples();editor.pause();audition.disabled=true;try{if(!a.src){await FS.follow(await FS.api('lips/voice-sample',{voice:item.name}));if(closed||menu.hidden)return;a.src=`/forge-studio/lips/voice-file?voice=${q(item.name)}`;}a.currentTime=0;await a.play();}finally{audition.disabled=false;}});
+            audition.onclick=FS.guard(async()=>{if(driver.wanted){driver.pause();return;}stopSamples();editor.pause();audition.disabled=true;try{if(!a.src){if(!item.sample)await FS.follow(await FS.api('lips/voice-sample',{voice:item.name}));if(closed||menu.hidden)return;driver.source(`/forge-studio/lips/voice-file?voice=${q(item.name)}`);}driver.seek(0);await driver.play();}finally{audition.disabled=false;}});
             a.onplay=()=>{audition.textContent='❚❚';};a.onpause=a.onended=()=>{audition.textContent='▶';};
             menu.append(h('div',{class:'fx-lip-voice-option'},choose,audition,a));
         }
@@ -218,7 +219,7 @@
                 FS.applyLipResult(c.id,result,request);close(true);FS.message(T('Lip sync applied to the timeline'));
             }finally{busy=false;if(!closed)enable();}
         });
-        function close(force){if(busy&&!force&&!confirm(T('It goes on in the background. Close this window?')))return;closed=true;++tuneVersion;++editVersion;clearTimeout(tuning);clearTimeout(editing);editor.destroy();stopSamples();document.removeEventListener('pointerdown',clickOutside);box.remove();}
+        function close(force){if(busy&&!force&&!confirm(T('It goes on in the background. Close this window?')))return;closed=true;++tuneVersion;++editVersion;clearTimeout(tuning);clearTimeout(editing);editor.destroy();samples.forEach(driver=>{driver.el.onplay=driver.el.onpause=driver.el.onended=null;driver.dispose();});document.removeEventListener('pointerdown',clickOutside);box.remove();}
         const box=h('div',{class:'fx-modal-back',dir:FS.hebrew()?'rtl':'ltr'},h('div',{class:'fx-modal fx-lips-modal fx-lip-workspace',role:'dialog','aria-modal':'true','aria-label':T('Lip sync')},
             h('div',{class:'fx-modal-head'},h('span',{},T('Lip sync')),h('span',{class:'fx-lip-filename'},c.media),h('span',{class:'fx-spacer'}),h('button',{class:'fx-icon',onclick:()=>close(false),title:T('Close')},'✕')),
             h('div',{class:'fx-lip-workbody'},controls,editor.view,editor.node),
