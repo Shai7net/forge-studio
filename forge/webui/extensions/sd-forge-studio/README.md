@@ -108,6 +108,12 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
   media** returns to the project bin. Search and kind filters work in both views. Opening another project resets
   the bin to project-only. Drag to the timeline, double-click or + to add at the playhead; ⤒ imports local files.
   The global index starts on demand. Other panels: AI, Sound, Text.
+- **Projects window:** the project's name at the top left opens every project as in a classic editor's home: a
+  large Create project with the picture's shape (9:16, 16:9, 1:1, 4:5, 3:4), then a card for each project with its
+  cover (the first picture or video on the main track), its size (its folder and the files it uses) and its length;
+  search, a grid or a list (with date and shape), and ⋯ on a card for Open or Move to trash. The trash
+  (`webuiorge-studio	rash`) keeps projects whole and brings them back; nothing there is deleted (empty the
+  folder in Explorer to free the space). The open project cannot be moved there.
 - **A bigger preview:** ⇔ under the picture (or P) folds the side panels away (remembered); ⛶ next to it (or F)
   shows the picture alone on the whole screen (Esc returns). The line above the timeline drags it taller or shorter.
 - **Picking clips:** click one, Ctrl-click more (Ctrl-click again leaves one out), Shift-click adds; right-clicking
@@ -116,6 +122,28 @@ sound effects and captions are made where they are needed. Hebrew throughout (ri
   0.1×-8×, the clips change as it moves, one undo; double-click: 1×) and quick buttons (0.25× to 4×, or … for any
   speed) on videos and sounds, 🔇 Mute / 🔊 Sound back on, and 🎵 Separate the sound from the video: the same stretch of the file plays faster or slower, so the clip gets shorter or longer (all the selected
   clips together when it is one of them); a speed ramp on it gives way to the steady speed.
+- **🎬 A video from this picture…** (right-click a picture on the timeline): choose any installed video model (Wan 2.2,
+  LTX 2.3 Q3/Q4, MiniMax-H3; the last one chosen is remembered), the length, AI sound, and write what happens (any
+  language: the 🌐 writer writes the prompt for that model, LTX's long form for LTX). The picture is the first frame;
+  the video goes right after it and the clips after it move along. Each model uses its own quality steps and size
+  rounding. Measured: LTX 2.3 Q3, 2 s, 832x1344 from a tall picture, ~5 minutes with the prompt writer.
+- **Seek bar:** a line under the picture (in the normal view and in ⛶ full screen) drags through the whole film:
+  the picture follows the pointer (snapped like the playhead), playing pauses while it is held and goes on after,
+  and the pointer over it shows the time it would go to.
+- **⇄ Transitions tab:** 224 GLSL transitions from [gl-transitions](https://github.com/gl-transitions/gl-transitions)
+  (MIT, each by its author; `forgestudio/fx/transitions.json`, its licence beside it) in categories like CapCut's
+  (Trending, Basic, Slide, Wipe, Zoom, 3D, Blur, Light, Glitch, Distortion, Shapes, All). Every tile plays while the
+  pointer is on it. A click puts it on the selected clip that follows another, else on the main-track cut nearest
+  the playhead (`clip.transition = "gl:<name>"`, its length in the inspector's Time section as for any transition).
+  It mixes the whole picture up to the clip's layer before the cut (the clip before held) and after it; the layers
+  above stay on top. The few that leave space around the picture (Cube, Doorway, Swap, ...) show the layers below
+  there.
+- **✦ Effects tab:** 28 video effects written for Forge Studio (`forgestudio/fx/effects.json`): Basic (blur,
+  sharpen, vignette), Colour (black & white, sepia, duotone, hue cycle, invert), Retro (film grain, old film, VHS,
+  CRT), Glitch (RGB split, glitch, pixelate), Art (halftone, sketch, posterize), Light (glow, light leak, flash),
+  Distort (wave, fisheye, kaleidoscope, mirror), Motion (shake, zoom pulse, zoom blur). A click adds one to the
+  selected picture and video clips (up to 4 a clip, `clip.fx = [{id, amount}]`); the inspector's Effects section
+  sets each one's strength or removes it.
 - **Player:** every layer drawn on one canvas. Click a clip in the picture to select it, drag to move it (the centre
   lines pull), drag a corner or use the wheel to size it, Alt+wheel to turn it. While a shot's frame is still being
   found (scrubbing, or the next shot at a cut; a seeking video gives Chrome an empty picture although it says it is
@@ -382,11 +410,25 @@ stands beside it and the layers take the inspector's place; the timeline stays. 
   **FIBO 2.0** and **FLUX 3** show their **native controls** instead (ordered references, the prompt writer, keeping
   the source size); FLUX 3 without references inpaints through Forge's classic mask like its Inpaint tab (its
   "edit with reference" path drew a flat block for a description). Every result is a new layer; an inpaint result
-  only inside the selection.
+  only inside the selection. The negative prompt has the 🌐 prompt writer too, and Hebrew in it is translated.
+- **Inpaint options (Forge's own):** draw again the selection or everything but it; masked content; the area only at
+  full size; soft edge; room; **soft inpainting** (Forge's built-in extension, its six settings) and the
+  **inpainting-checkpoint mask strength** (Forge's "Inpainting conditioning mask strength", for that call only) for
+  SD 1.5 / SDXL. **↔ Outpaint** (HakuImg's InOutPaint idea): the shot grows by the pixels given on each side, a
+  bottom layer stretches the picture's edges into the new area, and the new area is selected with a strip of the
+  picture (so the seam is drawn too); write what is around and Generate (inpaint, whole picture, strength 0.95).
+- **🎨 Effects (HakuImg):** HakuImg's own functions on the active layer, inside the selection when there is one: color
+  (brightness, contrast, saturation, temperature, hue, gamma, exposure offset, HDR, sharpness, noise, vignette), tone
+  curve (all / R / G / B, drawn on a small graph), blur, sketch (XDoG), pixelize, PixelOE, outline expansion, glow,
+  chromatic aberration, lens distortion, tilt shift and flip. Every change shows on the canvas a moment later; Apply
+  keeps it (one undo step), Cancel puts the layer back. Needs the HakuImg extension
+  (KohakuBlueleaf/a1111-sd-webui-haku-img, with pixeloe 0.1.4: 1.0 dropped the module HakuImg imports);
+  `forgestudio/haku.py` finds it among Forge's extensions, nothing of it is copied. 0.06-0.5 s an effect on
+  1024x768 after the first call (the first loads its libraries; PixelOE runs on the card).
 - **AI tools:** select the subject (BiRefNet-lite), select an object with a click (SAM ViT-B from the Segment Anything
   extension's models; one click takes the whole object, Shift+click adds, Alt+click takes a part away), remove the
   background (on a copy of the active layer, the original hidden), take away what is selected (LaMa from the Cleaner
-  extension; best for small things), add something in the selection (inpaint).
+  extension; best for small things), add something in the selection (inpaint), outpaint.
 - **Done:** 💾 save into the shot (the clip shows the flattened picture; Ctrl+S), 🎬 make a video from it (Wan starts
   from it; the clip goes right after the shot), 📤 save / send (a PNG file, or to img2img, Inpaint, FIBO / FLUX
   references, or Video Studio's Image to Video / Ingredients, where Wan and LTX are).
@@ -423,6 +465,15 @@ inpaint 8 s, FLUX 3 inpaint 36 s, FIBO 2.0 Dev 12 steps 118 s; the subject 8 s, 
   exported in 5.2 s on the RTX 3070 Laptop. A clip with keyframes is drawn frame by frame by `forgestudio/moving.py`
   with the player's own geometry (OpenCV, into a transparent UT Video file of the whole frame) and then layered like
   any other, because ffmpeg's scale and rotate cannot change a layer's size from frame to frame. Results go to `output\forge-studio\<date>\` and into the library.
+- **GLSL transitions and effects** run the same shader text in both places with the same wrapper: WebGL2 in the
+  page (`javascript/forge-studio-t-glfx.js`) and moderngl in the export (`forgestudio/glfx.py`, an OpenGL 3.3
+  context without a window, one per export thread). An effect goes on a clip's own frames in `moving.py`, before
+  its key and shape. A transition (`forgestudio/gltrans.py`) renders the edit up to the clip's layer twice over the
+  transition's time (the clip hidden / the clip before hidden; a third time, both hidden, for the see-through
+  ones), mixes them frame by frame and lays the segment on the clip's layer. Checked: all 252 shaders give the same
+  pixels in Chrome and in the export (on average under 0.1 of a level), except those that draw random noise (static,
+  burn, grain), whose noise pattern depends on the graphics card; a Cube transition in the player and in the
+  exported file differ by 6.5-8.7 levels, as much as two plain frames do (compression).
 - Media pictures for the timeline (`forgestudio/media.py`): a strip of frames over the whole file and the sound's
   outline, cached in `webui\forge-studio\cache`.
 

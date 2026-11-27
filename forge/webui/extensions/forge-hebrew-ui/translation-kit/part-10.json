@@ -37,6 +37,13 @@
   "Saved projects": "Saved projects",
   "📂 Open project": "📂 Open project",
   "Refresh the list of projects": "Refresh the list of projects",
+  "3D Openpose": "3D Openpose",
+  "Edit Openpose": "Edit Openpose",
+  "Pose": "Pose",
+  "Control Model number": "Control Model number",
+  "Use online version": "Use online version",
+  "3D Openpose Editor": "3D Openpose Editor",
+  "Normal map": "Normal map",
   "Prompt writer (🌐 Hebrew to English)": "Prompt writer (🌐 Hebrew to English)",
   "How much the writer adds to your idea": "How much the writer adds to your idea",
   "Faithful: only what you wrote. Rich: concrete looks, place, light and framing. Creative: a striking picture of your idea": "Faithful: only what you wrote. Rich: concrete looks, place, light and framing. Creative: a striking picture of your idea",
@@ -328,8 +335,6 @@
   "Character 4": "Character 4",
   "Character 2 becomes person": "Character 2 becomes person",
   "Character 3 becomes person": "Character 3 becomes person",
-  "Character 4 becomes person": "Character 4 becomes person",
-  "Use either 'Everyone in the picture' or More characters, not both.": "Use either 'Everyone in the picture' or More characters, not both.",
-  "Each character needs a different person in the video (press Find the people to see their numbers).": "Each character needs a different person in the video (press Find the people to see their numbers)."
+  "Character 4 becomes person": "Character 4 becomes person"
  }
 }

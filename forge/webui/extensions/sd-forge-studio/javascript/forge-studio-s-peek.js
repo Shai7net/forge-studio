@@ -14,6 +14,9 @@
     function galleryMedia(id) {
         const g = byId(id);
         if (!g) return null;
+        // a video result (AnimateDiff lists its GIF and its MP4): the video is what is dragged
+        const vid = Array.from(g.querySelectorAll('img, video')).map((e) => e.currentSrc || e.src).find((u) => /\.(mp4|webm|mov)(\?|$)/i.test(u || ''));
+        if (vid) return {url: vid, kind: 'video'};
         const img = g.querySelector('.preview img, img.preview') || g.querySelector('.thumbnail-item.selected img') ||
             g.querySelector('.thumbnail-item img, .grid-wrap img');
         return img && img.src ? {url: img.src, kind: 'image'} : null;
@@ -28,11 +31,13 @@
     // where each tab shows its result, and how to find the result (the newest one). txt2img, img2img and Extras: right
     // under the picture's buttons (after the whole panel it sat below the generation info, out of sight)
     const SPOTS = [
-        {id: 'txt2img', anchor: () => byId('image_buttons_txt2img') || byId('txt2img_results'), dragBox: () => byId('txt2img_results'), media: () => galleryMedia('txt2img_gallery')},
-        {id: 'img2img', anchor: () => byId('image_buttons_img2img') || byId('img2img_results'), dragBox: () => byId('img2img_results'), media: () => galleryMedia('img2img_gallery')},
-        {id: 'extras', anchor: () => byId('image_buttons_extras') || byId('extras_results'), dragBox: () => byId('extras_results'),
+        // after the Recent strip (sd-forge-workspace viewer.js) when there is one
+        {id: 'txt2img', anchor: () => byId('ws_recent_txt2img') || byId('image_buttons_txt2img') || byId('txt2img_results'), dragBox: () => byId('txt2img_results'), media: () => galleryMedia('txt2img_gallery')},
+        {id: 'img2img', anchor: () => byId('ws_recent_img2img') || byId('image_buttons_img2img') || byId('img2img_results'), dragBox: () => byId('img2img_results'), media: () => galleryMedia('img2img_gallery')},
+        {id: 'extras', anchor: () => byId('ws_recent_extras') || byId('image_buttons_extras') || byId('extras_results'), dragBox: () => byId('extras_results'),
             media: () => videoMedia(byId('extras_results')) || galleryMedia('extras_gallery')},
-        {id: 'video', anchor: () => blockOf(byId('vs_video')), media: () => videoMedia(byId('vs_video'))},
+        // Video Studio: under its Generate button's outcome line (2026-11-27 layout), else under the video
+        {id: 'video', anchor: () => byId('vs_status') || blockOf(byId('vs_video')), media: () => videoMedia(byId('vs_video'))},
         {id: 'deforum', anchor: () => byId('deforum_results'),
             media: () => videoMedia(byId('deforum_results')) || galleryMedia('deforum_gallery')},
         {id: 'zoom', anchor: () => byId('infinite-zoom_results'),

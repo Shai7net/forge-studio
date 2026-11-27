@@ -125,18 +125,170 @@ document.addEventListener("click", (e) => {
     for (const ms of [50, 300, 1000]) setTimeout(videoStudioSyncControls, ms);
 });
 
-// Shape and the picture sampler serve every sub-tab, so they live in the sub-tab bar itself, after the buttons: on
-// the same line when there is room, on a line of their own when not (the bar wraps).
-function videoStudioPlaceSharedRow() {
-    const row = gradioApp().querySelector("#vs_shared_row");
+// Quality starts the sub-tab bar and the Shape card closes it (on a line of its own): the choices of every video
+// right above the prompt.
+function videoStudioPlaceModel() {
+    const quality = gradioApp().querySelector("#vs_quality");
+    const card = gradioApp().querySelector("#vs_create");
     const nav = gradioApp().querySelector("#vs_mode_tabs > .tab-nav");
-    if (!row || !nav) return false;
-    if (row.parentElement !== nav) nav.appendChild(row);
+    if (!quality || !card || !nav) return false;
+    if (quality.parentElement !== nav) nav.prepend(quality);
+    if (card.parentElement !== nav) nav.append(card);
     return true;
 }
 
+// Generate and its outcome right under the window (Forge Studio's timeline drawer comes in after the window)
+function videoStudioOrderSide() {
+    const stage = gradioApp().getElementById("vs_stage");
+    const go = gradioApp().getElementById("vs_go_row");
+    const status = gradioApp().getElementById("vs_status");
+    if (!stage || !go || !status || go.parentElement !== stage.parentElement) return;
+    if (stage.nextElementSibling !== go) stage.after(go);
+    if (go.nextElementSibling !== status) go.after(status);
+}
+
+// The video model chosen now (a row of picture buttons; the prompt writer and Characters ask for it too).
+function videoStudioModel() {
+    const on = gradioApp().querySelector("#vs_model input:checked");
+    return on ? on.value : "";
+}
+
+// The model buttons: a picture and a short name on each choice, in the order Shai laid them out (2026-11-27).
+const VS_MODEL_LOOK = [
+    [/MiniMax/i, "minimax", "MiniMax-H3", "8 GB"],
+    [/LTX.*Q3/i, "ltx_q3", "LTX 2.3", "Q3 · 8 GB"],
+    [/LTX.*Q2/i, "ltx_q2", "LTX 2.3", "Q2 · 6 GB"],
+    [/LTX.*Q4/i, "ltx_q4", "LTX 2.3", "Q4 · 12 GB+"],
+    [/Wan.*Q3/i, "wan_q3", "Wan 2.2", "Q3"],
+    [/Wan.*Q4/i, "wan_q4", "Wan 2.2", "Q4 · sharper"],
+];
+function videoStudioModelButtons() {
+    const script = document.querySelector('script[src*="video-studio.js"]');
+    const base = script ? script.src.split("?")[0].replace(/javascript\/video-studio\.js$/, "assets/models/") : "";
+    let installed = null;
+    try { installed = JSON.parse(gradioApp().querySelector("#vs_installed").dataset.installed); } catch (e) { /* unknown */ }
+    for (const input of gradioApp().querySelectorAll("#vs_model input[type=radio]")) {
+        const label = input.closest("label");
+        if (!label || label.querySelector(".vs-model-pic")) continue;
+        const k = VS_MODEL_LOOK.findIndex(([re]) => re.test(input.value));
+        const [, file, name, note] = k >= 0 ? VS_MODEL_LOOK[k] : [null, null, input.value, ""];
+        label.style.order = k >= 0 ? k : 99;
+        label.title = input.value;
+        const pic = document.createElement("span");
+        pic.className = "vs-model-pic";
+        if (file) pic.style.backgroundImage = `url("${base}${file}.jpg")`;
+        const cap = document.createElement("span");
+        cap.className = "vs-model-cap hebrew-ui-skip";
+        cap.innerHTML = "<b></b><small></small>";
+        cap.querySelector("b").textContent = name;
+        cap.querySelector("small").textContent = note;
+        label.prepend(pic);
+        label.append(cap);
+        if (installed && !installed.includes(input.value)) {
+            label.classList.add("vs-not-installed");
+            const badge = document.createElement("span");
+            badge.className = "vs-model-get";
+            badge.textContent = "⬇";
+            badge.title = "Not downloaded yet: Models → Download and set up this model";
+            pic.append(badge);
+        }
+    }
+}
+
+// While a video is made the window shows the frog, the share done and the time left, over the picture made so far.
+function videoStudioLoader() {
+    const stage = gradioApp().getElementById("vs_stage");
+    const box = gradioApp().querySelector("#vs_status .vs-status");
+    if (!stage) return;
+    let el = stage.querySelector(".vs-loader");
+    if (!el) {
+        el = document.createElement("div");
+        el.className = "vs-loader hebrew-ui-skip";
+        el.innerHTML = '<div class="vs-loader-frog">🐸</div><div class="vs-loader-pct"></div><div class="vs-loader-left"></div><div class="vs-loader-stage"></div>';
+        stage.append(el);
+    }
+    const hide = stage.dataset.waiting !== "1";
+    if (el.hidden !== hide) el.hidden = hide;
+    if (!box || hide) return;
+    // only a changed text is written: a write is a change the page's observer sees, and it calls this again
+    const put = (sel, text) => { const n = el.querySelector(sel); if (n.textContent !== text) n.textContent = text; };
+    const he = document.documentElement.classList.contains("hebrew-ui-active");
+    const pct = parseInt(box.dataset.pct || "0", 10);
+    put(".vs-loader-pct", pct + "%");
+    const left = box.dataset.left;
+    put(".vs-loader-left", left
+        ? (he ? `נשארו בערך ${left}` : `about ${left} left`)
+        : (he ? "מחשב כמה זמן נשאר…" : "working out the time left…"));
+    const label = box.dataset.label || "";
+    const t = window.hebrewUiDictionary && window.hebrewUiDictionary.texts;
+    put(".vs-loader-stage", he && t && t[label] ? t[label] : label);
+}
+
+// Shape: a drawn rectangle of each shape on its choice (the choice's text stays under it, translated or not).
+const VS_SHAPES = {"9:16 portrait": [9, 16], "16:9 landscape": [16, 9], "1:1 square": [1, 1], "4:5 portrait": [4, 5], "3:4 portrait": [3, 4]};
+function videoStudioShapeIcons() {
+    for (const input of gradioApp().querySelectorAll("#vs_shape input[type=radio]")) {
+        const label = input.closest("label");
+        if (!label || label.querySelector(".vs-shape-icon")) continue;
+        const [w, h] = VS_SHAPES[input.value] || [1, 1];
+        const k = 22 / Math.max(w, h);
+        const icon = document.createElement("span");
+        icon.className = "vs-shape-icon";
+        icon.style.width = Math.round(w * k) + "px";
+        icon.style.height = Math.round(h * k) + "px";
+        label.prepend(icon);
+    }
+}
+
+// While a video is made: Stop in Generate's place, and the stage shows the picture made so far; then the video.
+const VS_IDLE = ["idle", "done", "error", "cancelled"];
+let vsClicked = 0, vsVideoBefore = null;   // the video shown when Generate was pressed
+function videoStudioState() {
+    const main = gradioApp().getElementById("vs_main");
+    const box = gradioApp().querySelector("#vs_status .vs-status");
+    if (!main || !box) return;
+    const stage = box.dataset.stage || "idle";
+    // right after the click the status has not changed yet: count it as working for a few seconds
+    const running = !VS_IDLE.includes(stage) || (Date.now() - vsClicked < 4000 && stage !== "error");
+    main.classList.toggle("vs-running", running);
+    const picture = gradioApp().querySelector("#vs_preview img");
+    const hasPicture = !!(picture && picture.getAttribute("src"));
+    const video = gradioApp().querySelector("#vs_video video");
+    const src = video ? video.getAttribute("src") || "" : "";
+    const stageBox = gradioApp().getElementById("vs_stage");
+    // the picture until this run's video arrives (the sound is still being added then; the video is the result)
+    const newVideo = vsVideoBefore !== null && src && src !== vsVideoBefore;
+    if (stageBox) stageBox.dataset.show = running && hasPicture && !newVideo ? "picture" : "video";
+    if (!running) vsVideoBefore = null;
+    if (stageBox) stageBox.classList.toggle("vs-has-video", !!(video && video.getAttribute("src")));
+    // the frog waits with the user until this run's video is there
+    if (stageBox) stageBox.dataset.waiting = running && !newVideo ? "1" : "";
+    videoStudioLoader();
+}
+
+document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest("#vs_generate, #vs_refine_go, #vs_sound_go");
+    if (!b) return;
+    vsClicked = Date.now();
+    const video = gradioApp().querySelector("#vs_video video");
+    vsVideoBefore = video ? video.getAttribute("src") || "" : "";
+    videoStudioState();
+}, true);
+
 onUiLoaded(() => {
-    if (!videoStudioPlaceSharedRow()) setTimeout(videoStudioPlaceSharedRow, 1500);
+    const ready = () => videoStudioPlaceModel();
+    if (!ready()) setTimeout(ready, 1500);
+    videoStudioShapeIcons();
+    videoStudioModelButtons();
+    const root = gradioApp().getElementById("vs_main");
+    if (root) new MutationObserver((records) => {
+        // the loader's own text is not news (it would call itself for ever)
+        if (records.every((r) => r.target.closest && r.target.closest(".vs-loader"))) return;
+        videoStudioShapeIcons(); videoStudioModelButtons(); videoStudioOrderSide(); videoStudioState();
+    })
+        .observe(root, {subtree: true, childList: true, attributes: true, attributeFilter: ["data-stage", "src"]});
+    setInterval(videoStudioState, 1000);
+    videoStudioState();
 });
 
 // The 🎬 button's own tooltip still names the SVD tab.

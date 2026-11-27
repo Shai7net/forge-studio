@@ -333,12 +333,28 @@ class UiSettings:
         def get_settings_values():
             return [get_value_for_setting(key) for key in component_keys]
 
-        demo.load(
-            fn=get_settings_values,
-            inputs=[],
-            outputs=[self.component_dict[k] for k in component_keys],
-            queue=False,
-        )
+        # Every page open refreshed all of the ~480 settings fields, and the page spent seconds applying them while it
+        # loaded. The quick settings (the checkpoint, VAE, ... over the tabs) are refreshed when the page opens, the
+        # rest when the Settings tab is opened (Forge Workspace speed-up, 2026-11-27).
+        quick_keys = [k for k in component_keys if k in (self.quicksettings_names or {})]
+        other_keys = [k for k in component_keys if k not in quick_keys]
+        settings_tab = getattr(self, "settings_tab", None)
+        if settings_tab is None:
+            quick_keys, other_keys = component_keys, []
+        if quick_keys:
+            demo.load(
+                fn=lambda: [get_value_for_setting(key) for key in quick_keys],
+                inputs=[],
+                outputs=[self.component_dict[k] for k in quick_keys],
+                queue=False,
+            )
+        if other_keys:
+            settings_tab.select(
+                fn=lambda: [get_value_for_setting(key) for key in other_keys],
+                inputs=[],
+                outputs=[self.component_dict[k] for k in other_keys],
+                queue=False,
+            )
 
     def search(self, text):
         print(text)

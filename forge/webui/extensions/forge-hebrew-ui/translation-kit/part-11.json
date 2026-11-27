@@ -16,6 +16,8 @@
   "Return the complete file as valid JSON with the same structure and nothing before or after it."
  ],
  "texts": {
+  "Use either 'Everyone in the picture' or More characters, not both.": "Use either 'Everyone in the picture' or More characters, not both.",
+  "Each character needs a different person in the video (press Find the people to see their numbers).": "Each character needs a different person in the video (press Find the people to see their numbers).",
   "Describe character 2": "Describe character 2",
   "Describe character 3": "Describe character 3",
   "Describe character 4": "Describe character 4",
@@ -30,6 +32,18 @@
   "not set up (choose MiniMax-H3 and press Download and set up this model)": "not set up (choose MiniMax-H3 and press Download and set up this model)",
   "(press Refresh to follow it; you can keep working meanwhile)": "(press Refresh to follow it; you can keep working meanwhile)",
   "Engine ready.": "Engine ready.",
+  "Advanced settings": "Advanced settings",
+  "MiniMax-H3 · fast (about 350p, the workflow default)": "MiniMax-H3 · fast (about 350p, the workflow default)",
+  "MiniMax-H3 · sharper (about 480p, tested on 8 GB)": "MiniMax-H3 · sharper (about 480p, tested on 8 GB)",
+  "480p - fast (about 5 min for 5 s)": "480p - fast (about 5 min for 5 s)",
+  "576p - balanced (about 8 min for 5 s)": "576p - balanced (about 8 min for 5 s)",
+  "720p - best (about 16 min for 5 s)": "720p - best (about 16 min for 5 s)",
+  "9:16 portrait": "9:16 portrait",
+  "16:9 landscape": "16:9 landscape",
+  "1:1 square": "1:1 square",
+  "4:5 portrait": "4:5 portrait",
+  "3:4 portrait": "3:4 portrait",
+  "Model settings": "Model settings",
   "Project": "Project",
   "New project": "New project",
   "Name of the new project:": "Name of the new project:",
@@ -195,7 +209,6 @@
   "Landscape 3:2": "Landscape 3:2",
   "Tall 9:16": "Tall 9:16",
   "Frame size": "Frame size",
-  "Pose": "Pose",
   "Standing": "Standing",
   "Walking": "Walking",
   "Running": "Running",
@@ -424,14 +437,6 @@
   "Ring": "Ring",
   "Plain shapes and my objects": "Plain shapes and my objects",
   "A plain shape is a 3D object like any other: stand it, stretch it by its frame, give it a colour or draw a material on it. Houses, crates, pillars and tables are built of them.": "A plain shape is a 3D object like any other: stand it, stretch it by its frame, give it a colour or draw a material on it. Houses, crates, pillars and tables are built of them.",
-  "Colour": "Colour",
-  "My objects: what you keep from any world (the button \"Keep it in my objects\" on an object) waits here, for this project and every other. Click one to stand it in this world.": "My objects: what you keep from any world (the button \"Keep it in my objects\" on an object) waits here, for this project and every other. Click one to stand it in this world.",
-  "Stand it in this world": "Stand it in this world",
-  "Forget it": "Forget it",
-  "Forget \"{0}\"? (Objects that were made of it stay.)": "Forget \"{0}\"? (Objects that were made of it stay.)",
-  "Nothing is kept yet.": "Nothing is kept yet.",
-  "What it is made of": "What it is made of",
-  "Its colour, or a material that Forge draws and wraps round it: old red bricks, rough bark, rusty iron, roof tiles. The material repeats without a seam.": "Its colour, or a material that Forge draws and wraps round it: old red bricks, rough bark, rusty iron, roof tiles. The material repeats without a seam.",
-  "The material repeats": "The material repeats"
+  "Colour": "Colour"
  }
 }

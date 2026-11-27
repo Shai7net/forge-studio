@@ -147,12 +147,19 @@ def draw(name, doc, c, out, should_stop=lambda: False):
     frames = _source_frames(name, c, W, H, fps, n, (sw, sh), crop)
     shape = render.mask_array(c, sw, sh) if render.mask_of(c) else None
     key = render.key_of(c)
+    effects = render.fx_of(c)
+    # the effects see the clip at its fitted size in the edit (the page's resolution uniform), whatever size it is drawn at
+    fx_res = (mw * fit0 * (1 - L - R), mh * fit0 * (1 - T - B))
     anchor = render.anchor_of(name, c) if render.animated(c) else (0.0, 0.0, 1.0, 1.0)
     try:
         for i in range(n):
             if should_stop():
                 raise RuntimeError("cancelled")
             src = next(frames)
+            if effects:  # the video effects first, on the clip's own picture (the page: effects, key, mask, colour)
+                from . import glfx
+                for f in effects:
+                    src = glfx.effect_frame(f["id"], src, i / fps, float(f.get("amount", 0.7)), fx_res)
             if key is not None:  # the chroma key first, then the shape (the page: key, mask, then colour)
                 src = render.chroma(key, src)
             if shape is not None:  # the shape: multiplied into the frame's own transparency

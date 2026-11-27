@@ -42,6 +42,13 @@
   רוורס בקליק ימני על קליפ (⏪, גם לכמה קליפים יחד); חיבור AI בין שני שוטים שנכנס ביניהם ומזיז איתו את השכבות,
   הכתוביות והדיאלוג שאחרי החיתוך; ו-🌐 בכל תיבת פרומפט של העורך, כמו בשדות של Forge: כותבים בעברית ומקבלים פרומפט באנגלית
   למודל, עם 👍/👎 שמלמדים את הכותב. ניגון וגרירה חלקים יותר, חלון Lip sync בלי גמגום, ו-Stop שעוצר עבודת AI באמת.
+  224 מעברי GLSL ו-28 אפקטים, פס גלילה מתחת לתמונה, חלון פרויקטים כמו בעורך קלאסי, וקליק ימני על תמונה בציר הזמן
+  הופך אותה לווידאו בכל אחד ממודלי הווידאו.
+- **כלי תמונה:** בסביבת התמונה של העורך: Inpaint ו-Outpaint עם האפשרויות של Forge עצמו (כולל מיזוג רך), והאפקטים
+  של **HakuImg** (צבע, עקומות, טשטוש, סקיצה, פיקסלים, זוהר, עדשה ועוד) עם תצוגה מקדימה חיה. וגם הלשונית של HakuImg
+  עצמו, ו**עורך תנוחות בתלת-ממד** (3D OpenPose) ששולח את התנוחה ישר ליחידות ה-ControlNet.
+- **ממשק מסודר ומהיר יותר:** ה-checkpoint מעל Generate, גלריית LoRA ליד הסגנונות, פס של התמונות והסרטונים האחרונים
+  עם צופה עם זום, Video Studio ידידותי יותר, ועמוד שמוכן בערך בחצי מהזמן.
 - **אנימציה:** ‏Deforum עם קיפריימים לפי מוזיקה, עורך ציר זמן ומסלול מצלמה בתלת-ממד ושליטה חיה ב-DeforumationQT;
   ‏AnimateDiff עם מוזיקה, העברת ריקוד (עכשיו בתוך AnimateDiff, עם כיוונון לדמויות חיות) ומסכה לכל פריים; Infinite Zoom.
 - **בניית עולמות:** ‏Simulation 360 (עולמות 360°, שערים, אובייקטים בתלת-ממד, מסלול מוקלט ודמויות מדברות) ו-Time
@@ -59,6 +66,16 @@
 - **שפת הממשק:** אנגלית, ותרגום מלא לעברית בלחיצה אחת. לכל שפה אחרת: נותנים את ערכת התרגום ל-AI שלכם (ChatGPT,
   ‏Claude, ‏Gemini...) וטוענים את מה שהוא מחזיר.
 - **הכל רץ על 8GB VRAM בלבד** 🚀: כל רכיב חדש נכתב ונמדד על כרטיס של 8GB.
+
+## צילומי מסך
+
+| | |
+|---|---|
+| ![העורך](docs/screenshots/editor.jpg)<br>**עורך הווידאו**: ציר הזמן, עם 224 מעברים ו-28 אפקטים | ![סביבת התמונה](docs/screenshots/image-workspace.jpg)<br>**סביבת התמונה**: שכבות, כלי AI והאפקטים של HakuImg עם תצוגה מקדימה חיה |
+| ![Inpaint](docs/screenshots/inpaint-outpaint.jpg)<br>**Inpaint ו-Outpaint** כמו בלשונית של Forge, כולל מיזוג רך | ![וידאו מתמונה](docs/screenshots/picture-to-video.jpg)<br>**קליק ימני על תמונה → וידאו** בכל מודל וידאו |
+| ![Video Studio](docs/screenshots/video-studio.jpg)<br>**Video Studio**: המודלים ככפתורים, הצורה, הפרומפט | ![txt2img](docs/screenshots/txt2img.jpg)<br>**txt2img**: ה-checkpoint מעל Generate, סגנונות \| LoRA, פס האחרונים |
+| ![הצופה](docs/screenshots/viewer.jpg)<br>**הצופה**: זום בגלגלת, גרירה, חצים, מסך מלא | ![3D OpenPose](docs/screenshots/3d-openpose.jpg)<br>**עורך תנוחות בתלת-ממד**: מעמידים דמות ושולחים ל-ControlNet |
+| ![עברית](docs/screenshots/hebrew.jpg)<br>**הממשק בעברית** (או בכל שפה, עם ערכת התרגום) | |
 
 ## דרישות
 
@@ -143,7 +160,8 @@ install.bat -Yes -Models all -HfToken hf_xxxxxxxx
 ### הלשוניות
 
 `txt2img` · `img2img` · `Video Studio` · `Characters` · `Forge Studio Editor` · `Deforum` · `Simulation 360` · `Infinite Zoom` ·
-`Time Strata` · `Live Portrait` · `PNG Info` · `Extras` · `Settings` · `Extensions`, ותיקיית **Other** עם השאר.
+`Time Strata` · `Live Portrait` · `3D Openpose` · `HakuImg` · `PNG Info` · `Extras` · `Settings` · `Extensions`, ותיקיית
+**Other** עם השאר.
 אפשר לסדר אותן מחדש עם **Organize…**.
 
 ### כותב הפרומפטים 🌐

@@ -22,27 +22,29 @@ changed one, its change is applied as a patch (`installer/patches`) on top of th
 
 | Extension | Source (commit) | Forge Studio's change |
 |---|---|---|
-| --sd-webui-ar-plusplus | [altoiddealer/--sd-webui-ar-plusplus](https://github.com/altoiddealer/--sd-webui-ar-plusplus) (`8b900cd274`) | none |
+| --sd-webui-ar-plusplus | [altoiddealer/--sd-webui-ar-plusplus](https://github.com/altoiddealer/--sd-webui-ar-plusplus) (`8b900cd274`) | [patch](installer/patches/--sd-webui-ar-plusplus.patch) |
 | StyleSelectorXL | [ahgsql/StyleSelectorXL](https://github.com/ahgsql/StyleSelectorXL) (`d538b0c475`) | none |
 | Wonder3D | [xxlong0/Wonder3D](https://github.com/xxlong0/Wonder3D) (`d894f827aa`) | none |
+| a1111-sd-webui-haku-img | [KohakuBlueleaf/a1111-sd-webui-haku-img](https://github.com/KohakuBlueleaf/a1111-sd-webui-haku-img) (`ac80e1e941`) | [patch](installer/patches/a1111-sd-webui-haku-img.patch) |
 | asymmetric-tiling-sd-webui | [tjm35/asymmetric-tiling-sd-webui](https://github.com/tjm35/asymmetric-tiling-sd-webui) (`b4470ddc38`) | [patch](installer/patches/asymmetric-tiling-sd-webui.patch) |
 | infinite-zoom-automatic1111-webui | [v8hid/infinite-zoom-automatic1111-webui](https://github.com/v8hid/infinite-zoom-automatic1111-webui) (`60adae2252`) | [patch](installer/patches/infinite-zoom-automatic1111-webui.patch) |
 | next-view | [NextDiffusion/next-view](https://github.com/NextDiffusion/next-view) (`287e21d38e`) | none |
 | sd-dynamic-prompts | [adieyal/sd-dynamic-prompts](https://github.com/adieyal/sd-dynamic-prompts) (`de056ff8d8`) | none |
 | sd-extension-system-info | [vladmandic/sd-extension-system-info](https://github.com/vladmandic/sd-extension-system-info) (`9942ea11aa`) | none |
 | sd-forge-animatediff | [continue-revolution/sd-forge-animatediff](https://github.com/continue-revolution/sd-forge-animatediff) (`b20f7519a1`) | [patch](installer/patches/sd-forge-animatediff.patch) |
-| sd-webui-ar | [alemelis/sd-webui-ar](https://github.com/alemelis/sd-webui-ar) (`3973c86a7a`) | none |
+| sd-webui-ar | [alemelis/sd-webui-ar](https://github.com/alemelis/sd-webui-ar) (`3973c86a7a`) | [patch](installer/patches/sd-webui-ar.patch) |
 | sd-webui-aspect-ratio-helper | [thomasasfk/sd-webui-aspect-ratio-helper](https://github.com/thomasasfk/sd-webui-aspect-ratio-helper) (`09096711a8`) | none |
 | sd-webui-cleaner | [novitalabs/sd-webui-cleaner](https://github.com/novitalabs/sd-webui-cleaner) (`d89d173a01`) | [patch](installer/patches/sd-webui-cleaner.patch) |
 | sd-webui-controlnet-evaclip | [huchenlei/sd-webui-controlnet-evaclip](https://github.com/huchenlei/sd-webui-controlnet-evaclip) (`39966e79a5`) | [patch](installer/patches/sd-webui-controlnet-evaclip.patch) |
 | sd-webui-live-portrait | [dimitribarbot/sd-webui-live-portrait](https://github.com/dimitribarbot/sd-webui-live-portrait) (`2d990f5382`) | [patch](installer/patches/sd-webui-live-portrait.patch) |
-| sd-webui-panorama-viewer | [GeorgLegato/sd-webui-panorama-viewer](https://github.com/GeorgLegato/sd-webui-panorama-viewer) (`aa2a238136`) | none |
+| sd-webui-panorama-viewer | [GeorgLegato/sd-webui-panorama-viewer](https://github.com/GeorgLegato/sd-webui-panorama-viewer) (`aa2a238136`) | [patch](installer/patches/sd-webui-panorama-viewer.patch) |
 | sd-webui-reactor | [Gourieff/sd-webui-reactor-sfw](https://github.com/Gourieff/sd-webui-reactor-sfw) (`0788c549de`) | [patch](installer/patches/sd-webui-reactor.patch) |
 | sd-webui-replacer | [light-and-ray/sd-webui-replacer](https://github.com/light-and-ray/sd-webui-replacer) (`aa46106a1d`) | none |
-| sd-webui-segment-anything | [continue-revolution/sd-webui-segment-anything](https://github.com/continue-revolution/sd-webui-segment-anything) (`982138cfb5`) | none |
+| sd-webui-segment-anything | [continue-revolution/sd-webui-segment-anything](https://github.com/continue-revolution/sd-webui-segment-anything) (`982138cfb5`) | [patch](installer/patches/sd-webui-segment-anything.patch) |
 | sd_web_ui_preset_utils | [Gerschel/sd_web_ui_preset_utils](https://github.com/Gerschel/sd_web_ui_preset_utils) (`e301734567`) | none |
 | stable-diffusion-webui-images-browser | [AlUlkesh/stable-diffusion-webui-images-browser](https://github.com/AlUlkesh/stable-diffusion-webui-images-browser) (`88bfbe3997`) | none |
 | stable-diffusion-webui-prompt-travel | [Kahsolt/stable-diffusion-webui-prompt-travel](https://github.com/Kahsolt/stable-diffusion-webui-prompt-travel) (`9c532f3487`) | [patch](installer/patches/stable-diffusion-webui-prompt-travel.patch) |
+| sd-webui-3d-open-pose-editor | [nonnonstop/sd-webui-3d-open-pose-editor](https://github.com/nonnonstop/sd-webui-3d-open-pose-editor) (`f2d5aac51d`) | [patch](installer/patches/sd-webui-3d-open-pose-editor.patch) |
 
 Tools:
 

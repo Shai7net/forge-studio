@@ -49,7 +49,7 @@
         UI.versions = h('div', {class: 'fs-fe-versions'});
         UI.status = h('div', {class: 'fx-dim'});
         UI.prompt = h('textarea', {class: 'fx-input fx-textarea', rows: 3, dir: 'auto', placeholder: T('What should be there (for example: a red silk shirt)')});
-        UI.negative = h('input', {class: 'fx-input', placeholder: T('Not wanted (used when CFG is above 1)')});
+        UI.negative = h('input', {class: 'fx-input', dir: 'auto', placeholder: T('Not wanted (used when CFG is above 1)')});
         UI.strength = h('input', {type: 'range', min: 0.1, max: 1, step: 0.05, value: 0.75, class: 'fx-range'});
         UI.strengthText = h('span', {class: 'fx-dim'}, '0.75');
         UI.strength.addEventListener('input', () => { UI.strengthText.textContent = UI.strength.value; });
@@ -72,7 +72,8 @@
                         h('button', {class: 'fx-btn', onclick: () => { X.mask.getContext('2d').clearRect(0, 0, X.W, X.H); draw(); }}, T('Clear'))),
                     h('label', {class: 'fx-field'}, T('Brush size'), UI.size)),
                 h('div', {class: 'fx-group'}, h('div', {class: 'fx-group-title'}, T('2. Ask Forge to draw')),
-                    FS.withWriter(UI.prompt, 'fs_frame_prompt', {as: 'img2img_prompt'}), UI.negative,
+                    FS.withWriter(UI.prompt, 'fs_frame_prompt', {as: 'img2img_prompt'}),
+                    FS.withWriter(UI.negative, 'fs_frame_negative', {as: 'img2img_neg_prompt'}),
                     h('label', {class: 'fx-field'}, h('span', {}, T('How much to change'), ' ', UI.strengthText), UI.strength),
                     h('button', {class: 'fx-primary', onclick: FS.guard(() => drawWithForge(true))}, '✨ ' + T('Draw in the painted area')),
                     h('button', {class: 'fx-btn', onclick: FS.guard(() => drawWithForge(false))}, T('Draw the whole frame again')),
@@ -155,7 +156,7 @@
         form.append('name', S.project);
         form.append('frame', X.versions[X.current].id);
         form.append('prompt', await FS.english(UI.prompt.value.trim(), 'image'));
-        form.append('negative', UI.negative.value.trim());
+        form.append('negative', await FS.english(UI.negative.value.trim(), 'negative'));
         form.append('strength', UI.strength.value);
         form.append('seed', '-1');
         if (masked) form.append('mask', await new Promise((r) => X.mask.toBlob(r, 'image/png')), 'mask.png');

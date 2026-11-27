@@ -12,15 +12,101 @@
 /* Open dropdown lists drew see-through over the prompt box in this Forge theme. */
 #vs_main ul.options { background: var(--background-fill-primary, #1f2937) !important; z-index: 50; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
 
-/* Shape and the picture sampler serve every sub-tab: video-studio.js moves them into the sub-tab bar, after the
-   buttons (the far end of the bar, in either direction); the bar wraps when the window is narrow. */
-#vs_mode_tabs > .tab-nav { flex-wrap: wrap; align-items: flex-end; row-gap: 4px; }
-#vs_shared_row { margin-inline-start: auto; width: auto !important; flex: 0 0 auto; flex-wrap: nowrap; gap: 8px;
-                 padding-bottom: 3px; border: none; background: none; }
-/* Gradio groups the two dropdowns in one .form, a column by default: side by side here */
-#vs_shared_row > .form { flex-direction: row !important; flex-wrap: nowrap !important; gap: 8px; border: none;
-                         background: none; box-shadow: none; }
-#vs_shared_row > div { flex: 0 0 auto !important; min-width: 0 !important; }
-#vs_shared_row #vs_shape { width: 124px; min-width: 124px !important; }
-#vs_shared_row #vs_picture_sampler { width: 152px; min-width: 152px !important; }
-#vs_shared_row label > span { margin-bottom: 1px; font-size: 0.8em; }
+/* ---- the layout (2026-11-26, laid out again 2026-11-27 from Shai's mock): friendly in front, technical in
+   Advanced settings ---- */
+
+/* the sub-tab bar: Quality first, the kinds of video, then the Shape card on a line of its own (video-studio.js) */
+#vs_mode_tabs > .tab-nav { flex-wrap: wrap; align-items: flex-end; row-gap: 8px; column-gap: 2px; border-bottom: none; }
+#vs_mode_tabs > .tab-nav > #vs_quality { flex: 0 0 auto; width: 240px; min-width: 200px !important; margin: 0 10px 2px 0 !important;
+    padding: 0 !important; border: none !important; background: none !important; box-shadow: none !important; }
+#vs_mode_tabs > .tab-nav > #vs_quality label > span:first-child { font-weight: 700; font-size: 12.5px; margin-bottom: 2px; }
+#vs_mode_tabs > .tab-nav > #vs_quality input { font-weight: 600; }
+#vs_quality ul.options { font-size: 13px !important; }
+#vs_mode_tabs > .tab-nav > button { border-radius: 8px 8px 0 0; padding: 6px 10px !important; font-size: 13.5px !important; }
+#vs_mode_tabs > .tab-nav > #vs_create { flex: 1 0 100%; order: 99; margin-top: 4px; }
+.vs-hint, .vs-hint p { font-size: 12.5px !important; line-height: 1.45 !important; color: var(--body-text-color-subdued) !important; margin: 2px 0 6px !important; }
+.vs-empty-tab { display: none !important; }
+
+/* Text to Video's note and "the opening picture", at the bottom of the column, on that sub-tab only */
+#vs_main[data-vs-mode]:not([data-vs-mode="t2v"]) #vs_t2v_extras { display: none !important; }
+#vs_t2v_extras { border: none !important; background: none !important; box-shadow: none !important; gap: 6px !important; }
+
+/* styles with its two small buttons on one line */
+#vs_styles_row { align-items: flex-end; gap: 8px; }
+#vs_styles_row > button { align-self: flex-end; height: 38px; margin-bottom: 2px; white-space: nowrap; }
+
+/* the Shape card: shape tiles, Length, two switches */
+#vs_create { padding: 12px 14px 8px !important; border-radius: 14px !important; gap: 12px !important;
+    background: var(--background-fill-secondary) !important; border: 1px solid var(--border-color-primary) !important; }
+#vs_create > div, #vs_create .form { background: none !important; border: none !important; box-shadow: none !important; }
+#vs_create fieldset > span, #vs_create .block-info, #vs_create #vs_seconds label > span:first-child {
+    font-weight: 700 !important; font-size: 13px !important; color: var(--body-text-color) !important; }
+#vs_shape input[type=radio], #vs_model input[type=radio] { position: absolute; opacity: 0; pointer-events: none; }
+#vs_shape .wrap { display: grid !important; grid-template-columns: repeat(5, minmax(64px, 1fr)); gap: 6px; }
+#vs_shape .wrap > label { display: flex !important; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px;
+    height: 70px; margin: 0 !important; padding: 8px 4px 7px !important; border-radius: 10px !important; cursor: pointer;
+    border: 1px solid var(--border-color-primary) !important; background: var(--background-fill-primary) !important;
+    font-size: 11.5px; text-align: center; line-height: 1.15; }
+#vs_shape .wrap > label:hover { border-color: var(--body-text-color-subdued) !important; }
+#vs_shape .wrap > label.selected, #vs_shape .wrap > label:has(input:checked) {
+    border-color: var(--color-accent) !important; background: var(--background-fill-secondary) !important; font-weight: 700; }
+.vs-shape-icon { display: block; flex: 0 0 auto; border: 2px solid currentColor; border-radius: 4px; margin: auto 0 0; opacity: .85; }
+#vs_shape .wrap > label.selected .vs-shape-icon, #vs_shape .wrap > label:has(input:checked) .vs-shape-icon { color: var(--color-accent); opacity: 1; }
+#vs_toggles { gap: 8px; flex-wrap: wrap; }
+#vs_toggles > .form, #vs_toggles > div { min-width: 0 !important; }
+#vs_toggles label { font-size: 12.5px; }
+
+/* the video model: a row of picture buttons above the window (video-studio.js adds the pictures and names) */
+#vs_models_box { padding: 10px 12px 12px !important; border-radius: 14px !important; background: var(--background-fill-secondary) !important;
+    border: 1px solid var(--border-color-primary) !important; }
+#vs_models_box > div, #vs_models_box .form { background: none !important; border: none !important; box-shadow: none !important; }
+#vs_model > span, #vs_model fieldset > span { display: block; text-align: center; font-weight: 800 !important; letter-spacing: .12em;
+    text-transform: uppercase; font-size: 12.5px !important; margin-bottom: 8px; color: var(--body-text-color) !important; }
+#vs_model .wrap { display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+#vs_model .wrap > label { position: relative; display: flex !important; flex-direction: column; gap: 5px; min-width: 0; margin: 0 !important;
+    padding: 0 !important; border: none !important; background: none !important; cursor: pointer; }
+#vs_model .wrap > label > span:not(.vs-model-pic):not(.vs-model-cap) { display: none !important; }   /* the long name: its tooltip */
+.vs-model-pic { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; background: #000 center / cover no-repeat;
+    box-shadow: inset 0 0 0 1px var(--border-color-primary); transition: box-shadow .12s, transform .12s, filter .12s; filter: saturate(.75) brightness(.8); }
+#vs_model .wrap > label:hover .vs-model-pic { filter: none; transform: translateY(-1px); }
+#vs_model .wrap > label.selected .vs-model-pic, #vs_model .wrap > label:has(input:checked) .vs-model-pic {
+    filter: none; box-shadow: 0 0 0 3px var(--color-accent), 0 6px 18px rgba(0,0,0,.45); }
+.vs-model-cap { display: flex; flex-direction: column; align-items: center; line-height: 1.15; text-align: center; min-width: 0; }
+.vs-model-cap b { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.vs-model-cap small { font-size: 10.5px; color: var(--body-text-color-subdued); white-space: nowrap; }
+#vs_model .wrap > label.selected .vs-model-cap b, #vs_model .wrap > label:has(input:checked) .vs-model-cap b { color: var(--color-accent); }
+.vs-model-get { position: absolute; top: 4px; inset-inline-end: 4px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+    background: rgba(0,0,0,.7); color: #fff; font-size: 11px; }
+#vs_model .wrap > label.vs-not-installed .vs-model-pic { filter: grayscale(.8) brightness(.55); }
+.vs-installed { display: none !important; }
+
+/* one window: the picture made so far while it works, the video when it is done */
+#vs_stage { position: relative; border-radius: 14px !important; overflow: hidden; border: 1px solid var(--border-color-primary) !important; }
+#vs_stage > div { border: none !important; box-shadow: none !important; }
+#vs_stage[data-show="video"] #vs_preview { display: none !important; }
+#vs_stage[data-show="picture"] #vs_video { display: none !important; }
+#vs_stage #vs_preview img { object-fit: contain; }
+/* ... and the frog over it until the video is there: the share done and the time left, no bar */
+.vs-loader { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    background: radial-gradient(60% 60% at 50% 45%, rgba(10,14,20,.55), rgba(10,14,20,.82)); color: #fff; pointer-events: none; }
+.vs-loader[hidden] { display: none !important; }
+.vs-loader-frog { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; font-size: 54px; line-height: 1;
+    background: rgba(255,255,255,.08); box-shadow: 0 0 0 2px rgba(72,230,155,.35), 0 0 30px rgba(72,230,155,.25);
+    animation: vs-frog-spin 1.6s linear infinite; }
+@keyframes vs-frog-spin { to { transform: rotate(360deg); } }
+.vs-loader-pct { margin-top: 10px; font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .01em;
+    text-shadow: 0 2px 10px rgba(0,0,0,.6); }
+.vs-loader-left { font-size: 15px; font-weight: 600; opacity: .95; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+.vs-loader-stage { font-size: 12.5px; opacity: .7; }
+#vs_actions { gap: 6px; flex-wrap: wrap; }
+#vs_actions > button { flex: 1 1 auto; min-width: 0 !important; white-space: nowrap; }
+
+/* one big button under the window: Generate, or Stop while a video is made */
+#vs_go_row { gap: 0; }
+#vs_go_row > button { width: 100%; height: 54px; font-size: 17px !important; font-weight: 700 !important; border-radius: 12px !important; }
+#vs_main:not(.vs-running) #vs_stop { display: none !important; }
+#vs_main.vs-running #vs_generate { display: none !important; }
+/* the status line: no bar; while working the window says it all, after it the outcome (done, stopped, an error) */
+#vs_status .vs-bar { display: none !important; }
+#vs_status:has(.vs-status[data-stage="idle"]), #vs_main.vs-running #vs_status { display: none !important; }
+#vs_status .vs-status { padding: 2px 4px; }

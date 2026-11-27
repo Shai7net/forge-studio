@@ -11,7 +11,7 @@ from urllib.parse import unquote, urlsplit
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response, StreamingResponse
 
-from . import NAME, VERSION, beats, clipkit, continuers, duck, framefiles, frames, generate, imageai, imagedoc, imagegen, layers, updates, lipsync, lipspeech, library, media, paths, projectbin, projects, render, sound, soundbank
+from . import NAME, VERSION, beats, clipkit, continuers, duck, framefiles, frames, generate, imageai, imagedoc, imagegen, layers, updates, lipsync, lipspeech, library, media, paths, projectbin, projecthome, projects, render, sound, soundbank
 
 _RANGE = re.compile(r"bytes=(\d*)-(\d*)")
 mimetypes.add_type("application/wasm", ".wasm")
@@ -130,6 +130,23 @@ def api_media(media_id: int, request: Request):
 
 def api_projects():
     return {"projects": projects.list_projects()}
+
+
+def api_projects_home():
+    return {"projects": projecthome.overview(), "trash": projecthome.trashed()}
+
+
+def api_project_cover(name: str, request: Request, trashed: int = 0):
+    path = _guard(lambda: projecthome.cover_path(name, bool(trashed)))
+    return _send(_guard(lambda: library.thumbnail_path(path, 360)), request, "image/jpeg", cache="max-age=60")
+
+
+def api_project_trash(name: str = Body(..., embed=True)):
+    return _guard(lambda: projecthome.trash(name))
+
+
+def api_project_restore(name: str = Body(..., embed=True)):
+    return _guard(lambda: projecthome.restore(name))
 
 
 def api_project(name: str):
@@ -284,9 +301,9 @@ def api_gen_submit(name: str = Body(...), kind: str = Body(...), prompt: str = B
                    seed: int = Body(-1), quality: str = Body(None), sound: bool = Body(True), width: int = Body(0),
                    height: int = Body(0), start: dict = Body(None), end: dict = Body(None), take_of: str = Body(None),
                    placeholder: dict = Body(None), engine: str = Body("auto"), direction: str = Body("after"), fps: float = Body(30),
-                   fast: bool = Body(False)):
+                   fast: bool = Body(False), model: str = Body(None)):
     return _guard(lambda: generate.submit(name, kind, prompt, seconds, seed, quality, sound, width, height, start, end,
-                                          take_of, placeholder, engine, direction, fps, fast))
+                                          take_of, placeholder, engine, direction, fps, fast, model))
 
 
 def api_gen_list(name: str):
@@ -447,6 +464,37 @@ async def api_image_erase(request: Request):
     form, png = await _image_form(request)
     picture, mask = await png("picture"), await png("mask")
     return await _off_loop(lambda: imageai.erase(form["name"], form["shot"], picture, mask))
+
+
+async def api_image_haku(request: Request):
+    """multipart: picture (PNG, the layer), effect, params (JSON) -> the picture with HakuImg's effect (PNG)"""
+    import json
+    from . import haku
+    form, png = await _image_form(request)
+    picture = await png("picture")
+    if not picture:
+        raise HTTPException(status_code=400, detail="the picture is missing")
+    params = json.loads(form.get("params") or "{}")
+    try:
+        data = await _off_loop(lambda: haku.apply(picture, form.get("effect") or "", params))
+    except HTTPException:
+        raise
+    except Exception as e:   # an effect's own failure (OpenCV, PixelOE...) is told to the page, not a bare 500
+        raise HTTPException(status_code=400, detail=f"HakuImg: {str(e).strip().splitlines()[-1][:300]}")
+    return Response(data, media_type="image/png", headers={"Cache-Control": "no-store"})
+
+
+def api_image_haku_info():
+    from . import haku
+    return haku.available()
+
+
+def api_fx_list(kind: str, request: Request):
+    """The GLSL transitions (gl-transitions, MIT) or the video effects, as the export uses them (fx/*.json)."""
+    from . import glfx
+    if kind not in ("transitions", "effects"):
+        raise HTTPException(status_code=404, detail="no such list")
+    return _send(os.path.join(glfx.FX, kind + ".json"), request, "application/json", cache="public, max-age=3600")
 
 
 def api_updates_check():
@@ -699,6 +747,10 @@ def register(app: FastAPI):
     route("/forge-studio/thumb/{media_id}", api_thumb, methods=["GET"])
     route("/forge-studio/media/{media_id}", api_media, methods=["GET"])
     route("/forge-studio/projects", api_projects, methods=["GET"])
+    route("/forge-studio/projects/home", api_projects_home, methods=["GET"])
+    route("/forge-studio/project/cover", api_project_cover, methods=["GET"])
+    route("/forge-studio/project/trash", api_project_trash, methods=["POST"])
+    route("/forge-studio/project/restore", api_project_restore, methods=["POST"])
     route("/forge-studio/project", api_project, methods=["GET"])
     route("/forge-studio/project/create", api_project_create, methods=["POST"])
     route("/forge-studio/project/bin", api_project_bin, methods=["GET"])
@@ -734,6 +786,7 @@ def register(app: FastAPI):
     route("/forge-studio/image/file", api_image_file, methods=["GET"])
     route("/forge-studio/image/save", api_image_save, methods=["POST"])
     route("/forge-studio/image/tidy", api_image_tidy, methods=["POST"])
+    route("/forge-studio/fx/{kind}", api_fx_list, methods=["GET"])
     route("/forge-studio/updates/check", api_updates_check, methods=["GET"])
     route("/forge-studio/updates/apply", api_updates_apply, methods=["POST"])
     route("/forge-studio/updates/restart", api_updates_restart, methods=["POST"])
@@ -742,6 +795,8 @@ def register(app: FastAPI):
     route("/forge-studio/image/subject", api_image_subject, methods=["POST"])
     route("/forge-studio/image/object", api_image_object, methods=["POST"])
     route("/forge-studio/image/erase", api_image_erase, methods=["POST"])
+    route("/forge-studio/image/haku", api_image_haku, methods=["POST"])
+    route("/forge-studio/image/haku-info", api_image_haku_info, methods=["GET"])
     route("/forge-studio/frame/grab", api_frame_grab, methods=["POST"])
     route("/forge-studio/frame/file", api_frame_file, methods=["GET"])
     route("/forge-studio/frame/draw", api_frame_draw, methods=["POST"])

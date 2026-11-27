@@ -67,6 +67,7 @@
 !/forge/webui/extensions/sd-forge-studio/
 !/forge/webui/extensions/sd-forge-time-strata/
 !/forge/webui/extensions/sd-forge-video-studio/
+!/forge/webui/extensions/sd-forge-workspace/
 
 # Python and editors
 __pycache__/

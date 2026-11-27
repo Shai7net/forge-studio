@@ -1,0 +1,188 @@
+/* Forge Workspace (javascript/workspace.js) */
+
+/* ---- the top line: the tab bar, with room on its right for the update frog and the language switch ---- */
+html.ws-on #tabs > .tab-nav { padding-inline-end: var(--ws-top-reserve, 230px); min-height: 34px; }
+html.ws-on #quicksettings.ws-qs { margin: 6px 0 4px; }
+html.ws-on #quicksettings.ws-qs.ws-empty { display: none !important; }
+.ws-hidden { display: none !important; }
+
+/* ---- the checkpoint above Generate ---- */
+html.ws-on .ws-ckpt { display: flex; align-items: flex-end; gap: 6px; min-width: 0; margin-bottom: 6px; }
+html.ws-on .ws-ckpt > #setting_sd_model_checkpoint { flex: 1 1 auto; min-width: 0 !important; max-width: none !important; margin: 0 !important; }
+html.ws-on .ws-ckpt > #refresh_sd_model_checkpoint { flex: 0 0 auto; align-self: flex-end; margin-bottom: 2px; }
+
+/* ---- the Model settings card ---- */
+html.ws-on .ws-model-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 14px; align-items: end; padding: 4px 0 2px; }
+html.ws-on .ws-model-grid > * { min-width: 0 !important; max-width: none !important; margin: 0 !important; }
+html.ws-on .ws-model-grid .ws-pair { display: flex; align-items: flex-end; gap: 6px; min-width: 0; }
+html.ws-on .ws-model-grid .ws-pair > .block { flex: 1 1 auto; min-width: 0 !important; margin: 0 !important; }
+html.ws-on .ws-model-grid .ws-pair > .gradio-button.tool { flex: 0 0 auto; margin-bottom: 2px; }
+html.ws-on .ws-model-grid > #setting_face_restoration { align-self: center; }
+
+/* ---- 🎨 Styles | 🧩 LoRA ---- */
+html.ws-on .ws-switch { display: flex; gap: 4px; margin: 8px 0 4px; }
+html.ws-on .ws-tools { align-items: center; flex-wrap: nowrap; }
+html.ws-on .ws-tools > .ws-switch { margin: 0; margin-inline-start: auto; flex: 0 1 auto; min-width: 0; }
+html.ws-on .ws-tools > .form { flex: 0 0 auto !important; flex-wrap: nowrap !important; width: auto !important; min-width: 0 !important; }
+html.ws-on .ws-tools > .ws-switch .ws-tab { padding: 0 10px; }
+html.ws-on .ws-tab { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 999px;
+    border: 1px solid var(--border-color-primary); background: var(--background-fill-secondary); color: var(--body-text-color);
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color .12s, background .12s; }
+html.ws-on .ws-tab:hover { border-color: var(--color-accent); }
+html.ws-on .ws-tab-icon { font-size: 13px; }
+html.ws-on .ws-count:empty { display: none; }
+html.ws-on .ws-count { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--color-accent); color: #fff;
+    font-size: 11px; line-height: 18px; text-align: center; }
+
+/* the LoRA chips, under the styles, in the same box look */
+html.ws-on .ws-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; padding: 6px; border-radius: var(--radius-lg, 8px);
+    border: 1px solid var(--border-color-primary); background: var(--input-background-fill, var(--background-fill-primary)); }
+html.ws-on .ws-chips[hidden] { display: none; }
+html.ws-on .ws-chip { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; min-width: 0; height: 28px; padding: 0 4px 0 8px;
+    border-radius: 7px; background: var(--background-fill-secondary); border: 1px solid var(--border-color-primary);
+    color: var(--body-text-color); font-size: 12.5px; }
+html.ws-on .ws-chip:hover { border-color: var(--color-accent); }
+html.ws-on .ws-chip-icon { font-size: 11px; opacity: .8; margin-inline-end: 3px; }
+html.ws-on .ws-chip-name { min-width: 0; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-inline-end: 4px; }
+html.ws-on .ws-chip-w { min-width: 26px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+html.ws-on .ws-chip-btn { display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 5px;
+    background: transparent; color: var(--body-text-color-subdued); font-size: 14px; line-height: 1; cursor: pointer; }
+html.ws-on .ws-chip-btn:hover { background: var(--border-color-primary); color: var(--body-text-color); }
+html.ws-on .ws-chip-x { font-size: 11px; margin-inline-start: 2px; }
+html.ws-on .ws-chip-x:hover { background: #d64545; color: #fff; }
+
+/* ---- the LoRA gallery ---- */
+html.ws-on .ws-gallery, html.ws-on .ws-t-back { font-family: var(--font, "Source Sans Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif); }
+html.ws-on .ws-gallery { position: fixed; z-index: 1000; display: flex; flex-direction: column; min-height: 260px; overflow: hidden;
+    background: var(--background-fill-primary); color: var(--body-text-color); border: 1px solid var(--border-color-primary);
+    border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,.55); font-size: 13px; }
+html.ws-on .ws-g-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-bottom: 1px solid var(--border-color-primary); }
+html.ws-on .ws-g-title { display: inline-flex; align-items: baseline; gap: 6px; font-weight: 700; font-size: 15px; margin-inline-end: 6px; }
+html.ws-on .ws-g-n { font-weight: 500; font-size: 12px; color: var(--body-text-color-subdued); }
+html.ws-on .ws-g-search { flex: 1 1 160px; min-width: 120px; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-color-primary);
+    background: var(--input-background-fill, var(--background-fill-secondary)); color: var(--body-text-color); font: inherit; }
+html.ws-on .ws-g-search:focus { outline: none; border-color: var(--color-accent); }
+html.ws-on .ws-g-scope { display: inline-flex; padding: 2px; border-radius: 9px; background: var(--background-fill-secondary); border: 1px solid var(--border-color-primary); }
+html.ws-on .ws-g-pill { height: 26px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--body-text-color-subdued); font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
+html.ws-on .ws-g-pill.on { background: var(--border-color-primary); color: var(--body-text-color); font-weight: 600; }
+html.ws-on .ws-g-close { width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: var(--body-text-color-subdued); cursor: pointer; font-size: 14px; }
+html.ws-on .ws-g-close:hover { background: var(--background-fill-secondary); color: var(--body-text-color); }
+html.ws-on .ws-g-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 150px minmax(0, 1fr); }
+html.ws-on .ws-g-body.no-side { grid-template-columns: minmax(0, 1fr); }
+html.ws-on .ws-g-side { overflow-y: auto; padding: 10px 8px; border-inline-end: 1px solid var(--border-color-primary); display: flex; flex-direction: column; gap: 2px; }
+html.ws-on .ws-g-folder { text-align: start; padding: 6px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--body-text-color-subdued);
+    font: inherit; font-size: 12.5px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html.ws-on .ws-g-folder:hover { color: var(--body-text-color); background: var(--background-fill-secondary); }
+html.ws-on .ws-g-folder.on { color: var(--body-text-color); background: var(--border-color-primary); font-weight: 600; }
+html.ws-on .ws-g-grid { overflow-y: auto; padding: 12px 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 14px 10px; align-content: start; }
+html.ws-on .ws-g-card { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-align: center; }
+html.ws-on .ws-g-thumb { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: var(--background-fill-secondary);
+    box-shadow: inset 0 0 0 1px var(--border-color-primary); transition: box-shadow .12s, transform .12s; }
+html.ws-on .ws-g-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+html.ws-on .ws-g-initial { position: absolute; inset: 0; display: grid; place-items: center; font-size: 22px; font-weight: 700; color: var(--body-text-color-subdued);
+    background: radial-gradient(80% 80% at 30% 20%, rgba(255,255,255,.06), transparent); }
+html.ws-on .ws-g-card:hover .ws-g-thumb { box-shadow: inset 0 0 0 2px var(--color-accent); transform: translateY(-1px); }
+html.ws-on .ws-g-card.on .ws-g-thumb { box-shadow: inset 0 0 0 3px var(--color-accent); }
+html.ws-on .ws-g-name { font-size: 12px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--body-text-color-subdued); }
+html.ws-on .ws-g-card:hover .ws-g-name, html.ws-on .ws-g-card.on .ws-g-name { color: var(--body-text-color); }
+html.ws-on .ws-g-ver { position: absolute; top: 5px; inset-inline-start: 5px; padding: 0 5px; border-radius: 5px; font-size: 10px; line-height: 16px; font-weight: 700;
+    background: rgba(0,0,0,.6); color: #fff; }
+html.ws-on .ws-g-ver.off { background: rgba(214,69,69,.85); }
+html.ws-on .ws-g-check { position: absolute; top: 5px; inset-inline-end: 5px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--color-accent); color: #fff; font-size: 12px; font-weight: 800; }
+html.ws-on .ws-g-trig { position: absolute; bottom: 5px; inset-inline-end: 5px; width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center;
+    background: rgba(0,0,0,.6); color: #ffd86b; font-size: 10px; font-weight: 800; }
+html.ws-on .ws-g-empty { padding: 30px 10px; text-align: center; color: var(--body-text-color-subdued); grid-column: 1 / -1; }
+html.ws-on .ws-g-foot { padding: 8px 14px; border-top: 1px solid var(--border-color-primary); font-size: 11.5px; color: var(--body-text-color-subdued); }
+
+/* trigger words */
+html.ws-on .ws-t-layer { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.45); backdrop-filter: blur(1px); }
+html.ws-on .ws-t-back { position: fixed; inset: 0; z-index: 1001; display: grid; place-items: center; background: rgba(0,0,0,.5); }
+html.ws-on .ws-t-box { width: min(420px, calc(100% - 32px)); display: grid; gap: 8px; padding: 16px; border-radius: 12px; background: var(--background-fill-primary);
+    border: 1px solid var(--border-color-primary); box-shadow: 0 18px 50px rgba(0,0,0,.5); color: var(--body-text-color); font-size: 13px; }
+html.ws-on .ws-t-title { font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+html.ws-on .ws-t-help { font-size: 12px; color: var(--body-text-color-subdued); }
+html.ws-on .ws-t-input { width: 100%; box-sizing: border-box; resize: vertical; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color-primary);
+    background: var(--input-background-fill, var(--background-fill-secondary)); color: var(--body-text-color); font: inherit; }
+html.ws-on .ws-t-input:focus { outline: none; border-color: var(--color-accent); }
+html.ws-on .ws-t-actions { display: flex; justify-content: flex-end; gap: 8px; }
+html.ws-on .ws-t-btn { height: 32px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--border-color-primary); background: var(--background-fill-secondary);
+    color: var(--body-text-color); font: inherit; font-weight: 600; cursor: pointer; }
+html.ws-on .ws-t-btn.primary { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+html.ws-on .ws-t-btn:hover { filter: brightness(1.1); }
+
+@media (max-width: 700px) {
+    .ws-g-body { grid-template-columns: minmax(0, 1fr); }
+    .ws-g-side { flex-direction: row; overflow-x: auto; border-inline-end: 0; border-bottom: 1px solid var(--border-color-primary); }
+}
+
+/* ---- Recent: the newest outputs under a result display (viewer.js) ---- */
+.ws-recent { position: relative; display: grid; grid-template-columns: auto 26px minmax(0, 1fr) 26px; align-items: center; gap: 6px;
+    margin: 8px 0 4px; padding: 6px 8px; border-radius: 12px; border: 1px solid var(--border-color-primary); background: var(--background-fill-secondary); }
+.ws-r-head { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 52px; }
+.ws-r-label { font-size: 11.5px; font-weight: 700; color: var(--body-text-color-subdued); text-transform: uppercase; letter-spacing: .06em; }
+.ws-r-btn, .ws-r-arrow { border: 0; background: transparent; color: var(--body-text-color-subdued); cursor: pointer; font-size: 16px; line-height: 1;
+    padding: 4px; border-radius: 6px; }
+.ws-r-arrow { font-size: 22px; height: 64px; }
+.ws-r-btn:hover, .ws-r-arrow:hover { color: var(--body-text-color); background: var(--background-fill-primary); }
+.ws-r-row { display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; padding: 2px 0; scroll-behavior: smooth; }
+.ws-r-item { position: relative; flex: 0 0 auto; width: 64px; height: 64px; padding: 0; border: 0; border-radius: 8px; overflow: hidden; cursor: pointer;
+    background: #000; box-shadow: inset 0 0 0 1px var(--border-color-primary); }
+.ws-r-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .15s; }
+.ws-r-item:hover { box-shadow: 0 0 0 2px var(--color-accent); }
+.ws-r-item:hover img { transform: scale(1.06); }
+.ws-r-play { position: absolute; inset-inline-end: 3px; bottom: 3px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;
+    background: rgba(0,0,0,.65); color: #fff; font-size: 9px; }
+.ws-r-none { font-size: 12px; color: var(--body-text-color-subdued); padding: 0 6px; align-self: center; }
+
+/* ---- the viewer ---- */
+.ws-viewer { position: fixed; inset: 0; z-index: 2000; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: rgba(8,10,14,.96);
+    color: #fff; font-family: var(--font, "Source Sans Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif); user-select: none; }
+.ws-v-top { display: flex; align-items: center; gap: 8px; padding: 10px 14px; }
+.ws-v-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; opacity: .9; }
+.ws-v-badge { padding: 1px 8px; border-radius: 99px; background: rgba(72,230,155,.18); color: #7dffc0; font-size: 11px; font-weight: 600; }
+.ws-v-hint { font-size: 11.5px; opacity: .5; white-space: nowrap; }
+.ws-v-btn { width: 36px; height: 36px; border: 0; border-radius: 10px; background: rgba(255,255,255,.08); color: #fff; font-size: 17px; cursor: pointer; }
+.ws-v-btn:hover { background: rgba(255,255,255,.18); }
+.ws-v-stage { position: relative; overflow: hidden; min-height: 0; height: 100%; align-self: stretch; cursor: zoom-in; touch-action: none; }
+.ws-v-stage.zoomed { cursor: grab; }
+.ws-v-stage.dragging { cursor: grabbing; }
+/* the whole picture or video inside the window, whatever its shape: centred in the stage, as big as fits (a percent
+   max-height inside a grid row did not hold, so tall and wide ones ran out at the bottom) */
+.ws-v-media { position: absolute; inset: 0; margin: auto; width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain;
+    transform-origin: center center; transition: transform .06s linear; will-change: transform; }
+video.ws-v-media { width: 100%; height: 100%; }
+.ws-v-stage.dragging .ws-v-media { transition: none; }
+.ws-v-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 48px; height: 72px; border: 0; border-radius: 12px; z-index: 2;
+    background: rgba(255,255,255,.07); color: #fff; font-size: 34px; line-height: 1; cursor: pointer; }
+.ws-v-nav:hover:not(:disabled) { background: rgba(255,255,255,.18); }
+.ws-v-nav:disabled { opacity: .2; cursor: default; }
+.ws-v-nav.prev { left: 12px; }
+.ws-v-nav.next { right: 12px; }
+.ws-v-tools { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 10px 14px 14px; min-height: 20px; }
+.ws-v-tools:empty { padding: 6px; }
+.ws-v-tool { height: 34px; padding: 0 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.08); color: #fff;
+    font: inherit; font-size: 13px; cursor: pointer; }
+.ws-v-tool:hover { background: rgba(255,255,255,.18); }
+/* the result's own buttons, brought into the viewer */
+.ws-v-tools > [id^="image_buttons_"] { display: flex !important; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 8px 10px !important;
+    border-radius: 14px; background: rgba(255,255,255,.06); }
+
+/* the right column as tall as the two prompts, so Generation sits right under them (2026-11-27) */
+html.ws-on .ws-ckpt { margin-bottom: 0; }
+html.ws-on .ws-ckpt #setting_sd_model_checkpoint > label > span:first-child,
+html.ws-on .ws-ckpt #setting_sd_model_checkpoint span[data-testid="block-info"] { display: none !important; }
+html.ws-on .ws-ckpt #setting_sd_model_checkpoint { padding-top: 0 !important; }
+html.ws-on #txt2img_generate_box, html.ws-on #img2img_generate_box { min-height: 0 !important; }
+html.ws-on #txt2img_generate_box > button, html.ws-on #img2img_generate_box > button { min-height: 0 !important; height: 58px !important; }
+html.ws-on #txt2img_actions_column, html.ws-on #img2img_actions_column { gap: 5px !important; }
+html.ws-on .ws-tools { min-height: 0 !important; }
+
+/* a video result plays in the result's window (viewer.js videoResult) */
+.ws-has-video { position: relative !important; }
+.ws-video-result { position: absolute; top: 0; left: 0; width: 100%; z-index: 5; overflow: hidden; background: #000; border-radius: inherit; }
+.ws-video-result video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+.ws-vr-open { position: absolute; top: 8px; inset-inline-end: 8px; width: 34px; height: 34px; border: 0; border-radius: 9px; cursor: pointer;
+    background: rgba(0,0,0,.6); color: #fff; font-size: 16px; }
+.ws-vr-open:hover { background: rgba(0,0,0,.8); }
+.ws-has-video > :not(.ws-video-result) { visibility: hidden; }   /* the GIF and the broken square of the MP4 */

@@ -1,0 +1,77 @@
+[
+ {
+  "i": 0,
+  "en": "Advanced settings",
+  "ctx": "Video Studio: accordion with the technical settings (2026-11-26 layout)"
+ },
+ {
+  "i": 1,
+  "en": "MiniMax-H3 · fast (about 350p, the workflow default)",
+  "ctx": "Video Studio quality choice for MiniMax-H3"
+ },
+ {
+  "i": 2,
+  "en": "MiniMax-H3 · sharper (about 480p, tested on 8 GB)",
+  "ctx": "Video Studio quality choice for MiniMax-H3"
+ },
+ {
+  "i": 3,
+  "en": "480p - fast (about 5 min for 5 s)",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 4,
+  "en": "576p - balanced (about 8 min for 5 s)",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 5,
+  "en": "720p - best (about 16 min for 5 s)",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 6,
+  "en": "LTX 288p · quick draft",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 7,
+  "en": "LTX 416p · balanced for 8 GB",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 8,
+  "en": "LTX 480p · more detail",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 9,
+  "en": "LTX 576p · more memory",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 10,
+  "en": "9:16 portrait",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 11,
+  "en": "16:9 landscape",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 12,
+  "en": "1:1 square",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 13,
+  "en": "4:5 portrait",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ },
+ {
+  "i": 14,
+  "en": "3:4 portrait",
+  "ctx": "Video Studio: a Quality or Shape choice shown as a button (2026-11-26 layout)"
+ }
+]

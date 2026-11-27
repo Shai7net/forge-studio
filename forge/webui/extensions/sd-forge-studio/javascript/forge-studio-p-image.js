@@ -409,6 +409,95 @@
         addLayer(l.name + ' ' + T('cut out'), c);
         refresh();
     };
+    /* An effect on the active layer (HakuImg's, r-image-fx.js): begin() takes the layer's pixels where they show,
+     * preview() draws a result in its place while the effect is tuned (null: the layer as it was), commit() keeps it
+     * as one undo step and cancel() puts the layer back. With a selection the result is only inside it. */
+    function withinSelection(st, result) {
+        const c = canvas(D.width, D.height), cc = ctx(c);
+        if (!D.sel) { cc.drawImage(result, 0, 0, D.width, D.height); return c; }
+        cc.drawImage(st.flat, 0, 0);
+        cc.globalCompositeOperation = 'destination-out';
+        cc.drawImage(D.sel, 0, 0);
+        const inside = canvas(D.width, D.height), ic = ctx(inside);
+        ic.drawImage(result, 0, 0, D.width, D.height);
+        ic.globalCompositeOperation = 'destination-in';
+        ic.drawImage(D.sel, 0, 0);
+        cc.globalCompositeOperation = 'source-over';
+        cc.drawImage(inside, 0, 0);
+        return c;
+    }
+    IM.effect = {
+        begin() {
+            const l = D && activeLayer();
+            if (!l) return null;
+            const flat = canvas(D.width, D.height);
+            ctx(flat).drawImage(l.canvas, l.x, l.y);
+            return {id: l.id, name: l.name, original: l.canvas, x: l.x, y: l.y, flat};
+        },
+        preview(st, result) {
+            const l = st && layer(st.id);
+            if (!l) return;
+            if (result) { l.canvas = withinSelection(st, result); l.x = l.y = 0; } else { l.canvas = st.original; l.x = st.x; l.y = st.y; }
+            draw();
+        },
+        cancel(st) { IM.effect.preview(st, null); },
+        commit(st, result, label) {
+            const l = st && layer(st.id);
+            if (!l) return;
+            l.canvas = st.original;
+            l.x = st.x;
+            l.y = st.y;
+            remember(label, [l.id]);
+            l.canvas = withinSelection(st, result);
+            D.store[l.id] = l.canvas;
+            l.x = l.y = 0;
+            l.dirty = true;
+            refresh();
+        },
+    };
+
+    /* The shot made bigger by `top, right, bottom, left` pixels for outpainting (as HakuImg's InOutPaint): every layer
+     * keeps its place, a new bottom layer stretches the picture's edges into the new area (so the drawing has colours
+     * to start from), and the new area is selected, reaching `overlap` pixels into the picture so the seam is drawn too. */
+    IM.expand = function (top, right, bottom, left, overlap) {
+        [top, right, bottom, left] = [top, right, bottom, left].map((v) => Math.max(0, Math.round(+v || 0)));
+        if (!(top || right || bottom || left)) throw new Error(T('Give at least one side some pixels'));
+        const W0 = D.width, H0 = D.height, W = W0 + left + right, H = H0 + top + bottom;
+        if (W > 4096 || H > 4096) throw new Error(T('At most 4096 pixels a side'));
+        const flat = IM.flatten();
+        remember(T('Expand the canvas'), 'all');
+        for (const l of D.layers) {
+            const c = canvas(W, H);
+            ctx(c).drawImage(l.canvas, l.x + left, l.y + top);
+            l.canvas = c;
+            D.store[l.id] = c;
+            l.x = l.y = 0;
+            l.dirty = true;
+            if (l.text) { l.text.x += left; l.text.y += top; }
+        }
+        D.width = W;
+        D.height = H;
+        // the edges stretched outwards: the top and bottom rows first, then the side columns of that (the corners too)
+        const edges = canvas(W, H), e = ctx(edges);
+        e.drawImage(flat, left, top);
+        e.imageSmoothingEnabled = false;   // a 1-pixel row stretched with smoothing mixes in the clear pixels beside it
+        if (top) e.drawImage(flat, 0, 0, W0, 1, left, 0, W0, top);
+        if (bottom) e.drawImage(flat, 0, H0 - 1, W0, 1, left, top + H0, W0, bottom);
+        const tall = copyOf(edges);
+        if (left) e.drawImage(tall, left, 0, 1, H, 0, 0, left, H);
+        if (right) e.drawImage(tall, left + W0 - 1, 0, 1, H, left + W0, 0, right, H);
+        D.active = D.layers[0].id;
+        addLayer('🧩 ' + T('Edges for outpainting'), edges, null, true);   // below the bottom layer
+        D.active = D.layers[D.layers.length - 1].id;
+        const m = canvas(W, H), mc = ctx(m), o = Math.max(0, Math.round(+overlap || 0));
+        mc.fillStyle = '#fff';
+        mc.fillRect(0, 0, W, H);
+        mc.clearRect(left + (left ? o : 0), top + (top ? o : 0), W0 - (left ? o : 0) - (right ? o : 0), H0 - (top ? o : 0) - (bottom ? o : 0));
+        D.sel = m;
+        selectionChanged();
+        fit();
+        refresh();
+    };
     IM.status = (t) => { if (UI.status) UI.status.textContent = t || ''; };
 
     /* a text layer: its words stay editable (double-click the layer) */

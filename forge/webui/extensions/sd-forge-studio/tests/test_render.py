@@ -168,6 +168,54 @@ class Render(unittest.TestCase):
         want = [min(255, round(v * g)) for v, g in zip(css((200, 100, 50)), (gr, gg, gb))]
         self.assertTrue(all(abs(g - w) <= 8 for g, w in zip(got, want)), (got, want))
 
+    def test_glsl_transition_and_effects(self):
+        from PIL import Image
+        src = os.path.join(TMP, "src")
+        red, blue, white = (os.path.join(src, n) for n in ("gl-red.png", "gl-blue.png", "gl-white.png"))
+        Image.new("RGB", (W, H), (255, 0, 0)).save(red)
+        Image.new("RGB", (W, H), (0, 0, 255)).save(blue)
+        Image.new("RGBA", (80, 80), (255, 255, 255, 255)).save(white)
+        wr, wb, ww = (projects.add_media("r", x) for x in (red, blue, white))
+        clips = [{"id": "a", "track": "v1", "kind": "image", "media": wr, "start": 0, "duration": 1},
+                 {"id": "b", "track": "v1", "kind": "image", "media": wb, "start": 1, "duration": 2,
+                  "transitionIn": 1.0, "transition": "gl:Fade"},
+                 # a layer above the transition: it stays itself
+                 {"id": "w", "track": "v2", "kind": "image", "media": ww, "start": 0, "duration": 3, "scale": 0.25}]
+        out = self.export(self.doc(clips))
+        near = lambda a, b, d=14: all(abs(x - y) <= d for x, y in zip(a, b))
+        self.assertTrue(near(pixel(out, 0.5, 30, 30), (255, 0, 0)), pixel(out, 0.5, 30, 30))
+        # halfway through the transition (frame 45 of the 1 s Fade from 1 s at 30 fps): the two mixed half and half
+        mid = pixel(out, 1.5, 30, 30)
+        self.assertTrue(near(mid, (128, 0, 128), 18), mid)
+        self.assertTrue(near(pixel(out, 1.5, W // 2, H // 2), (255, 255, 255), 10), pixel(out, 1.5, W // 2, H // 2))
+        self.assertTrue(near(pixel(out, 2.5, 30, 30), (0, 0, 255)), pixel(out, 2.5, 30, 30))
+        # an effect on a clip: Invert at full strength turns red into cyan
+        out = self.export(self.doc([{"id": "e", "track": "v1", "kind": "image", "media": wr, "start": 0, "duration": 1,
+                                     "fx": [{"id": "invert", "amount": 1.0}]}]))
+        self.assertTrue(near(pixel(out, 0.5, 100, 100), (0, 255, 255)), pixel(out, 0.5, 100, 100))
+
+    def test_see_through_glsl_transition_shows_the_layer_below(self):
+        from PIL import Image
+        green = os.path.join(TMP, "src", "gl-green.png")
+        Image.new("RGB", (W, H), (0, 255, 0)).save(green)
+        wg = projects.add_media("r", green)
+        red, blue = os.path.join(TMP, "src", "gl-red2.png"), os.path.join(TMP, "src", "gl-blue2.png")
+        Image.new("RGB", (W, H), (255, 0, 0)).save(red)
+        Image.new("RGB", (W, H), (0, 0, 255)).save(blue)
+        wr, wb = projects.add_media("r", red), projects.add_media("r", blue)
+        # the Cube turns in empty space: on v2 over a green v1, the space around the box is the green layer
+        clips = [{"id": "g", "track": "v1", "kind": "image", "media": wg, "start": 0, "duration": 3},
+                 {"id": "a", "track": "v2", "kind": "image", "media": wr, "start": 0, "duration": 1},
+                 {"id": "b", "track": "v2", "kind": "image", "media": wb, "start": 1, "duration": 2,
+                  "transitionIn": 1.0, "transition": "gl:Cube"}]
+        out = self.export(self.doc(clips))
+        near = lambda a, b, d=20: all(abs(x - y) <= d for x, y in zip(a, b))
+        corner = pixel(out, 1.5, 4, 4)
+        self.assertTrue(near(corner, (0, 255, 0)), corner)
+        middle = pixel(out, 1.5, W // 2, H // 2)
+        self.assertTrue(middle[1] < 80 and middle[0] + middle[2] > 120, middle)
+        self.assertTrue(near(pixel(out, 2.5, 4, 4), (0, 0, 255)), pixel(out, 2.5, 4, 4))
+
     def test_dissolve_at_a_cut(self):
         clips = [
             {"id": "a", "track": "v1", "kind": "video", "media": self.w["red"], "start": 0, "duration": 2, "in": 0},

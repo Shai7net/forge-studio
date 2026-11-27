@@ -1156,8 +1156,10 @@ def create_ui():
             for interface, label, ifid in sorted_interfaces:
                 if label in shared.opts.hidden_tabs:
                     continue
-                with gr.TabItem(label, id=ifid, elem_id=f"tab_{ifid}"):
+                with gr.TabItem(label, id=ifid, elem_id=f"tab_{ifid}") as tab_item:
                     interface.render()
+                if ifid == "settings":
+                    settings.settings_tab = tab_item   # its fields are refreshed when it is opened (ui_settings.py)
 
                 if ifid not in ["extensions", "settings"]:
                     loadsave.add_block(interface, ifid)

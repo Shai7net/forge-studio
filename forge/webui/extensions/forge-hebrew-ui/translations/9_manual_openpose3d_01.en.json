@@ -1,0 +1,9 @@
+[
+ {"i": 0, "en": "3D Openpose", "ctx": "tab name: the 3D pose editor extension (sd-webui-3d-open-pose-editor)"},
+ {"i": 1, "en": "Edit Openpose", "ctx": "sub-tab of the 3D pose editor: where the 3D figure is posed"},
+ {"i": 2, "en": "Pose", "ctx": "picture box: the OpenPose skeleton made from the 3D figure"},
+ {"i": 3, "en": "Control Model number", "ctx": "dropdown: which ControlNet unit (0, 1, 2...) the picture goes to"},
+ {"i": 4, "en": "Use online version", "ctx": "setting of the 3D pose editor: load the editor from its website instead of the local copy"},
+ {"i": 5, "en": "3D Openpose Editor", "ctx": "settings section title of the 3D pose editor"},
+ {"i": 6, "en": "Normal map", "ctx": "picture box of the 3D pose editor: the normal map of the hands and feet"}
+]

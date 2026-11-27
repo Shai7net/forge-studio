@@ -28,7 +28,9 @@ the same window.
 | **Newest image models** | FLUX 3 Image Klein and FIBO 2.0, picked from the normal checkpoint list next to SDXL and SD 1.5; the sampler, steps and CFG follow the model you choose |
 | **Video generation** | **Video Studio** with three engines. **Wan 2.2 14B**: text/image/first-and-last-frame video, longer videos from up to six pictures, *Ingredients to Video* (your characters and objects together in one video) and *Replace a character* (Wan 2.2 Animate). **LTX 2.3**: fast video with its own sound, video from words alone, and *Image + Audio to Video* (a picture that speaks or moves to your sound, recordings of any length). **MiniMax-H3 FL2V** (W4A8, 8 GB): text, image and first-and-last-frame video |
 | **Characters** | Describe a character in any language, or give a reference picture, and FLUX 3 Klein draws a consistent character sheet over a pose template. Keep them in projects, send one to Ingredients to Video, make a 3D model of it, or stand it in a Simulation 360 world |
-| **Video editor** | **Forge Studio Editor** tab: a timeline editor in the spirit of CapCut, where generating, extending and repainting shots is part of the edit; an image workspace with layers and AI tools inside it (edit a picture, then animate it, without leaving the edit); captions, narration, music and effects; exports in high quality. Its timeline opens under the result of every tab, so a good result is dragged straight into the edit |
+| **Video editor** | **Forge Studio Editor** tab: a timeline editor in the spirit of CapCut, where generating, extending and repainting shots is part of the edit; an image workspace with layers and AI tools inside it (edit a picture, then animate it, without leaving the edit); captions, narration, music and effects; 224 GLSL transitions and 28 effects; exports in high quality. Its timeline opens under the result of every tab, so a good result is dragged straight into the edit. Right-click a picture to turn it into a video with any of the video models |
+| **Picture tools** | In the image workspace: inpaint and outpaint with Forge's own options (soft inpainting included) and **HakuImg**'s colour, curves, blur, sketch, pixel art, glow and lens effects with a live preview. HakuImg's own tab, and a **3D OpenPose editor** whose poses go straight into ControlNet units |
+| **A tidier, faster interface** | The checkpoint above Generate, a LoRA gallery beside the styles, a Recent strip of your latest pictures and videos with a zoomable viewer, a friendlier Video Studio, and a page that is ready in about half the time it took |
 | **Animation** | Deforum with music-driven keyframes, a drawn timeline + 3D camera path editor and DeforumationQT live control; AnimateDiff with music, dance transfer (now inside AnimateDiff, with a setup for living characters) and per-frame inpainting masks; Infinite Zoom |
 | **World building** | **Simulation 360**: 360° worlds with portals, 3D objects, a recorded route and talking characters. **Time Strata**: turn a video into a sculpture of time |
 | **Upscaling** | Extras for video with a before/after viewer, Hires. fix in Extras, Real-ESRGAN, and NVIDIA RTX Video Super Resolution as an upscaler |
@@ -38,6 +40,16 @@ the same window.
 | **Your own interface** | **UI Skins**: hold the mouse on any button, tab or card title to give it colours, a picture or other words; save skins, switch them, share them as one file (Classic is always there). Extension cards start closed, drag into your order, and the ones you seldom use go into **More** |
 | **Interface language** | English, and a full Hebrew translation one click away. Any other language: give the translation kit to your AI (ChatGPT, Claude, Gemini...) and load what it returns |
 | **8 GB first** | Every new piece was written and measured on an 8 GB card: int8 engines, streaming of model blocks, tiled decoding |
+
+## Screenshots
+
+| | |
+|---|---|
+| ![The editor](docs/screenshots/editor.jpg)<br>**Forge Studio Editor**: the timeline, with 224 transitions and 28 effects | ![Image workspace](docs/screenshots/image-workspace.jpg)<br>**Image workspace**: layers, AI tools and HakuImg's effects with a live preview |
+| ![Inpaint](docs/screenshots/inpaint-outpaint.jpg)<br>**Inpaint and outpaint** like Forge's own tab, soft inpainting included | ![A video from a picture](docs/screenshots/picture-to-video.jpg)<br>**Right-click a picture → a video** with any video model |
+| ![Video Studio](docs/screenshots/video-studio.jpg)<br>**Video Studio**: the models as buttons, the shape, the prompt | ![txt2img](docs/screenshots/txt2img.jpg)<br>**txt2img**: the checkpoint above Generate, Styles \| LoRA, the Recent strip |
+| ![Viewer](docs/screenshots/viewer.jpg)<br>**The viewer**: zoom with the wheel, drag, arrows, full screen | ![3D OpenPose](docs/screenshots/3d-openpose.jpg)<br>**3D OpenPose editor**: pose a figure, send it to ControlNet |
+| ![Hebrew](docs/screenshots/hebrew.jpg)<br>**The interface in Hebrew** (or any language, with the translation kit) | |
 
 ## Requirements
 
@@ -138,8 +150,8 @@ an ordinary checkpoint, your own values return (they are kept even across a page
 ### The tabs
 
 `txt2img` · `img2img` · `Video Studio` · `Characters` · `Forge Studio Editor` · `Deforum` · `Simulation 360` · `Infinite Zoom` ·
-`Time Strata` · `Live Portrait` · `PNG Info` · `Extras` · `Settings` · `Extensions`, and an **Other** folder with
-the rest. Drag tabs between the bar and folders with **Organize…** (Navigation Bookmarks).
+`Time Strata` · `Live Portrait` · `3D Openpose` · `HakuImg` · `PNG Info` · `Extras` · `Settings` · `Extensions`, and an
+**Other** folder with the rest. Drag tabs between the bar and folders with **Organize…** (Navigation Bookmarks).
 
 ## Features
 
@@ -154,6 +166,19 @@ shot with motion and camera for Wan video. Under the box it shows what it unders
 It runs Gemma 4 E4B (Google) locally through llama.cpp, about 1.5 s per prompt, and leaves the graphics card
 before any generation starts.
 
+### txt2img and img2img
+- **The checkpoint above Generate**; SD VAE, Clip skip and face restoration in a *Model settings* card among the
+  extension cards; the generation tabs on top.
+- **Styles | LoRA**: next to the styles, a gallery of your LoRAs with their pictures (those that fit the loaded
+  model first). A picked LoRA becomes a chip with its weight (−/+, ✕); right-click to edit its trigger words. The tag
+  goes into the prompt only when you press Generate, so the prompt stays clean.
+- **Recent**: a strip of your latest pictures and videos under the result of txt2img, img2img, Extras and Video
+  Studio. Click one (or the result) for the **viewer**: wheel zoom at the pointer, drag, double-click to fit,
+  ← → between pictures, full screen, and the result's own buttons (to img2img, Extras, the editor...) inside it.
+- AnimateDiff shows its MP4 in the result window (not a pile of frames), and that MP4 is what goes to the editor.
+- **Faster**: measured on the maintainer's PC, the interface is ready in 11 s instead of 16, it is busy for 6 s
+  after that instead of 26, and Gradio's API description (`/info`) is made once instead of on every page load.
+
 ### FLUX 3 Image Klein
 Black Forest Labs' model as a normal checkpoint, with its own int8 engine for 8 GB cards: 1024×1024 in about 25 s
 (16 steps), edits with the img2img picture as a reference, FLUX 3 LoRAs, and a built-in prompt writer.
@@ -164,6 +189,9 @@ reference pictures in the FIBO panel), an optional exact mask, and JSON captions
 environment (installed by the installer or the panel's button), so Forge's own packages stay untouched.
 
 ### Video Studio (Wan 2.2, LTX 2.3 and MiniMax-H3)
+- **A friendlier tab**: the models as picture buttons, Quality as a list, a *Shape* card (9:16, 16:9, 1:1, 4:5,
+  3:4) above the prompt, a progress frog with the percent and the time left, Generate that turns into Stop, and one
+  video window.
 - Three engines, chosen in the model list: **Wan 2.2 14B** for the most faithful motion, and **LTX 2.3** (22B
   distilled, GGUF: Q3 is the one for 8 GB, Q2 for 6 GB, Q4 for 12 GB and more) for fast video **with its own sound**,
   video from words alone with no opening picture, LTX LoRAs, and **Image + Audio to Video**: a picture and a sound
@@ -214,6 +242,22 @@ effects where they are needed; export in high quality.
   selections, brush, text, crop, layers with blend modes, and generation with the checkpoint chosen at the top
   (SD with ControlNet, FLUX 3, FIBO 2.0). AI tools select the subject or an object with a click, remove the
   background, or take away what is selected. When done, save it into the shot or make a video from it.
+  - **Inpaint like Forge's tab**: draw again the selection or everything but it, masked content, the area only at
+    full size, soft edge, room around it, **soft inpainting** (Forge's six settings) and the mask strength of an
+    inpainting checkpoint.
+  - **↔ Outpaint**: the picture grows by the pixels you give each side, its edges are stretched into the new area
+    and the new area is selected with a strip of the picture, so the seam is drawn too; write what is around it.
+  - **🎨 Effects (HakuImg)**: colour (brightness, contrast, saturation, temperature, hue, gamma, exposure, HDR,
+    sharpness, noise, vignette), a tone curve you draw, blur, sketch, pixelize, PixelOE, outline expansion, glow,
+    chromatic aberration, lens distortion, tilt shift and flip, on the active layer and inside the selection. Each
+    change shows on the canvas a moment later; Apply keeps it, Cancel puts the layer back.
+- **🎬 A video from this picture**: right-click a picture on the timeline, choose the model (Wan 2.2, LTX 2.3,
+  MiniMax-H3), the length and AI sound, and write what happens in any language; the video goes right after the
+  picture and the clips after it move along.
+- **Transitions and effects**: 224 GLSL transitions (gl-transitions, MIT) and 28 effects, each tile playing when the
+  pointer is on it; the player shows exactly what the export makes. A seek bar under the picture drags through the
+  whole film.
+- **Projects like a classic editor**: a window of project cards with search and a trash.
 - **The timeline under every result**: txt2img, img2img, Extras, Video Studio, Deforum, Infinite Zoom and Time
   Strata have a green bar under their result; ▼ opens Forge Studio's own timeline right there, and the result is
   dragged onto it (or added at the end).
@@ -230,6 +274,17 @@ effects where they are needed; export in high quality.
 - Smoother playback and scrubbing, a Lip sync window that plays without stutter, and Stop that really stops an AI
   job (the shot, its worker and the queue).
 - Each start of Forge opens a new project; your earlier ones stay in the list.
+
+### HakuImg
+KohakuBlueleaf's picture tools ([a1111-sd-webui-haku-img](https://github.com/KohakuBlueleaf/a1111-sd-webui-haku-img))
+as their own tab (blend layers, colour, curves, blur, sketch, pixel art, glow, chromatic aberration, lens, tilt
+shift, flip, in/outpaint canvas) and, with the same functions, in the editor's image workspace.
+
+### 3D OpenPose editor
+nonnonstop's [3D Openpose Editor](https://github.com/nonnonstop/sd-webui-3d-open-pose-editor): pose a 3D figure (or
+take a random pose, or detect one from a picture), *Generate* the pose map and the depth, normal and canny maps of
+the hands and feet, and *Send to txt2img / img2img*. In Forge Studio each map lands in the ControlNet unit you chose,
+switched on, with the preprocessor off and a model of the right kind for the checkpoint's family (SD 1.5 or SDXL).
 
 ### Deforum (upgraded)
 - **Audio Keyframes**: music-driven camera and strength keyframes, with listening, marking and camera directing.

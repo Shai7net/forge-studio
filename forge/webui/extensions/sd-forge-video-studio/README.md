@@ -15,6 +15,24 @@ Five sub-tabs, one **Generate video** button, and a visible **Video model** sele
 | **Replace a character** | a video and a picture of a character | the person in the video becomes the character: motion, expressions, camera and background stay |
 | **Image + Audio to Video** | a picture, an audio recording and a scene prompt | LTX animates the picture to the recording and preserves the source audio in the output |
 
+## The page (laid out 2026-11-26/27 from Shai's mock)
+
+- **Left:** **Quality** (a list) opens the sub-tab bar, then the kinds of video (Text to Video, Image to Video, ...);
+  under them a card with **Shape** as tiles with the shape drawn on each (portrait, landscape, square, 4:5, 3:4),
+  **Length** and two switches (smooth motion, AI sound); then the open sub-tab, the prompt and Styles. Everything
+  technical is folded into **Advanced settings** and **Models**; Text to Video's note and **Advanced: the opening
+  picture** sit at the bottom of the column (on that sub-tab only).
+- **Right:** **Model**: a row of picture buttons (MiniMax-H3, LTX 2.3 Q3/Q2/Q4, Wan 2.2 Q3/Q4; pictures in
+  `assets/models/`, ⬇ on a model not downloaded yet). Under it **one window**: while a video is made it shows the
+  picture made so far with a spinning 🐸, the share done in % and the time left (no bar); the moment the video
+  arrives the same window plays it. Under the window one big button: **Generate video**, which turns into **Stop**
+  while anything is being made (a video, Refine, sound). Then the outcome line, Forge Studio's timeline drawer and
+  the small buttons (Continue, Show the last video, Open the output folder, Send to Forge Studio Editor).
+- Shape and Quality decide the size of Text to Video and Ingredients for every model. (Before this, MiniMax-H3
+  filled Width/Height with 608x352 on Text to Video, which overrode a 9:16 Shape; now a 9:16 H3 clip is 352x608.)
+  The H3 qualities are named by area: *fast (about 350p)* and *sharper (about 480p)*.
+- The model is a radio now: other pages read it with `videoStudioModel()` (the 🌐 writer and Characters do).
+
 ## MiniMax-H3 FL2V on 8 GB
 
 Choose **MiniMax-H3 FL2V · W4A8 · 8 GB** in **Video model**. The selector fixes the

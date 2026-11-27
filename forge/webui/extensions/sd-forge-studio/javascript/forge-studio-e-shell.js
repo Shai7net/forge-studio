@@ -45,7 +45,7 @@
     const ASPECTS = [['9:16', 1080, 1920], ['16:9', 1920, 1080], ['1:1', 1080, 1080], ['4:5', 1080, 1350], ['3:4', 1080, 1440]];
 
     function topBar() {
-        UI.projectBtn = h('button', {class: 'fx-project', onclick: (e) => projectMenu(e)}, h('span', {class: 'fx-logo'}, '◆'), h('span', {class: 'fx-pname'}, T('No project open')), ' ▾');
+        UI.projectBtn = h('button', {class: 'fx-project', title: T('All projects'), onclick: FS.guard(() => projectMenu())}, h('span', {class: 'fx-logo'}, '◆'), h('span', {class: 'fx-pname', dir: 'auto'}, T('No project open')), ' ▾');
         UI.saved = h('span', {class: 'fx-saved'});
         UI.aspect = h('select', {class: 'fx-select', title: T('Shape of the video'), onchange: FS.guard(() => {
             const a = ASPECTS.find((x) => x[0] === UI.aspect.value);
@@ -107,23 +107,134 @@
     function closePopover() { if (UI.pop) UI.pop.remove(); UI.pop = null; window.removeEventListener('pointerdown', outside); }
     FS.closePopover = closePopover;
 
-    async function projectMenu(e) {
-        const list = (await FS.api('projects')).projects;
-        const name = h('input', {class: 'fx-input', value: FS.defaultProjectName(), id: 'fx-new-name'});
-        const shape = h('select', {class: 'fx-select', id: 'fx-new-shape'}, ...ASPECTS.map(([n]) => h('option', {value: n}, n)));
-        const create = h('button', {class: 'fx-primary', onclick: FS.guard(async () => {
-            const a = ASPECTS.find((x) => x[0] === shape.value);
-            closePopover();
-            await FS.newProject(name.value.trim(), {width: a[1], height: a[2]});
-        })}, '+ ' + T('New project'));
-        popover(e.currentTarget,
-            h('div', {class: 'fx-pop-title'}, T('New project')),
-            h('div', {class: 'fx-row'}, name, shape), create,
-            h('div', {class: 'fx-pop-title'}, T('Projects')),
-            h('div', {class: 'fx-list'}, ...list.map((p) => h('button', {class: 'fx-list-item' + (p.name === S.project ? ' on' : ''),
-                onclick: FS.guard(async () => { closePopover(); await FS.openProject(p.name); })}, p.name,
-            h('span', {class: 'fx-dim'}, new Date(p.saved * 1000).toLocaleString())))));
-        name.select();
+    /* ---- the projects window: like a classic editor's home (create, every project as a card, search, trash) ---- */
+
+    const remember = (key, value) => { try { if (value === undefined) return localStorage.getItem(key); localStorage.setItem(key, value); } catch (e) { /* storage off */ } return null; };
+    const sizeText = (b) => (b >= 1 << 30 ? (b / (1 << 30)).toFixed(1) + 'G' : b >= 1 << 20 ? (b / (1 << 20)).toFixed(1) + 'M'
+        : (b / 1024).toFixed(1) + 'K');
+    const clock = (s) => {
+        s = Math.round(s || 0);
+        const hh = Math.floor(s / 3600), mm = Math.floor(s / 60) % 60, ss = s % 60, two = (n) => String(n).padStart(2, '0');
+        return (hh ? hh + ':' + two(mm) : two(mm)) + ':' + two(ss);
+    };
+    const shapeName = (p) => {
+        const a = ASPECTS.find((x) => x[1] === p.width && x[2] === p.height);
+        return a ? a[0] : p.width && p.height ? p.width + '×' + p.height : '';
+    };
+
+    async function projectMenu() { await projectHome(); }
+    FS.projectHome = projectHome;
+
+    async function projectHome(startInTrash) {
+        closePopover();
+        const old = UI.root.querySelector('.fx-home-back');
+        if (old) old.remove();
+        let data = await FS.api('projects/home');
+        let inTrash = !!startInTrash, query = '', view = remember('forgeStudio.homeView') === 'list' ? 'list' : 'grid';
+        let shape = ASPECTS.find((a) => a[0] === remember('forgeStudio.homeShape')) || ASPECTS[0];
+        const items = h('div', {class: 'fx-home-items'});
+        const heading = h('div', {class: 'fx-home-heading'});
+        const note = h('div', {class: 'fx-home-note fx-dim'});
+        const search = h('input', {class: 'fx-input fx-home-search', type: 'search', placeholder: T('Search projects'),
+            oninput: () => { query = search.value.trim().toLowerCase(); draw(); }});
+        const viewBtn = h('button', {class: 'fx-home-tool', onclick: () => { view = view === 'grid' ? 'list' : 'grid'; remember('forgeStudio.homeView', view); draw(); }});
+        const trashBtn = h('button', {class: 'fx-home-tool', onclick: () => { inTrash = !inTrash; draw(); }});
+        const chips = h('div', {class: 'fx-home-shapes'});
+        const drawChips = () => chips.replaceChildren(...ASPECTS.map((a) => {
+            const r = a[1] / a[2], w = r >= 1 ? 22 : Math.round(22 * r), hgt = r >= 1 ? Math.round(22 / r) : 22;
+            return h('button', {class: 'fx-home-shape' + (a === shape ? ' on' : ''), title: T('Shape of the video') + ' ' + a[0],
+                onclick: (e) => { e.stopPropagation(); shape = a; remember('forgeStudio.homeShape', a[0]); drawChips(); }},
+            h('span', {class: 'fx-home-shape-box', style: `width:${w}px;height:${hgt}px`}), a[0]);
+        }));
+        drawChips();
+        const create = h('button', {class: 'fx-home-create', onclick: FS.guard(async () => {
+            close();
+            await FS.newProject(FS.defaultProjectName(), {width: shape[1], height: shape[2]});
+        })}, h('span', {class: 'fx-home-plus'}, '+'), h('span', {}, T('Create project')));
+        const close = () => { box.remove(); window.removeEventListener('keydown', esc, true); };
+        const esc = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+        const reload = async () => { data = await FS.api('projects/home'); draw(); };
+
+        function thumb(p) {
+            const t = h('div', {class: 'fx-home-thumb'});
+            const blank = () => t.replaceChildren(h('div', {class: 'fx-home-blank'}, h('span', {}, '◆'),
+                h('small', {}, p.clips ? T('No picture yet') : T('Empty'))));
+            if (p.cover) {
+                const img = h('img', {loading: 'lazy', alt: '', draggable: 'false',
+                    src: `/forge-studio/project/cover?name=${encodeURIComponent(p.name)}${inTrash ? '&trashed=1' : ''}&v=${Math.round(p.saved)}`});
+                img.onerror = blank;
+                t.append(img);
+            } else blank();
+            if (p.duration > 0) t.append(h('span', {class: 'fx-home-dur'}, clock(p.duration)));
+            return t;
+        }
+        function menuFor(p, card) {
+            const pick = (label, fn, extra) => h('button', Object.assign({class: 'fx-home-menu-item', onclick: FS.guard(async (e) => {
+                e.stopPropagation(); card.classList.remove('menu'); await fn(); })}, extra || {}), label);
+            const open = p.name === S.project;
+            const list = inTrash
+                ? [pick('↺ ' + T('Restore'), async () => { const r = await FS.api('project/restore', {name: p.name}); FS.message(T('Brought back: {0}', r.name)); await reload(); })]
+                : [pick('▶ ' + T('Open'), async () => { close(); await FS.openProject(p.name); }),
+                    pick('🗑 ' + T('Move to trash'), async () => {
+                        await FS.api('project/trash', {name: p.name});
+                        FS.message(T('{0} is in the trash (it can be brought back)', p.name));
+                        await reload();
+                    }, open ? {disabled: true, title: T('Open another project first')} : null)];
+            const btn = h('button', {class: 'fx-home-more', title: T('More'), onclick: (e) => {
+                e.stopPropagation();
+                for (const other of items.querySelectorAll('.menu')) if (other !== card) other.classList.remove('menu');
+                card.classList.toggle('menu');
+            }}, '⋯');
+            return [btn, h('div', {class: 'fx-home-menu'}, ...list)];
+        }
+        function card(p) {
+            const meta = [sizeText(p.size), clock(p.duration)].join(' | ');
+            const go = FS.guard(async () => {
+                if (inTrash) { el.classList.toggle('menu'); return; }   // a project in the trash: its Restore
+                close();
+                if (p.name !== S.project) await FS.openProject(p.name);
+            });
+            const el = h('div', {class: 'fx-home-card' + (p.name === S.project ? ' on' : ''), tabindex: 0, title: p.name, role: 'button',
+                onclick: go, onkeydown: (e) => { if (e.key === 'Enter') go(); }});
+            const [more, menu] = menuFor(p, el);
+            if (view === 'grid') {
+                el.append(thumb(p), more, menu, h('div', {class: 'fx-home-name', dir: 'auto'}, inTrash ? p.was : p.name), h('div', {class: 'fx-home-meta'}, meta));
+            } else {
+                el.append(thumb(p), h('div', {class: 'fx-home-name', dir: 'auto'}, inTrash ? p.was : p.name),
+                    h('div', {class: 'fx-home-cell'}, new Date((inTrash ? p.trashed : p.saved) * 1000).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'})),
+                    h('div', {class: 'fx-home-cell'}, shapeName(p)), h('div', {class: 'fx-home-cell'}, clock(p.duration)),
+                    h('div', {class: 'fx-home-cell'}, sizeText(p.size)), more, menu);
+            }
+            return el;
+        }
+        function draw() {
+            const all = inTrash ? data.trash : data.projects;
+            const list = all.filter((p) => !query || (inTrash ? p.was : p.name).toLowerCase().includes(query));
+            heading.replaceChildren(inTrash ? T('Trash') : T('Projects'), h('span', {class: 'fx-home-count'}, '(' + all.length + ')'));
+            viewBtn.replaceChildren(h('span', {class: 'fx-home-tool-icon'}, view === 'grid' ? '☰' : '▦'), T(view === 'grid' ? 'List' : 'Grid'));
+            trashBtn.replaceChildren(h('span', {class: 'fx-home-tool-icon'}, inTrash ? '←' : '🗑'),
+                inTrash ? T('Projects') : T('Trash') + (data.trash.length ? ' (' + data.trash.length + ')' : ''));
+            trashBtn.classList.toggle('on', inTrash);
+            items.className = 'fx-home-items fx-home-' + view;
+            create.parentElement.hidden = inTrash;
+            note.textContent = inTrash ? T('Projects in the trash can be brought back. Nothing here is deleted; to free the space, empty the trash folder in Explorer.') : '';
+            note.hidden = !inTrash;
+            items.replaceChildren(...(list.length ? list.map(card)
+                : [h('div', {class: 'fx-home-none fx-dim'}, query ? T('No project matches') : inTrash ? T('The trash is empty') : T('No projects yet'))]));
+        }
+        const box = h('div', {class: 'fx-modal-back fx-home-back', dir: FS.hebrew() ? 'rtl' : 'ltr', onclick: (e) => { if (e.target === box) close(); }},
+            h('div', {class: 'fx-home', role: 'dialog', 'aria-modal': 'true', 'aria-label': T('Projects'),
+                onclick: (e) => { if (!e.target.closest('.fx-home-more, .fx-home-menu')) for (const m of items.querySelectorAll('.menu')) m.classList.remove('menu'); }},
+            h('div', {class: 'fx-home-top'}, h('span', {class: 'fx-logo'}, '◆'), h('span', {class: 'fx-home-title'}, 'Forge Studio'),
+                h('span', {class: 'fx-spacer'}), h('button', {class: 'fx-icon', title: T('Close'), onclick: close}, '✕')),
+            h('div', {class: 'fx-home-scroll'},
+                h('div', {class: 'fx-home-hero'}, create, chips),
+                h('div', {class: 'fx-home-bar'}, heading, h('span', {class: 'fx-spacer'}), search, viewBtn, trashBtn),
+                note, items)));
+        UI.root.append(box);
+        window.addEventListener('keydown', esc, true);
+        draw();
+        (S.project ? items.querySelector('.fx-home-card.on') || items.querySelector('.fx-home-card') : create).focus();
     }
 
     /* the export: text clips are drawn here (as the player draws them) and sent, then the server renders */
@@ -189,6 +300,7 @@
             h('button', {class: 'fx-icon', title: T('A frame on (→)'), onclick: step(1 / FS.fps())}, '▸'),
             h('button', {class: 'fx-icon', title: T('To the end (End)'), onclick: () => FS.seek(FS.total())}, '⏭'),
             UI.time,
+            seekBar(),
             h('span', {class: 'fx-transport-end'},
                 UI.wideBtn = h('button', {class: 'fx-icon', title: T('Bigger preview: the side panels away (P)'), onclick: () => setWide(!UI.root.classList.contains('fx-wide'))}, '⇔'),
                 h('button', {class: 'fx-icon', title: T('The preview on the whole screen (F, Esc to return)'), onclick: () => previewFull()}, '⛶')));
@@ -196,6 +308,64 @@
         UI.canvas.addEventListener('pointerdown', canvasPointer);
         UI.canvas.addEventListener('wheel', canvasWheel, {passive: false});
         return UI.stage;
+    }
+
+    /* the seek bar under the picture (as in other video editors): the played part filled, a dot to drag back and
+     * forth through the film (the picture follows while dragging), a click jumps there, the time shows on hover;
+     * the same in the normal, the bigger and the whole-screen preview */
+    function seekBar() {
+        const fill = h('div', {class: 'fx-seek-fill'}), knob = h('div', {class: 'fx-seek-knob'}), tip = h('div', {class: 'fx-seek-tip', hidden: true});
+        const bar = h('div', {class: 'fx-seek', title: T('Drag to move through the film')}, h('div', {class: 'fx-seek-track'}, fill), knob, tip);
+        const at = (e) => { const r = bar.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / Math.max(1, r.width))) * FS.total(); };
+        let dragging = false, wasPlaying = false, last = -1;
+        bar.addEventListener('pointerdown', (e) => {
+            if (!S.doc || e.button !== 0) return;
+            e.preventDefault();
+            dragging = true;
+            wasPlaying = S.playing;
+            if (S.playing) FS.player.pause();
+            bar.setPointerCapture(e.pointerId);
+            bar.classList.add('dragging');
+            FS.seek(FS.snapTime(at(e)));
+        });
+        bar.addEventListener('pointermove', (e) => {
+            if (!S.doc) return;
+            const t = at(e), r = bar.getBoundingClientRect();
+            tip.hidden = false;
+            tip.textContent = FS.timecode(t);
+            tip.style.left = Math.max(0, Math.min(r.width, e.clientX - r.left)) + 'px';
+            if (dragging) FS.seek(FS.snapTime(t));
+        });
+        const up = () => {
+            if (!dragging) return;
+            dragging = false;
+            bar.classList.remove('dragging');
+            if (wasPlaying) FS.player.play();
+        };
+        bar.addEventListener('pointerup', up);
+        bar.addEventListener('pointercancel', up);
+        bar.addEventListener('pointerleave', () => { if (!dragging) tip.hidden = true; });
+        // follows the playhead (also while playing, when the time moves without an event); it sleeps while the bar is
+        // out of sight (another tab) - it ran ~144 times a second on every tab of Forge
+        let following = false, inSight = false;
+        new IntersectionObserver((entries) => {
+            inSight = entries.some((e) => e.isIntersecting);
+            if (inSight && !following) { following = true; requestAnimationFrame(follow); }
+        }).observe(bar);
+        const follow = () => {
+            if (!inSight) { following = false; return; }
+            if (S.doc) {
+                const total = FS.total(), p = total > 0 ? Math.max(0, Math.min(1, S.time / total)) : 0;
+                if (Math.abs(p - last) > 1e-4) {
+                    last = p;
+                    fill.style.width = (p * 100) + '%';
+                    knob.style.left = (p * 100) + '%';
+                }
+            }
+            requestAnimationFrame(follow);
+        };
+        UI.seek = bar;
+        return bar;
     }
 
     /* the topmost clip under a point of the picture (edit pixels), selected first if it is there */
@@ -749,6 +919,9 @@
     function galleryUrls(id) {
         const gallery = gradioApp().getElementById(id);
         if (!gallery) return [];
+        // a video result (AnimateDiff lists its GIF and its MP4): the video files are what is sent
+        const videos = Array.from(gallery.querySelectorAll('img, video')).map((e) => e.currentSrc || e.src).filter((u) => /\.(mp4|webm|mov)(\?|$)/i.test(u || ''));
+        if (videos.length) return [...new Set(videos)];
         const big = gallery.querySelector('.preview img, img.preview');
         if (big) return [big.src];
         const selected = gallery.querySelector('.thumbnail-item.selected img');
@@ -764,8 +937,11 @@
                 onclick: (e) => { e.preventDefault(); FS.send(galleryUrls(tab + '_gallery')); }}, '🎞️'));
         }
         const video = gradioApp().getElementById('vs_video');
-        if (video && !video.parentElement.querySelector('.fs-send-video')) {
-            video.insertAdjacentElement('afterend', h('button', {class: 'lg secondary gradio-button fs-send fs-send-video hebrew-ui-skip', onclick: (e) => {
+        // Video Studio's row of small buttons under the video when it has one (2026-11-27 layout), else under the video
+        const actions = gradioApp().getElementById('vs_actions');
+        if (video && !(actions || video.parentElement).querySelector('.fs-send-video')) {
+            const put = (b) => (actions ? actions.append(b) : video.insertAdjacentElement('afterend', b));
+            put(h('button', {class: 'lg secondary gradio-button fs-send fs-send-video hebrew-ui-skip', onclick: (e) => {
                 e.preventDefault();
                 const v = video.querySelector('video');
                 FS.send([v && (v.currentSrc || v.src)]);

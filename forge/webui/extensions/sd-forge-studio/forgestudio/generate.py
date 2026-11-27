@@ -168,7 +168,8 @@ def _made_with(path):
 # ---- requests ----
 
 def submit(name, kind, prompt="", seconds=5.0, seed=-1, quality=None, sound=True, width=0, height=0,
-           start=None, end=None, take_of=None, placeholder=None, engine="auto", direction="after", fps=30, fast=False):
+           start=None, end=None, take_of=None, placeholder=None, engine="auto", direction="after", fps=30, fast=False,
+           model=None):
     """`start` / `end`: {web, seconds, last} of the frames to begin and end on; `take_of`: the web name of a clip
     to make again. Returns the record."""
     if kind not in KINDS:
@@ -203,6 +204,8 @@ def submit(name, kind, prompt="", seconds=5.0, seed=-1, quality=None, sound=True
               "start": start, "end": end, "take_of": take_of, "placeholder": placeholder, "project": name,
               "engine": engine if engine in continuers.ENGINES else "auto",
               "direction": direction, "fps": fps, "fast": bool(fast),
+              # a Video Studio model chosen for this request (Wan, LTX, MiniMax-H3); None: Video Studio's own choice
+              "model": model if model and model in available().get("presets", []) else None,
               "state": "waiting", "asked": time.time()}
     with _lock:
         recs = _read(name)
@@ -474,15 +477,21 @@ def _make_wan(name, record):
         if record["kind"] == "between":
             pictures[1] = _picture(name, record["end"])
             count = 2
-    quality = record["quality"] if record["quality"] in vs.QUALITY else d("Quality", vs.DEFAULT_QUALITY)
-    if record.get("fast"):
-        quality = min(vs.QUALITY, key=vs.QUALITY.get)
-    preset = d("Model", vs.models.DEFAULT_PRESET)
-    if vs.models.missing(preset):
+    preset = record.get("model") or d("Model", vs.models.DEFAULT_PRESET)
+    if preset not in vs.models.PRESETS or vs.models.missing(preset):
         preset = next((p for p in vs.models.PRESETS if not vs.models.missing(p)), preset)
+    # each model family has its own qualities (LTX's and MiniMax-H3's are not Wan's)
+    is_ltx, is_h3 = vs.ltx.is_ltx(preset), vs.h3.is_h3(preset)
+    qualities = vs.ltx.QUALITY if is_ltx else vs.h3.QUALITY if is_h3 else vs.QUALITY
+    family_default = vs.ltx.default_quality(preset) if is_ltx else vs.h3.DEFAULT_QUALITY if is_h3 else d("Quality", vs.DEFAULT_QUALITY)
+    quality = record["quality"] if record["quality"] in qualities else family_default
+    if quality not in qualities:
+        quality = next(iter(qualities))
+    if record.get("fast"):
+        quality = min(qualities, key=qualities.get)
     width, height = record.get("width") or 0, record.get("height") or 0
     if width and height:  # the sequence's shape, at the chosen quality's size
-        width, height = vs.fit_size(width, height, vs.QUALITY[quality])
+        width, height = vs.fit_size(width, height, qualities[quality], 32 if is_ltx or is_h3 else 16)
     aspect = d("Shape", "9:16 portrait")
     if width and height:
         aspect = min(vs.ASPECTS, key=lambda k: abs(vs.ASPECTS[k][0] / vs.ASPECTS[k][1] - width / height))

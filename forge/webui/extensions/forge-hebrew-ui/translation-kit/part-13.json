@@ -16,6 +16,15 @@
   "Return the complete file as valid JSON with the same structure and nothing before or after it."
  ],
  "texts": {
+  "The sound you flew to becomes a sound of the scene, from its start": "The sound you flew to becomes a sound of the scene, from its start",
+  "The flight becomes the route: {0} keys in place of the {1} there are?": "The flight becomes the route: {0} keys in place of the {1} there are?",
+  "The flight is the route now: {0} keys (arrows) to change as you like": "The flight is the route now: {0} keys (arrows) to change as you like",
+  "The flight is too short to become a route": "The flight is too short to become a route",
+  "A big view: the world as wide and tall as the page, the panel under it": "A big view: the world as wide and tall as the page, the panel under it",
+  "A portal into its own world cannot lead back": "A portal into its own world cannot lead back",
+  "The portal has no shape yet": "The portal has no shape yet",
+  "Until second": "Until second",
+  "When in the scene it stops, and the figure stands or does its act again (0: it does not stop)": "When in the scene it stops, and the figure stands or does its act again (0: it does not stop)",
   "This shot's lens, in degrees: wide to see more of a small room, narrow to come close (0: as its way says)": "This shot's lens, in degrees: wide to see more of a small room, narrow to come close (0: as its way says)",
   "A motion from a file": "A motion from a file",
   "Feet stay where they step": "Feet stay where they step",
@@ -378,24 +387,6 @@
   "Drag to the timeline, or double-click": "Drag to the timeline, or double-click",
   "Add at the playhead": "Add at the playhead",
   "As a layer above": "As a layer above",
-  "Cut out, as a layer": "Cut out, as a layer",
-  "Drag to make the timeline taller or shorter": "Drag to make the timeline taller or shorter",
-  "This project was made with the first version: its clips were brought over (titles and captions of that version were not)": "This project was made with the first version: its clips were brought over (titles and captions of that version were not)",
-  "Undo (Ctrl+Z)": "Undo (Ctrl+Z)",
-  "Redo (Ctrl+Y)": "Redo (Ctrl+Y)",
-  "Split at the playhead (S)": "Split at the playhead (S)",
-  "Split at the playhead": "Split at the playhead",
-  "Split": "Split",
-  "Delete (Del)": "Delete (Del)",
-  "Duplicate (Ctrl+D)": "Duplicate (Ctrl+D)",
-  "Magnetic main track: no gaps": "Magnetic main track: no gaps",
-  "Snap to edges and the playhead": "Snap to edges and the playhead",
-  "Zoom in": "Zoom in",
-  "Zoom out": "Zoom out",
-  "Fit the whole edit": "Fit the whole edit",
-  "Drop here for a new layer": "Drop here for a new layer",
-  "Drop here for a new sound track": "Drop here for a new sound track",
-  "Takes: click to switch": "Takes: click to switch",
-  "Take {0} of {1}": "Take {0} of {1}"
+  "Cut out, as a layer": "Cut out, as a layer"
  }
 }

@@ -132,6 +132,29 @@ def load_checkpoint_guess_config(sd, output_vae=True, output_clip=True, output_c
 
 
 @torch.no_grad()
+@contextlib.contextmanager
+def skip_random_init():
+    """While a checkpoint's models are built, the random starting values of their layers are not drawn: the
+    checkpoint's weights are copied over them right after. CLIP's embeddings alone drew ~0.65 s of random numbers on
+    every SDXL load (Forge Workspace speed-up, 2026-11-27). Layers the checkpoint does not fill keep torch.empty
+    memory instead of random values; the same weights end up in the model either way."""
+    import os
+    if os.environ.get("FORGE_RANDOM_INIT") == "1":   # the old way, for comparisons
+        yield
+        return
+    init = torch.nn.init
+    names = ["normal_", "uniform_", "trunc_normal_", "kaiming_uniform_", "kaiming_normal_", "xavier_uniform_",
+             "xavier_normal_", "orthogonal_"]
+    saved = {n: getattr(init, n) for n in names if hasattr(init, n)}
+    for n in saved:
+        setattr(init, n, lambda tensor, *args, **kwargs: tensor)
+    try:
+        yield
+    finally:
+        for n, f in saved.items():
+            setattr(init, n, f)
+
+
 def load_model_for_a1111(timer, checkpoint_info=None, state_dict=None):
     a1111_config_filename = find_checkpoint_config(state_dict, checkpoint_info)
     a1111_config = OmegaConf.load(a1111_config_filename)
@@ -151,14 +174,15 @@ def load_model_for_a1111(timer, checkpoint_info=None, state_dict=None):
 
     timer.record("forge instantiate config")
 
-    forge_objects = load_checkpoint_guess_config(
-        state_dict,
-        output_vae=True,
-        output_clip=True,
-        output_clipvision=True,
-        embedding_directory=cmd_opts.embeddings_dir,
-        output_model=True
-    )
+    with skip_random_init():
+        forge_objects = load_checkpoint_guess_config(
+            state_dict,
+            output_vae=True,
+            output_clip=True,
+            output_clipvision=True,
+            embedding_directory=cmd_opts.embeddings_dir,
+            output_model=True
+        )
     sd_model.forge_objects = forge_objects
     sd_model.forge_objects_original = forge_objects.shallow_copy()
     sd_model.forge_objects_after_applying_lora = forge_objects.shallow_copy()

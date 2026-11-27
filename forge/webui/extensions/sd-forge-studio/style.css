@@ -71,8 +71,8 @@ body.fx-noscroll { overflow: hidden !important; }
 .fx-side, .fx-inspector { background: var(--fx-panel); min-height: 0; display: flex; flex-direction: column; }
 .fx-side { border-inline-end: 1px solid var(--fx-line); }
 .fx-inspector { border-inline-start: 1px solid var(--fx-line); overflow-y: auto; padding: 10px 12px; gap: 10px; }
-.fx-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); gap: 2px; padding: 6px; border-bottom: 1px solid var(--fx-line); }
-.fx-tab { display: grid; justify-items: center; gap: 2px; border: 0; background: transparent; color: var(--fx-dim); padding: 6px 2px; font-size: 11px; }
+.fx-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1px; padding: 6px 4px; border-bottom: 1px solid var(--fx-line); }
+.fx-tab { display: grid; justify-items: center; gap: 3px; min-width: 0; border: 0; background: transparent; color: var(--fx-dim); padding: 6px 1px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.01em; }
 .fx-tab-icon { font-size: 17px; line-height: 1; }
 .fx-tab.on { background: var(--fx-panel2); color: var(--fx-fg); }
 .fx-tab:hover { color: var(--fx-fg); }
@@ -511,11 +511,12 @@ body.fx-noscroll { overflow: hidden !important; }
 .im-view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 .im-textin { position: absolute; z-index: 3; min-width: 160px; background: rgba(0,0,0,.35); border: 1px dashed var(--fx-ai); outline: none;
     font-family: "Segoe UI", sans-serif; font-weight: 700; line-height: 1.2; padding: 2px 4px; resize: both; }
-.im-layers-title { display: flex; align-items: center; gap: 2px; }
-.im-layers-title .fx-icon { padding: 0 4px; }
+.im-layers-title { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
+.im-layers-title .fx-icon { padding: 0 3px; min-width: 0; }
 .im-layer-props { display: grid; gap: 6px; }
+.im-right .fx-group { grid-template-columns: minmax(0, 1fr); }   /* a long row wraps or shrinks instead of widening the column */
 .im-layer-props .im-opt { justify-content: space-between; }
-.im-layer-props .fx-select, .im-layer-props .fx-range { width: 160px; }
+.im-layer-props .fx-select, .im-layer-props .fx-range { width: auto; flex: 1 1 0; min-width: 0; max-width: 160px; }
 .im-layers { display: flex; flex-direction: column; gap: 3px; }
 .im-layer { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border: 1px solid var(--fx-line2); border-radius: 6px; background: var(--fx-panel2);
     cursor: pointer; user-select: none; }
@@ -547,6 +548,30 @@ body.fx-noscroll { overflow: hidden !important; }
 .im-result img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; border-radius: 3px; }
 .im-ai-tools { display: grid; grid-template-columns: 1fr; gap: 5px; }
 .im-ai-btn { font-size: 12px; text-align: start; padding: 5px 7px; }
+.im-soft { padding: 6px; background: var(--fx-panel2); border-radius: 6px; grid-template-columns: minmax(0, 1fr); }
+.im-soft .im-row, .im-outpaint .im-row { min-width: 0; }
+.im-soft .im-row > span, .im-outpaint .im-row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.im-outpaint .im-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); direction: ltr; }   /* Left on the left, Right on the right, in Hebrew too */
+.im-outpaint .im-row > span { unicode-bidi: plaintext; }
+.im-outpaint .im-row .fx-num, .im-soft .im-row .fx-num { width: 56px; }
+.im-outpaint .fx-btn { align-self: flex-start; }
+
+/* ---- HakuImg's effects (forge-studio-r-image-fx.js) ---- */
+.im-fx { display: flex; flex-direction: column; gap: 8px; }
+.im-fx-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.im-fx-chip { padding: 3px 7px; font-size: 12px; }
+.im-fx-chip.on { border-color: var(--fx-ai); color: var(--fx-ai); background: var(--fx-ai-soft); }
+.im-fx-controls { display: flex; flex-direction: column; gap: 5px; }
+.im-fx-slider { display: grid; grid-template-columns: minmax(84px, 38%) minmax(0, 1fr) 62px; align-items: center; gap: 6px; font-size: 12px; }
+.im-fx-slider > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.im-fx-slider .fx-num { width: 62px; padding: 2px 4px; }
+.im-fx-choice { grid-template-columns: minmax(84px, 38%) minmax(0, 1fr); }
+.im-fx-choice .fx-select { width: 100%; min-width: 0; }
+.im-fx-actions { flex-wrap: wrap; gap: 6px; align-items: center; }
+.im-fx-status { min-height: 16px; }
+.im-fx-off .im-fx-chips, .im-fx-off .im-fx-controls, .im-fx-off .im-fx-actions { opacity: .45; pointer-events: none; }
+.im-curve-box { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.im-curve { width: 200px; height: 200px; border: 1px solid var(--fx-line2); border-radius: 6px; cursor: crosshair; touch-action: none; }
 
 /* ---- 🐸 Check for updates (forge-studio-r-updates.js), next to Language at the top of Forge ---- */
 #fs-update { position: absolute; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 1px; direction: ltr; }
@@ -618,3 +643,120 @@ body.fx-noscroll { overflow: hidden !important; }
 .fx-writer > input + .pw-write { right: 6px; }
 [dir="rtl"] .fx-writer > input + .pw-write { left: 6px; }
 .fx-writer > input + .pw-write { width: 22px; height: 22px; line-height: 20px; font-size: 13px; bottom: 50%; transform: translateY(50%); }
+
+/* ---- the seek bar under the picture (e-shell seekBar) ---- */
+.fx-transport { justify-content: flex-start; padding-inline: 10px; }
+.fx-transport .fx-transport-end { position: static; margin-inline-start: 4px; }
+.fx-seek { position: relative; flex: 1; min-width: 80px; height: 26px; margin-inline: 10px; cursor: pointer; touch-action: none; direction: ltr; }
+.fx-seek-track { position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px; border-radius: 2px; background: var(--fx-line2); overflow: hidden; }
+.fx-seek:hover .fx-seek-track, .fx-seek.dragging .fx-seek-track { height: 6px; margin-top: -3px; }
+.fx-seek-fill { height: 100%; width: 0; background: var(--fx-accent); }
+.fx-seek-knob { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #fff;
+    box-shadow: 0 0 0 2px var(--fx-accent), 0 1px 4px rgba(0,0,0,.5); pointer-events: none; }
+.fx-seek.dragging .fx-seek-knob, .fx-seek:hover .fx-seek-knob { width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+.fx-seek-tip { position: absolute; bottom: 100%; transform: translateX(-50%); padding: 2px 6px; border-radius: 4px; background: #000c;
+    color: #fff; font-size: 11px; white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums; }
+.fx-stage.fx-stage-full .fx-transport { background: #000a; }
+.fx-transport .fx-time { position: static; order: -1; margin-inline-end: 8px; white-space: nowrap; }
+
+/* ---- ⇄ Transitions and ✦ Effects galleries (t-glfx.js) ---- */
+.fx-gl { gap: 10px; }
+.fx-gl-body { display: flex; gap: 10px; flex: none; align-items: flex-start; }
+.fx-gl-cats { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; position: sticky; top: 0; }
+.fx-gl-cat { background: none; border: 0; color: var(--fx-dim); font: inherit; font-size: 12px; text-align: start; padding: 6px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.fx-gl-cat:hover { color: var(--fx-fg); background: var(--fx-panel2); }
+.fx-gl-cat.on { color: var(--fx-fg); background: var(--fx-line); font-weight: 600; }
+.fx-gl-grid { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); grid-auto-rows: max-content; gap: 12px 8px; align-content: start; }
+.fx-gl-tile { background: none; border: 0; padding: 0; color: var(--fx-fg); cursor: pointer; display: flex; flex-direction: column; gap: 5px; font: inherit; min-width: 0; text-align: center; }
+.fx-gl-frame { position: relative; display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 9px; overflow: hidden; background: var(--fx-panel2);
+    box-shadow: inset 0 0 0 1px var(--fx-line); transition: box-shadow .12s, transform .12s; }
+.fx-gl-thumb { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.fx-gl-tile:hover .fx-gl-frame, .fx-gl-tile:focus-visible .fx-gl-frame { box-shadow: inset 0 0 0 2px var(--fx-accent); transform: translateY(-1px); }
+.fx-gl-tile:focus-visible { outline: none; }
+.fx-gl-name { font-size: 11px; line-height: 1.25; color: var(--fx-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-gl-tile:hover .fx-gl-name { color: var(--fx-fg); }
+.fx-gl-note { font-size: 11px; }
+.fx-gl-fxrow { display: grid; grid-template-columns: 1fr 1.2fr auto; align-items: center; gap: 6px; }
+
+/* ---- the projects window (e-shell.js projectHome) ---- */
+.fx-home-back { place-items: stretch; padding: 3vh 3vw; }
+.fx-home { display: grid; grid-template-rows: auto minmax(0, 1fr); width: min(1180px, 100%); height: 100%; margin: 0 auto; background: var(--fx-bg);
+    border: 1px solid var(--fx-line2); border-radius: 14px; box-shadow: 0 30px 80px rgba(0,0,0,.75); overflow: hidden; }
+.fx-home-top { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--fx-line); background: var(--fx-panel); }
+.fx-home-title { font-weight: 700; font-size: 15px; letter-spacing: .01em; }
+.fx-home-scroll { overflow-y: auto; padding: 22px 28px 30px; display: flex; flex-direction: column; gap: 18px; }
+.fx-home-hero { display: flex; flex-direction: column; gap: 10px; }
+.fx-home-create { position: relative; display: flex; align-items: center; justify-content: center; gap: 14px; height: 108px; width: 100%;
+    border: 0; border-radius: 14px; cursor: pointer; color: #fff; font: inherit; font-size: 18px; font-weight: 700; overflow: hidden;
+    background: radial-gradient(120% 140% at 15% 110%, #1fd1c1 0%, transparent 55%), radial-gradient(90% 120% at 85% -10%, #6d4cff 0%, transparent 60%),
+        linear-gradient(100deg, #10241f 0%, #1b1640 55%, #2a1650 100%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); transition: filter .15s, transform .15s; }
+.fx-home-create:hover { filter: brightness(1.12); }
+.fx-home-create:active { transform: scale(.995); }
+.fx-home-plus { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #fff; color: #111; font-size: 22px; line-height: 1; font-weight: 800; }
+.fx-home-shapes { display: flex; flex-wrap: wrap; gap: 8px; }
+.fx-home-shape { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 9px; border: 1px solid var(--fx-line2);
+    background: var(--fx-panel); color: var(--fx-dim); font: inherit; font-size: 12px; cursor: pointer; }
+.fx-home-shape:hover { color: var(--fx-fg); border-color: var(--fx-dim); }
+.fx-home-shape.on { color: var(--fx-fg); border-color: var(--fx-accent); background: rgba(45,212,191,.08); }
+.fx-home-shape-box { display: inline-block; border: 1.5px solid currentColor; border-radius: 3px; }
+.fx-home-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fx-home-heading { font-weight: 700; font-size: 15px; display: flex; gap: 6px; align-items: baseline; }
+.fx-home-count { color: var(--fx-dim); font-weight: 500; font-size: 13px; }
+.fx-home-bar .fx-home-search { width: 240px; flex: none; height: 32px; border-radius: 8px; }
+.fx-home-tool { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--fx-line2);
+    background: var(--fx-panel); color: var(--fx-fg); font: inherit; font-size: 13px; cursor: pointer; }
+.fx-home-tool:hover { border-color: var(--fx-dim); }
+.fx-home-tool.on { border-color: var(--fx-accent); }
+.fx-home-tool-icon { font-size: 13px; opacity: .85; }
+.fx-home-note { font-size: 12px; padding: 8px 12px; border-radius: 8px; background: var(--fx-panel); border: 1px solid var(--fx-line); }
+.fx-home-none { padding: 40px 0; text-align: center; }
+.fx-home-items.fx-home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 22px 18px; }
+.fx-home-card { position: relative; min-width: 0; cursor: pointer; border-radius: 12px; outline: none; }
+.fx-home-thumb { position: relative; aspect-ratio: 1 / 1; border-radius: 12px; overflow: hidden; background: var(--fx-panel2);
+    box-shadow: inset 0 0 0 1px var(--fx-line); transition: box-shadow .15s, transform .15s; }
+.fx-home-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.fx-home-blank { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 4px; color: var(--fx-dim);
+    background: radial-gradient(80% 80% at 30% 20%, #232a36, #12151b); }
+.fx-home-blank span { font-size: 26px; opacity: .5; }
+.fx-home-blank small { font-size: 11px; }
+.fx-home-dur { position: absolute; inset-inline-end: 6px; bottom: 6px; padding: 1px 6px; border-radius: 5px; font-size: 11px; font-variant-numeric: tabular-nums;
+    background: rgba(0,0,0,.62); color: #fff; }
+.fx-home-card:hover .fx-home-thumb, .fx-home-card:focus-visible .fx-home-thumb { box-shadow: inset 0 0 0 2px var(--fx-accent); }
+.fx-home-card.on .fx-home-thumb { box-shadow: inset 0 0 0 2px var(--fx-accent), 0 0 0 3px rgba(45,212,191,.18); }
+.fx-home-name { margin-top: 8px; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-home-meta { margin-top: 2px; font-size: 12px; color: var(--fx-dim); font-variant-numeric: tabular-nums; }
+.fx-home-more { position: absolute; top: 6px; inset-inline-end: 6px; width: 28px; height: 24px; border-radius: 7px; border: 0; cursor: pointer;
+    background: rgba(0,0,0,.6); color: #fff; font-size: 16px; line-height: 1; opacity: 0; transition: opacity .12s; }
+.fx-home-card:hover .fx-home-more, .fx-home-card.menu .fx-home-more, .fx-home-card:focus-within .fx-home-more { opacity: 1; }
+.fx-home-menu { display: none; position: absolute; top: 34px; inset-inline-end: 6px; z-index: 3; min-width: 170px; padding: 5px; border-radius: 10px;
+    background: var(--fx-panel2); border: 1px solid var(--fx-line2); box-shadow: 0 12px 30px rgba(0,0,0,.55); }
+.fx-home-card.menu .fx-home-menu { display: grid; gap: 2px; }
+.fx-home-menu-item { text-align: start; padding: 7px 10px; border-radius: 7px; border: 0; background: none; color: var(--fx-fg); font: inherit; font-size: 13px; cursor: pointer; }
+.fx-home-menu-item:hover:not(:disabled) { background: var(--fx-line); }
+.fx-home-menu-item:disabled { opacity: .45; cursor: not-allowed; }
+.fx-home-items.fx-home-list { display: grid; gap: 4px; }
+.fx-home-list .fx-home-card { display: grid; grid-template-columns: 56px minmax(0, 1fr) 170px 80px 70px 70px 32px; align-items: center; gap: 14px;
+    padding: 6px 10px; border-radius: 10px; }
+.fx-home-list .fx-home-card:hover, .fx-home-list .fx-home-card.on { background: var(--fx-panel); }
+.fx-home-list .fx-home-thumb { width: 56px; border-radius: 8px; }
+.fx-home-list .fx-home-dur { display: none; }
+.fx-home-list .fx-home-name { margin: 0; }
+.fx-home-cell { font-size: 12px; color: var(--fx-dim); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx-home-list .fx-home-more { position: static; opacity: .7; background: transparent; color: var(--fx-dim); }
+.fx-home-list .fx-home-menu { top: 42px; }
+@media (max-width: 760px) {
+    .fx-home-scroll { padding: 16px; }
+    .fx-home-list .fx-home-card { grid-template-columns: 48px minmax(0, 1fr) 32px; }
+    .fx-home-list .fx-home-cell { display: none; }
+    .fx-home-bar .fx-home-search { width: 100%; order: 5; }
+}
+.fx-home-list .fx-home-blank small { display: none; }
+.fx-home-list .fx-home-blank span { font-size: 18px; }
+.fx-home-back[dir="ltr"] .fx-home-name { text-align: left; }
+.fx-home-back[dir="rtl"] .fx-home-name { text-align: right; }
+/* the image workspace's inpaint rows that need room: a slider with its value, and the outpaint sides (label above) */
+.im-sub > label.im-weight { display: grid; grid-template-columns: minmax(0, 1fr) minmax(70px, 40%) 34px; align-items: center; gap: 6px; white-space: normal; }
+.im-sub > label.im-weight .fx-range { width: 100%; }
+.im-outpaint .im-row { flex-direction: column; align-items: stretch; gap: 2px; }
+.im-outpaint .im-row .fx-num { width: 100%; box-sizing: border-box; }

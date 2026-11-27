@@ -1,0 +1,16 @@
+diff --git a/scripts/main.py b/scripts/main.py
+index 6760850..3ad7e04 100755
+--- a/scripts/main.py
++++ b/scripts/main.py
+@@ -6,7 +6,10 @@ from PIL import Image
+ from modules import shared
+ from modules import scripts
+ from modules import script_callbacks
+-from modules import generation_parameters_copypaste as gpc
++try:
++    from modules import generation_parameters_copypaste as gpc
++except ImportError:  # Forge / newer webui: the module is infotext_utils
++    from modules import infotext_utils as gpc
+ from modules.ui_components import FormRow
+ from modules.images import save_image
+ 

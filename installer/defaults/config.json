@@ -502,6 +502,9 @@
     "ui_skins_long_press_ms": 650,
     "ui_cards_closed": true,
     "ui_cards_organize": true,
+    "hakuimg_layer_num": 5,
+    "hakuimg_curve_points": 3,
+    "openpose3d_use_online_version": false,
     "sd_vae": "Automatic",
     "outdir_samples": "",
     "outdir_grids": ""

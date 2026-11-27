@@ -1,0 +1,13 @@
+diff --git a/javascript/sam.js b/javascript/sam.js
+index 0c9a6e6..ac68fd3 100644
+--- a/javascript/sam.js
++++ b/javascript/sam.js
+@@ -24,7 +24,7 @@ function switchToInpaintUpload() {
+ function samTabPrefix() {
+     const tabs = gradioApp().querySelector('#tabs');
+     if (tabs) {
+-        const buttons = tabs.querySelectorAll('button');
++        const buttons = tabs.querySelectorAll(':scope > .tab-nav > button');   // only the tab bar (it runs on every change)
+         if (buttons) {
+             if (buttons[0].className.includes("selected")) {
+                 return "txt2img_sam_"

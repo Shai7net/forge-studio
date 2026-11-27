@@ -87,6 +87,8 @@ onUiLoaded(() => {
 
 // 🎬: the video model chosen in Video Studio goes along (in the payload box's place), so the writer writes for it
 function charactersVideoModel(cid, idea, slot, payload) {
+    // Video Studio's model is a row of picture buttons since 2026-11-27 (a list before)
+    if (typeof videoStudioModel === "function") return [cid, idea, slot, videoStudioModel()];
     const model = gradioApp().querySelector("#vs_model input");
     return [cid, idea, slot, model ? model.value : ""];
 }

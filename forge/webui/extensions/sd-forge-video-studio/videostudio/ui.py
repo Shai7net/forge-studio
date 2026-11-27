@@ -158,7 +158,10 @@ def status_html(stage, progress=None, note="", elapsed=None, eta=None, error=Non
     if error:
         body += f"<pre class='vs-error'>{html.escape(error)}</pre>"
     bar = f"<div class='vs-bar'><div style='width:{pct}%;background:{color}'></div></div>" if stage not in ("error",) else ""
-    return f"<div class='vs-status'>{bar}<div class='vs-status-text'>{body}</div></div>"
+    # data-stage: video-studio.js shows Stop instead of Generate, and the picture made so far, while it works
+    left = f"{int(eta // 60)}:{int(eta % 60):02d}" if eta else ""
+    return (f"<div class='vs-status' data-stage='{html.escape(stage)}' data-pct='{pct}' data-left='{left}' "
+            f"data-label='{html.escape(label)}'>{bar}<div class='vs-status-text'>{body}</div></div>")
 
 
 # The labels and notes below are the first look of Image to Video; afterwards videoStudioPictureLayout in
@@ -776,7 +779,9 @@ def source_dimensions(mode, picture, audio_picture, video, quality, preset, repl
         default = ltx.default_quality(preset) if ltx.is_ltx(preset) else h3.DEFAULT_QUALITY if h3.is_h3(preset) else DEFAULT_QUALITY
         area, multiple = qualities.get(quality, qualities[default]), 32 if ltx.is_ltx(preset) or h3.is_h3(preset) else 16
     else:
-        return (608, 352) if h3.is_h3(preset) else (0, 0)
+        # no source picture (Text to Video, Ingredients): the Shape and the Quality give the size. MiniMax-H3 used to
+        # get a fixed 608x352 here, which overrode a 9:16 Shape (his 2026-11-26 report: 9:16 came out 16:9)
+        return (0, 0)
     if w <= 0 or h <= 0:
         raise ValueError('The source has no readable picture dimensions.')
     return fit_size(w, h, min(w * h, area), multiple)
@@ -1286,7 +1291,7 @@ def refine(last_frame, rquality, rstrength, smooth, upscale, int8, attention, pr
         meta = json.load(f)
     if meta.get('backend') == 'h3':
         yield out(status_html('error', error='MiniMax-H3 Refine is not available in the linked FL2V workflow. '
-                                             'Generate the shot directly with the 480×864 quality preset instead.'))
+                                             'Generate the shot directly with the sharper MiniMax-H3 quality instead.'))
         return
     if meta.get("parts"):
         # the whole joined video at a larger size does not fit an 8 GB card in one go
@@ -1515,35 +1520,26 @@ def build():
 
     with gr.Blocks(analytics_enabled=False) as tab:
         mode = gr.Textbox(value="t2v", visible=False, elem_id="vs_mode")
-        preset = gr.Dropdown(presets, value=default_preset, label="Video model", elem_id="vs_model")
-        gr.Markdown('Choose Wan, LTX, or MiniMax-H3. Model selection loads efficient defaults automatically. '
-                    'Character replacement and Phantom use their dedicated Wan models. '
-                    'Ingredients draws one first frame of all the pictures with an installed FLUX 3 Klein (the image checkpoint '
-                    'stays as chosen), then the chosen video model animates it; without FLUX 3 it uses Phantom.')
         with gr.Row(elem_id="vs_main"):
             with gr.Column(scale=5, elem_id="vs_tabs_column"):
-                # Shared by every sub-tab; style.css sets it on the right of the sub-tab buttons
-                with gr.Row(elem_id="vs_shared_row"):
-                    t2v_aspect = gr.Dropdown(list(ASPECTS), value="9:16 portrait", label="Shape",
-                                             elem_id="vs_shape", min_width=124)
-                    t2v_sampler = gr.Dropdown(samplers, value=samplers[0] if samplers else None,
-                                              label="Sampler for the picture", elem_id="vs_picture_sampler",
-                                              min_width=152)
+                # Quality and the kind of video on one line, the Shape card under them: video-studio.js moves both into
+                # the sub-tab bar (Quality before the buttons, the card after them on a line of its own)
+                quality = gr.Dropdown(list(ltx.QUALITY if initial_ltx else QUALITY),
+                    value=ltx.default_quality(default_preset) if initial_ltx else DEFAULT_QUALITY, label="Quality",
+                    elem_id="vs_quality", min_width=220)
+                with gr.Group(elem_id="vs_create"):
+                    t2v_aspect = gr.Radio(list(ASPECTS), value="9:16 portrait", label="Shape", elem_id="vs_shape")
+                    seconds = gr.Slider(1, 7.5, value=5, step=0.25, label="Length (seconds)", elem_id="vs_seconds")
+                    with gr.Row(elem_id="vs_toggles"):
+                        smooth = gr.Checkbox(value=True, label='Smooth motion: 48 fps (FILM)' if initial_ltx else 'Smooth motion: 32 fps (FILM)',
+                                             elem_id="vs_smooth")
+                        auto_sound = gr.Checkbox(value=True, label="Add AI sound automatically (MMAudio, about 1.5 min)",
+                                                 elem_id="vs_auto_sound")
                 # ids let javascript/video-studio.js open a sub-tab by name (the 🎬 button, Continue)
                 with gr.Tabs(elem_id="vs_mode_tabs"):
                     with gr.Tab(MODES["t2v"], id="t2v", elem_id="vs_tab_t2v") as text_tab:
-                        gr.Markdown("Write what happens in the prompt below and press Generate. Behind the scenes the "
-                                    "opening picture is written from your words and drawn by FLUX 3 Klein, then the "
-                                    "video model (Wan, LTX, or MiniMax-H3) animates it.")
-                        with gr.Accordion("Advanced: the opening picture", open=False) as picture_controls:
-                            frame_by = gr.Dropdown(list(FRAME_CHOICES), value=FRAME_FLUX, label="Who draws it",
-                                                   elem_id="vs_frame_by")
-                            t2v_picture_prompt = gr.Textbox(label="Picture prompt (empty: written from the video prompt)",
-                                                            lines=2, elem_id="vs_first_frame")
-                            with gr.Row():
-                                t2v_steps = gr.Slider(1, 60, value=25, step=1,
-                                                      label="Picture steps (the selected checkpoint)")
-                                t2v_cfg = gr.Slider(1, 15, value=6, step=0.5, label="Picture CFG (the selected checkpoint)")
+                        # its note and "the opening picture" are at the bottom of the column (#vs_t2v_extras)
+                        gr.HTML("", elem_classes=["vs-empty-tab"])
                     with gr.Tab(MODES["i2v"], id="i2v", elem_id="vs_tab_i2v") as image_tab:
                         # One picture starts the video; ➕ adds a last frame, then more pictures for a longer video.
                         # All six exist from the start and are shown as they are added.
@@ -1568,7 +1564,7 @@ def build():
                                             for k in range(MAX_PICTURES - 1)]
                         _take_over_send_to_video(pictures[0])
                     with gr.Tab(MODES["ingredients"], id="ingredients", elem_id="vs_tab_ingredients") as ingredients_tab:
-                        gr.Markdown("Up to four pictures of who and what is in the video - people, a pet, an object, a "
+                        gr.Markdown(elem_classes=["vs-hint"], value="Up to four pictures of who and what is in the video - people, a pet, an object, a "
                                     "place, or a whole character sheet - and the prompt says what happens; the video "
                                     "keeps their looks (like Flow's Ingredients). Name them in the prompt: \"the woman "
                                     "(picture 1) pours coffee into the red cup (picture 2) in the kitchen (picture 3)\". "
@@ -1586,7 +1582,7 @@ def build():
                             ing_models = gr.Markdown(ingredients_models_markdown(default_preset))
                             ing_download = gr.Button('Download missing Ingredients models', size="sm")
                     with gr.Tab(MODES["replace"], id="replace", elem_id="vs_tab_replace") as replace_tab:
-                        gr.Markdown("The person in your video becomes the character in your picture: the motion, the "
+                        gr.Markdown(elem_classes=["vs-hint"], value="The person in your video becomes the character in your picture: the motion, the "
                                     "face's expressions, the camera and the background stay (Wan 2.2 Animate). A picture "
                                     "of several people: choose one, or 'Everyone in the picture' (one pass per person). "
                                     "Describe the character in the prompt (clothes, hair) for the best likeness, and "
@@ -1645,7 +1641,7 @@ def build():
                         rep_models = gr.Markdown(replace_models_markdown())
                         rep_download = gr.Button("Download the missing files", size="sm")
                     with gr.Tab(MODES['ltx_audio'], id='ltx_audio', elem_id='vs_tab_ltx_audio') as audio_tab:
-                        gr.Markdown('LTX: animate a picture to your audio. Speech and singing drive the video. '
+                        gr.Markdown(elem_classes=['vs-hint'], value='LTX: animate a picture to your audio. Speech and singing drive the video. '
                                     'An LTX model is selected automatically. Add the picture and recording, then describe the scene. '
                                     'The recording sets the video length; longer recordings use consecutive short parts. '
                                     'The picture sets the shape within the selected quality. The original audio is preserved in the result.')
@@ -1655,43 +1651,23 @@ def build():
                 prompt = gr.Textbox(label="Prompt: what happens in the video", lines=4, elem_id="vs_prompt",
                                     placeholder="Describe the motion and the camera, in English, e.g. 'The man stands up, "
                                                 "catches a suit thrown to him and walks into the next room.'")
-                styles = gr.Dropdown(prompting.style_names(), value=[], multiselect=True, label="Styles",
-                                     elem_id="vs_styles")
-                with gr.Row():
-                    styles_refresh = gr.Button("Refresh styles", size="sm")
-                    styles_apply = gr.Button("Write into the prompt", size="sm")
-                with gr.Accordion("Save the prompt as a style", open=False):
-                    style_name = gr.Textbox(label="Style name", lines=1, max_lines=1)
-                    style_save = gr.Button("Save style", size="sm")
-                    gr.Markdown("Saved in Forge's own styles list (the txt2img one too). A style can carry a LoRA: "
-                                "`<lora:file name:1>, trigger words`. In Video Studio a tag that names a Wan LoRA loads it "
-                                "(both halves of a high/low pair); the trigger words stay in the prompt.")
-                with gr.Row():
-                    quality = gr.Dropdown(list(ltx.QUALITY if initial_ltx else QUALITY),
-                        value=ltx.default_quality(default_preset) if initial_ltx else DEFAULT_QUALITY, label="Quality", elem_id="vs_quality")
-                    seconds = gr.Slider(1, 7.5, value=5, step=0.25, label="Length (seconds)", elem_id="vs_seconds")
-                    seed = gr.Number(value=-1, label="Seed (-1 random)", precision=0)
-                with gr.Row():
-                    smooth = gr.Checkbox(value=True, label='Smooth motion: 48 fps (FILM)' if initial_ltx else 'Smooth motion: 32 fps (FILM)')
-                    upscale = gr.Dropdown(ups, value=default_up, label="Enlarge the finished video")
-                with gr.Row():
-                    auto_sound = gr.Checkbox(value=True, label="Add AI sound automatically (MMAudio, about 1.5 min)")
-                    sound_words = gr.Textbox(label="Sound: what is heard (plain English; empty: the prompt and the picture)",
-                                             lines=1, scale=3, placeholder="explosions, fire roaring, debris falling")
-                native_audio = gr.Checkbox(value=True, visible=initial_ltx, label='LTX synchronized sound',
-                    info='Generate sound together with the video. This takes priority over automatic MMAudio.', elem_id='vs_ltx_native_audio')
-                with gr.Accordion("LoRA", open=False):
+                with gr.Row(elem_id="vs_styles_row"):
+                    styles = gr.Dropdown(prompting.style_names(), value=[], multiselect=True, label="Styles",
+                                         elem_id="vs_styles", scale=6)
+                    styles_refresh = gr.Button("Refresh styles", size="sm", elem_id="vs_styles_refresh", scale=1, min_width=90)
+                    styles_apply = gr.Button("Write into the prompt", size="sm", elem_id="vs_styles_apply", scale=1, min_width=90)
+                # everything a creator does not need to see every time
+                with gr.Accordion("Advanced settings", open=False, elem_id="vs_advanced"):
                     with gr.Row():
-                        lora1 = gr.Dropdown(lora_choices(default_preset), value=NO_LORA, label="LoRA 1")
-                        lora1_w = gr.Slider(-2, 2, value=1.0, step=0.05, label="Strength 1")
+                        seed = gr.Number(value=-1, label="Seed (-1 random)", precision=0, elem_id="vs_seed")
+                        t2v_sampler = gr.Dropdown(samplers, value=samplers[0] if samplers else None,
+                                                  label="Sampler for the picture", elem_id="vs_picture_sampler")
                     with gr.Row():
-                        lora2 = gr.Dropdown(lora_choices(default_preset), value=NO_LORA, label="LoRA 2")
-                        lora2_w = gr.Slider(-2, 2, value=1.0, step=0.05, label="Strength 2")
-                    gr.Markdown('LoRAs follow the selected video model. Wan: models/VideoStudio/loras or models/Lora/wan. '
-                                'LTX: models/VideoStudio/ltx/loras or models/Lora/ltx. '
-                                'Wan high/low pairs are loaded together. `<lora:name:1>` in a prompt or style also works.')
-                    lora_refresh = gr.Button("Refresh list", size="sm")
-                with gr.Accordion("Advanced", open=False):
+                        upscale = gr.Dropdown(ups, value=default_up, label="Enlarge the finished video", elem_id="vs_upscale")
+                        sound_words = gr.Textbox(label="Sound: what is heard (plain English; empty: the prompt and the picture)",
+                                                 lines=1, scale=2, placeholder="explosions, fire roaring, debris falling")
+                    native_audio = gr.Checkbox(value=True, visible=initial_ltx, label='LTX synchronized sound',
+                        info='Generate sound together with the video. This takes priority over automatic MMAudio.', elem_id='vs_ltx_native_audio')
                     negative = gr.Textbox(label="Negative prompt (used only when CFG is above 1)", lines=2)
                     with gr.Row():
                         steps = gr.Slider(2, 12, value=initial_settings['steps'], step=1, label="Steps", interactive=not initial_ltx)
@@ -1705,7 +1681,28 @@ def build():
                     with gr.Row():
                         width = gr.Number(value=0, label="Width (0: from quality)", precision=0, elem_id='vs_width')
                         height = gr.Number(value=0, label="Height (0: from quality)", precision=0, elem_id='vs_height')
+                    with gr.Accordion("LoRA", open=False):
+                        with gr.Row():
+                            lora1 = gr.Dropdown(lora_choices(default_preset), value=NO_LORA, label="LoRA 1")
+                            lora1_w = gr.Slider(-2, 2, value=1.0, step=0.05, label="Strength 1")
+                        with gr.Row():
+                            lora2 = gr.Dropdown(lora_choices(default_preset), value=NO_LORA, label="LoRA 2")
+                            lora2_w = gr.Slider(-2, 2, value=1.0, step=0.05, label="Strength 2")
+                        gr.Markdown('LoRAs follow the selected video model. Wan: models/VideoStudio/loras or models/Lora/wan. '
+                                    'LTX: models/VideoStudio/ltx/loras or models/Lora/ltx. '
+                                    'Wan high/low pairs are loaded together. `<lora:name:1>` in a prompt or style also works.')
+                        lora_refresh = gr.Button("Refresh list", size="sm")
+                    with gr.Accordion("Save the prompt as a style", open=False):
+                        style_name = gr.Textbox(label="Style name", lines=1, max_lines=1)
+                        style_save = gr.Button("Save style", size="sm")
+                        gr.Markdown("Saved in Forge's own styles list (the txt2img one too). A style can carry a LoRA: "
+                                    "`<lora:file name:1>, trigger words`. In Video Studio a tag that names a Wan LoRA loads it "
+                                    "(both halves of a high/low pair); the trigger words stay in the prompt.")
                 with gr.Accordion("Models", open=not installed):
+                    gr.Markdown('Choose Wan, LTX, or MiniMax-H3. Model selection loads efficient defaults automatically. '
+                                'Character replacement and Phantom use their dedicated Wan models. '
+                                'Ingredients draws one first frame of all the pictures with an installed FLUX 3 Klein (the image checkpoint '
+                                'stays as chosen), then the chosen video model animates it; without FLUX 3 it uses Phantom.')
                     models_md = gr.Markdown(models_markdown())
                     with gr.Row():
                         download = gr.Button("Download and set up this model", size="sm", variant="primary",
@@ -1714,19 +1711,44 @@ def build():
                         ltx_engine = gr.Button('Set up LTX engine', size='sm', elem_id='vs_ltx_setup')
                         h3_engine = gr.Button('Set up MiniMax-H3 engine', size='sm', elem_id='vs_h3_setup')
                         refresh = gr.Button("Refresh", size="sm")
-            with gr.Column(scale=4):
-                with gr.Row():
+                with gr.Group(elem_id="vs_t2v_extras"):
+                    gr.Markdown(elem_classes=["vs-hint"], value="Write what happens in the prompt above and press Generate. Behind the scenes the "
+                                "opening picture is written from your words and drawn by FLUX 3 Klein, then the "
+                                "video model (Wan, LTX, or MiniMax-H3) animates it.")
+                    with gr.Accordion("Advanced: the opening picture", open=False) as picture_controls:
+                        frame_by = gr.Dropdown(list(FRAME_CHOICES), value=FRAME_FLUX, label="Who draws it",
+                                               elem_id="vs_frame_by")
+                        t2v_picture_prompt = gr.Textbox(label="Picture prompt (empty: written from the video prompt)",
+                                                        lines=2, elem_id="vs_first_frame")
+                        with gr.Row():
+                            t2v_steps = gr.Slider(1, 60, value=25, step=1,
+                                                  label="Picture steps (the selected checkpoint)")
+                            t2v_cfg = gr.Slider(1, 15, value=6, step=0.5, label="Picture CFG (the selected checkpoint)")
+            with gr.Column(scale=4, elem_id="vs_side"):
+                # the video model as picture buttons (video-studio.js puts a picture and a short name on each choice;
+                # data-installed tells it which ones are not downloaded yet)
+                with gr.Group(elem_id="vs_models_box"):
+                    preset = gr.Radio(presets, value=default_preset, label="Model", elem_id="vs_model")
+                    gr.HTML(f"<div id='vs_installed' data-installed='{html.escape(json.dumps(installed))}'></div>",
+                            elem_classes=["vs-installed"])
+                # one window: the picture made so far while it works (with the frog and how long is left), the video
+                # when it is done
+                with gr.Group(elem_id="vs_stage"):
+                    video = gr.Video(label="Video", elem_id="vs_video", interactive=False, height=460)
+                    preview = gr.Image(label="Preview (middle frame while it is made)", interactive=False, height=460,
+                                       elem_id="vs_preview", show_label=False)
+                # one button: Generate, and Stop while a video is being made (video-studio.js swaps them)
+                with gr.Row(elem_id="vs_go_row"):
                     go = gr.Button("Generate video", variant="primary", elem_id="vs_generate")
-                    stop = gr.Button("Stop", elem_id="vs_stop")
+                    stop = gr.Button("Stop", variant="stop", elem_id="vs_stop")
                 status = gr.HTML(status_html("idle", 0), elem_id="vs_status")
-                video = gr.Video(label="Video", elem_id="vs_video", interactive=False)
-                preview = gr.Image(label="Preview (middle frame while it is made)", interactive=False, height=320)
-                details = gr.Textbox(label="Details", lines=3, interactive=False)
+                with gr.Row(elem_id="vs_actions"):
+                    cont = gr.Button("Continue from the last frame", size="sm", elem_id="vs_continue")
+                    show = gr.Button("Show the last video", size="sm", elem_id="vs_show_last")
+                    folder = gr.Button("Open the output folder", size="sm", elem_id="vs_open_folder")
                 last_frame = gr.Textbox(visible=False)
-                with gr.Row():
-                    cont = gr.Button("Continue from the last frame", size="sm")
-                    folder = gr.Button("Open the output folder", size="sm")
-                    show = gr.Button("Show the last video", size="sm")
+                with gr.Accordion("Details", open=False, elem_id="vs_details_box"):
+                    details = gr.Textbox(label="Details", lines=3, interactive=False, show_label=False)
                 with gr.Accordion("Refine the last video: same motion, sharper", open=False):
                     with gr.Row():
                         rquality = gr.Dropdown(list(REFINE_QUALITY)[:1] if initial_ltx else list(REFINE_QUALITY),
@@ -1734,7 +1756,7 @@ def build():
                         rstrength = gr.Dropdown(list(REFINE_STRENGTH), value=next(iter(REFINE_STRENGTH)), label="Strength")
                     gr.Markdown("Make takes quickly at 480p; when you like one, refine it here. The clip is drawn again "
                                 "at the larger size from its own frames, keeping the motion.")
-                    rgo = gr.Button("Refine the last video", variant="primary", size="sm")
+                    rgo = gr.Button("Refine the last video", variant="primary", size="sm", elem_id="vs_refine_go")
                 with gr.Accordion("Sound and speech for the last video", open=False):
                     with gr.Row():
                         fx_on = gr.Checkbox(value=True, label="AI sound effects from the picture (MMAudio)")
@@ -1760,7 +1782,7 @@ def build():
                     with gr.Row():
                         lips = gr.Checkbox(value=True, label="Move the lips to the words (MuseTalk)")
                         sound_seed = gr.Number(value=0, label="Sound seed", precision=0)
-                    sgo = gr.Button("Add sound", variant="primary", size="sm")
+                    sgo = gr.Button("Add sound", variant="primary", size="sm", elem_id="vs_sound_go")
 
         inputs = [mode, picture_count] + pictures + part_prompts + [
                   t2v_aspect, t2v_picture_prompt, t2v_steps, t2v_cfg, t2v_sampler,

@@ -1,0 +1,108 @@
+diff --git a/javascript/pano_hints.js b/javascript/pano_hints.js
+index 9f01c52..3763a6f 100644
+--- a/javascript/pano_hints.js
++++ b/javascript/pano_hints.js
+@@ -1,43 +1,60 @@
+-// mouseover tooltips for various UI elements
+-
+-pano_titles = {
+-    "Pano 👀":"Send to Panorama Viewer Tab",
+-    "🌐": "Switch between selected image and Equirectangular view",
+-    "🧊": "Switch between selected image and CubeMap view",
+-	"✜": "Convert current spherical map into cubemap (for better outpainting)",
+-	"💫": "Convert current cubemap to equirectangular map (for better upscaling)",
+-	"❌": "Close current panorama viewer",
+-	"Pano 🎦": "Open a new Panorama-Movie-Viewer"
+-}
+-
+-
+-onUiUpdate(function(){
+-	gradioApp().querySelectorAll('span, button, select, p').forEach(function(span){
+-		tooltip = pano_titles[span.textContent];
+-
+-		if(!tooltip){
+-		    tooltip = pano_titles[span.value];
+-		}
+-
+-		if(!tooltip){
+-			for (const c of span.classList) {
+-				if (c in pano_titles) {
+-					tooltip = pano_titles[c];
+-					break;
+-				}
+-			}
+-		}
+-
+-		if(tooltip){
+-			span.title = tooltip;
+-		}
+-	})
+-
+-	gradioApp().querySelectorAll('select').forEach(function(select){
+-	    if (select.onchange != null) return;
+-
+-	    select.onchange = function(){
+-            select.title = pano_titles[select.value] || "";
+-	    }
+-	})
+-})
++// mouseover tooltips for various UI elements
++
++pano_titles = {
++    "Pano 👀":"Send to Panorama Viewer Tab",
++    "🌐": "Switch between selected image and Equirectangular view",
++    "🧊": "Switch between selected image and CubeMap view",
++	"✜": "Convert current spherical map into cubemap (for better outpainting)",
++	"💫": "Convert current cubemap to equirectangular map (for better upscaling)",
++	"❌": "Close current panorama viewer",
++	"Pano 🎦": "Open a new Panorama-Movie-Viewer"
++}
++
++
++// Only what a change added is looked at: scanning the whole page (~98,000 elements) on every change held the page
++// up for seconds while it loaded (Forge Workspace speed-up, 2026-11-27). Without a change list: the whole page.
++function panoHintTargets(mutations, selector) {
++	if (!mutations || !mutations.length) return Array.from(gradioApp().querySelectorAll(selector));
++	const out = new Set();
++	for (const m of mutations) {
++		const t = m.target;
++		if (t && t.nodeType === 1 && t.matches(selector)) out.add(t);
++		for (const n of m.addedNodes) {
++			if (n.nodeType !== 1) continue;
++			if (n.matches(selector)) out.add(n);
++			n.querySelectorAll(selector).forEach((e) => out.add(e));
++		}
++	}
++	return Array.from(out);
++}
++
++onUiUpdate(function(mutations){
++	panoHintTargets(mutations, 'span, button, select, p').forEach(function(span){
++		tooltip = pano_titles[span.textContent];
++
++		if(!tooltip){
++		    tooltip = pano_titles[span.value];
++		}
++
++		if(!tooltip){
++			for (const c of span.classList) {
++				if (c in pano_titles) {
++					tooltip = pano_titles[c];
++					break;
++				}
++			}
++		}
++
++		if(tooltip){
++			span.title = tooltip;
++		}
++	})
++
++	panoHintTargets(mutations, 'select').forEach(function(select){
++	    if (select.onchange != null) return;
++
++	    select.onchange = function(){
++            select.title = pano_titles[select.value] || "";
++	    }
++	})
++})

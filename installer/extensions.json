@@ -4,7 +4,8 @@
     {
       "name": "--sd-webui-ar-plusplus",
       "url": "https://github.com/altoiddealer/--sd-webui-ar-plusplus.git",
-      "commit": "8b900cd2748f95bce455db62ba0cb08093a3ca59"
+      "commit": "8b900cd2748f95bce455db62ba0cb08093a3ca59",
+      "patch": "patches/--sd-webui-ar-plusplus.patch"
     },
     {
       "name": "StyleSelectorXL",
@@ -15,6 +16,12 @@
       "name": "Wonder3D",
       "url": "https://github.com/xxlong0/Wonder3D",
       "commit": "d894f827aa8c2917761a0dad3ab40df74c7a5b24"
+    },
+    {
+      "name": "a1111-sd-webui-haku-img",
+      "url": "https://github.com/KohakuBlueleaf/a1111-sd-webui-haku-img.git",
+      "commit": "ac80e1e9415e25109ae1e6193d4a3a33aaa86b13",
+      "patch": "patches/a1111-sd-webui-haku-img.patch"
     },
     {
       "name": "asymmetric-tiling-sd-webui",
@@ -52,7 +59,8 @@
     {
       "name": "sd-webui-ar",
       "url": "https://github.com/alemelis/sd-webui-ar.git",
-      "commit": "3973c86a7a0f9722b5f61dd1a141ba6821f60245"
+      "commit": "3973c86a7a0f9722b5f61dd1a141ba6821f60245",
+      "patch": "patches/sd-webui-ar.patch"
     },
     {
       "name": "sd-webui-aspect-ratio-helper",
@@ -80,7 +88,8 @@
     {
       "name": "sd-webui-panorama-viewer",
       "url": "https://github.com/GeorgLegato/sd-webui-panorama-viewer",
-      "commit": "aa2a238136f68d8943b17378d8c01b6e00179e68"
+      "commit": "aa2a238136f68d8943b17378d8c01b6e00179e68",
+      "patch": "patches/sd-webui-panorama-viewer.patch"
     },
     {
       "name": "sd-webui-reactor",
@@ -96,7 +105,8 @@
     {
       "name": "sd-webui-segment-anything",
       "url": "https://github.com/continue-revolution/sd-webui-segment-anything.git",
-      "commit": "982138cfb505de61a3cbb257b2fa9d461d9b5493"
+      "commit": "982138cfb505de61a3cbb257b2fa9d461d9b5493",
+      "patch": "patches/sd-webui-segment-anything.patch"
     },
     {
       "name": "sd_web_ui_preset_utils",
@@ -113,6 +123,12 @@
       "url": "https://github.com/Kahsolt/stable-diffusion-webui-prompt-travel.git",
       "commit": "9c532f3487c69d533ae6637bae331f92ebb7b69f",
       "patch": "patches/stable-diffusion-webui-prompt-travel.patch"
+    },
+    {
+      "name": "sd-webui-3d-open-pose-editor",
+      "url": "https://github.com/nonnonstop/sd-webui-3d-open-pose-editor.git",
+      "commit": "f2d5aac51d891bc5f266b1549f3cf4495fc52160",
+      "patch": "patches/sd-webui-3d-open-pose-editor.patch"
     }
   ]
 }

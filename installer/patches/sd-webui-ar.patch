@@ -1,0 +1,30 @@
+diff --git a/javascript/button_titles.js b/javascript/button_titles.js
+index 34073e0..15db251 100644
+--- a/javascript/button_titles.js
++++ b/javascript/button_titles.js
+@@ -1,2 +1,10 @@
+ // Do not put custom titles here. This file is overwritten each time the WebUI is started.
+-ar_button_titles = {}
++ar_button_titles = {
++    "1:1" : " 1:1 ratio based on minimum dimension",
++    "3:2" : " Set width based on 3:2 ratio to height",
++    "4:3" : " Set width based on 4:3 ratio to height",
++    "16:9" : " Set width based on 16:9 ratio to height",
++    "1" : " 1:1 square",
++    "2" : " 3:2 landscape",
++    "3" : " 9:16 portrait",
++}
+\ No newline at end of file
+diff --git a/javascript/sd-webui-ar.js b/javascript/sd-webui-ar.js
+index 97bd5e9..9ebad28 100644
+--- a/javascript/sd-webui-ar.js
++++ b/javascript/sd-webui-ar.js
+@@ -11,7 +11,7 @@ ar_button_titles["Calculate Width"] = "Calculate new width based on source aspec
+ ar_button_titles["Apply"] = "Apply calculated width and height to txt2img/img2img sliders";
+ 
+ onUiUpdate(function(){
+-	gradioApp().querySelectorAll('#txt2img_container_aspect_ratio button, #img2img_container_aspect_ratio button').forEach(function(elem){
++	['txt2img_container_aspect_ratio', 'img2img_container_aspect_ratio'].flatMap((id) => { const box = gradioApp().getElementById(id); return box ? Array.from(box.querySelectorAll('button')) : []; }).forEach(function(elem){
+ 		tooltip = ar_button_titles[elem.textContent];
+ 		if(tooltip){
+ 		 	elem.title = tooltip;

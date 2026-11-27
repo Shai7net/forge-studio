@@ -102,6 +102,44 @@
     font-style: italic;
 }
 
+/* the request in the user's words: a quiet chip that puts it back in the box */
+.pw-source {
+    margin-top: 3px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--body-text-color-subdued);
+}
+
+.pw-source-text {
+    min-width: 0;
+    max-width: 100%;
+    padding: 1px 8px;
+    border: 1px dashed var(--border-color-primary);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--body-text-color);
+    font: inherit;
+    font-size: 12.5px;
+    text-align: start;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+.pw-source-text:hover {
+    border-style: solid;
+    border-color: var(--color-accent);
+    background: var(--background-fill-primary);
+}
+
+.pw-source-text::after {
+    content: " ↩";
+    color: var(--body-text-color-subdued);
+}
+
 .pw-why {
     margin-top: 4px;
 }

@@ -1055,9 +1055,23 @@
         g.fillText(T('from above'), 6, 13);
     }
 
+    // The loop sleeps while the stage is out of sight (another tab): it ran ~144 times a second on every tab and read
+    // the layout (offsetParent) each time, which on Forge's ~100,000-element page held the browser up. An
+    // IntersectionObserver on the canvas wakes it.
+    let ticking = false, seen = null, inSight = false;
+    function watchSight() {
+        if (!UI.canvas || seen === UI.canvas) return;
+        seen = UI.canvas;
+        new IntersectionObserver((entries) => {
+            inSight = entries.some((e) => e.isIntersecting);
+            if (inSight && !ticking) { ticking = true; requestAnimationFrame(tick); }
+        }).observe(UI.canvas);
+    }
     function tick(now) {
+        watchSight();
+        if (seen && !inSight) { ticking = false; return; }
         requestAnimationFrame(tick);
-        if (!E.doc || !E.renderer || E.recording || !UI.root || !UI.root.isConnected || !UI.canvas.offsetParent) return;
+        if (!E.doc || !E.renderer || E.recording || !UI.root || !UI.root.isConnected || !UI.canvas) return;
         const D = E.doc.shot.duration;
         const dt = Math.min(0.1, Math.max(0, (now - (UI.lastTick || now)) / 1000));
         UI.lastTick = now;
@@ -1141,6 +1155,7 @@
             }
         }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         window.addEventListener('beforeunload', () => { if (E.dirty) E.saveNow(); });
+        ticking = true;
         requestAnimationFrame(tick);
     }
     S.start = start;

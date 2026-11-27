@@ -132,7 +132,8 @@ def typed_count(c, lt, n):
     return max(0, k)
 
 
-def build(name, doc, preset="h264", loudness=None, out=None, audio_only=False, video_only=False, moving=None):
+def build(name, doc, preset="h264", loudness=None, out=None, audio_only=False, video_only=False, moving=None, gl=None,
+          rgba_out=False):
     """The ffmpeg inputs and filter graph for the edit's picture ([vout]) and/or sound ([aout]).
     `moving`: clip id -> the clip already drawn with its keyframes (moving.draw); a keyed clip without one is
     placed where it stands at its start (only for checking the edit). Returns (args, graph, total seconds, fps)."""
@@ -317,6 +318,21 @@ def build(name, doc, preset="h264", loudness=None, out=None, audio_only=False, v
             graph.append(f"[{current}][{label}]overlay=x={px}:y={py}:eof_action=pass:"
                          f"enable='between(t,{start:.6f},{start + dur + hold:.6f})'[{nxt}]")
             current, step = nxt, step + 1
+            if gl and c.get("id") in gl:
+                # a GLSL transition into this clip (gltrans.py): the mixed picture of its layer and those below lies
+                # over them while it runs
+                gpath, gstart, gdur = gl[c["id"]]
+                args += ["-i", gpath]
+                gi = inputs
+                inputs += 1
+                chain = [f"[{gi}:v]format=rgba", "setpts=PTS-STARTPTS", f"fps={fps:.6f}"]
+                if gstart > 0:
+                    chain.append(f"tpad=start_duration={gstart:.6f}:start_mode=add:color=0x00000000")
+                graph.append(",".join(chain) + f"[gl{step}]")
+                nxt = f"base{step + 1}"
+                graph.append(f"[{current}][gl{step}]overlay=x=0:y=0:eof_action=pass:"
+                             f"enable='between(t,{gstart:.6f},{gstart + gdur - 0.5 / fps:.6f})'[{nxt}]")
+                current, step = nxt, step + 1
             if tkind in ("black", "white"):
                 # the dip: the colour rises over everything drawn so far, then falls away over the next clip
                 half = trans / 2
@@ -365,7 +381,8 @@ def build(name, doc, preset="h264", loudness=None, out=None, audio_only=False, v
     else:
         graph.append(f"anullsrc=r=48000:cl=stereo,atrim=0:{total:.6f}[aout]")
     if not audio_only:
-        final = f"[{current}]format=yuv420p" + (f",scale={OW}:{OH}:flags=lanczos" if (OW, OH) != (W, H) else "") + "[vout]"
+        final = (f"[{current}]format=rgba[vout]" if rgba_out else
+                 f"[{current}]format=yuv420p" + (f",scale={OW}:{OH}:flags=lanczos" if (OW, OH) != (W, H) else "") + "[vout]")
         graph.append(final)
     return args, ";\n".join(graph), total, fps
 
@@ -401,9 +418,22 @@ def keyed(c):
     return any(keys_of(c, k) for k in KEYED)
 
 
+def fx_of(c):
+    """The clip's video effects ([{id, amount}], the page's c.fx), on pictures and videos only."""
+    if c.get("kind") not in ("video", "image"):
+        return []
+    return [f for f in (c.get("fx") or []) if isinstance(f, dict) and f.get("id")][:4]
+
+
+def gl_transition(c):
+    """The GLSL transition into clip c ('gl:<name>' in c.transition), or None."""
+    kind = c.get("transition") or ""
+    return kind[3:] if kind.startswith("gl:") and _num(c.get("transitionIn"), 0) > 0 else None
+
+
 def moves(c):
-    """Drawn frame by frame by moving.py: keyframes, an animation in or out, a speed ramp, or a chroma key."""
-    return keyed(c) or animated(c) or (c.get("kind") == "video" and ramped(c)) or key_of(c) is not None
+    """Drawn frame by frame by moving.py: keyframes, an animation in or out, a speed ramp, a chroma key or effects."""
+    return keyed(c) or animated(c) or (c.get("kind") == "video" and ramped(c)) or key_of(c) is not None or bool(fx_of(c))
 
 
 def key_of(c):
@@ -1010,7 +1040,11 @@ def start(name, doc, preset="h264", loudness=None, options=None):
             drawn = moving_mod.draw_all(name, doc, paths.sub("exports-work", job_id, "moving"), job)
             if job["state"] == "cancelled":
                 return
-            v_args, v_graph, _t, _f = build(name, doc, preset, None, video_only=True, moving=drawn)
+            from . import gltrans
+            glsegs = gltrans.render_all(name, doc, paths.sub("exports-work", job_id, "gl"), job, drawn)
+            if job["state"] == "cancelled":
+                return
+            v_args, v_graph, _t, _f = build(name, doc, preset, None, video_only=True, moving=drawn, gl=glsegs)
             picture = os.path.join(work, "picture." + p["ext"])
             sound = os.path.join(work, "sound.wav")
             audio_job = {}
@@ -1064,6 +1098,11 @@ def start(name, doc, preset="h264", loudness=None, options=None):
         finally:
             job["ended"] = time.time()
             job.pop("process", None)
+            try:  # this thread's OpenGL context (GLSL transitions and effects) goes with it
+                from . import glfx
+                glfx.release()
+            except Exception:
+                pass
     threading.Thread(target=run, name="forge-studio-render", daemon=True).start()
     return public(job)
 

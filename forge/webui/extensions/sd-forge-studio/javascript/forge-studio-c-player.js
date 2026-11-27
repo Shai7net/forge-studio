@@ -314,7 +314,8 @@
         x.fillStyle = background || '#000';
         x.fillRect(0, 0, W, H);
         let animating = false;
-        for (const c of clips) {
+        const glfx = FS.glfx;   // t-glfx.js: GLSL transitions and effects
+        const drawOne = (x, c) => {
             const b = P.box(c, t);
             const fill = FS.fillOf(c);
             if (fill) {
@@ -365,8 +366,11 @@
                     const [dx, dy, dw, dh] = into ? [0, 0, into.w, into.h] : [-b.w / 2, -b.h / 2, b.w, b.h];
                     const look = colour(c);
                     if (look && !into) g.filter = look;
-                    const [L, T, R, B] = b.crop;
-                    if (L || T || R || B) {
+                    // its effects: the cropped picture through them first (before key and shape, as the export)
+                    const fxPic = glfx && c.fx && c.fx.length ? glfx.clipPicture(c, src, t, b.crop) : null;
+                    const [L, T, R, B] = fxPic ? [0, 0, 0, 0] : b.crop;
+                    if (fxPic) g.drawImage(fxPic, dx, dy, dw, dh);
+                    else if (L || T || R || B) {
                         const nw = src.videoWidth || src.naturalWidth, nh = src.videoHeight || src.naturalHeight;
                         g.drawImage(src, L * nw, T * nh, (1 - L - R) * nw, (1 - T - B) * nh, dx, dy, dw, dh);
                     } else g.drawImage(src, dx, dy, dw, dh);
@@ -397,6 +401,13 @@
                 x.fillRect(0, 0, W, H);
                 x.restore();
             }
+        };
+        for (const c of clips) {
+            // a GLSL transition: the picture up to its layer before the cut (the clip before held) and after it, mixed
+            if (glfx && glfx.heldBy(c, t, clips)) continue;
+            const p = glfx && glfx.into(c, t, clips);
+            if (p && glfx.drawTransition(x, c, p, t, drawOne)) continue;
+            drawOne(x, c);
         }
         // a whole picture: kept, to stay up while the next one is loading (before the selection frame goes on it)
         if (!loading && !P.clean) {

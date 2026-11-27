@@ -179,8 +179,22 @@ def _api(task, fam, W, H, mode, p, flat, mask, units):
         if u.get("image"):
             unit["image"] = _b64(u["image"])
         cn.append(unit)
+    scripts_args = {}
     if cn:
-        req["alwayson_scripts"] = {"ControlNet": {"args": cn}}
+        scripts_args["ControlNet"] = {"args": cn}
+    if mode in ("inpaint", "inpaint-sketch"):
+        # Forge's soft inpainting (its built-in extension), in the order of its controls
+        soft = p.get("soft")
+        if isinstance(soft, dict):
+            scripts_args["Soft Inpainting"] = {"args": [True] + [float(soft.get(k, d)) for k, d in (
+                ("power", 1), ("scale", 0.5), ("detail", 4), ("influence", 0), ("threshold", 0.5), ("contrast", 2))]}
+        # an inpainting checkpoint's "Inpainting conditioning mask strength" (Forge's setting, for this call only)
+        weight = p.get("mask_weight")
+        if weight is not None and float(weight) != 1.0:
+            req["override_settings"] = {"inpainting_mask_weight": max(0.0, min(1.0, float(weight)))}
+            req["override_settings_restore_afterwards"] = True
+    if scripts_args:
+        req["alwayson_scripts"] = scripts_args
     import json
     images, seeds = [], []
     count = max(1, min(4, int(p.get("count") or 1)))

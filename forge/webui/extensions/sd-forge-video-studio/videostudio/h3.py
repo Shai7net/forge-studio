@@ -40,8 +40,9 @@ PRESETS = {
 }
 DEFAULT_PRESET = next(iter(PRESETS))
 QUALITY = {
-    'MiniMax-H3 608×352 · workflow default': 608 * 352,
-    'MiniMax-H3 480×864 · tested portrait 8 GB': 480 * 864,
+    # the area: the Shape decides which way round (608x352 landscape, 352x608 portrait, ...)
+    'MiniMax-H3 · fast (about 350p, the workflow default)': 608 * 352,
+    'MiniMax-H3 · sharper (about 480p, tested on 8 GB)': 480 * 864,
 }
 DEFAULT_QUALITY = next(iter(QUALITY))
 
@@ -101,7 +102,7 @@ def adapt_job(job, preset, quality, seconds):
     width, height = int(job['width']), int(job['height'])
     width, height = max(32, round(width / 32) * 32), max(32, round(height / 32) * 32)
     if width * height > max(QUALITY.values()):
-        raise ValueError('The 8 GB MiniMax-H3 profile supports up to the tested 480×864 pixel area.')
+        raise ValueError('The 8 GB MiniMax-H3 profile supports up to the tested 480x864 pixel area.')
     pr = PRESETS[preset]
     comfy, custom = runtime_paths()
     result = dict(job, backend='h3', model=path(pr['model']), text_encoder=path(pr['text_encoder']),

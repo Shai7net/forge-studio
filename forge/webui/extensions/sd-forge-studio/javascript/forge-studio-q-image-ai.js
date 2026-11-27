@@ -43,13 +43,38 @@
         const denoise = h('input', {type: 'range', min: 0.05, max: 1, step: 0.05, value: 0.6, class: 'fx-range'});
         const denoiseText = h('span', {class: 'fx-dim'}, '0.60');
         denoise.addEventListener('input', () => { denoiseText.textContent = (+denoise.value).toFixed(2); });
-        const fill = h('select', {class: 'fx-select'}, ...['original', 'fill', 'latent noise', 'latent nothing'].map((v) => h('option', {value: v}, T('fill:' + v))));
+        const fill = h('select', {class: 'fx-select'}, ...['original', 'fill', 'latent noise', 'latent nothing'].map((v) => h('option', {value: v}, FS.hebrew() ? T('fill:' + v) : v[0].toUpperCase() + v.slice(1))));
         const onlyMasked = h('input', {type: 'checkbox', checked: true});
         const blur = num(4, 0, 64, 1), padding = num(32, 0, 256, 4);
         const row = (label, ...el) => h('label', {class: 'im-opt im-row'}, h('span', {}, T(label)), ...el);
         const strengthRow = row('Strength', denoise, denoiseText);
-        const inpaintBox = h('div', {class: 'im-sub'}, row('Masked content', fill), h('label', {class: 'im-opt'}, onlyMasked, T('Draw only the selected area at full size')),
-            row('Soft edge of the mask', blur), row('Room around it', padding));
+        // Forge's own inpaint options (the img2img → Inpaint tab): which part is drawn again, soft inpainting (its
+        // built-in extension), the strength of an inpainting checkpoint's mask; and outpainting (HakuImg's InOutPaint)
+        const maskMode = h('select', {class: 'fx-select'}, h('option', {value: 'masked'}, T('The selection')), h('option', {value: 'not'}, T('Everything but the selection')));
+        const soft = h('input', {type: 'checkbox'});
+        const softParts = {power: num(1, 0, 8, 0.1), scale: num(0.5, 0, 8, 0.05), detail: num(4, 1, 32, 0.5),
+            influence: num(0, 0, 1, 0.05), threshold: num(0.5, 0, 8, 0.25), contrast: num(2, 0, 8, 0.25)};
+        const softBox = h('div', {class: 'im-grid im-soft'}, row('Schedule bias', softParts.power), row('Preservation strength', softParts.scale),
+            row('Transition contrast boost', softParts.detail), row('Mask influence', softParts.influence),
+            row('Difference threshold', softParts.threshold), row('Difference contrast', softParts.contrast));
+        softBox.hidden = true;
+        soft.addEventListener('change', () => { softBox.hidden = !soft.checked; });
+        const softRow = h('label', {class: 'im-opt', title: T('Forge\'s soft inpainting: the drawn part fades into the picture where the mask is soft, instead of a hard seam')}, soft, T('Soft inpainting'));
+        const maskWeight = h('input', {type: 'range', min: 0, max: 1, step: 0.05, value: 1, class: 'fx-range'});
+        const maskWeightText = h('span', {class: 'fx-dim'}, '1.00');
+        maskWeight.addEventListener('input', () => { maskWeightText.textContent = (+maskWeight.value).toFixed(2); });
+        const maskWeightRow = h('label', {class: 'im-opt im-weight', title: T('Only for inpainting checkpoints: how much of the original shape they keep (Forge\'s "Inpainting conditioning mask strength")')},
+            h('span', {}, T('Inpainting model mask strength')), maskWeight, maskWeightText);
+        const side = (v) => num(v, 0, 2048, 8);
+        const out = {top: side(0), right: side(128), bottom: side(0), left: side(128), overlap: num(16, 0, 128, 4)};
+        const outBox = h('div', {class: 'im-sub im-outpaint'}, h('div', {class: 'im-subtitle'}, '↔ ' + T('Outpaint: make the picture bigger')),
+            h('div', {class: 'im-grid'}, row('Top', out.top), row('Bottom', out.bottom), row('Left', out.left), row('Right', out.right),
+                row('Into the picture', out.overlap)),
+            h('div', {class: 'fx-dim'}, T('The new area is selected (with a strip of the picture, so the seam is drawn too); then write what is around and Generate.')),
+            h('button', {class: 'fx-btn', onclick: FS.guard(() => outpaint())}, '↔ ' + T('Make it bigger and select the new area')));
+        const inpaintBox = h('div', {class: 'im-sub'}, row('Draw again', maskMode), row('Masked content', fill),
+            h('label', {class: 'im-opt'}, onlyMasked, T('Draw only the selected area at full size')),
+            row('Soft edge of the mask', blur), row('Room around it', padding), softRow, softBox, maskWeightRow, outBox);
         // ControlNet (SD 1.5 / SDXL)
         const units = h('div', {class: 'im-units'});
         const cnBox = h('div', {class: 'im-sub'}, h('div', {class: 'im-subtitle'}, 'ControlNet', h('span', {class: 'fx-spacer'}),
@@ -107,12 +132,27 @@
                     h('button', {class: 'fx-icon', title: T('Remove'), onclick: () => { G.refs.splice(i, 1); drawRefs(); }}, '✕')), src, r.fileName ? h('div', {class: 'fx-dim'}, r.fileName) : null);
             }));
         }
+        function outpaint() {
+            IM.expand(+out.top.value, +out.right.value, +out.bottom.value, +out.left.value, +out.overlap.value);
+            setMode('inpaint');
+            fill.value = 'original';
+            onlyMasked.checked = false;
+            maskMode.value = 'masked';
+            if (!G.touchedStrength) { denoise.value = 0.95; denoiseText.textContent = '0.95'; }
+            IM.status(T('The new area is selected: write what is around the picture and Generate'));
+            prompt.focus();
+        }
+        G.outpaint = () => { setMode('inpaint'); outBox.scrollIntoView({block: 'center', behavior: 'smooth'}); };
         function setMode(m) {
             G.mode = m;
             modeRow.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.mode === m));
             note.textContent = T(NOTES[m]);
             strengthRow.hidden = m === 'txt2img';
             inpaintBox.hidden = !(m === 'inpaint' || m === 'inpaint-sketch') || (G.opts && G.opts.family === 'fibo');
+            // soft inpainting and the mask strength are Forge's SD tools (FLUX 3's classic inpaint has neither)
+            const sd = !(G.opts && ['flux3', 'fibo'].includes(G.opts.family));
+            softRow.hidden = maskWeightRow.hidden = !sd;
+            softBox.hidden = !sd || !soft.checked;
             if (m !== 'txt2img' && !G.touchedStrength) { denoise.value = m === 'img2img' ? 0.55 : 0.75; denoiseText.textContent = (+denoise.value).toFixed(2); }
             if (m === 'sketch' || m === 'inpaint-sketch') IM.tool('brush');
             if (m === 'inpaint' || m === 'inpaint-sketch') { if (!IM.selection()) FS.message(T('Select the area to draw again (selection tools on the left)')); }
@@ -137,6 +177,28 @@
             setMode(G.mode);
         }
 
+        const blank = (w, hh) => { const c = document.createElement('canvas'); c.width = w; c.height = hh; return c; };
+        function invertedMask(sel) {
+            const c = blank(sel.width, sel.height), x = c.getContext('2d');
+            x.fillStyle = '#fff';
+            x.fillRect(0, 0, c.width, c.height);
+            x.globalCompositeOperation = 'destination-out';
+            x.drawImage(sel, 0, 0);
+            return c;
+        }
+        /* a selection (white, its alpha the amount) as the black and white PNG Forge reads */
+        function maskPng(sel) {
+            const c = blank(sel.width, sel.height), x = c.getContext('2d');
+            x.fillStyle = '#000';
+            x.fillRect(0, 0, c.width, c.height);
+            const w = blank(c.width, c.height), wc = w.getContext('2d');
+            wc.fillStyle = '#fff';
+            wc.fillRect(0, 0, w.width, w.height);
+            wc.globalCompositeOperation = 'destination-in';
+            wc.drawImage(sel, 0, 0);
+            x.drawImage(w, 0, 0);
+            return new Promise((r) => c.toBlob(r, 'image/png'));
+        }
         async function blobOf(source, target) {
             if (source === 'flat') return new Promise((r) => IM.flatten().toBlob(r, 'image/png'));
             if (source.startsWith('layer:')) return IM.layerBlob(source.slice(6));
@@ -148,20 +210,23 @@
             if (!G.opts) await apply(true);
             const mode = G.mode, text = prompt.value.trim();
             if (mode === 'txt2img' && !text) throw new Error(T('Write what the picture shows'));
-            const sel = IM.selection();
+            let sel = IM.selection();
             if ((mode === 'inpaint' || mode === 'inpaint-sketch') && !sel) throw new Error(T('Select the area to draw again first'));
+            // "Everything but the selection": the mask turned over here, so every model (and the new layer) gets it
+            if (sel && maskMode.value === 'not' && (mode === 'inpaint' || mode === 'inpaint-sketch')) sel = invertedMask(sel);
             const form = new FormData();
             form.append('name', S.project);
             form.append('shot', IM.doc().shot);
             form.append('mode', mode);
             const english = text ? await FS.english(text, 'image') : '';
-            const params = {prompt: english, negative: negative.value.trim(), steps: +steps.value, cfg: +cfg.value, sampler: sampler.value,
+            const params = {prompt: english, negative: await FS.english(negative.value.trim(), 'negative'), steps: +steps.value, cfg: +cfg.value, sampler: sampler.value,
                 scheduler: scheduler.value, seed: +seed.value, count: Math.max(1, Math.min(4, +count.value || 1)), denoise: +denoise.value,
                 fill: fill.value, only_masked: onlyMasked.checked, mask_blur: +blur.value, padding: +padding.value,
-                writer: writer.value, keep_size: keepSize.checked};
+                writer: writer.value, keep_size: keepSize.checked, mask_weight: +maskWeight.value,
+                soft: soft.checked ? Object.fromEntries(Object.entries(softParts).map(([k, el]) => [k, +el.value])) : null};
             form.append('params', JSON.stringify(params));
             if (mode !== 'txt2img') form.append('flat', await blobOf('flat'), 'flat.png');
-            if (mode === 'inpaint' || mode === 'inpaint-sketch') form.append('mask', await IM.maskBlob(), 'mask.png');
+            if (mode === 'inpaint' || mode === 'inpaint-sketch') form.append('mask', await maskPng(sel), 'mask.png');
             const native = ['flux3', 'fibo'].includes(G.opts.family);
             if (!native) {
                 const list = G.units.filter((u) => u.model !== 'None' || u.module !== 'None');
@@ -205,7 +270,8 @@
 
         box.append(h('div', {class: 'fx-group im-gen'},
             h('div', {class: 'fx-group-title'}, '✨ ' + T('Generate with Forge')),
-            model, modeRow, note, FS.withWriter(prompt, 'fs_image_prompt', {as: 'img2img_prompt'}), negative,
+            model, modeRow, note, FS.withWriter(prompt, 'fs_image_prompt', {as: 'img2img_prompt'}),
+            FS.withWriter(negative, 'fs_image_negative', {as: 'img2img_neg_prompt'}),
             h('div', {class: 'im-grid'}, row('Steps', steps), row('CFG', cfg), row('Sampler', sampler), row('Schedule', scheduler),
                 row('Seed', seed), row('Variations', count)),
             strengthRow, inpaintBox, cnBox, nativeBox, go, status, results));
@@ -286,6 +352,10 @@
                 b('🎯', 'Select an object', 'Then click the object on the picture (SAM); Shift+click adds, Alt+click takes away', () => IM.tool('object')),
                 b('✂', 'Remove the background', 'The active layer without its background, on a copy (BiRefNet)', background),
                 b('🧽', 'Take away what is selected', 'Fills the selection from what is around it (LaMa): best for small things; for a big one, select it and add the background in words', erase),
+                b('↔', 'Outpaint', 'Makes the picture bigger and draws what is around it (inpaint on the new area)', () => {
+                    const gen = box.querySelector('.im-gen');
+                    if (gen && G.outpaint) G.outpaint();
+                }),
                 b('➕', 'Add something in the selection', 'Draws what you write inside the selection (inpaint)', () => {
                     if (!IM.selection()) throw new Error(T('Select where to add it first'));
                     const gen = box.querySelector('.im-gen');

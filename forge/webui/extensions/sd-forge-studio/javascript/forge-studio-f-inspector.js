@@ -262,6 +262,10 @@
             out.push(section('AI', h('div', {class: 'fx-ai-actions'},
                 ...actions.map((a) => h('button', {class: 'fx-ai-btn', onclick: FS.guard(() => a.run(c))}, a.label)))));
         }
+        // sections other modules add (t-glfx: the clip's video effects)
+        for (const hook of FS.inspectorHooks || []) {
+            try { const s = hook(c, section); if (s) out.push(s); } catch (e) { console.error(e); }
+        }
         return out;
     }
 
@@ -381,11 +385,15 @@
         'slide:right': 'Slide in from the right', 'slide:left': 'Slide in from the left', 'slide:top': 'Slide in from the top',
         'slide:bottom': 'Slide in from the bottom', 'push:right': 'Push from the right', 'push:left': 'Push from the left',
         'push:top': 'Push from the top', 'push:bottom': 'Push from the bottom'};
-    FS.transitionName = (c) => FS.T(TRANSITION_NAMES[c.transitionIn > 0 ? c.transition || 'dissolve' : '']);
+    FS.transitionName = (c) => (c.transitionIn > 0 && String(c.transition || '').startsWith('gl:')
+        ? '✨ ' + (FS.glfx ? FS.glfx.title(c.transition.slice(3)) : c.transition.slice(3))
+        : FS.T(TRANSITION_NAMES[c.transitionIn > 0 ? c.transition || 'dissolve' : '']));
     function transitionKind(c) {
         const h = FS.h;
         const now = c.transitionIn > 0 ? c.transition || 'dissolve' : '';
-        const pick = h('select', {class: 'fx-select'}, ...['', ...FS.TRANSITIONS].map((k) => h('option', {value: k, selected: k === now}, '⇄ ' + T(TRANSITION_NAMES[k]))));
+        const pick = h('select', {class: 'fx-select'}, ...['', ...FS.TRANSITIONS].map((k) => h('option', {value: k, selected: k === now}, '⇄ ' + T(TRANSITION_NAMES[k]))),
+            // a GLSL transition from the Transitions tab
+            now.startsWith('gl:') ? h('option', {value: now, selected: true}, FS.transitionName(c)) : null);
         pick.addEventListener('change', () => FS.transition(c.id, pick.value ? c.transitionIn || (pick.value.includes(':') ? 0.6 : 1) : 0, pick.value));
         return pick;
     }

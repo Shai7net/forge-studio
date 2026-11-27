@@ -16,6 +16,14 @@
   "Return the complete file as valid JSON with the same structure and nothing before or after it."
  ],
  "texts": {
+  "My objects: what you keep from any world (the button \"Keep it in my objects\" on an object) waits here, for this project and every other. Click one to stand it in this world.": "My objects: what you keep from any world (the button \"Keep it in my objects\" on an object) waits here, for this project and every other. Click one to stand it in this world.",
+  "Stand it in this world": "Stand it in this world",
+  "Forget it": "Forget it",
+  "Forget \"{0}\"? (Objects that were made of it stay.)": "Forget \"{0}\"? (Objects that were made of it stay.)",
+  "Nothing is kept yet.": "Nothing is kept yet.",
+  "What it is made of": "What it is made of",
+  "Its colour, or a material that Forge draws and wraps round it: old red bricks, rough bark, rusty iron, roof tiles. The material repeats without a seam.": "Its colour, or a material that Forge draws and wraps round it: old red bricks, rough bark, rusty iron, roof tiles. The material repeats without a seam.",
+  "The material repeats": "The material repeats",
   "How many times the drawn material goes round the object": "How many times the drawn material goes round the object",
   "Material": "Material",
   "Old red bricks, rough bark, rusty iron, roof tiles…": "Old red bricks, rough bark, rusty iron, roof tiles…",
@@ -323,15 +331,6 @@
   "No sound": "No sound",
   "Make it the route": "Make it the route",
   "The flight becomes the route's keys (arrows on the map): a key where it bends, turns or stops, to move and change afterwards": "The flight becomes the route's keys (arrows on the map): a key where it bends, turns or stops, to move and change afterwards",
-  "With its sound in the scene": "With its sound in the scene",
-  "The sound you flew to becomes a sound of the scene, from its start": "The sound you flew to becomes a sound of the scene, from its start",
-  "The flight becomes the route: {0} keys in place of the {1} there are?": "The flight becomes the route: {0} keys in place of the {1} there are?",
-  "The flight is the route now: {0} keys (arrows) to change as you like": "The flight is the route now: {0} keys (arrows) to change as you like",
-  "The flight is too short to become a route": "The flight is too short to become a route",
-  "A big view: the world as wide and tall as the page, the panel under it": "A big view: the world as wide and tall as the page, the panel under it",
-  "A portal into its own world cannot lead back": "A portal into its own world cannot lead back",
-  "The portal has no shape yet": "The portal has no shape yet",
-  "Until second": "Until second",
-  "When in the scene it stops, and the figure stands or does its act again (0: it does not stop)": "When in the scene it stops, and the figure stands or does its act again (0: it does not stop)"
+  "With its sound in the scene": "With its sound in the scene"
  }
 }

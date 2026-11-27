@@ -1,0 +1,13 @@
+diff --git a/javascript/sd-webui-ar-plusplus.js b/javascript/sd-webui-ar-plusplus.js
+index 0d1e370..4f31338 100644
+--- a/javascript/sd-webui-ar-plusplus.js
++++ b/javascript/sd-webui-ar-plusplus.js
+@@ -9,7 +9,7 @@ arsp__ar_button_titles[" \u{02139}"] = 'Show the Information panel including add
+ arsp__ar_button_titles[" \u{02BC5}"] = 'Hide the Information panel.'
+ 
+ onUiUpdate(function(){
+-	gradioApp().querySelectorAll('#arsp__txt2img_container_aspect_ratio button, #arsp__img2img_container_aspect_ratio button').forEach(function(elem){
++	['arsp__txt2img_container_aspect_ratio', 'arsp__img2img_container_aspect_ratio'].flatMap((id) => { const box = gradioApp().getElementById(id); return box ? Array.from(box.querySelectorAll('button')) : []; }).forEach(function(elem){
+ 		tooltip = arsp__ar_button_titles[elem.textContent];
+ 		if(tooltip){
+ 		 	elem.title = tooltip;

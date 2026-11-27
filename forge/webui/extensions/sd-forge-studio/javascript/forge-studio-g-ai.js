@@ -143,7 +143,10 @@
         if (!S.project) throw new Error(T('Open or create a project first'));
         const project = S.project;
         opts = opts || {};
-        if (body.prompt) body.prompt = await FS.english(body.prompt, body.kind === 'text' ? 't2v' : 'i2v');
+        // the prompt is written for the model that will make the clip (an LTX model reads a longer paragraph with sound)
+        const writeAs = body.writeAs || (body.kind === 'text' ? 't2v' : 'i2v');
+        delete body.writeAs;
+        if (body.prompt) body.prompt = await FS.english(body.prompt, writeAs);
         if (S.project !== project) throw new Error(T('The project changed; request cancelled'));
         const seconds = FS.snapTime(body.seconds || G.seconds);
         const shifted = opts.shift ? S.doc.clips.map((c) => c.id) : [];
@@ -484,7 +487,33 @@
         return isVideo(c) && info && info.width && Math.abs(info.width / info.height - S.doc.settings.width / S.doc.settings.height) > 0.02;
     };
 
+    /* 🎬 a video from a picture on the timeline, by any installed Video Studio model; it comes right after the picture */
+    const MODEL_NAMES = [[/MiniMax/i, 'MiniMax-H3'], [/LTX.*Q3/i, 'LTX 2.3 · Q3'], [/LTX.*Q2/i, 'LTX 2.3 · Q2'],
+        [/LTX.*Q4/i, 'LTX 2.3 · Q4'], [/Wan.*Q3/i, 'Wan 2.2 · Q3'], [/Wan.*Q4/i, 'Wan 2.2 · Q4']];
+    const modelName = (p) => (MODEL_NAMES.find(([re]) => re.test(p)) || [null, p])[1];
+    G.pictureToVideo = async function (clip) {
+        const o = await FS.api('generate/options');
+        if (!o.ok || !(o.presets || []).length) throw new Error(o.message || T('No video model is installed yet (Video Studio → Models)'));
+        let last = null;
+        try { last = localStorage.getItem('forgeStudio.pictureModel'); } catch (e) { /* storage off */ }
+        const answer = await FS.ask(T('A video from this picture'), T('What happens in the video (Hebrew or English)'), '',
+            T('The picture is the first frame and the model animates it. The video comes right after the picture.'),
+            {label: T('Video model'), value: o.presets.includes(last) ? last : o.presets[0],
+                options: o.presets.map((p) => [p, modelName(p)]), confirmLabel: 'Make the video', requireText: true,
+                number: {label: T('Length'), value: G.seconds || 5, min: 1, max: 7.5, step: 0.5},
+                sound: {label: T('With AI sound'), checked: G.sound !== false}},
+            {video: 'i2v'});
+        if (!answer) return;
+        try { localStorage.setItem('forgeStudio.pictureModel', answer.choice); } catch (e) { /* storage off */ }
+        await G.request({kind: 'picture', prompt: answer.text, model: answer.choice, seconds: answer.number || G.seconds,
+            sound: answer.sound, writeAs: /LTX/i.test(answer.choice) ? 'ltx:i2v' : 'i2v',
+            start: {web: clip.media, seconds: 0}}, {time: FS.end(clip), track: clip.track});
+        FS.message(T('Making the video with {0}…', modelName(answer.choice)));
+    };
+
     FS.clipActions = [
+        {id: 'picture2video', label: '🎬 ' + T('A video from this picture…'), when: (c) => c && c.kind === 'image' && c.media,
+            run: (c) => G.pictureToVideo(c)},
         {id: 'take', label: '🎞 ' + T('Make it again (another take)'), when: madeByWan, run: (c) => G.anotherTake(c)},
         {id: 'continue', label: '➡ ' + T('Continue this shot'), when: isVideo, run: (c) => G.continueClip(c)},
         {id: 'join', label: '🔗 ' + T('Join to the next clip (AI, frame to frame)'), when: (c) => isPicture(c) && G.nextOf(c),

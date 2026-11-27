@@ -131,7 +131,8 @@
         FS.busy && FS.busy(FS.T('Writing the prompt in English…'));
         try {
             const r = await fetch('/translator/write', {method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({text, field: mode === 'image' ? 'img2img_prompt' : 'vs_prompt', video_mode: mode === 'image' ? '' : mode})});
+                body: JSON.stringify({text, field: mode === 'image' ? 'img2img_prompt' : mode === 'negative' ? 'img2img_neg_prompt' : 'vs_prompt',
+                    video_mode: mode === 'image' || mode === 'negative' ? '' : mode})});
             if (!r.ok) return text;
             const j = await r.json();
             if (!j.prompt) return text;

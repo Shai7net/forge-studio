@@ -43,6 +43,11 @@
         forget: ["Forget this one", "לשכוח את זה"],
         note: ["Note: ", "הערה: "],
         meaning: ["Understood:", "הבין:"],
+        source: ["You wrote:", "כתבת:"],
+        sourceTip: ["Click: your words go back into the box (and are copied), so 🌐 can write them for another model",
+            "לחיצה: המילים שלך חוזרות לתיבה (וגם מועתקות), כדי ש-🌐 יכתוב אותן בשביל מודל אחר"],
+        sourceBack: ["Your words are back in the box and copied: pick another model and press 🌐.",
+            "המילים שלך חזרו לתיבה והועתקו: בחר מודל אחר ולחץ 🌐."],
         meaningTip: ["What the writer understood from your words. A wrong word here? 👎 and say which word you meant.",
             "מה הכותב הבין מהמילים שלך. מילה לא נכונה? 👎 וכתוב לאיזו מילה התכוונת."],
     };
@@ -117,11 +122,14 @@
             '<button type="button" class="pw-btn" data-tip="close" data-act="close">✕</button>' +
             '</div>' +
             '<div class="pw-meaning" hidden><span class="pw-meaning-label"></span> <span class="pw-meaning-text" dir="ltr"></span></div>' +
+            // the request in the user's own words: a click puts it back for 🌐 (another model, another tab)
+            '<div class="pw-source" hidden><span class="pw-source-label"></span> <button type="button" class="pw-source-text" dir="auto"></button></div>' +
             '<div class="pw-why" hidden><input type="text" class="pw-why-input"></div>';
         el.querySelector(".pw-like").addEventListener("click", () => rate(field, 1));
         el.querySelector(".pw-dislike").addEventListener("click", () => rate(field, -1));
         el.querySelector('[data-act="again"]').addEventListener("click", () => write(field, true));
         el.querySelector('[data-act="undo"]').addEventListener("click", () => undo(field));
+        el.querySelector(".pw-source-text").addEventListener("click", () => reuse(field));
         el.querySelector('[data-act="library"]').addEventListener("click", openLibrary);
         el.querySelector('[data-act="close"]').addEventListener("click", () => el.remove());
         el.querySelector(".pw-why-input").addEventListener("keydown", (e) => {
@@ -143,6 +151,8 @@
         el.querySelectorAll("[data-tip]").forEach((b) => (b.title = t(b.dataset.tip)));
         el.querySelector(".pw-meaning-label").textContent = t("meaning");
         el.querySelector(".pw-meaning").title = t("meaningTip");
+        el.querySelector(".pw-source-label").textContent = t("source");
+        el.querySelector(".pw-source-text").title = t("sourceTip");
         const input = el.querySelector(".pw-why-input");
         if (input) input.placeholder = t("why");
     }
@@ -204,8 +214,10 @@
             const as = extra ? extra.as : field;
             let video = extra ? (typeof extra.video === "function" ? extra.video() : extra.video || "")
                 : typeof videoStudioMode === "function" ? videoStudioMode() : "";
-            const model = gradioApp().querySelector("#vs_model input");
-            if ((as.startsWith("vs_") || as === "ch_video") && model && /\bLTX\b/.test(model.value)) {
+            // Video Studio's model is a row of picture buttons since 2026-11-27 (a list before)
+            const model = {value: typeof videoStudioModel === "function" ? videoStudioModel()
+                : ((gradioApp().querySelector("#vs_model input") || {}).value || "")};
+            if ((as.startsWith("vs_") || as === "ch_video") && model.value && /\bLTX\b/.test(model.value)) {
                 video = "ltx:" + (as === "ch_video" ? "ingredients" : video);
             }
             const d = await call("/translator/write", {
@@ -219,6 +231,9 @@
             const meaning = bar(field).querySelector(".pw-meaning");
             meaning.hidden = !d.meaning;
             meaning.querySelector(".pw-meaning-text").textContent = d.meaning || "";
+            const mine = bar(field).querySelector(".pw-source");
+            mine.hidden = false;
+            mine.querySelector(".pw-source-text").textContent = source;
             say(field, writtenStatus(field));
             setCounts(d.counts);
             return true;
@@ -279,6 +294,18 @@
         ta.value = s.source;
         updateInput(ta);
         say(field, t("undone"));
+    }
+
+    // the request back in the box, as the user wrote it, and on the clipboard (for a box on another tab)
+    function reuse(field) {
+        const s = state[field];
+        const ta = textarea(field);
+        if (!s || !ta) return;
+        ta.value = s.source;
+        updateInput(ta);
+        ta.focus();
+        if (navigator.clipboard) navigator.clipboard.writeText(s.source).catch(() => null);
+        say(field, t("sourceBack"), "ok");
     }
 
     // ------------------------------------------------------------------ what was learned

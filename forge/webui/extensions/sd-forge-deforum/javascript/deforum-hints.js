@@ -200,8 +200,25 @@ deforum_titles = {
     "Generate human masks": "This will generate masks of all the humans in a video. Created at generation of hybrid video. Not yet integrated for auto-masking, but it will create the masks, and you can then use the mask video manually.",
 }
 
-onUiUpdate(function(){
-	gradioApp().querySelectorAll('span, button, select, p').forEach(function(span){
+// Only what a change added is looked at: scanning the whole page (~98,000 elements) on every change held the page
+// up for seconds while it loaded (Forge Workspace speed-up, 2026-11-27). Without a change list: the whole page.
+function deforumHintTargets(mutations, selector) {
+	if (!mutations || !mutations.length) return Array.from(gradioApp().querySelectorAll(selector));
+	const out = new Set();
+	for (const m of mutations) {
+		const t = m.target;
+		if (t && t.nodeType === 1 && t.matches(selector)) out.add(t);
+		for (const n of m.addedNodes) {
+			if (n.nodeType !== 1) continue;
+			if (n.matches(selector)) out.add(n);
+			n.querySelectorAll(selector).forEach((e) => out.add(e));
+		}
+	}
+	return Array.from(out);
+}
+
+onUiUpdate(function(mutations){
+	deforumHintTargets(mutations, 'span, button, select, p').forEach(function(span){
 		tooltip = deforum_titles[span.textContent];
 
 		if(!tooltip){
@@ -222,7 +239,7 @@ onUiUpdate(function(){
 		}
 	})
 
-	gradioApp().querySelectorAll('select').forEach(function(select){
+	deforumHintTargets(mutations, 'select').forEach(function(select){
 	    if (select.onchange != null) return;
 
 	    select.onchange = function(){
